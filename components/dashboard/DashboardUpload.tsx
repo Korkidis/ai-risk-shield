@@ -26,14 +26,14 @@ export function DashboardUpload({ onFileSelect }: Props) {
             <p className="text-slate-500 text-sm max-w-xs text-center">
                 Drag & drop or click to upload.
                 <br />
-                <span className="text-xs opacity-60">Supports JPG, PNG, MP4 (Max 50MB)</span>
+                <span className="text-xs opacity-60">Supports JPG, PNG, MP4, MOV, WEBM (Max 50MB)</span>
             </p>
 
             <input
                 id="dash-file-input"
                 type="file"
                 className="hidden"
-                accept="image/*,video/mp4"
+                accept="image/*,video/mp4,video/quicktime,video/webm"
                 onChange={handleFileSelect}
             />
         </div>

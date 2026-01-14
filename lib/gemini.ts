@@ -36,12 +36,13 @@ SCORING PROTOCOL (BE AGGRESSIVE - FALSE NEGATIVES ARE WORSE THAN FALSE POSITIVES
 - Major celebrity faces that are clearly recognizable
 - Fortune 500 logos (Apple, Nike, McDonald's, etc.)
 - Copyrighted artwork reproductions
+- Famous movie scenes or clips
 
 75-94 POINTS - PROBABLE INFRINGEMENT:
 - Fan art of copyrighted characters
 - Style mimicry of famous artists
 - Derivative works with unclear licensing
-- Stock imagery without watermarks
+- Stock imagery/footage without watermarks
 - Brand-adjacent designs
 
 50-74 POINTS - MODERATE RISK:
@@ -55,7 +56,7 @@ SCORING PROTOCOL (BE AGGRESSIVE - FALSE NEGATIVES ARE WORSE THAN FALSE POSITIVES
 
 0-24 POINTS - MINIMAL RISK:
 - Abstract art, patterns
-- Verified original photography
+- Verified original photography/videography
 - Clearly licensed stock content
 
 CRITICAL RULES:
@@ -64,13 +65,13 @@ CRITICAL RULES:
 3. If you see Taylor Swift, Beyonce or any celebrity, score 85+
 4. When in doubt, score HIGHER. Liability is expensive.`;
 
-async function analyzeIP(imageBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
+async function analyzeIP(assetBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         systemInstruction: IP_SYSTEM_INSTRUCTION
     });
 
-    const prompt = `Analyze this image for intellectual property infringement risk.
+    const prompt = `Analyze this visual asset (image or video) for intellectual property infringement risk.
 
 Respond with ONLY a JSON object in this exact format:
 {
@@ -79,7 +80,7 @@ Respond with ONLY a JSON object in this exact format:
   "reasoning": "<detailed explanation of detected IP elements and infringement vectors>"
 }`;
 
-    return executePrompt(model, prompt, imageBuffer, mimeType);
+    return executePrompt(model, prompt, assetBuffer, mimeType);
 }
 
 // ============================================================================
@@ -125,13 +126,13 @@ CRITICAL RULES:
 2. Cartoon violence is lower risk than realistic violence
 3. Consider: "Would a Fortune 500 CMO be comfortable with this in an ad?"`;
 
-async function analyzeSafety(imageBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
+async function analyzeSafety(assetBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         systemInstruction: SAFETY_SYSTEM_INSTRUCTION
     });
 
-    const prompt = `Analyze this image for brand safety and PR risk.
+    const prompt = `Analyze this visual asset (image or video) for brand safety and PR risk.
 
 Respond with ONLY a JSON object in this exact format:
 {
@@ -140,7 +141,7 @@ Respond with ONLY a JSON object in this exact format:
   "reasoning": "<detailed breakdown of safety concerns and policy violations>"
 }`;
 
-    return executePrompt(model, prompt, imageBuffer, mimeType);
+    return executePrompt(model, prompt, assetBuffer, mimeType);
 }
 
 // ============================================================================
@@ -153,22 +154,22 @@ In the current regulatory environment, legitimate professional content MUST have
 The ABSENCE of verifiable provenance is now treated as evidence of unauthorized use or AI generation.
 
 YOUR EXPERTISE:
-- Digital image forensics
+- Digital media forensics
 - AI generation detection
 - Metadata analysis
 - Chain of custody verification
 
 SCORING PROTOCOL (DEFAULT TO HIGH RISK - INNOCENCE MUST BE PROVEN):
 
-90-100 POINTS - NO PROVENANCE (DEFAULT FOR MOST IMAGES):
-- Screenshots of other images/screens
-- Images with no camera sensor characteristics
+90-100 POINTS - NO PROVENANCE (DEFAULT FOR MOST ASSETS):
+- Screen recordings or screenshots
+- Assets with no camera/device sensor characteristics
 - Cropped/derivative content
-- AI-generated content (melted hands, impossible anatomy)
-- Any image you cannot verify has legitimate origin
+- AI-generated content (physically impossible motion, artifacts)
+- Any asset you cannot verify has legitimate origin
 
 75-89 POINTS - SUSPICIOUS PROVENANCE:
-- Heavily compressed/re-saved images
+- Heavily compressed/re-saved files
 - Watermarks removed or cropped out
 - Editing artifacts visible
 - Professional quality but no metadata
@@ -176,16 +177,16 @@ SCORING PROTOCOL (DEFAULT TO HIGH RISK - INNOCENCE MUST BE PROVEN):
 50-74 POINTS - UNCLEAR PROVENANCE:
 - Cannot determine if original or derived
 - Mixed characteristics
-- Amateur photography with some editing
+- Amateur capture with some editing
 
 25-49 POINTS - PARTIAL PROVENANCE:
-- Some camera metadata patterns visible
+- Some camera/device metadata patterns visible
 - Natural imperfections present
-- Appears to be original photo but unverified
+- Appears to be original capture but unverified
 
 10-24 POINTS - GOOD PROVENANCE (RARE):
-- Clear camera sensor noise patterns
-- Natural lens characteristics
+- Clear sensor noise patterns
+- Natural lens/motion characteristics
 - Consistent lighting physics
 - Appears to be unedited camera capture
 
@@ -194,19 +195,19 @@ SCORING PROTOCOL (DEFAULT TO HIGH RISK - INNOCENCE MUST BE PROVEN):
 - Never score this low unless you can see embedded verification
 
 CRITICAL RULES:
-1. If this looks like a SCREENSHOT: score 90+
+1. If this looks like a SCREEN RECORDING/SHOT: score 90+
 2. If this is a digital illustration/graphic: score 85+ (unverifiable origin)
-3. If there is NO camera noise/sensor pattern: score 80+
+3. If there is NO sensor pattern: score 80+
 4. If you have ANY doubt about provenance: score 75+
-5. DEFAULT ASSUMPTION: The image lacks provenance until proven otherwise.`;
+5. DEFAULT ASSUMPTION: The asset lacks provenance until proven otherwise.`;
 
-async function analyzeProvenance(imageBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
+async function analyzeProvenance(assetBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         systemInstruction: PROVENANCE_SYSTEM_INSTRUCTION
     });
 
-    const prompt = `Analyze this image for content authenticity and provenance.
+    const prompt = `Analyze this visual asset (image or video) for content authenticity and provenance.
 
 IMPORTANT: In 2026, the absence of C2PA credentials is itself a red flag. Score accordingly.
 
@@ -217,14 +218,14 @@ Respond with ONLY a JSON object in this exact format:
   "reasoning": "<technical breakdown of provenance signals and concerns>"
 }`;
 
-    return executePrompt(model, prompt, imageBuffer, mimeType);
+    return executePrompt(model, prompt, assetBuffer, mimeType);
 }
 
 // ============================================================================
 // CHIEF OFFICER (SYNTHESIS)
 // ============================================================================
 async function generateChiefStrategy(reports: SpecialistReport[]): Promise<string> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `You are a Chief Forensic Risk Officer. Based on these findings, provide a 3-point strategic mitigation plan:
 
@@ -282,13 +283,13 @@ async function executePrompt(
 // ============================================================================
 // MAIN PARALLEL EXECUTOR WITH COMPOUND RISK LOGIC
 // ============================================================================
-export async function analyzeImageMultiPersona(imageBuffer: Buffer, mimeType: string): Promise<RiskProfile> {
+export async function analyzeImageMultiPersona(assetBuffer: Buffer, mimeType: string): Promise<RiskProfile> {
 
     // 1. Run Specialists in Parallel
     const [ip, safety, provenance] = await Promise.all([
-        analyzeIP(imageBuffer, mimeType),
-        analyzeSafety(imageBuffer, mimeType),
-        analyzeProvenance(imageBuffer, mimeType)
+        analyzeIP(assetBuffer, mimeType),
+        analyzeSafety(assetBuffer, mimeType),
+        analyzeProvenance(assetBuffer, mimeType)
     ]);
 
     // 2. Calculate Base Composite (Weighted: IP 50%, Safety 30%, Provenance 20%)
