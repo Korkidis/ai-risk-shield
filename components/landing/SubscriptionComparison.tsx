@@ -2,7 +2,7 @@
 
 export function SubscriptionComparison() {
     return (
-        <section id="compare-plans" className="py-24 border-t border-slate-800 bg-[#020617]">
+        <section id="pricing" className="py-24 border-t border-slate-800 bg-[#020617]">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Enterprise-Grade Protection</h2>
@@ -11,7 +11,7 @@ export function SubscriptionComparison() {
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-5 gap-4">
+                <div className="grid md:grid-cols-5 gap-4 mb-24">
                     {/* Feature Legend */}
                     <div className="hidden md:block col-span-1 space-y-4 pt-48 pr-4">
                         <FeatureLabel label="Monthly Scans" />
@@ -39,8 +39,10 @@ export function SubscriptionComparison() {
                             <FeatureCheck value={false} />
                             <FeatureCheck value="Community" />
                         </div>
-                        <button className="w-full py-3 rounded-xl border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest opacity-50 cursor-not-allowed">
-                            Current Plan
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="w-full py-3 rounded-xl border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors">
+                            Start Free
                         </button>
                     </div>
 
@@ -49,7 +51,7 @@ export function SubscriptionComparison() {
                         <div className="mb-6 text-center h-32">
                             <h3 className="text-lg font-bold text-white mb-2">Individual</h3>
                             <div className="text-2xl font-bold text-white">$49<span className="text-sm font-normal text-indigo-300">/mo</span></div>
-                            <p className="text-indigo-300 text-[10px] mt-2 uppercase tracking-widest">For Creators</p>
+                            <p className="text-indigo-300 text-[10px] mt-2 uppercase tracking-widest">Creators & Freelancers</p>
                         </div>
                         <div className="space-y-4 mb-8 flex-grow">
                             <FeatureCheck value="50 / mo" highlighted />
@@ -61,7 +63,7 @@ export function SubscriptionComparison() {
                             <FeatureCheck value="Email" />
                         </div>
                         <button className="w-full py-3 rounded-xl bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-colors">
-                            Start Trial
+                            Choose Individual
                         </button>
                     </div>
 
@@ -73,7 +75,7 @@ export function SubscriptionComparison() {
                         <div className="mb-6 text-center h-32">
                             <h3 className="text-lg font-bold text-white mb-2">Team</h3>
                             <div className="text-2xl font-bold text-white">$199<span className="text-sm font-normal text-slate-400">/mo</span></div>
-                            <p className="text-slate-400 text-[10px] mt-2 uppercase tracking-widest">Small Agencies</p>
+                            <p className="text-slate-400 text-[10px] mt-2 uppercase tracking-widest">Brand + Legal Review</p>
                         </div>
                         <div className="space-y-4 mb-8 flex-grow">
                             <FeatureCheck value="200 / mo" />
@@ -85,7 +87,7 @@ export function SubscriptionComparison() {
                             <FeatureCheck value="Priority" />
                         </div>
                         <button className="w-full py-3 rounded-xl border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors">
-                            Contact Sales
+                            Choose Team
                         </button>
                     </div>
 
@@ -94,7 +96,7 @@ export function SubscriptionComparison() {
                         <div className="mb-6 text-center h-32">
                             <h3 className="text-lg font-bold text-slate-400 mb-2">Agency</h3>
                             <div className="text-2xl font-bold text-slate-400">$599<span className="text-sm font-normal text-slate-500">/mo</span></div>
-                            <p className="text-slate-500 text-[10px] mt-2 uppercase tracking-widest">Enterprise Vol</p>
+                            <p className="text-slate-500 text-[10px] mt-2 uppercase tracking-widest">High-Volume Client Workflows</p>
                         </div>
                         <div className="space-y-4 mb-8 flex-grow">
                             <FeatureCheck value="1,000 / mo" />
@@ -106,9 +108,25 @@ export function SubscriptionComparison() {
                             <FeatureCheck value="Dedicated" />
                         </div>
                         <button className="w-full py-3 rounded-xl border border-white/10 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
-                            Book Demo
+                            Contact Sales
                         </button>
                     </div>
+                </div>
+
+                {/* ENTERPRISE ROW */}
+                <div className="max-w-4xl mx-auto rounded-3xl bg-gradient-to-r from-slate-900 to-slate-950 border border-slate-800 p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-900/10 rounded-full blur-[80px] group-hover:bg-indigo-900/20 transition-colors duration-700"></div>
+
+                    <div className="relative z-10 text-center md:text-left">
+                        <h3 className="text-2xl font-bold text-white mb-2">Need Enterprise Scale?</h3>
+                        <p className="text-slate-400 max-w-lg">
+                            Custom implementations for large organizations. On-premise deployment, unlimited seats, custom API rate limits, and dedicated forensic analyst support.
+                        </p>
+                    </div>
+
+                    <button className="relative z-10 whitespace-nowrap px-8 py-4 bg-white text-slate-950 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors">
+                        Contact for Rates
+                    </button>
                 </div>
             </div>
         </section>

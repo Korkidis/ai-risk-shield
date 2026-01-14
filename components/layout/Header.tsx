@@ -15,18 +15,26 @@ export function Header() {
                     <span className="font-bold tracking-tighter text-xl uppercase text-white">Risk Shield <span className="text-[10px] text-indigo-400 align-top ml-1">v2.0</span></span>
                 </div>
 
-                <div className="flex items-center space-x-6">
-                    <Link href="/" className="text-xs font-medium text-white hover:text-indigo-400 uppercase tracking-widest transition-colors">
-                        Free Tool
+                {/* Center Navigation */}
+                <div className="hidden md:flex items-center space-x-8">
+                    <Link href="/#how-it-works" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+                        How it Works
                     </Link>
-                    <Link href="/login" className="text-xs font-medium text-slate-400 hover:text-white uppercase tracking-widest transition-colors">
-                        Login
+                    <Link href="/#pricing" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+                        Pricing
+                    </Link>
+                </div>
+
+                {/* Right Actions */}
+                <div className="flex items-center space-x-4">
+                    <Link href="/login" className="hidden md:block text-xs font-medium text-slate-400 hover:text-white uppercase tracking-widest transition-colors">
+                        Log In
                     </Link>
                     <button
                         onClick={() => window.location.reload()}
-                        className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 px-5 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all transform hover:-translate-y-0.5"
                     >
-                        New Scan
+                        Start Scan
                     </button>
                 </div>
             </div>

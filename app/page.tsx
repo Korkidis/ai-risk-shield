@@ -5,6 +5,9 @@ import { FreeUploadContainer } from '@/components/landing/FreeUploadContainer'
 import { ScanResultsWithGate } from '@/components/landing/ScanResultsWithGate'
 import { Header } from '@/components/layout/Header'
 import { SubscriptionComparison } from '@/components/landing/SubscriptionComparison'
+import { HowItWorks } from '@/components/landing/HowItWorks'
+import { CredibilitySection } from '@/components/landing/CredibilitySection'
+import { CTASection } from '@/components/landing/CTASection'
 import { RiskProfile } from '@/lib/gemini'
 
 type ViewState = 'upload' | 'processing' | 'results'
@@ -16,12 +19,7 @@ export default function LandingPage() {
     const [processingProgress, setProcessingProgress] = useState(0)
     const [processingStep, setProcessingStep] = useState('Initializing...')
 
-    const resetApp = () => {
-        setView('upload')
-        setScanId('')
-        setRiskProfile(null)
-        setProcessingProgress(0)
-    }
+
 
     return (
         <div className="min-h-screen flex flex-col font-sans overflow-x-hidden selection:bg-indigo-500/30">
@@ -92,8 +90,17 @@ export default function LandingPage() {
                     )}
                 </div>
 
+                {/* HOW IT WORKS SECTION */}
+                <HowItWorks />
+
                 {/* COMPARISON SECTION */}
                 <SubscriptionComparison />
+
+                {/* CREDIBILITY SECTION */}
+                <CredibilitySection />
+
+                {/* FINAL CTA SECTION */}
+                <CTASection />
 
             </main>
 

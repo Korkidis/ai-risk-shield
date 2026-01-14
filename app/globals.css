@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
+
 @theme {
   /* Colors - SaaS Noir System */
   --color-deep-space: #020617;

@@ -58,34 +58,47 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       </div>
 
       {!preview && (
-        <div className="relative group cursor-pointer max-w-2xl mx-auto">
-          {/* Glow Effect */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+        <>
+          <div className="relative group cursor-pointer max-w-2xl mx-auto">
+            {/* Glow Effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
 
-          {/* Card Content */}
-          <div
-            className="relative glass rounded-[3rem] p-16 border-2 border-dashed border-slate-700 group-hover:border-indigo-500/50 transition-all text-center flex flex-col items-center justify-center min-h-[320px]"
-            onClick={() => document.getElementById('hidden-file-input')?.click()}
-          >
-            {/* Icon Wrapper - Strict Size */}
-            <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-black/50">
-              <svg className="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-              </svg>
+            {/* Card Content */}
+            <div
+              className="relative glass rounded-[3rem] p-16 border-2 border-dashed border-slate-700 group-hover:border-indigo-500/50 transition-all text-center flex flex-col items-center justify-center min-h-[320px]"
+              onClick={() => document.getElementById('hidden-file-input')?.click()}
+            >
+              {/* Icon Wrapper - Strict Size */}
+              <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-black/50">
+                <svg className="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+              </div>
+
+              <h2 className="text-2xl font-bold mb-2 text-white">Upload Asset</h2>
+              <p className="text-slate-500 text-sm">Image or Video (MP4) Supported</p>
             </div>
 
-            <h2 className="text-2xl font-bold mb-2 text-white">Upload Asset</h2>
-            <p className="text-slate-500 text-sm">Image or Video (MP4) Supported</p>
+            <input
+              id="hidden-file-input"
+              type="file"
+              className="hidden"
+              accept="image/*,video/mp4"
+              onChange={handleFileSelect}
+            />
           </div>
 
-          <input
-            id="hidden-file-input"
-            type="file"
-            className="hidden"
-            accept="image/*,video/mp4"
-            onChange={handleFileSelect}
-          />
-        </div>
+          {/* Usage Info & Disclaimer */}
+          <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+            <div className="flex flex-col space-y-1 text-sm text-slate-400 font-medium tracking-wide">
+              <p>Free: 3 scans per month</p>
+              <p>Files processed securely, auto-deleted</p>
+            </div>
+            <p className="text-[10px] text-slate-600 uppercase tracking-widest max-w-xs mx-auto pt-4 opacity-60 hover:opacity-100 transition-opacity">
+              Disclaimer: Risk Shield is a diagnostic tool. Not legal advice.
+            </p>
+          </div>
+        </>
       )}
 
       {/* Preview View */}
