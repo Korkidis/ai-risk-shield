@@ -15,12 +15,19 @@ export async function POST(req: NextRequest) {
 
         // Run Forensic Analysis
         const { analyzeImageMultiPersona } = await import('@/lib/gemini');
-        const riskProfile = await analyzeImageMultiPersona(buffer, file.type);
+        const riskProfile = await analyzeImageMultiPersona(buffer, file.type, file.name);
 
         return NextResponse.json(riskProfile);
 
-    } catch (error) {
-        console.error('Analysis Error:', error)
-        return NextResponse.json({ error: 'Deep Analysis Failed' }, { status: 500 })
+    } catch (error: any) {
+        console.error('Analysis Error:', error);
+
+        // Handle Gemini 429/Quota limits explicitly if possible, or just pass message
+        const message = error.message || 'Deep Analysis Failed';
+
+        return NextResponse.json(
+            { error: message, details: error.toString() },
+            { status: 500 }
+        );
     }
 }

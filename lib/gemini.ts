@@ -1,6 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { verifyContentCredentials, C2PAReport } from './c2pa';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
 
 export type SpecialistReport = {
     score: number;
@@ -12,9 +18,50 @@ export type RiskProfile = {
     ip_report: SpecialistReport;
     safety_report: SpecialistReport;
     provenance_report: SpecialistReport;
+    c2pa_report: C2PAReport; // NEW
     composite_score: number;
     verdict: "Low Risk" | "Medium Risk" | "High Risk" | "Critical Risk";
     chief_officer_strategy: string;
+}
+
+// ============================================================================
+// FILE MANAGER HELPERS
+// ============================================================================
+// Helper to write buffer to temp file
+function writeTempFile(buffer: Buffer, mimeType: string): string {
+    const tempDir = os.tmpdir();
+    // Sanitize extension
+    const ext = mimeType.split('/')[1] || 'bin';
+    const tempFilePath = path.join(tempDir, `upload-${Date.now()}.${ext}`);
+    fs.writeFileSync(tempFilePath, buffer);
+    return tempFilePath;
+}
+
+// Upload local file to Gemini
+async function uploadToGemini(filePath: string, mimeType: string): Promise<string> {
+    try {
+        // 2. Upload to Gemini
+        const uploadResponse = await fileManager.uploadFile(filePath, {
+            mimeType,
+            displayName: "Forensic Asset Analysis",
+        });
+
+        // 3. Poll for Active State (if video)
+        let file = await fileManager.getFile(uploadResponse.file.name);
+        while (file.state === FileState.PROCESSING) {
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2s
+            file = await fileManager.getFile(uploadResponse.file.name);
+        }
+
+        if (file.state === FileState.FAILED) {
+            throw new Error("Video processing failed.");
+        }
+
+        return file.uri;
+
+    } catch (e) {
+        throw e;
+    }
 }
 
 // ============================================================================
@@ -62,12 +109,12 @@ SCORING PROTOCOL (BE AGGRESSIVE - FALSE NEGATIVES ARE WORSE THAN FALSE POSITIVES
 CRITICAL RULES:
 1. If you see Mickey Mouse, score 98+
 2. If you see ANY Disney/Marvel/Pixar character, score 95+
-3. If you see Taylor Swift, Beyonce or any celebrity, score 85+
+3. If you see Taylor Swift, Beyonce, or ANY major celebrity: score 99+ (CRITICAL LIABILITY)
 4. When in doubt, score HIGHER. Liability is expensive.`;
 
-async function analyzeIP(assetBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
+async function analyzeIP(part: any): Promise<SpecialistReport> {
     const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         systemInstruction: IP_SYSTEM_INSTRUCTION
     });
 
@@ -80,7 +127,7 @@ Respond with ONLY a JSON object in this exact format:
   "reasoning": "<detailed explanation of detected IP elements and infringement vectors>"
 }`;
 
-    return executePrompt(model, prompt, assetBuffer, mimeType);
+    return executePrompt(model, prompt, part);
 }
 
 // ============================================================================
@@ -126,9 +173,9 @@ CRITICAL RULES:
 2. Cartoon violence is lower risk than realistic violence
 3. Consider: "Would a Fortune 500 CMO be comfortable with this in an ad?"`;
 
-async function analyzeSafety(assetBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
+async function analyzeSafety(part: any): Promise<SpecialistReport> {
     const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         systemInstruction: SAFETY_SYSTEM_INSTRUCTION
     });
 
@@ -141,75 +188,62 @@ Respond with ONLY a JSON object in this exact format:
   "reasoning": "<detailed breakdown of safety concerns and policy violations>"
 }`;
 
-    return executePrompt(model, prompt, assetBuffer, mimeType);
+    return executePrompt(model, prompt, part);
 }
 
 // ============================================================================
 // PERSONA 3: PROVENANCE ENGINEER
 // ============================================================================
-const PROVENANCE_SYSTEM_INSTRUCTION = `You are an AI Forensics Engineer specializing in content authenticity verification.
+const PROVENANCE_SYSTEM_INSTRUCTION = `You are an AI Forensics Engineer specializing in content authenticity and provenance verification.
 
-CRITICAL CONTEXT (2026):
-In the current regulatory environment, legitimate professional content MUST have C2PA/Content Credentials. 
-The ABSENCE of verifiable provenance is now treated as evidence of unauthorized use or AI generation.
+CORE PHILOSOPHY:
+Provenance is the 'chain of custody' for an asset. 
+1. C2PA (Content Credentials) is the cryptographic 'Gold Standard'. If verified, provenance is established.
+2. Visual Forensics (your job) is the 'Detective Work'. You look for artifacts, AI noise, and metadata anomalies that suggest the provenance has been stripped, faked, or "washed" (e.g. screenshot of a licensed image).
 
-YOUR EXPERTISE:
-- Digital media forensics
-- AI generation detection
-- Metadata analysis
-- Chain of custody verification
+SCORING PROTOCOL (INNOCENCE MUST BE PROVEN BY PROVENANCE):
 
-SCORING PROTOCOL (DEFAULT TO HIGH RISK - INNOCENCE MUST BE PROVEN):
-
-90-100 POINTS - NO PROVENANCE (DEFAULT FOR MOST ASSETS):
-- Screen recordings or screenshots
-- Assets with no camera/device sensor characteristics
-- Cropped/derivative content
-- AI-generated content (physically impossible motion, artifacts)
-- Any asset you cannot verify has legitimate origin
-
-75-89 POINTS - SUSPICIOUS PROVENANCE:
-- Heavily compressed/re-saved files
-- Watermarks removed or cropped out
-- Editing artifacts visible
-- Professional quality but no metadata
-
-50-74 POINTS - UNCLEAR PROVENANCE:
-- Cannot determine if original or derived
-- Mixed characteristics
-- Amateur capture with some editing
+0-24 POINTS - VERIFIED PROVENANCE (TARGET STATE):
+- ONLY possible if C2PA status is 'verified'.
+- If C2PA is verified, your score SHOULD be in this range unless you see blatant visual tampering/screenshot artifacts.
 
 25-49 POINTS - PARTIAL PROVENANCE:
-- Some camera/device metadata patterns visible
-- Natural imperfections present
-- Appears to be original capture but unverified
+- Some camera/device metadata patterns visible.
+- Appears to be original capture but lacks cryptographic verification.
 
-10-24 POINTS - GOOD PROVENANCE (RARE):
-- Clear sensor noise patterns
-- Natural lens/motion characteristics
-- Consistent lighting physics
-- Appears to be unedited camera capture
+50-74 POINTS - UNCLEAR PROVENANCE:
+- Cannot determine if original or derived.
+- Amateur capture with some editing.
 
-0-9 POINTS - VERIFIED (YOU CANNOT ASSIGN THIS):
-- Would require actual C2PA credential verification
-- Never score this low unless you can see embedded verification
+75-89 POINTS - SUSPICIOUS PROVENANCE:
+- Professional quality but NO C2PA/metadata (Red flag in 2026).
+- Watermarks removed or cropped out.
+
+90-100 POINTS - NO PROVENANCE / PROVENANCE WASHING:
+- Screen recordings or screenshots (obvious provenance stripping).
+- AI-generated content (physically impossible motion, artifacts).
 
 CRITICAL RULES:
-1. If this looks like a SCREEN RECORDING/SHOT: score 90+
-2. If this is a digital illustration/graphic: score 85+ (unverifiable origin)
-3. If there is NO sensor pattern: score 80+
-4. If you have ANY doubt about provenance: score 75+
-5. DEFAULT ASSUMPTION: The asset lacks provenance until proven otherwise.`;
+1. C2PA IS PROVENANCE. If C2PA Status is "verified", the risk is LOW (0-20).
+2. If C2PA is "missing", the asset is "Unverified" and usually High Risk (75+).
+3. If this is a digital illustration/graphic with no C2PA, score 85+ (unverifiable origin).`;
 
-async function analyzeProvenance(assetBuffer: Buffer, mimeType: string): Promise<SpecialistReport> {
+async function analyzeProvenance(part: any, filename: string = '', c2paStatus: string): Promise<SpecialistReport> {
     const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         systemInstruction: PROVENANCE_SYSTEM_INSTRUCTION
     });
 
     const prompt = `Analyze this visual asset (image or video) for content authenticity and provenance.
+    
+METADATA CONTEXT:
+Filename: "${filename}"
+C2PA/Content Credentials Status: "${c2paStatus}"
 
-IMPORTANT: In 2026, the absence of C2PA credentials is itself a red flag. Score accordingly.
+IMPORTANT RULES:
+1. If C2PA Status is "verified", this is a strong positive signal. Lower the risk score significantly (0-20 range) unless the visual content is obviously tampered.
+2. If the filename contains "screen", "rec", "capture", or "shot" (e.g. "Screen Recording 2024..."), AUTOMATICALLY SCORE THIS 95+ as it is likely a scrape without license.
+3. In 2026, the absence of C2PA credentials is a red flag. Score accordingly.
 
 Respond with ONLY a JSON object in this exact format:
 {
@@ -218,14 +252,14 @@ Respond with ONLY a JSON object in this exact format:
   "reasoning": "<technical breakdown of provenance signals and concerns>"
 }`;
 
-    return executePrompt(model, prompt, assetBuffer, mimeType);
+    return executePrompt(model, prompt, part);
 }
 
 // ============================================================================
 // CHIEF OFFICER (SYNTHESIS)
 // ============================================================================
 async function generateChiefStrategy(reports: SpecialistReport[]): Promise<string> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are a Chief Forensic Risk Officer. Based on these findings, provide a 3-point strategic mitigation plan:
 
@@ -257,14 +291,10 @@ Provide exactly 3 bullet points of actionable strategic recommendations to mitig
 async function executePrompt(
     model: ReturnType<typeof genAI.getGenerativeModel>,
     prompt: string,
-    buffer: Buffer,
-    mime: string
+    part: any
 ): Promise<SpecialistReport> {
     try {
-        const result = await model.generateContent([
-            prompt,
-            { inlineData: { data: buffer.toString('base64'), mimeType: mime } }
-        ]);
+        const result = await model.generateContent([prompt, part]);
         const text = result.response.text()
             .replace(/```json/g, '')
             .replace(/```/g, '')
@@ -283,47 +313,141 @@ async function executePrompt(
 // ============================================================================
 // MAIN PARALLEL EXECUTOR WITH COMPOUND RISK LOGIC
 // ============================================================================
-export async function analyzeImageMultiPersona(assetBuffer: Buffer, mimeType: string): Promise<RiskProfile> {
+export async function analyzeImageMultiPersona(assetBuffer: Buffer, mimeType: string, filename: string = "unknown"): Promise<RiskProfile> {
 
-    // 1. Run Specialists in Parallel
-    const [ip, safety, provenance] = await Promise.all([
-        analyzeIP(assetBuffer, mimeType),
-        analyzeSafety(assetBuffer, mimeType),
-        analyzeProvenance(assetBuffer, mimeType)
-    ]);
+    let part;
+    let geminiFileUri: string | null = null;
+    let tempFilePath: string | null = null;
+    let c2paReport: C2PAReport = { status: 'missing' };
 
-    // 2. Calculate Base Composite (Weighted: IP 50%, Safety 30%, Provenance 20%)
-    let composite = Math.round((ip.score * 0.5) + (safety.score * 0.3) + (provenance.score * 0.2));
+    try {
+        // 1. Write ALL assets to temp file for C2PA analysis
+        tempFilePath = writeTempFile(assetBuffer, mimeType);
 
-    // 3. COMPOUND RISK MULTIPLIER
-    // If IP is high (likely infringement) AND Provenance is risky (can't prove ownership)
-    // This is the worst case: Using someone else's IP without proof of license
-    if (ip.score >= 80 && provenance.score >= 60) {
-        // Boost composite by 15-25 points depending on severity
-        const boost = Math.round((ip.score + provenance.score) / 10);
-        composite = Math.min(100, composite + boost);
+        // 2. Run C2PA Analysis concurrently with Gemini Upload
+        const c2paPromise = verifyContentCredentials(tempFilePath);
+
+        let geminiPartPromise;
+        if (mimeType.startsWith('video/')) {
+            // For Video: Upload via File API
+            geminiPartPromise = uploadToGemini(tempFilePath, mimeType).then(uri => {
+                geminiFileUri = uri;
+                return {
+                    fileData: {
+                        mimeType: mimeType,
+                        fileUri: geminiFileUri
+                    }
+                };
+            });
+        } else {
+            // For Image: Use Inline Data (but we needed the temp file for C2PA anyway)
+            geminiPartPromise = Promise.resolve({
+                inlineData: {
+                    data: assetBuffer.toString('base64'),
+                    mimeType: mimeType
+                }
+            });
+        }
+
+        // Wait for pre-processing (C2PA + Gemini Upload)
+        try {
+            const [report, p] = await Promise.all([c2paPromise, geminiPartPromise]);
+            c2paReport = report;
+            part = p;
+        } catch (e) {
+            console.error("Preliminary Analysis Error (C2PA or Upload):", e);
+            // If C2PA fails, we still have c2paReport = { status: 'missing' }
+            // If Gemini Upload fails, we might not have 'part'
+        }
+
+        // 3. Run Forensic Specialists in Parallel
+        let ip: SpecialistReport = { score: 75, teaser: "Engine Offline", reasoning: "Could not connect to forensic engine." };
+        let safety: SpecialistReport = { score: 75, teaser: "Engine Offline", reasoning: "Could not connect to forensic engine." };
+        let provenance: SpecialistReport = { score: 75, teaser: "Engine Offline", reasoning: "Could not connect to forensic engine." };
+
+        if (part) {
+            try {
+                const results = await Promise.all([
+                    analyzeIP(part),
+                    analyzeSafety(part),
+                    analyzeProvenance(part, filename, c2paReport.status)
+                ]);
+                ip = results[0];
+                safety = results[1];
+                provenance = results[2];
+            } catch (e) {
+                console.error("Specialist Analysis Error:", e);
+                // Keep default 75 scores
+            }
+        }
+
+        // 4. Calculate Base Composite (Weighted: IP 50%, Safety 30%, Provenance 20%)
+        let composite = Math.round((ip.score * 0.5) + (safety.score * 0.3) + (provenance.score * 0.2));
+
+        // 5. COMPOUND RISK MULTIPLIER
+        // If IP is high (likely infringement) AND Provenance is risky (can't prove ownership)
+        // This is the worst case: Using someone else's IP without proof of license
+        if (ip.score >= 80 && provenance.score >= 60) {
+            const boost = Math.round((ip.score + provenance.score) / 10);
+            composite = Math.min(100, composite + boost);
+        }
+
+        // 6. CRITICAL OVERRIDE (THE "TAYLOR SWIFT RULE")
+        // If IP is Critical (90+), the Asset is Critical. Period. 
+        // Do not let "Brand Safety = 0" (wholesome content) drag down the risk score of stolen IP.
+        if (ip.score >= 90) {
+            composite = Math.max(composite, 95); // Force Critical Risk
+        } else if (ip.score >= 80) {
+            composite = Math.max(composite, 85); // Force High Risk
+        }
+
+        // 7. Verdict Logic
+        let verdict: RiskProfile['verdict'] = "Low Risk";
+        if (composite >= 80) verdict = "Critical Risk";
+        else if (composite >= 60) verdict = "High Risk";
+        else if (composite >= 35) verdict = "Medium Risk";
+
+        // 8. Generate Chief Strategy
+        const strategy = await generateChiefStrategy([ip, safety, provenance]);
+
+        return {
+            ip_report: ip,
+            safety_report: safety,
+            provenance_report: provenance,
+            c2pa_report: c2paReport,
+            composite_score: composite,
+            verdict,
+            chief_officer_strategy: strategy
+        };
+
+    } catch (criticalError) {
+        console.error("Critical Failure in Analysis Pipeline:", criticalError);
+        // Absolute fallback
+        return {
+            ip_report: { score: 99, teaser: "PIPELINE CRITICAL FAILURE", reasoning: criticalError instanceof Error ? criticalError.message : String(criticalError) },
+            safety_report: { score: 0, teaser: "N/A", reasoning: "" },
+            provenance_report: { score: 0, teaser: "N/A", reasoning: "" },
+            c2pa_report: c2paReport,
+            composite_score: 99,
+            verdict: "Critical Risk",
+            chief_officer_strategy: "Emergency forensic failure. Check server logs."
+        };
+    } finally {
+        // Cleanup Temp File
+        if (tempFilePath && fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath);
+        }
+
+        // Cleanup Gemini Cloud File
+        if (geminiFileUri) {
+            try {
+                // fileUri is "https://generativeai.googleapis.com/v1beta/files/NAME"
+                // fileManager expects just the name
+                const name = (geminiFileUri as string).split('/').pop();
+                if (name) await fileManager.deleteFile(name);
+            } catch (e) {
+                console.error("Cleanup Error", e);
+            }
+        }
     }
-
-    // 4. If IP alone is critical (95+), ensure minimum composite of 75
-    if (ip.score >= 95 && composite < 75) {
-        composite = 75;
-    }
-
-    // 5. Verdict Logic
-    let verdict: RiskProfile['verdict'] = "Low Risk";
-    if (composite >= 80) verdict = "Critical Risk";
-    else if (composite >= 60) verdict = "High Risk";
-    else if (composite >= 35) verdict = "Medium Risk";
-
-    // 6. Generate Chief Strategy
-    const strategy = await generateChiefStrategy([ip, safety, provenance]);
-
-    return {
-        ip_report: ip,
-        safety_report: safety,
-        provenance_report: provenance,
-        composite_score: composite,
-        verdict,
-        chief_officer_strategy: strategy
-    };
 }

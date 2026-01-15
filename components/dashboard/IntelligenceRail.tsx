@@ -1,15 +1,14 @@
 'use client'
 
 import { RiskProfile } from '@/lib/gemini'
-import { AlertTriangle, CheckCircle2, Shield, Fingerprint, FileSearch, ArrowRight, Download, Share2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Shield, Fingerprint, FileSearch, Download, Share2 } from 'lucide-react'
 
 type Props = {
     status: 'idle' | 'scanning' | 'complete'
     profile: RiskProfile | null
-    onScan: () => void
 }
 
-export function IntelligenceRail({ status, profile, onScan }: Props) {
+export function IntelligenceRail({ status, profile }: Props) {
     if (status === 'idle') {
         return (
             <div className="h-full flex flex-col justify-center items-center text-center p-12 border border-slate-800 rounded-3xl bg-slate-900/10">
@@ -33,7 +32,7 @@ export function IntelligenceRail({ status, profile, onScan }: Props) {
                 <h3 className="text-lg font-bold text-white mb-2 animate-pulse">Analyzing Vectors...</h3>
                 <div className="space-y-2 text-center">
                     <p className="text-xs text-slate-500">Checking IP Database...</p>
-                    <p className="text-xs text-slate-500">Verifying Provenance...</p>
+                    <p className="text-xs text-slate-500">Verifying Provenance & Credentials...</p>
                     <p className="text-xs text-slate-500">Assessing Safety Protocols...</p>
                 </div>
             </div>
@@ -90,10 +89,11 @@ export function IntelligenceRail({ status, profile, onScan }: Props) {
                         icon={<Shield className="w-4 h-4" />}
                     />
                     <FindingCard
-                        title="Provenance"
+                        title="Provenance & Credentials"
                         score={profile.provenance_report.score}
                         description={profile.provenance_report.teaser}
                         icon={<CheckCircle2 className="w-4 h-4" />}
+                        c2pa={profile.c2pa_report}
                     />
                 </div>
 
@@ -141,7 +141,7 @@ function ScanIcon(props: any) {
     )
 }
 
-function FindingCard({ title, score, description, icon }: any) {
+function FindingCard({ title, score, description, icon, c2pa }: any) {
     const getColor = (s: number) => {
         if (s > 65) return 'text-red-400'
         if (s > 35) return 'text-amber-400'
@@ -155,9 +155,24 @@ function FindingCard({ title, score, description, icon }: any) {
                     <span className="text-slate-500 group-hover:text-white transition-colors">{icon}</span>
                     <span>{title}</span>
                 </div>
-                <span className={`text-xs font-bold ${getColor(score)}`}>{score}/100</span>
+                <div className="flex items-center space-x-2">
+                    {c2pa && (
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${c2pa.status === 'verified' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
+                            c2pa.status === 'missing' ? 'bg-slate-800 text-slate-500 border-slate-700' :
+                                'bg-red-500/10 text-red-400 border-red-500/20'
+                            }`}>
+                            {c2pa.status}
+                        </span>
+                    )}
+                    <span className={`text-xs font-bold ${getColor(score)}`}>{score}/100</span>
+                </div>
             </div>
             <p className="text-xs text-slate-500 line-clamp-2">{description}</p>
+            {c2pa?.issuer && (
+                <p className="text-[10px] text-slate-600 mt-2 italic">
+                    Signed by: <span className="text-slate-500">{c2pa.issuer}</span>
+                </p>
+            )}
         </div>
     )
 }

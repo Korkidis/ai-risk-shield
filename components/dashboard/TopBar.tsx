@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, Plus, Bell } from 'lucide-react'
+import { Plus, Bell } from 'lucide-react'
 
 export function DashboardTopBar() {
     return (
@@ -17,16 +17,6 @@ export function DashboardTopBar() {
                 </div>
 
                 <div className="h-6 w-px bg-slate-800"></div>
-
-                {/* Global Search */}
-                <div className="relative w-96 group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-hover:text-slate-400 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Search scan ID, filename, case, or uploader..."
-                        className="w-full bg-slate-900/50 border border-slate-800 text-slate-300 text-sm rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all placeholder:text-slate-600"
-                    />
-                </div>
             </div>
 
             {/* Right: Actions & status */}

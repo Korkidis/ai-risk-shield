@@ -38,6 +38,7 @@ const nextConfig = {
       },
     ]
   },
+  serverExternalPackages: ['c2pa-node'],
 }
 
 module.exports = nextConfig

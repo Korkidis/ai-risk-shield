@@ -79,7 +79,7 @@ export function FullForensicReport({ scan, asset, findings, tenantName, userName
                 {[
                     { label: 'IP Risk', score: scan.ip_risk_score, text: 'Copyright/TM Exposure' },
                     { label: 'Brand Safety', score: scan.safety_risk_score, text: 'NSFW/Hate/Violence' },
-                    { label: 'Provenance', score: scan.provenance_risk_score, text: 'C2PA/Chain of Custody' }
+                    { label: 'Provenance & Credentials', score: scan.provenance_risk_score, text: 'C2PA/Chain of Custody Verification' }
                 ].map(m => (
                     <div key={m.label} className="border-2 border-slate-900 rounded-lg p-6">
                         <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">{m.label}</div>
@@ -102,8 +102,8 @@ export function FullForensicReport({ scan, asset, findings, tenantName, userName
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-3">
                                     <span className={`px-3 py-1 rounded text-xs font-black uppercase tracking-wider ${finding.severity === 'critical' ? 'bg-red-100 text-red-700' :
-                                            finding.severity === 'high' ? 'bg-orange-100 text-orange-700' :
-                                                'bg-blue-100 text-blue-700'
+                                        finding.severity === 'high' ? 'bg-orange-100 text-orange-700' :
+                                            'bg-blue-100 text-blue-700'
                                         }`}>
                                         {finding.severity}
                                     </span>

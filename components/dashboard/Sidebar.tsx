@@ -6,21 +6,17 @@ import {
     LayoutGrid,
     Briefcase,
     ShieldAlert,
-    FileText,
     Users,
     CreditCard,
-    Code2,
     LogOut
 } from 'lucide-react'
 
 const navItems = [
-    { name: 'Scans', href: '/dashboard', icon: LayoutGrid },
-    { name: 'Cases', href: '/dashboard/cases', icon: Briefcase },
-    { name: 'Policies', href: '/dashboard/policies', icon: ShieldAlert },
-    { name: 'Reports', href: '/dashboard/reports', icon: FileText },
+    { name: 'Scan History', href: '/dashboard', icon: LayoutGrid },
+    { name: 'Reports', href: '/dashboard/cases', icon: Briefcase },
+    { name: 'Brand Guidelines', href: '/dashboard/policies', icon: ShieldAlert },
     { name: 'Team', href: '/dashboard/team', icon: Users },
     { name: 'Usage & Billing', href: '/dashboard/usage', icon: CreditCard },
-    { name: 'API & Webhooks', href: '/dashboard/api', icon: Code2 },
 ]
 
 export function DashboardSidebar() {
@@ -47,8 +43,8 @@ export function DashboardSidebar() {
                             key={item.name}
                             href={item.href}
                             className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${isActive
-                                    ? 'bg-indigo-600/10 text-indigo-400'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                                ? 'bg-indigo-600/10 text-indigo-400'
+                                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                                 }`}
                         >
                             <item.icon className={`w-5 h-5 ${isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-white'}`} />

@@ -69,7 +69,6 @@ export default function DashboardPage() {
         <IntelligenceRail
           status={status}
           profile={riskProfile}
-          onScan={() => file && startScan(file)}
         />
       </div>
     </div>
