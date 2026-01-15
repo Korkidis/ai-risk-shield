@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
     LayoutGrid,
-    Briefcase,
     ShieldAlert,
     Users,
     CreditCard,
@@ -12,8 +11,7 @@ import {
 } from 'lucide-react'
 
 const navItems = [
-    { name: 'Scan History', href: '/dashboard', icon: LayoutGrid },
-    { name: 'Reports', href: '/dashboard/cases', icon: Briefcase },
+    { name: 'Scans & Reports', href: '/dashboard/scans-reports', icon: LayoutGrid },
     { name: 'Brand Guidelines', href: '/dashboard/policies', icon: ShieldAlert },
     { name: 'Team', href: '/dashboard/team', icon: Users },
     { name: 'Usage & Billing', href: '/dashboard/usage', icon: CreditCard },

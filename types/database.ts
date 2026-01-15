@@ -43,6 +43,10 @@ export interface ExtendedScan {
   stripe_payment_intent_id?: string | null
   created_at: string
   completed_at?: string | null
+  notes?: string | null
+  tags?: string[]
+  share_token?: string | null
+  share_expires_at?: string | null
 }
 
 export interface ScanFinding {

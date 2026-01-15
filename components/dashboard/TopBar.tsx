@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Plus, Bell } from 'lucide-react'
 
 export function DashboardTopBar() {
@@ -35,10 +36,10 @@ export function DashboardTopBar() {
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full border-2 border-[#020617]"></span>
                 </button>
 
-                <button className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-indigo-600/20 transition-all hover:-translate-y-0.5">
+                <Link href="/dashboard" className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-indigo-600/20 transition-all hover:-translate-y-0.5">
                     <Plus className="w-4 h-4" />
                     <span>New Scan</span>
-                </button>
+                </Link>
             </div>
         </header>
     )

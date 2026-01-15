@@ -1,33 +1,54 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser, getTenantId } from '@/lib/supabase/auth'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * GET /api/scans/list
  *
  * Fetch recent scans for the current user's tenant
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Parse query parameters
+    const { searchParams } = new URL(req.url)
+    const riskLevel = searchParams.get('risk_level')
+    const fileType = searchParams.get('file_type')
+    const sortBy = searchParams.get('sort_by') || 'created_at'
+    const sortOrder = searchParams.get('sort_order') || 'desc'
+
     const tenantId = await getTenantId()
     const supabase = await createClient()
 
-    // Fetch recent scans with assets and findings
-    const { data: scans, error } = await supabase
+    // Build the query
+    let query = supabase
       .from('scans')
       .select(`
         *,
-        assets(filename, file_type),
+        assets(filename, file_type, storage_path, mime_type),
         scan_findings(*)
       `)
       .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-      .limit(10)
+
+    // Applied Filters
+    if (riskLevel && riskLevel !== 'all') {
+      query = query.eq('risk_level', riskLevel)
+    }
+    if (fileType && fileType !== 'all') {
+      // asset_id.file_type but we need to join or use filter
+      // For now, simpler filtering on scans table if possible, or join
+      // Actually, assets is joined, so we can use:
+      query = query.filter('assets.file_type', 'eq', fileType)
+    }
+
+    // Sorting
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' })
+
+    const { data: scans, error } = await query.limit(50)
 
     if (error) {
       console.error('Failed to fetch scans:', error)
