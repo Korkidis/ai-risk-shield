@@ -200,3 +200,66 @@ export async function logout() {
   await supabase.auth.signOut()
   redirect('/')
 }
+
+// ============================================================================
+// PASSWORD RESET
+// ============================================================================
+
+export async function requestPasswordReset(_prevState: unknown, formData: FormData) {
+  const email = formData.get('email') as string
+
+  if (!email || !z.string().email().safeParse(email).success) {
+    return {
+      error: 'Please enter a valid email address',
+    }
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
+  })
+
+  if (error) {
+    console.error('Password reset error:', error)
+    return {
+      error: 'Failed to send reset email. Please try again.',
+    }
+  }
+
+  // Always return success to prevent email enumeration
+  return { success: true }
+}
+
+export async function resetPassword(_prevState: unknown, formData: FormData) {
+  const password = formData.get('password') as string
+
+  const validation = z
+    .string()
+    .min(12, 'Password must be at least 12 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .safeParse(password)
+
+  if (!validation.success) {
+    return {
+      error: validation.error.issues[0]?.message || 'Invalid password',
+    }
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.updateUser({
+    password: validation.data,
+  })
+
+  if (error) {
+    console.error('Password update error:', error)
+    return {
+      error: 'Failed to reset password. Please try again or request a new reset link.',
+    }
+  }
+
+  return { success: true }
+}

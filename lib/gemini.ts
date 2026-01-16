@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { verifyContentCredentials, C2PAReport } from './c2pa';
+import { BrandGuideline } from '@/types/database';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
@@ -112,10 +113,11 @@ CRITICAL RULES:
 3. If you see Taylor Swift, Beyonce, or ANY major celebrity: score 99+ (CRITICAL LIABILITY)
 4. When in doubt, score HIGHER. Liability is expensive.`;
 
-async function analyzeIP(part: any): Promise<SpecialistReport> {
+async function analyzeIP(part: any, guidelineRules?: string): Promise<SpecialistReport> {
+    const instruction = IP_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES (OVERRIDE GENERIC POLICIES):\n${guidelineRules}` : '');
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
-        systemInstruction: IP_SYSTEM_INSTRUCTION
+        systemInstruction: instruction
     });
 
     const prompt = `Analyze this visual asset (image or video) for intellectual property infringement risk.
@@ -173,10 +175,11 @@ CRITICAL RULES:
 2. Cartoon violence is lower risk than realistic violence
 3. Consider: "Would a Fortune 500 CMO be comfortable with this in an ad?"`;
 
-async function analyzeSafety(part: any): Promise<SpecialistReport> {
+async function analyzeSafety(part: any, guidelineRules?: string): Promise<SpecialistReport> {
+    const instruction = SAFETY_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES (OVERRIDE GENERIC POLICIES):\n${guidelineRules}` : '');
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
-        systemInstruction: SAFETY_SYSTEM_INSTRUCTION
+        systemInstruction: instruction
     });
 
     const prompt = `Analyze this visual asset (image or video) for brand safety and PR risk.
@@ -228,10 +231,11 @@ CRITICAL RULES:
 2. If C2PA is "missing", the asset is "Unverified" and usually High Risk (75+).
 3. If this is a digital illustration/graphic with no C2PA, score 85+ (unverifiable origin).`;
 
-async function analyzeProvenance(part: any, filename: string = '', c2paStatus: string): Promise<SpecialistReport> {
+async function analyzeProvenance(part: any, filename: string = '', c2paStatus: string, guidelineRules?: string): Promise<SpecialistReport> {
+    const instruction = PROVENANCE_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES:\n${guidelineRules}` : '');
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
-        systemInstruction: PROVENANCE_SYSTEM_INSTRUCTION
+        systemInstruction: instruction
     });
 
     const prompt = `Analyze this visual asset (image or video) for content authenticity and provenance.
@@ -310,10 +314,26 @@ async function executePrompt(
     }
 }
 
+// Helper to format guideline rules
+function formatGuidelineRules(g: BrandGuideline): string {
+    return [
+        g.prohibitions.length > 0 ? `PROHIBITIONS (STRICT NO):\n- ${g.prohibitions.join('\n- ')}` : '',
+        g.requirements.length > 0 ? `REQUIREMENTS (MUST HAVE):\n- ${g.requirements.join('\n- ')}` : '',
+        g.context_modifiers.length > 0 ? `CONTEXTUAL EXCEPTIONS (IMPORTANT):\n- ${g.context_modifiers.join('\n- ')}` : '',
+        `TARGET MARKETS: ${g.target_markets.join(', ')}`,
+        `TARGET PLATFORMS: ${g.target_platforms.join(', ')}`
+    ].filter(Boolean).join('\n\n');
+}
+
 // ============================================================================
 // MAIN PARALLEL EXECUTOR WITH COMPOUND RISK LOGIC
 // ============================================================================
-export async function analyzeImageMultiPersona(assetBuffer: Buffer, mimeType: string, filename: string = "unknown"): Promise<RiskProfile> {
+export async function analyzeImageMultiPersona(
+    assetBuffer: Buffer,
+    mimeType: string,
+    filename: string = "unknown",
+    guideline?: BrandGuideline
+): Promise<RiskProfile> {
 
     let part;
     let geminiFileUri: string | null = null;
@@ -367,10 +387,11 @@ export async function analyzeImageMultiPersona(assetBuffer: Buffer, mimeType: st
 
         if (part) {
             try {
+                const guidelineRules = guideline ? formatGuidelineRules(guideline) : undefined;
                 const results = await Promise.all([
-                    analyzeIP(part),
-                    analyzeSafety(part),
-                    analyzeProvenance(part, filename, c2paReport.status)
+                    analyzeIP(part, guidelineRules),
+                    analyzeSafety(part, guidelineRules),
+                    analyzeProvenance(part, filename, c2paReport.status, guidelineRules)
                 ]);
                 ip = results[0];
                 safety = results[1];

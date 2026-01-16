@@ -23,27 +23,36 @@ export interface ExtendedAsset {
   created_at: string
 }
 
+export interface BrandGuideline {
+  id: string
+  tenant_id: string
+  name: string
+  industry?: string
+  is_default: boolean
+  prohibitions: string[]
+  requirements: string[]
+  context_modifiers: string[]
+  target_markets: string[]
+  target_platforms: string[]
+  last_used_at?: string
+  created_at: string
+  updated_at: string
+}
+
 export interface ExtendedScan {
   id: string
-  session_id?: string | null
-  tenant_id?: string | null
-  analyzed_by?: string | null
+  tenant_id: string
   asset_id: string
-  is_video: boolean
-  status: 'processing' | 'complete' | 'failed'
-  risk_level?: string | null
-  composite_score?: number | null
-  ip_risk_score?: number | null
-  safety_risk_score?: number | null
-  provenance_risk_score?: number | null
-  email?: string | null
-  email_captured_at?: string | null
-  purchased?: boolean | null
-  purchase_type?: string | null
-  stripe_payment_intent_id?: string | null
+  guideline_id?: string
+  status: 'processing' | 'completed' | 'failed'
+  ip_risk_score?: number
+  safety_risk_score?: number
+  provenance_risk_score?: number
+  composite_score?: number
+  risk_level?: 'critical' | 'high' | 'review' | 'safe'
   created_at: string
-  completed_at?: string | null
-  notes?: string | null
+  updated_at: string
+  notes?: string
   tags?: string[]
   share_token?: string | null
   share_expires_at?: string | null

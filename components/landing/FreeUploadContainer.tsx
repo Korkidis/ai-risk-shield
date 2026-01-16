@@ -33,16 +33,92 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       const formData = new FormData()
       formData.append('file', file)
 
-      const res = await fetch('/api/analyze', { method: 'POST', body: formData })
+      // Use anonymous upload endpoint
+      const uploadRes = await fetch('/api/scans/anonymous-upload', {
+        method: 'POST',
+        body: formData
+      })
 
-      if (!res.ok) throw new Error('Analysis failed')
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json()
+        throw new Error(errorData.error || 'Upload failed')
+      }
 
-      const data = await res.json()
-      onUploadComplete(data)
+      const { scanId } = await uploadRes.json()
 
-    } catch (err) {
-      console.error(err)
-      alert('Analysis failed. Please try again.')
+      // Poll for scan completion
+      let attempts = 0
+      const maxAttempts = 60 // 60 seconds max wait
+
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+
+        const statusRes = await fetch(`/api/scans/${scanId}/status`)
+        if (!statusRes.ok) {
+          throw new Error('Failed to check scan status')
+        }
+
+        const scanStatus = await statusRes.json()
+
+        if (scanStatus.status === 'complete') {
+          // Construct risk profile from scan status
+          const riskProfile: RiskProfile = {
+            composite_score: scanStatus.composite_score || 0,
+            verdict: scanStatus.risk_level === 'critical' ? 'Critical Risk' :
+              scanStatus.risk_level === 'high' ? 'High Risk' :
+                scanStatus.risk_level === 'review' ? 'Medium Risk' : 'Low Risk',
+            ip_report: {
+              score: scanStatus.ip_risk_score || 0,
+              teaser: 'IP risk analysis complete',
+              reasoning: 'Analysis complete. Full details available after email capture.'
+            },
+            safety_report: {
+              score: scanStatus.safety_risk_score || 0,
+              teaser: 'Brand safety analysis complete',
+              reasoning: 'Analysis complete. Full details available after email capture.'
+            },
+            provenance_report: {
+              score: scanStatus.provenance_risk_score || 0,
+              teaser: 'Provenance analysis complete',
+              reasoning: 'Analysis complete. Full details available after email capture.'
+            },
+            c2pa_report: {
+              status: 'missing'
+            },
+            chief_officer_strategy: 'Free scan completed. Upgrade for full forensic analysis.'
+          }
+
+          onUploadComplete(riskProfile)
+          return
+        } else if (scanStatus.status === 'failed') {
+          throw new Error('Analysis failed')
+        }
+
+        attempts++
+      }
+
+      throw new Error('Analysis timed out. Please try again.')
+
+    } catch (err: any) {
+      console.error('Upload error details:', {
+        message: err.message,
+        stack: err.stack,
+        error: err
+      })
+
+      let errorMessage = 'Analysis failed. Please try again.'
+
+      if (err.message.includes('Scan limit reached')) {
+        errorMessage = 'You have reached the limit of 3 free scans per month. Please upgrade for unlimited scans.'
+      } else if (err.message.includes('Upload failed')) {
+        errorMessage = 'File upload failed. Please check your connection and try again.'
+      } else if (err.message.includes('Invalid file type')) {
+        errorMessage = 'Invalid file type. Please upload an image (JPEG, PNG, WebP) or video (MP4).'
+      } else if (err.message.includes('timed out')) {
+        errorMessage = 'Analysis is taking longer than expected. Please try again.'
+      }
+
+      alert(errorMessage)
       setFile(null)
       setPreview(null)
       window.location.reload()

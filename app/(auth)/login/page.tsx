@@ -93,6 +93,13 @@ export default function LoginPage() {
                 placeholder="••••••••••••"
               />
             </div>
+
+            {/* Forgot Password Link */}
+            <div className="flex items-center justify-end -mt-2">
+              <Link href="/forgot-password" className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider">
+                Forgot Password?
+              </Link>
+            </div>
           </div>
 
           {/* Error Message */}

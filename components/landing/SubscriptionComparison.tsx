@@ -18,7 +18,7 @@ export function SubscriptionComparison() {
                         <FeatureLabel label="User Seats" />
                         <FeatureLabel label="Forensic Depth" />
                         <FeatureLabel label="Video Analysis" />
-                        <FeatureLabel label="Brand Guidelines" />
+                        <FeatureLabel label="Guidelines/Policies" />
                         <FeatureLabel label="API Access" />
                         <FeatureLabel label="Support" />
                     </div>

@@ -14,10 +14,10 @@ export function HowItWorks() {
             <div className="max-w-7xl mx-auto px-6 relative z-10">
                 <div className="text-center mb-20">
                     <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                        Deep Forensic <span className="text-indigo-500">Analysis</span>
+                        How It <span className="text-indigo-500">Works</span>
                     </h2>
                     <p className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
-                        Our proprietary multi-modal engine allows us to deconstruct media at the pixel, metadata, and semantic levels without exposing your data to public training sets.
+                        Upload your image or video. Get a comprehensive risk assessment in seconds. It's that simple.
                     </p>
                 </div>
 
@@ -25,24 +25,24 @@ export function HowItWorks() {
                     {/* Step 1 */}
                     <Card
                         icon={<Scan className="w-8 h-8 text-indigo-400" />}
-                        title="Ingestion & Fingerprinting"
-                        description="Perceptual hashing creates a unique digital signature, isolating visual artifacts and compression anomalies for initial baseline comparison."
+                        title="Upload Your Asset"
+                        description="Drop an image or video. We scan it instantly—checking for copyright risks, AI-generated content, and brand safety issues."
                         step="01"
                     />
 
                     {/* Step 2 */}
                     <Card
                         icon={<BrainCircuit className="w-8 h-8 text-indigo-400" />}
-                        title="Multi-Vector Synthesis"
-                        description="Content is simultaneously evaluated against 12+ enterprise-grade detection models, checking for generative noise patterns and diffusion artifacts."
+                        title="AI Forensic Analysis"
+                        description="Our engine analyzes visual patterns, metadata, and content credentials to detect manipulation, provenance issues, and potential legal exposure."
                         step="02"
                     />
 
                     {/* Step 3 */}
                     <Card
                         icon={<ShieldCheck className="w-8 h-8 text-indigo-400" />}
-                        title="Risk & Provenance Report"
-                        description="A finalized forensic assessment scores the asset for Copyright Exposure, Brand Safety, and AI Probability with actionable confidence intervals."
+                        title="Get Your Risk Score"
+                        description="Receive a clear risk rating with detailed insights on IP exposure, brand safety, and authenticity—so you can make confident decisions."
                         step="03"
                     />
                 </div>

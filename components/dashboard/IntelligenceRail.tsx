@@ -123,6 +123,13 @@ export function IntelligenceRail({ status, profile }: Props) {
                         <Share2 className="w-4 h-4" />
                     </button>
                 </div>
+
+                {/* Legal Disclaimer inside Rail */}
+                <div className="pt-4 pb-2 text-center">
+                    <p className="text-[7px] text-slate-600 uppercase tracking-widest leading-relaxed font-bold opacity-60">
+                        DISCLAIMER: RISK SHIELD IS A DIAGNOSTIC TOOL FOR FORENSIC PATTERN RECOGNITION. THIS DOES NOT CONSTITUTE LEGAL ADVICE. ALL FINAL COMPLIANCE DECISIONS SHOULD BE MADE BY QUALIFIED LEGAL COUNSEL. RISK SCORES ARE INDICATORS OF ALGORITHMIC EXPOSURE, NOT DEFINITIVE LEGAL RULINGS.
+                    </p>
+                </div>
             </div>
         )
     }

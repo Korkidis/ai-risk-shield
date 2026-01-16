@@ -3,20 +3,26 @@
 import { useState, useEffect } from 'react'
 import {
     Search,
+    ArrowUpDown,
+    X,
+    Trash2,
+    Share2,
+    Download,
+    Loader2,
+    FileText,
+    Film,
+    Tag,
     SortAsc,
     Grid,
     Plus,
-    Download,
-    Share2,
-    Trash2,
-    MessageSquare,
-    Tag as TagIcon,
     ChevronRight,
-    Loader2
+    MessageSquare,
+    Tag as TagIcon
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScanWithRelations } from '@/types/database'
 import { format } from 'date-fns'
+import { CustomSelect } from '@/components/ui/CustomSelect'
 
 export default function ScansReportsPage() {
     const [scans, setScans] = useState<ScanWithRelations[]>([])
@@ -203,27 +209,27 @@ export default function ScansReportsPage() {
 
                         <div className="h-4 w-px bg-slate-800 mx-2 hidden md:block" />
 
-                        <select
+                        <CustomSelect
                             value={filterRisk}
-                            onChange={(e) => setFilterRisk(e.target.value)}
-                            className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:outline-none hover:border-slate-600 transition-colors cursor-pointer"
-                        >
-                            <option value="all">Risk Level: All</option>
-                            <option value="critical">Risk Level: Critical</option>
-                            <option value="high">Risk Level: High</option>
-                            <option value="review">Risk Level: Review</option>
-                            <option value="safe">Risk Level: Safe</option>
-                        </select>
+                            onChange={setFilterRisk}
+                            options={[
+                                { value: 'all', label: 'Risk Level: All' },
+                                { value: 'critical', label: 'Risk Level: Critical' },
+                                { value: 'high', label: 'Risk Level: High' },
+                                { value: 'review', label: 'Risk Level: Review' },
+                                { value: 'safe', label: 'Risk Level: Safe' }
+                            ]}
+                        />
 
-                        <select
+                        <CustomSelect
                             value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
-                            className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:outline-none hover:border-slate-600 transition-colors cursor-pointer"
-                        >
-                            <option value="all">Asset Type: All</option>
-                            <option value="image">Asset Type: Images</option>
-                            <option value="video">Asset Type: Videos</option>
-                        </select>
+                            onChange={setFilterType}
+                            options={[
+                                { value: 'all', label: 'Asset Type: All' },
+                                { value: 'image', label: 'Asset Type: Image' },
+                                { value: 'video', label: 'Asset Type: Video' }
+                            ]}
+                        />
                     </div>
 
                     <div className="flex items-center gap-2">

@@ -40,8 +40,8 @@ export function UpgradeModal({ scanId, onClose }: Props) {
             <h3 className="font-bold text-xl mb-3 text-white">Full Audit Report</h3>
             <ul className="text-xs text-slate-500 space-y-3 mb-8 flex-grow">
               <li className="flex items-center"><svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeWidth="3" /></svg>Full Reasoning & Logic</li>
-              <li className="flex items-center"><svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeWidth="3" /></svg>Legal Mitigation Suggestions</li>
-              <li className="flex items-center"><svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeWidth="3" /></svg>Certified Signature Log</li>
+              <li className="flex items-center"><svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeWidth="3" /></svg>Legal Mitigation Suggestions</li>
+              <li className="flex items-center"><svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeWidth="3" /></svg>Certified Signature Log</li>
             </ul>
             <div className="text-4xl font-black mb-8 text-white">$29<span className="text-sm text-slate-500 font-normal">.00</span></div>
             <button onClick={() => handlePurchase('Single')} className="w-full bg-white text-slate-900 font-bold py-4 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-all">Purchase Report</button>
