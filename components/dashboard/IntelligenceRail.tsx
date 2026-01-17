@@ -61,7 +61,10 @@ export function IntelligenceRail({ status, profile }: Props) {
                     <div className="relative z-10 flex justify-between items-start">
                         <div>
                             <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Composite Risk Score</div>
-                            <div className={`text-4xl font-black ${color}`}>{profile.composite_score}<span className="text-lg text-slate-500 font-medium">/100</span></div>
+                            <div className={`text-4xl font-black ${color}`}>
+                                {profile.composite_score ?? 0}
+                                <span className="text-lg text-slate-500 font-medium">/100</span>
+                            </div>
                         </div>
                         <div className={`px-3 py-1 rounded-full border ${borderColor} bg-slate-900/50 ${color} text-xs font-bold uppercase tracking-widest`}>
                             {profile.verdict}
