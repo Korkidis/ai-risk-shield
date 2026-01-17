@@ -7,30 +7,11 @@ html {
 
 
 @theme {
-  /* Colors - SaaS Noir System */
-  --color-deep-space: #020617;
-
-  --color-surface: rgba(15, 23, 42, 0.8);
-  --color-surface-glass: rgba(15, 23, 42, 0.6);
-
-  --color-brand: #4f46e5;
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-200: #c7d2fe;
-  --color-brand-300: #a5b4fc;
-  --color-brand-400: #818cf8;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand-800: #3730a3;
-  --color-brand-900: #312e81;
-
-  --color-risk-safe: #10b981;
-  --color-risk-medium: #f59e0b;
-  --color-risk-critical: #ef4444;
+  /* Colors - Risk Shield System maps to ./styles/design-tokens.css */
 
   /* Fonts */
-  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
 /* Custom Utilities from Reference */
@@ -60,6 +41,27 @@ html {
 
     100% {
       background-position: 200% 0;
+    }
+  }
+
+  /* Animations for Forensic Scanner */
+  @keyframes scanSmooth {
+    0% {
+      top: 0%;
+      opacity: 0;
+    }
+
+    5% {
+      opacity: 1;
+    }
+
+    95% {
+      opacity: 1;
+    }
+
+    100% {
+      top: 100%;
+      opacity: 0;
     }
   }
 }

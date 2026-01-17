@@ -1,38 +1,39 @@
 'use client'
 
 import Link from 'next/link'
+import { ShieldAlert } from 'lucide-react'
 
 export function Header() {
     return (
-        <nav className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-md sticky top-0 z-50">
+        <nav className="border-b border-rs-gray-200 bg-rs-white/80 backdrop-blur-md sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                <div className="flex items-center space-x-3 cursor-pointer" onClick={() => window.location.reload()}>
-                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                        </svg>
+                <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => window.location.reload()}>
+                    <div className="w-8 h-8 bg-rs-black rounded-[4px] flex items-center justify-center shadow-[var(--rs-shadow-sm)] transition-transform group-hover:scale-105">
+                        <ShieldAlert className="w-5 h-5 text-rs-white" strokeWidth={2.5} />
                     </div>
-                    <span className="font-bold tracking-tighter text-xl uppercase text-white">Risk Shield <span className="text-[10px] text-indigo-400 align-top ml-1">v2.0</span></span>
+                    <span className="font-bold tracking-tighter text-xl uppercase text-rs-black group-hover:text-rs-gray-700 transition-colors">
+                        Risk Shield <span className="text-[10px] text-rs-gray-500 align-top ml-1 font-mono">v2.0</span>
+                    </span>
                 </div>
 
                 {/* Center Navigation */}
                 <div className="hidden md:flex items-center space-x-8">
-                    <Link href="/#how-it-works" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
-                        How it Works
+                    <Link href="/#how-it-works" className="text-sm font-medium text-rs-gray-500 hover:text-rs-black transition-colors uppercase tracking-wide text-[11px]">
+                        Protocol
                     </Link>
-                    <Link href="/#pricing" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+                    <Link href="/#pricing" className="text-sm font-medium text-rs-gray-500 hover:text-rs-black transition-colors uppercase tracking-wide text-[11px]">
                         Pricing
                     </Link>
                 </div>
 
                 {/* Right Actions */}
                 <div className="flex items-center space-x-4">
-                    <Link href="/login" className="hidden md:block text-xs font-medium text-slate-400 hover:text-white uppercase tracking-widest transition-colors">
+                    <Link href="/login" className="hidden md:block text-[11px] font-bold text-rs-gray-500 hover:text-rs-black uppercase tracking-widest transition-colors">
                         Log In
                     </Link>
                     <button
                         onClick={() => window.location.reload()}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 px-5 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all transform hover:-translate-y-0.5"
+                        className="bg-rs-black hover:bg-rs-gray-800 text-rs-white shadow-[var(--rs-shadow-sm)] px-5 py-2 rounded-[4px] text-[10px] font-bold uppercase tracking-widest transition-all transform hover:-translate-y-0.5"
                     >
                         Start Scan
                     </button>

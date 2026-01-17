@@ -1,12 +1,14 @@
 'use client'
 
+import { RSButton } from "../rs/RSButton"
+
 export function SubscriptionComparison() {
     return (
-        <section id="pricing" className="py-24 border-t border-slate-800 bg-[#020617]">
+        <section id="pricing" className="py-24 border-t border-rs-gray-200 bg-rs-white">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Enterprise-Grade Protection</h2>
-                    <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+                    <h2 className="text-3xl md:text-5xl font-bold text-rs-black mb-6 tracking-tighter">Enterprise-Grade Protection</h2>
+                    <p className="text-rs-gray-600 max-w-2xl mx-auto text-lg font-medium">
                         Choose the level of forensic depth your organization requires.
                     </p>
                 </div>
@@ -24,133 +26,137 @@ export function SubscriptionComparison() {
                     </div>
 
                     {/* FREE TIER */}
-                    <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative flex flex-col">
-                        <div className="mb-6 text-center h-32">
-                            <h3 className="text-lg font-bold text-white mb-2">Free</h3>
-                            <div className="text-2xl font-bold text-slate-400">$0</div>
-                            <p className="text-slate-500 text-[10px] mt-2 uppercase tracking-widest">Public Anonymity</p>
-                        </div>
-                        <div className="space-y-4 mb-8 flex-grow">
-                            <FeatureCheck value="3 / mo" />
-                            <FeatureCheck value="1" />
-                            <FeatureCheck value="Teaser Only" />
-                            <FeatureCheck value={false} />
-                            <FeatureCheck value={false} />
-                            <FeatureCheck value={false} />
-                            <FeatureCheck value="Community" />
-                        </div>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="w-full py-3 rounded-xl border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors">
-                            Start Free
-                        </button>
-                    </div>
+                    <PricingCard
+                        title="Free"
+                        price="$0"
+                        priceSub=""
+                        description="Public Anonymity"
+                        action={<RSButton variant="secondary" fullWidth onClick={() => window.location.reload()}>Start Free</RSButton>}
+                    >
+                        <FeatureCheck value="3 / mo" />
+                        <FeatureCheck value="1" />
+                        <FeatureCheck value="Teaser Only" />
+                        <FeatureCheck value={false} />
+                        <FeatureCheck value={false} />
+                        <FeatureCheck value={false} />
+                        <FeatureCheck value="Community" />
+                    </PricingCard>
 
                     {/* INDIVIDUAL TIER */}
-                    <div className="bg-indigo-900/10 border border-indigo-500/30 rounded-3xl p-6 relative flex flex-col shadow-xl shadow-indigo-900/10">
-                        <div className="mb-6 text-center h-32">
-                            <h3 className="text-lg font-bold text-white mb-2">Individual</h3>
-                            <div className="text-2xl font-bold text-white">$49<span className="text-sm font-normal text-indigo-300">/mo</span></div>
-                            <p className="text-indigo-300 text-[10px] mt-2 uppercase tracking-widest">Creators & Freelancers</p>
-                        </div>
-                        <div className="space-y-4 mb-8 flex-grow">
-                            <FeatureCheck value="50 / mo" highlighted />
-                            <FeatureCheck value="1" />
-                            <FeatureCheck value="Full Report" highlighted />
-                            <FeatureCheck value={false} />
-                            <FeatureCheck value={false} />
-                            <FeatureCheck value={false} />
-                            <FeatureCheck value="Email" />
-                        </div>
-                        <button className="w-full py-3 rounded-xl bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-colors">
-                            Choose Individual
-                        </button>
-                    </div>
+                    <PricingCard
+                        title="Individual"
+                        price="$49"
+                        priceSub="/mo"
+                        description="Creators & Freelancers"
+                        isSafe
+                        action={<RSButton variant="primary" fullWidth>Choose Individual</RSButton>}
+                    >
+                        <FeatureCheck value="50 / mo" highlighted />
+                        <FeatureCheck value="1" />
+                        <FeatureCheck value="Full Report" highlighted />
+                        <FeatureCheck value={false} />
+                        <FeatureCheck value={false} />
+                        <FeatureCheck value={false} />
+                        <FeatureCheck value="Email" />
+                    </PricingCard>
 
                     {/* TEAM TIER */}
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-3xl p-6 relative flex flex-col">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-slate-900 px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest">
-                            Popular
-                        </div>
-                        <div className="mb-6 text-center h-32">
-                            <h3 className="text-lg font-bold text-white mb-2">Team</h3>
-                            <div className="text-2xl font-bold text-white">$199<span className="text-sm font-normal text-slate-400">/mo</span></div>
-                            <p className="text-slate-400 text-[10px] mt-2 uppercase tracking-widest">Brand + Legal Review</p>
-                        </div>
-                        <div className="space-y-4 mb-8 flex-grow">
-                            <FeatureCheck value="200 / mo" />
-                            <FeatureCheck value="5" />
-                            <FeatureCheck value="Full Report" />
-                            <FeatureCheck value="Included" />
-                            <FeatureCheck value={true} />
-                            <FeatureCheck value={true} />
-                            <FeatureCheck value="Priority" />
-                        </div>
-                        <button className="w-full py-3 rounded-xl border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors">
-                            Choose Team
-                        </button>
-                    </div>
+                    <PricingCard
+                        title="Team"
+                        price="$199"
+                        priceSub="/mo"
+                        description="Brand + Legal Review"
+                        popular
+                        action={<RSButton variant="secondary" fullWidth>Choose Team</RSButton>}
+                    >
+                        <FeatureCheck value="200 / mo" highlighted />
+                        <FeatureCheck value="5" />
+                        <FeatureCheck value="Full Report" highlighted />
+                        <FeatureCheck value="Included" />
+                        <FeatureCheck value={true} />
+                        <FeatureCheck value={true} />
+                        <FeatureCheck value="Priority" />
+                    </PricingCard>
 
                     {/* AGENCY TIER */}
-                    <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative flex flex-col">
-                        <div className="mb-6 text-center h-32">
-                            <h3 className="text-lg font-bold text-slate-400 mb-2">Agency</h3>
-                            <div className="text-2xl font-bold text-slate-400">$599<span className="text-sm font-normal text-slate-500">/mo</span></div>
-                            <p className="text-slate-500 text-[10px] mt-2 uppercase tracking-widest">High-Volume Client Workflows</p>
-                        </div>
-                        <div className="space-y-4 mb-8 flex-grow">
-                            <FeatureCheck value="1,000 / mo" />
-                            <FeatureCheck value="15" />
-                            <FeatureCheck value="Full Report" />
-                            <FeatureCheck value="Included" />
-                            <FeatureCheck value={true} />
-                            <FeatureCheck value={true} />
-                            <FeatureCheck value="Dedicated" />
-                        </div>
-                        <button className="w-full py-3 rounded-xl border border-white/10 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
-                            Contact Sales
-                        </button>
-                    </div>
+                    <PricingCard
+                        title="Agency"
+                        price="$599"
+                        priceSub="/mo"
+                        description="High-Volume Workflows"
+                        action={<RSButton variant="secondary" fullWidth>Contact Sales</RSButton>}
+                    >
+                        <FeatureCheck value="1,000 / mo" />
+                        <FeatureCheck value="15" />
+                        <FeatureCheck value="Full Report" />
+                        <FeatureCheck value="Included" />
+                        <FeatureCheck value={true} />
+                        <FeatureCheck value={true} />
+                        <FeatureCheck value="Dedicated" />
+                    </PricingCard>
                 </div>
 
                 {/* ENTERPRISE ROW */}
-                <div className="max-w-4xl mx-auto rounded-3xl bg-gradient-to-r from-slate-900 to-slate-950 border border-slate-800 p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-900/10 rounded-full blur-[80px] group-hover:bg-indigo-900/20 transition-colors duration-700"></div>
-
-                    <div className="relative z-10 text-center md:text-left">
-                        <h3 className="text-2xl font-bold text-white mb-2">Need Enterprise Scale?</h3>
-                        <p className="text-slate-400 max-w-lg">
+                <div className="max-w-4xl mx-auto rounded-[4px] bg-rs-gray-900 text-rs-white border border-rs-black p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-[var(--rs-shadow-md)]">
+                    <div className="text-center md:text-left">
+                        <h3 className="text-2xl font-bold mb-2 tracking-tight">Need Enterprise Scale?</h3>
+                        <p className="text-rs-gray-400 max-w-lg">
                             Custom implementations for large organizations. On-premise deployment, unlimited seats, custom API rate limits, and dedicated forensic analyst support.
                         </p>
                     </div>
 
-                    <button className="relative z-10 whitespace-nowrap px-8 py-4 bg-white text-slate-950 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors">
+                    <RSButton variant="primary" className="whitespace-nowrap bg-white text-rs-black hover:bg-rs-gray-200">
                         Contact for Rates
-                    </button>
+                    </RSButton>
                 </div>
             </div>
         </section>
     )
 }
 
+function PricingCard({ title, price, priceSub, description, children, action, popular, isSafe }: any) {
+    return (
+        <div className={`
+            border rounded-[4px] p-6 relative flex flex-col transition-all duration-300
+            ${popular ? 'bg-rs-gray-100 border-rs-black shadow-[var(--rs-shadow-md)] scale-105 z-10' : 'bg-rs-white border-rs-gray-200 hover:border-rs-gray-300'}
+            ${isSafe ? 'border-rs-safe/30 bg-green-50/30' : ''}
+        `}>
+            {popular && (
+                <div className="absolute top-0 right-0 bg-rs-black text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
+                    Popular
+                </div>
+            )}
+            <div className="mb-6 text-center h-32 flex flex-col justify-end pb-4 border-b border-rs-gray-200/50">
+                <h3 className="text-lg font-bold text-rs-black mb-1">{title}</h3>
+                <div className="text-3xl font-bold text-rs-black tracking-tight">{price}<span className="text-sm font-normal text-rs-gray-500">{priceSub}</span></div>
+                <p className="text-rs-gray-500 text-[10px] mt-2 uppercase tracking-widest">{description}</p>
+            </div>
+            <div className="space-y-4 mb-8 flex-grow">
+                {children}
+            </div>
+            {action}
+        </div>
+    )
+}
+
 function FeatureLabel({ label }: { label: string }) {
-    return <div className="h-10 flex items-center text-sm font-medium text-slate-400">{label}</div>
+    return <div className="h-10 flex items-center text-sm font-bold text-rs-gray-500 uppercase tracking-wide text-[10px]">{label}</div>
 }
 
 function FeatureCheck({ value, highlighted = false }: { value: string | boolean, highlighted?: boolean }) {
     return (
-        <div className="h-10 flex items-center justify-center md:justify-center border-b border-white/5 last:border-0 md:border-0">
-            <span className="md:hidden text-xs text-slate-500 mr-auto">Feature:</span>
+        <div className="h-10 flex items-center justify-center md:justify-center border-b border-rs-gray-100 last:border-0 md:border-0">
+            <span className="md:hidden text-xs text-rs-gray-400 mr-auto">Feature:</span>
             {typeof value === 'boolean' ? (
                 value ? (
-                    <svg className={`w-5 h-5 ${highlighted ? 'text-indigo-400' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-5 h-5 ${highlighted ? 'text-rs-black' : 'text-rs-safe'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                 ) : (
-                    <span className="text-slate-700">-</span>
+                    <span className="text-rs-gray-300">-</span>
                 )
             ) : (
-                <span className={`text-sm font-bold ${highlighted ? 'text-white' : 'text-slate-300'}`}>{value}</span>
+                <span className={`text-sm font-bold ${highlighted ? 'text-rs-black' : 'text-rs-gray-600'}`}>{value}</span>
             )}
         </div>
     )

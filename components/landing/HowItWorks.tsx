@@ -1,48 +1,51 @@
 'use client'
 
 import { Scan, BrainCircuit, ShieldCheck } from 'lucide-react'
+import { RSCard } from '../rs/RSCard'
 
 export function HowItWorks() {
     return (
-        <section id="how-it-works" className="py-24 bg-[#020617] relative overflow-hidden">
-            {/* Background Gradients */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-900/10 rounded-full blur-[100px]"></div>
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-900/10 rounded-full blur-[100px]"></div>
-            </div>
+        <section id="how-it-works" className="py-24 bg-rs-gray-50 border-t border-rs-gray-200 relative overflow-hidden">
+            {/* Background Texture */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none text-rs-black"
+                style={{
+                    backgroundImage: `linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)`,
+                    backgroundSize: '40px 40px'
+                }}
+            />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
                 <div className="text-center mb-20">
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                        How It <span className="text-indigo-500">Works</span>
+                    <h2 className="text-3xl md:text-5xl font-bold text-rs-black mb-6 tracking-tighter">
+                        Forensic <span className="text-rs-gray-500">Protocol</span>
                     </h2>
-                    <p className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
-                        Upload your image or video. Get a comprehensive risk assessment in seconds. It's that simple.
+                    <p className="text-rs-gray-600 max-w-2xl mx-auto text-lg leading-relaxed font-medium">
+                        Standardized auditing process for visual asset verification.
                     </p>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-8">
                     {/* Step 1 */}
-                    <Card
-                        icon={<Scan className="w-8 h-8 text-indigo-400" />}
-                        title="Upload Your Asset"
-                        description="Drop an image or video. We scan it instantly—checking for copyright risks, AI-generated content, and brand safety issues."
+                    <StepCard
+                        icon={<Scan className="w-6 h-6 text-rs-black" />}
+                        title="Upload Asset"
+                        description="Input image or video file. System scans instantly for copyright risks, AI signatures, and brand safety violations."
                         step="01"
                     />
 
                     {/* Step 2 */}
-                    <Card
-                        icon={<BrainCircuit className="w-8 h-8 text-indigo-400" />}
-                        title="AI Forensic Analysis"
-                        description="Our engine analyzes visual patterns, metadata, and content credentials to detect manipulation, provenance issues, and potential legal exposure."
+                    <StepCard
+                        icon={<BrainCircuit className="w-6 h-6 text-rs-black" />}
+                        title="Forensic Analysis"
+                        description="Engine analyzes visual patterns, metadata, and C2PA credentials to detect manipulation and provenance gaps."
                         step="02"
                     />
 
                     {/* Step 3 */}
-                    <Card
-                        icon={<ShieldCheck className="w-8 h-8 text-indigo-400" />}
-                        title="Get Your Risk Score"
-                        description="Receive a clear risk rating with detailed insights on IP exposure, brand safety, and authenticity—so you can make confident decisions."
+                    <StepCard
+                        icon={<ShieldCheck className="w-6 h-6 text-rs-black" />}
+                        title="Risk Verdict"
+                        description="Receive a definitive risk score with detailed insights on exposure, allowing for confident compliance decisions."
                         step="03"
                     />
                 </div>
@@ -51,24 +54,25 @@ export function HowItWorks() {
     )
 }
 
-function Card({ icon, title, description, step }: { icon: React.ReactNode, title: string, description: string, step: string }) {
+function StepCard({ icon, title, description, step }: { icon: React.ReactNode, title: string, description: string, step: string }) {
     return (
-        <div className="group relative bg-slate-900/30 border border-slate-800 p-8 rounded-3xl hover:bg-slate-900/50 hover:border-indigo-500/30 transition-all duration-500 hover:-translate-y-1">
-            <div className="absolute top-6 right-8 text-4xl font-bold text-slate-800 group-hover:text-indigo-900/50 transition-colors duration-500 select-none">
-                {step}
+        <RSCard variant="default" className="h-full hover:-translate-y-1 transition-transform duration-300">
+            <div className="flex flex-col h-full">
+                <div className="flex justify-between items-start mb-6">
+                    <div className="p-3 bg-rs-gray-100 rounded-[4px] border border-rs-gray-200">
+                        {icon}
+                    </div>
+                    <span className="font-mono text-2xl font-bold text-rs-gray-200 select-none">{step}</span>
+                </div>
+
+                <h3 className="text-xl font-bold text-rs-black mb-3 tracking-tight">
+                    {title}
+                </h3>
+
+                <p className="text-rs-gray-600 leading-relaxed text-sm">
+                    {description}
+                </p>
             </div>
-
-            <div className="mb-6 p-4 bg-slate-950/50 rounded-2xl w-fit border border-slate-800 group-hover:border-indigo-500/30 group-hover:shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)] transition-all duration-500">
-                {icon}
-            </div>
-
-            <h3 className="text-xl font-bold text-white mb-4 group-hover:text-indigo-200 transition-colors">
-                {title}
-            </h3>
-
-            <p className="text-slate-400 leading-relaxed text-sm group-hover:text-slate-300 transition-colors">
-                {description}
-            </p>
-        </div>
+        </RSCard>
     )
 }

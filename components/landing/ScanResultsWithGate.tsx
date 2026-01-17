@@ -17,9 +17,9 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
     const circumference = 502.6
     const offset = circumference - (riskProfile.composite_score / 100) * circumference
 
-    // Decide Color
-    let color = "#10b981"
-    if (riskProfile.composite_score > 65) color = "#ef4444"
+    // Decide Color - using RS tokens
+    let color = "var(--rs-safe)"
+    if (riskProfile.composite_score > 65) color = "var(--rs-signal)"
     else if (riskProfile.composite_score > 35) color = "#f59e0b"
 
     return (
@@ -28,13 +28,12 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
 
             <div className="grid lg:grid-cols-2 gap-8 items-start">
                 {/* Left: Scores */}
-                <div className="space-y-6">
-                    <div className="glass p-10 rounded-[3rem] text-center relative overflow-hidden">
-                        <div className="shimmer absolute inset-0 pointer-events-none"></div>
+                <div className="space-y-4">
+                    <div className="bg-rs-white p-10 rounded-lg border border-[var(--rs-gray-200)] text-center relative overflow-hidden" style={{ boxShadow: 'var(--rs-shadow-bevel)' }}>
                         <div className="relative z-10">
                             <div className="relative inline-flex items-center justify-center mb-6">
                                 <svg className="w-48 h-48">
-                                    <circle className="text-slate-800" strokeWidth="10" stroke="currentColor" fill="transparent" r="80" cx="96" cy="96" />
+                                    <circle stroke="var(--rs-gray-200)" strokeWidth="10" fill="transparent" r="80" cx="96" cy="96" />
                                     <circle
                                         key={mounted ? 'mounted' : 'unmounted'}
                                         className="gauge-ring"
@@ -48,12 +47,12 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                     />
                                 </svg>
                                 <div className="absolute flex flex-col items-center">
-                                    <span className="text-6xl font-bold tracking-tighter text-white">{riskProfile.composite_score}</span>
-                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Risk Index</span>
+                                    <span className="text-6xl font-bold tracking-tighter" style={{ color: 'var(--rs-black)' }}>{riskProfile.composite_score}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--rs-gray-500)' }}>Risk Index</span>
                                 </div>
                             </div>
                             <h3 className="text-2xl font-black mb-2 uppercase tracking-tight" style={{ color }}>{riskProfile.verdict}</h3>
-                            <p className="text-sm text-slate-400 leading-relaxed font-medium">{riskProfile.ip_report.teaser}</p>
+                            <p className="text-sm leading-relaxed font-medium" style={{ color: 'var(--rs-gray-600)' }}>{riskProfile.ip_report.teaser}</p>
                         </div>
                     </div>
 
@@ -65,53 +64,64 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                 </div>
 
                 {/* Right: Forensic Log */}
-                <div className="glass p-10 rounded-[3rem] h-full flex flex-col justify-between border-indigo-500/20 shadow-2xl shadow-indigo-500/5">
+                <div className="bg-rs-white p-10 rounded-lg border border-[var(--rs-gray-200)] h-full flex flex-col justify-between" style={{ boxShadow: 'var(--rs-shadow-bevel)' }}>
                     <div>
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold uppercase tracking-tight text-white">Forensic Log</h3>
+                            <h3 className="text-lg font-bold uppercase tracking-tight" style={{ color: 'var(--rs-black)' }}>Analysis Complete.</h3>
                             <div className="flex items-center space-x-2">
-                                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                                <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Locked</span>
+                                <span className="w-2 h-2 rounded-full bg-rs-signal animate-pulse"></span>
+                                <span className="text-[10px] text-rs-signal font-bold uppercase tracking-widest">Locked</span>
                             </div>
                         </div>
 
-                        {/* Locked Reasoning - Simple placeholder, no content leak */}
-                        <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                            <span className="block mb-2 font-bold text-slate-300">Analysis Complete.</span>
-                            The Multi-Persona Engine has flagged <span className="text-white font-bold">{riskProfile.verdict}</span> based on weighted risk indicators across IP, Safety, and Provenance vectors.
+                        {/* Analysis Summary */}
+                        <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--rs-gray-600)' }}>
+                            The Multi-Persona Engine has flagged <span className="font-bold" style={{ color: 'var(--rs-black)' }}>{riskProfile.verdict}</span> based on weighted risk indicators across IP, Safety, and Provenance vectors.
                         </p>
 
                         <div className="space-y-3 mb-6">
-                            <div className="flex items-center space-x-3">
-                                <span className="text-[9px] uppercase tracking-widest text-slate-600 w-24">IP Specialist</span>
-                                <div className="flex-1 h-2 bg-slate-800 rounded"></div>
-                                <span className="w-2 h-2 rounded-full bg-slate-700"></span>
+                            <div className="flex items-center justify-between py-2 border-b border-[var(--rs-gray-100)]">
+                                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: 'var(--rs-gray-500)' }}>IP Specialist</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-20 h-1.5 rounded-full" style={{ background: 'var(--rs-gray-200)' }}></div>
+                                    <span className="w-2 h-2 rounded-full" style={{ background: 'var(--rs-gray-400)' }}></span>
+                                </div>
                             </div>
-                            <div className="flex items-center space-x-3">
-                                <span className="text-[9px] uppercase tracking-widest text-slate-600 w-24">Safety Analyst</span>
-                                <div className="flex-1 h-2 bg-slate-800 rounded"></div>
-                                <span className="w-2 h-2 rounded-full bg-slate-700"></span>
+                            <div className="flex items-center justify-between py-2 border-b border-[var(--rs-gray-100)]">
+                                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: 'var(--rs-gray-500)' }}>Safety Analyst</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-20 h-1.5 rounded-full" style={{ background: 'var(--rs-gray-200)' }}></div>
+                                    <span className="w-2 h-2 rounded-full" style={{ background: 'var(--rs-gray-400)' }}></span>
+                                </div>
                             </div>
-                            <div className="flex items-center space-x-3">
-                                <span className="text-[9px] uppercase tracking-widest text-slate-600 w-24">Provenance Eng.</span>
-                                <div className="flex-1 h-2 bg-slate-800 rounded"></div>
-                                <span className="w-2 h-2 rounded-full bg-slate-700"></span>
+                            <div className="flex items-center justify-between py-2 border-b border-[var(--rs-gray-100)]">
+                                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: 'var(--rs-gray-500)' }}>Provenance Eng.</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-20 h-1.5 rounded-full" style={{ background: 'var(--rs-gray-200)' }}></div>
+                                    <span className="w-2 h-2 rounded-full" style={{ background: 'var(--rs-gray-400)' }}></span>
+                                </div>
                             </div>
                         </div>
 
-                        <p className="text-indigo-400 text-xs font-semibold italic mb-6">
+                        <p className="text-rs-signal text-xs font-semibold italic mb-6">
                             🔒 Detailed reasoning + Chief Officer Mitigation Strategy available in Sample Report
                         </p>
                     </div>
 
                     <div className="space-y-4">
-                        <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Company Email to Receive Sample Report</label>
+                        <label className="block text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: 'var(--rs-gray-500)' }}>Company Email to Receive Sample Report</label>
                         <div className="flex flex-col space-y-3">
                             <input
                                 id="email-input"
                                 type="email"
                                 placeholder="email@company.com"
-                                className="bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all w-full text-white"
+                                className="rounded-[4px] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[var(--rs-info)] transition-all w-full"
+                                style={{
+                                    background: 'var(--rs-white)',
+                                    border: '1px solid var(--rs-gray-300)',
+                                    color: 'var(--rs-black)',
+                                    boxShadow: 'var(--rs-shadow-track)'
+                                }}
                             />
                             <button
                                 onClick={async () => {
@@ -461,12 +471,17 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                     doc.save("Risk_Shield_Forensic_Report.pdf");
                                     setShowUpgrade(true);
                                 }}
-                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-indigo-500/20 transition-all"
+                                className="w-full font-bold py-4 rounded-[4px] text-xs uppercase tracking-widest transition-all hover:opacity-90 active:scale-[0.99]"
+                                style={{
+                                    background: 'var(--rs-black)',
+                                    color: 'var(--rs-white)',
+                                    boxShadow: 'var(--rs-shadow-bevel-heavy)'
+                                }}
                             >
                                 Download Sample Report
                             </button>
                         </div>
-                        <p className="text-[9px] text-center text-slate-500 uppercase tracking-widest">Confidential technical log delivery</p>
+                        <p className="text-[9px] text-center uppercase tracking-widest" style={{ color: 'var(--rs-gray-500)' }}>Confidential technical log delivery</p>
                     </div>
                 </div>
             </div>
@@ -475,15 +490,23 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
 }
 
 function ScoreRow({ label, value }: { label: string, value: number }) {
-    const getColor = (v: number) => {
-        if (v >= 70) return 'text-red-400'
-        if (v >= 40) return 'text-amber-400'
-        return 'text-emerald-400'
+    const getColorStyle = (v: number) => {
+        if (v >= 70) return { color: 'var(--rs-signal)' }
+        if (v >= 40) return { color: '#f59e0b' } // amber
+        return { color: 'var(--rs-safe)' }
     }
     return (
-        <div className="glass p-5 rounded-2xl flex justify-between items-center group cursor-help" title={`${label} risk indicator based on forensic analysis`}>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-indigo-400 transition-colors">{label}</span>
-            <span className={`text-lg font-bold ${getColor(value)}`}>{value}%</span>
+        <div
+            className="bg-rs-white p-4 rounded-[4px] flex justify-between items-center group cursor-help transition-all hover:shadow-md"
+            style={{
+                border: '1px solid var(--rs-gray-200)',
+                boxShadow: 'var(--rs-shadow-bevel)'
+            }}
+            title={`${label} risk indicator based on forensic analysis`}
+        >
+            <span className="text-[10px] font-bold uppercase tracking-widest transition-colors" style={{ color: 'var(--rs-gray-500)' }}>{label}</span>
+            <span className="text-lg font-bold" style={getColorStyle(value)}>{value}%</span>
         </div>
     )
 }
+

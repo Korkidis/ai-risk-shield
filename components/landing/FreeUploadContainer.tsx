@@ -3,6 +3,8 @@
 import { useState } from 'react'
 
 import { RiskProfile } from '@/lib/gemini'
+import { RSUploadZone } from '../rs/RSUploadZone'
+import { RSProcessingPanel } from '../rs/RSProcessingPanel'
 
 type Props = {
   onUploadStart: () => void
@@ -10,43 +12,63 @@ type Props = {
 }
 
 export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) {
-  const [preview, setPreview] = useState<string | null>(null)
-  const [file, setFile] = useState<File | null>(null)
+  // State: 'ready' | 'processing'
+  // Note: 'results' state is handled by the parent page component switching views
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement> | { target: { files: FileList } }) => {
-    const selected = e.target.files?.[0]
-    if (selected) {
-      setFile(selected)
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        setPreview(ev.target?.result as string)
-      }
-      reader.readAsDataURL(selected)
-    }
-  }
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [currentFile, setCurrentFile] = useState<File | null>(null)
 
-  const handleInitiate = async () => {
-    if (!file) return
-    onUploadStart()
+  // Processing Simulation State
+  const [progress, setProgress] = useState(0)
+  const [statusMessage, setStatusMessage] = useState("Initializing forensic engine...")
+
+  const handleInitiateScan = async (file: File) => {
+    setCurrentFile(file)
+    setIsProcessing(true)
+    onUploadStart() // Notify parent to switch layout mode if needed
 
     try {
       const formData = new FormData()
       formData.append('file', file)
 
-      // Use anonymous upload endpoint
+      // Start Simulation Interval
+      let p = 0
+      const steps = [
+        "Verifying digital signature...",
+        "Analyzing visual spectrum...",
+        "Cross-referencing IP databases...",
+        "Checking C2PA provenance...",
+        "Calculating risk probability...",
+        "Generating forensic report..."
+      ]
+
+      const interval = setInterval(() => {
+        p += 0.5 // Slower, more deliberate for "wow" factor
+        if (p > 90) p = 90 // Cap until real completion
+
+        setProgress(p)
+        setStatusMessage(steps[Math.floor((p / 100) * steps.length)] || "Finalizing analysis...")
+      }, 100)
+
+      // Store interval for cleanup
+      const cleanupSimulation = () => clearInterval(interval)
+
+
+      // 1. Upload to API
       const uploadRes = await fetch('/api/scans/anonymous-upload', {
         method: 'POST',
         body: formData
       })
 
       if (!uploadRes.ok) {
+        cleanupSimulation()
         const errorData = await uploadRes.json()
         throw new Error(errorData.error || 'Upload failed')
       }
 
       const { scanId } = await uploadRes.json()
 
-      // Poll for scan completion
+      // 2. Poll for scan completion
       let attempts = 0
       const maxAttempts = 60 // 60 seconds max wait
 
@@ -55,12 +77,17 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
 
         const statusRes = await fetch(`/api/scans/${scanId}/status`)
         if (!statusRes.ok) {
+          cleanupSimulation()
           throw new Error('Failed to check scan status')
         }
 
         const scanStatus = await statusRes.json()
 
         if (scanStatus.status === 'complete') {
+          cleanupSimulation()
+          setProgress(100)
+          setStatusMessage("Analysis complete. Compiling dossier.")
+
           // Construct risk profile from scan status
           const riskProfile: RiskProfile = {
             composite_score: scanStatus.composite_score || 0,
@@ -88,15 +115,21 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
             chief_officer_strategy: 'Free scan completed. Upgrade for full forensic analysis.'
           }
 
-          onUploadComplete(riskProfile)
+          // Small delay to show 100% completion before switching
+          setTimeout(() => {
+            onUploadComplete(riskProfile)
+          }, 1500) // Longer delay to admire the 100% state
+
           return
         } else if (scanStatus.status === 'failed') {
+          cleanupSimulation()
           throw new Error('Analysis failed')
         }
 
         attempts++
       }
 
+      cleanupSimulation()
       throw new Error('Analysis timed out. Please try again.')
 
     } catch (err: any) {
@@ -109,90 +142,62 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       let errorMessage = 'Analysis failed. Please try again.'
 
       if (err.message.includes('Scan limit reached')) {
-        errorMessage = 'You have reached the limit of 3 free scans per month. Please upgrade for unlimited scans.'
+        errorMessage = 'Limit reached: 3 free scans per month.'
       } else if (err.message.includes('Upload failed')) {
-        errorMessage = 'File upload failed. Please check your connection and try again.'
+        errorMessage = 'Upload connection failed.'
       } else if (err.message.includes('Invalid file type')) {
-        errorMessage = 'Invalid file type. Please upload an image (JPEG, PNG, WebP) or video (MP4).'
-      } else if (err.message.includes('timed out')) {
-        errorMessage = 'Analysis is taking longer than expected. Please try again.'
+        errorMessage = 'Invalid format use JPG, PNG, or MP4.'
       }
 
       alert(errorMessage)
-      setFile(null)
-      setPreview(null)
-      window.location.reload()
+      setIsProcessing(false)
+      setCurrentFile(null)
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto text-center space-y-12 py-10">
+    <div className="max-w-4xl mx-auto space-y-16 py-12">
 
-      <div className="space-y-4">
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-none text-white">AI Risk Validation.</h1>
-        <p className="text-slate-400 text-lg max-w-xl mx-auto">Forensic auditing for IP, Brand Safety, and Content Provenance.</p>
+      {/* Hero Text - Fade out on processing */}
+      <div className={`text-center space-y-6 transition-all duration-500 ${isProcessing ? 'opacity-50 blur-sm scale-95' : 'opacity-100'}`}>
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-none text-rs-black">
+          AI Risk <span className="text-rs-gray-400">Validation</span>
+        </h1>
+        <p className="text-rs-gray-600 text-lg max-w-xl mx-auto font-medium">
+          Forensic auditing for IP, Brand Safety, and Content Provenance.
+        </p>
       </div>
 
-      {!preview && (
-        <>
-          <div className="relative group cursor-pointer max-w-2xl mx-auto">
-            {/* Glow Effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-
-            {/* Card Content */}
-            <div
-              className="relative glass rounded-[3rem] p-16 border-2 border-dashed border-slate-700 group-hover:border-indigo-500/50 transition-all text-center flex flex-col items-center justify-center min-h-[320px]"
-              onClick={() => document.getElementById('hidden-file-input')?.click()}
-            >
-              {/* Icon Wrapper - Strict Size */}
-              <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-black/50">
-                <svg className="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                </svg>
-              </div>
-
-              <h2 className="text-2xl font-bold mb-2 text-white">Upload Asset</h2>
-              <p className="text-slate-500 text-sm">Image or Video (MP4) Supported</p>
-            </div>
-
-            <input
-              id="hidden-file-input"
-              type="file"
-              className="hidden"
-              accept="image/*,video/mp4"
-              onChange={handleFileSelect}
+      {/* INTERACTIVE ZONE */}
+      <div className="w-full max-w-2xl mx-auto">
+        {!isProcessing ? (
+          <RSUploadZone
+            onFileSelect={handleInitiateScan}
+            maxSizeMB={50}
+            className="bg-rs-white shadow-[var(--rs-shadow-sm)]"
+          />
+        ) : (
+          <div className="animate-in zoom-in-95 duration-700 ease-out">
+            <RSProcessingPanel
+              filename={currentFile?.name || "unknown_asset"}
+              progress={progress}
+              statusMessage={statusMessage}
+              imageSrc={currentFile ? URL.createObjectURL(currentFile) : null}
             />
           </div>
+        )}
+      </div>
 
-          {/* Usage Info & Disclaimer */}
-          <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-            <div className="flex flex-col space-y-1 text-sm text-slate-400 font-medium tracking-wide">
-              <p>Free: 3 scans per month</p>
-              <p>Files processed securely, auto-deleted</p>
-            </div>
-            <p className="text-[10px] text-slate-600 uppercase tracking-widest max-w-xs mx-auto pt-4 opacity-60 hover:opacity-100 transition-opacity">
-              Disclaimer: Risk Shield is a diagnostic tool. Not legal advice.
-            </p>
+      {/* Footer Info */}
+      {!isProcessing && (
+        <div className="flex flex-col items-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+          <div className="flex items-center gap-6 text-xs font-mono text-rs-gray-400 uppercase tracking-widest">
+            <span>Free: 3 scans/mo</span>
+            <span>•</span>
+            <span>Secure Processing</span>
+            <span>•</span>
+            <span>Auto-Deletion</span>
           </div>
-        </>
-      )}
-
-      {/* Preview View */}
-      {preview && (
-        <div className="max-w-md mx-auto animate-in fade-in zoom-in duration-300">
-          <div className="rounded-3xl border border-slate-700 shadow-2xl overflow-hidden mb-8 aspect-square bg-slate-900 flex items-center justify-center">
-            {file?.type.startsWith('video') ? (
-              <video src={preview} className="w-full h-full object-cover" controls />
-            ) : (
-              <img src={preview} className="w-full h-full object-cover" alt="Preview" />
-            )}
-          </div>
-          <button
-            onClick={handleInitiate}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-5 rounded-2xl transition-all shadow-xl shadow-indigo-500/20 uppercase tracking-widest text-sm"
-          >
-            Initiate Forensic Audit
-          </button>
         </div>
       )}
     </div>
