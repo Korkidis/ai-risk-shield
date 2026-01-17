@@ -29,8 +29,15 @@ export function UpgradeButton({ scanId }: { scanId: string }) {
             }
 
             const stripe = await stripePromise
-            if (stripe) {
-                await stripe.redirectToCheckout({ sessionId })
+            if (stripe && sessionId) {
+                // Modern Stripe API: redirect to checkout URL
+                // Type assertion needed as redirectToCheckout exists but may not be in latest types
+                const { error: stripeError } = await (stripe as any).redirectToCheckout({ sessionId })
+                if (stripeError) {
+                    console.error('Stripe redirect error:', stripeError)
+                    alert('Failed to redirect to checkout')
+                    setLoading(false)
+                }
             }
         } catch (err) {
             console.error('Checkout failed', err)

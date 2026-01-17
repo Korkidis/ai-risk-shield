@@ -1,7 +1,7 @@
 'use client'
 
 import { DashboardUpload } from './DashboardUpload'
-import { RefreshCw, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 type Props = {
     file: File | null

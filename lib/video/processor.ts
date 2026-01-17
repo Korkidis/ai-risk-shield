@@ -20,7 +20,6 @@ export async function extractFrames(videoBuffer: Buffer, limit = 10): Promise<Fr
     const tempDir = os.tmpdir()
     const runId = uuidv4()
     const videoPath = path.join(tempDir, `${runId}.mp4`)
-    const outputPattern = path.join(tempDir, `${runId}_frame_%d.jpg`)
 
     // 1. Write video to temp file
     await fs.writeFile(videoPath, videoBuffer)

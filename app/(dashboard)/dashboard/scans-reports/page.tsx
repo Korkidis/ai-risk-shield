@@ -3,15 +3,10 @@
 import { useState, useEffect } from 'react'
 import {
     Search,
-    ArrowUpDown,
-    X,
     Trash2,
     Share2,
     Download,
     Loader2,
-    FileText,
-    Film,
-    Tag,
     SortAsc,
     Grid,
     Plus,

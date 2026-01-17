@@ -8,12 +8,13 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getCurrentUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+        const params = await context.params
         const tenantId = await getTenantId()
         const supabase = await createClient()
         const body = await req.json()
@@ -52,12 +53,13 @@ export async function PATCH(
  */
 export async function DELETE(
     _req: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getCurrentUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+        const params = await context.params
         const tenantId = await getTenantId()
         const supabase = await createClient()
 

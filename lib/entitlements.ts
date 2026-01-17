@@ -23,7 +23,7 @@ export const Entitlements = {
     /**
      * Can the user view the FULL report (sensitive data, full findings)?
      */
-    canViewFullReport: (user: UserContext | null, scan: ScanContext, anonSessionId?: string) => {
+    canViewFullReport: (user: UserContext | null, scan: ScanContext, _anonSessionId?: string) => {
         // 1. One-time purchased scan (Anonymous or Auth)
         if (scan.purchased && scan.purchase_type === 'one_time') {
             // If user purchased it, or if it's the same anonymous session that bought it (cookie persistence)

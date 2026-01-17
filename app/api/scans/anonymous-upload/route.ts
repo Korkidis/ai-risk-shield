@@ -97,8 +97,8 @@ export async function POST(request: Request) {
     // Create scan record
     const scanData: Partial<ExtendedScan> = {
       session_id: sessionId,
-      tenant_id: null,
-      analyzed_by: null,
+      tenant_id: null as any, // Explicitly null for anonymous scans
+      analyzed_by: null as any, // Explicitly null for anonymous scans
       asset_id: (asset as ExtendedAsset).id,
       is_video: fileType === 'video',
       status: 'processing',

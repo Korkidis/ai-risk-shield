@@ -19,7 +19,7 @@ export type C2PAResult = {
     claims: any[]
 }
 
-export async function verifyC2PA(fileBuffer: Buffer, mimeType: string): Promise<C2PAResult> {
+export async function verifyC2PA(_fileBuffer?: Buffer, _mimeType?: string): Promise<C2PAResult> {
     try {
         // Mock implementation for MVP stability (native modules in Next.js Server Components are tricky)
         // To enable real C2PA:

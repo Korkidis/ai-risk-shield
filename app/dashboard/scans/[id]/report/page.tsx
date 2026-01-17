@@ -72,7 +72,7 @@ export default async function ReportPage(props: { params: Promise<{ id: string }
                 asset={asset}
                 findings={findings}
                 tenantName={(userContext as any)?.tenants?.name || 'Anonymous Client'}
-                userName={userContext?.email || 'N/A'}
+                userName={(userContext as any)?.email || 'N/A'}
             />
         </div>
     )

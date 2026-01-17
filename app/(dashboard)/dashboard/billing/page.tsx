@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CreditCard, Zap, TrendingUp, HardDrive, Calendar, ExternalLink } from 'lucide-react'
+import { CreditCard, Zap, TrendingUp, Calendar, ExternalLink } from 'lucide-react'
 
 export default function BillingPage() {
     const [showManageModal, setShowManageModal] = useState(false)

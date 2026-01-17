@@ -119,13 +119,13 @@ export async function recordAnonymousScan() {
         newTimestamps = [...validOldTimestamps, now]
     }
 
-    const { error: upsertError } = await supabase
-        .from('ips' as any) // Cast to any because types aren't generated
+    const { error: upsertError } = await (supabase
+        .from('ips') as any) // Cast to any because ips table types aren't generated
         .upsert({
             ip_hash: ipHash,
             scan_timestamps: newTimestamps,
             last_scan_at: now
-        })
+        }, { onConflict: 'ip_hash' })
 
     if (upsertError) {
         console.error('Failed to record IP scan:', upsertError)
