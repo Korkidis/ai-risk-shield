@@ -1,0 +1,49 @@
+@layer base {
+  :root {
+    /* --- Core Palette (Dieter Rams x Saul Bass DNA) --- */
+    --rs-black: #1a1a1a;
+    --rs-white: #faf9f7;
+    --rs-signal: #d62828;      /* Risk / Alert */
+    --rs-safe: #2d6a4f;        /* Resolved / Safe */
+    
+    /* Warm Grays for structural elements */
+    --rs-gray-900: #262624;
+    --rs-gray-800: #3d3d3a;
+    --rs-gray-700: #575752;
+    --rs-gray-600: #73736c;
+    --rs-gray-500: #919189;
+    --rs-gray-400: #b0b0a8;
+    --rs-gray-300: #cfcfc8;
+    --rs-gray-200: #e5e5df;
+    --rs-gray-100: #f2f2ed;
+
+    /* --- Spacing System (4px Base Unit) --- */
+    --rs-space-xs: 4px;
+    --rs-space-sm: 8px;
+    --rs-space-md: 16px;
+    --rs-space-lg: 24px;
+    --rs-space-xl: 32px;
+    --rs-space-2xl: 48px;
+    --rs-space-3xl: 64px;
+    --rs-space-4xl: 96px;
+
+    /* --- Typography (Authoritative Sans) --- */
+    --rs-font-display: "Inter", -apple-system, sans-serif;
+    --rs-font-body: "Inter", -apple-system, sans-serif;
+    
+    /* Letter spacing for authority (tight) */
+    --rs-tracking-tight: -0.02em;
+    --rs-tracking-tighter: -0.05em;
+
+    /* --- Geometry --- */
+    --rs-radius-sharp: 0px;
+    --rs-radius-subtle: 4px;
+    --rs-border-thin: 1px;
+    --rs-border-heavy: 2px;
+
+    /* --- Motion --- */
+    --rs-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --rs-duration-fast: 150ms;
+    --rs-duration-normal: 300ms;
+  }
+}
