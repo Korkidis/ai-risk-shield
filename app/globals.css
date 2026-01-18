@@ -1,13 +1,156 @@
 @import "tailwindcss";
-@import "../styles/design-tokens.css";
+
+/* Design Tokens (Inlined to fix build error) */
+@layer base {
+  :root {
+    /* INDUSTRIAL FINISH — Mid-Century Coloration */
+    --rs-white: #EBE7E0;
+    /* "Clay White" — ABS Structural Shell */
+    --rs-gray-50: #E5E1DA;
+    --rs-gray-100: #DBD7D0;
+    --rs-gray-200: #CFCBC4;
+    --rs-gray-300: #B4B0AB;
+    /* "Lufthansa Grey" */
+    --rs-gray-400: #9A9691;
+    --rs-gray-500: #7A7671;
+    --rs-gray-600: #5A5651;
+    --rs-gray-700: #3D3935;
+    --rs-gray-800: #2A2622;
+    --rs-gray-900: #1A1A1A;
+    /* "Carbon Matte" */
+    --rs-black: #1A1A1A;
+
+    /* Functional Accents */
+    --rs-signal: #FF4F00;
+    /* "Vivid Signal" */
+    --rs-safe: #006742;
+    /* Emerald Green */
+    --rs-info: #005F87;
+    --rs-indicator: #3A6351;
+    --rs-function: #2E5A88;
+
+    /* --- elevation scale (z-logic: refined) --- */
+    --rs-shadow-l1: inset 2px 2px 6px rgba(0, 0, 0, 0.15), inset -2px -2px 4px rgba(255, 255, 255, 0.3);
+    --rs-shadow-l2: 6px 6px 12px rgba(190, 186, 178, 0.6), -6px -6px 12px rgba(255, 255, 255, 0.4);
+    --rs-shadow-l3: 12px 12px 24px rgba(190, 186, 178, 0.7), -12px -12px 24px rgba(255, 255, 255, 0.4);
+    --rs-shadow-pressed: var(--rs-shadow-l1);
+
+    /* --- geometric nesting (radius) --- */
+    --rs-radius-chassis: 24px;
+    --rs-radius-container: 16px;
+    --rs-radius-element: 8px;
+
+    /* --- kinetic feedback --- */
+    --rs-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* --- high-fidelity details --- */
+    --rs-parting-line: 1px solid rgba(255, 255, 255, 0.3);
+    --rs-text-etched: 0px 1px 0px rgba(255, 255, 255, 0.8);
+
+    /* glass & crt effects */
+    --rs-glass-convex: radial-gradient(120% 120% at 50% -10%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 50%), radial-gradient(120% 120% at 50% 110%, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 50%);
+    --rs-texture-molded: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+
+    /* typography and spacing */
+    --rs-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --rs-font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+
+    /* --- SEMANTIC LAYER (Light Mode Default) --- */
+    --rs-bg-surface: var(--rs-white);
+    --rs-bg-well: var(--rs-gray-50);
+    --rs-bg-element: var(--rs-gray-100);
+
+    --rs-text-primary: var(--rs-black);
+    --rs-text-secondary: var(--rs-gray-600);
+    --rs-text-tertiary: var(--rs-gray-400);
+
+    --rs-border-primary: var(--rs-gray-100);
+    --rs-border-strong: var(--rs-black);
+
+    --rs-bg-inverse: var(--rs-black);
+    --rs-text-inverse: var(--rs-white);
+
+    --rs-text-shadow-etched: 0px 1px 0px rgba(255, 255, 255, 0.8);
+  }
+
+  [data-theme='dark'] {
+    /* RAMS DARK MODE: "Matte Charcoal" */
+    --rs-bg-surface: #121212;
+    /* Deepest Matte */
+    --rs-bg-well: #1A1A1A;
+    /* Recessed Dark */
+    --rs-bg-element: #262626;
+    /* Element L1 */
+
+    --rs-text-primary: #EBE7E0;
+    /* Warm White Text */
+    --rs-text-secondary: #9A9691;
+    --rs-text-tertiary: #5A5651;
+
+    --rs-border-primary: #333333;
+    /* Subtle Seams */
+    --rs-border-strong: #EBE7E0;
+
+    --rs-bg-inverse: #EBE7E0;
+    --rs-text-inverse: #121212;
+
+    /* Re-calibrated Physics (Shadows) for Dark Mode */
+    --rs-shadow-l1: inset 2px 2px 6px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.05);
+    --rs-shadow-l2: 4px 4px 10px rgba(0, 0, 0, 0.6), -1px -1px 2px rgba(255, 255, 255, 0.05);
+    --rs-shadow-l3: 10px 10px 20px rgba(0, 0, 0, 0.7), -2px -2px 4px rgba(255, 255, 255, 0.05);
+
+    --rs-text-shadow-etched: 0px 1px 2px rgba(0, 0, 0, 0.8);
+  }
+
+  /* utility: etched label */
+  .rs-etched {
+    font-family: var(--rs-font-sans);
+    font-weight: 900;
+    text-transform: uppercase;
+    color: var(--rs-text-primary);
+    text-shadow: var(--rs-text-shadow-etched);
+    letter-spacing: 0.05em;
+  }
+
+  /* utility: micro-dot grid */
+  .rs-bg-microdot {
+    background-color: var(--rs-bg-surface);
+    background-image: radial-gradient(var(--rs-border-primary) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
+
+  /* utility: physical well (recessed gradient) */
+  .rs-well {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0) 100%), var(--rs-bg-well);
+    box-shadow: var(--rs-shadow-l1);
+  }
+}
 
 html {
   scroll-behavior: smooth;
 }
 
-
 @theme {
-  /* Colors - Risk Shield System maps to ./styles/design-tokens.css */
+  /* Mapping MOMA Tokens to Tailwind Theme */
+  --color-rs-white: var(--rs-white);
+  --color-rs-black: var(--rs-black);
+
+  --color-rs-gray-50: var(--rs-gray-50);
+  --color-rs-gray-100: var(--rs-gray-100);
+  --color-rs-gray-200: var(--rs-gray-200);
+  --color-rs-gray-300: var(--rs-gray-300);
+  --color-rs-gray-400: var(--rs-gray-400);
+  --color-rs-gray-500: var(--rs-gray-500);
+  --color-rs-gray-600: var(--rs-gray-600);
+  --color-rs-gray-700: var(--rs-gray-700);
+  --color-rs-gray-800: var(--rs-gray-800);
+  --color-rs-gray-900: var(--rs-gray-900);
+
+  --color-rs-signal: var(--rs-signal);
+  --color-rs-safe: var(--rs-safe);
+  --color-rs-info: var(--rs-info);
+  --color-rs-indicator: var(--rs-indicator);
+  --color-rs-function: var(--rs-function);
 
   /* Fonts */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -22,26 +165,78 @@ html {
     border: 1px solid rgba(51, 65, 85, 0.5);
   }
 
+  /* Forensic Optics: Analyzed Glass */
+  .rs-glass-analyzed {
+    position: relative;
+    background: rgba(10, 10, 12, 0.4);
+    backdrop-filter: contrast(1.2) brightness(0.9) grayscale(0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .rs-glass-analyzed::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.04;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
   .gauge-ring {
     transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     transform: rotate(-90deg);
     transform-origin: 50% 50%;
   }
 
-  .shimmer {
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
+  /* Typography Utilities */
+  .rs-header-bold-italic {
+    font-family: var(--rs-font-sans);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+    line-height: 0.85;
   }
 
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
+  /* Precision Type System */
+  .rs-type-display {
+    font-family: var(--rs-font-sans);
+    letter-spacing: -0.04em;
+    /* User Spec */
+    font-weight: 900;
+  }
 
-    100% {
-      background-position: 200% 0;
-    }
+  .rs-type-section {
+    font-family: var(--rs-font-sans);
+    letter-spacing: -0.02em;
+    /* User Spec */
+    font-weight: 700;
+  }
+
+  .rs-type-body {
+    font-family: var(--rs-font-sans);
+    font-weight: 400;
+  }
+
+  .rs-type-mono {
+    font-family: var(--rs-font-mono);
+    font-weight: 500;
+  }
+
+  .rs-type-micro {
+    font-family: var(--rs-font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .rs-type-label {
+    font-family: var(--rs-font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
 
   /* Animations for Forensic Scanner */
@@ -64,4 +259,129 @@ html {
       opacity: 0;
     }
   }
+}
+
+/* Global Reset (from tokens) */
+body {
+  background-color: var(--rs-white);
+  color: var(--rs-black);
+  font-family: var(--rs-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* utility: injection molded texture */
+.rs-texture-molded {
+  position: relative;
+}
+
+.rs-texture-molded::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--rs-texture-molded);
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+}
+
+/* utility: crt scanlines */
+.rs-crt-overlay {
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 2px, 2px 100%;
+  pointer-events: none;
+}
+
+/* utility: digital noise */
+.rs-texture-noise {
+  position: relative;
+}
+
+.rs-texture-noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+}
+
+/* utility: the "laser" line (separator) */
+.rs-line {
+  height: 1px;
+  background-color: var(--rs-gray-200);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* keyframes for scan animation */
+@keyframes scan-line {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-scan {
+  animation: scan-line 2.5s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 4s linear infinite;
+}
+
+/* global utilities (Restored Manually in Case Mapping Fails in some Contexts) */
+.bg-rs-black {
+  background-color: var(--rs-black);
+}
+
+.bg-rs-white {
+  background-color: var(--rs-white);
+}
+
+.bg-rs-signal {
+  background-color: var(--rs-signal);
+}
+
+.bg-rs-safe {
+  background-color: var(--rs-safe);
+}
+
+.text-rs-black {
+  color: var(--rs-black);
+}
+
+.text-rs-white {
+  color: var(--rs-white);
+}
+
+.text-rs-signal {
+  color: var(--rs-signal);
+}
+
+.text-rs-safe {
+  color: var(--rs-safe);
 }

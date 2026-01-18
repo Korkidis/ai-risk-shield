@@ -41,9 +41,9 @@ export function RSToggle({
             onClick={toggle}
             className={cn(
                 "relative inline-flex items-center rounded-full transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-rs-black focus:ring-offset-2",
-                // Track Styles: Carved Inset
-                "shadow-[var(--rs-shadow-track)]", // The "Carved" look
-                isChecked ? "bg-rs-safe" : "bg-rs-gray-200",
+                // Track Styles: Deep Socket
+                "shadow-[var(--rs-shadow-socket)] border border-black/5",
+                isChecked ? "bg-rs-safe" : "bg-rs-gray-300",
                 currentSize.track,
                 className
             )}
@@ -52,7 +52,9 @@ export function RSToggle({
             <span className="sr-only">Toggle setting</span>
             <span
                 className={cn(
-                    "pointer-events-none rounded-full bg-white shadow-[var(--rs-shadow-knob)] ring-0 transition-transform duration-300 cubic-bezier(0.16, 1, 0.3, 1)", // Springy physics
+                    "pointer-events-none rounded-full bg-rs-white shadow-[var(--rs-shadow-hull)] ring-0 transition-transform duration-300 cubic-bezier(0.16, 1, 0.3, 1)",
+                    // Thumb Detail
+                    "flex items-center justify-center",
                     isChecked ? currentSize.thumbChecked : currentSize.thumb,
                     size === 'md' ? "w-5 h-5" : "w-3 h-3"
                 )}

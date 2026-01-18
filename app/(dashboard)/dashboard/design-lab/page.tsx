@@ -1,538 +1,469 @@
 "use client";
+import { useState, useEffect } from 'react';
+import {
+    Shield,
+    Zap,
+    Activity,
+    Terminal,
+    Layers,
+    Cpu,
+    Move,
+    Sun,
+    Moon
+} from 'lucide-react';
 
 import { RSButton } from '@/components/rs/RSButton';
 import { RSInput } from '@/components/rs/RSInput';
 import { RSRiskBadge } from '@/components/rs/RSRiskBadge';
-import { RSToggle } from '@/components/rs/RSToggle';
+import { RSKnob } from '@/components/rs/RSKnob';
 import { RSPanel } from '@/components/rs/RSPanel';
-import { RSRiskScore } from '@/components/rs/RSRiskScore';
 import { RSMeter } from '@/components/rs/RSMeter';
 import { RSScanner } from '@/components/rs/RSScanner';
 import { RSSystemLog } from '@/components/rs/RSSystemLog';
-import { RSRadialMeter } from '@/components/rs/RSRadialMeter';
-import { RSKnob } from '@/components/rs/RSKnob';
-import { RSSelect } from '@/components/rs/RSSelect';
-import { RSTooltip } from '@/components/rs/RSTooltip';
-import { RSCallout } from '@/components/rs/RSCallout';
-import { RSFileUpload } from '@/components/rs/RSFileUpload';
-import { RSModal } from '@/components/rs/RSModal';
-import { RSProgressBar } from '@/components/rs/RSProgressBar';
+import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
+import { RSTelemetryStream } from '@/components/rs/RSTelemetryStream';
 import { RSCard } from '@/components/rs/RSCard';
-import { RSNavbar } from '@/components/rs/RSNavbar';
-import { RSAvatar } from '@/components/rs/RSAvatar';
-import { RSBreadcrumb } from '@/components/rs/RSBreadcrumb';
-import { RSTable } from '@/components/rs/RSTable';
-import { RSTabs } from '@/components/rs/RSTabs';
-import { RSEmptyState } from '@/components/rs/RSEmptyState';
-import { RSReportCard } from '@/components/rs/RSReportCard';
-import { RSCheckbox } from '@/components/rs/RSCheckbox';
-import { RSTextarea } from '@/components/rs/RSTextarea';
-import { RSToastItem } from '@/components/rs/RSToast';
+import { RSModal } from '@/components/rs/RSModal';
+import { cn } from '@/lib/utils';
 
 export default function DesignLabPage() {
+    const [activeTab, setActiveTab] = useState<'palette' | 'components' | 'physics'>('components');
+    const [scanActive, setScanActive] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+
+    const TabButton = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
+        <button
+            onClick={() => setActiveTab(id)}
+            className={cn(
+                "flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-[var(--rs-radius-element)]",
+                activeTab === id
+                    ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)] translate-y-[-2px]" // Extruded Active
+                    : "text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] hover:bg-[var(--rs-bg-element)]/50"
+            )}
+        >
+            <Icon size={14} />
+            {label}
+        </button>
+    );
+
     return (
-        <div className="min-h-screen bg-rs-white text-rs-black font-sans rs-texture-noise p-12" style={{
-            backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)`,
-            backgroundSize: '40px 40px'
-        }}>
-            {/* --- MASTER HEADER (The Manual Cover) --- */}
-            <header className="mb-20 border-b border-rs-gray-200 pb-8">
-                <div className="flex justify-between items-end">
-                    <div>
-                        <h1 className="text-4xl font-bold tracking-tighter text-rs-black mb-2">INTERFACE STANDARDS</h1>
-                        <p className="font-mono text-sm text-rs-gray-500 uppercase tracking-widest">
-                            Ref. Scientific • <span className="text-rs-signal">V2.0 (Braun/Skeuomorphic)</span>
-                        </p>
-                    </div>
-                    <div className="text-right font-mono text-xs text-rs-gray-400 leading-relaxed">
-                        <p>SYS.STATUS: OPERATIONAL</p>
-                        <p>RENDER: HIGH_FIDELITY</p>
-                        <p>LOC: DESIGN_LAB</p>
-                    </div>
-                </div>
-            </header>
+        <div className="min-h-screen bg-[var(--rs-bg-surface)] text-[var(--rs-text-primary)] font-sans selection:bg-[#FF4F00] selection:text-white relative overflow-x-hidden rs-bg-microdot transition-colors duration-500">
 
-            {/* --- COLOR PALETTE --- */}
-            <section className="mb-24">
-                <div className="flex items-center gap-4 mb-8">
-                    <span className="font-mono text-xs text-rs-gray-400">01.0</span>
-                    <h2 className="text-xl font-bold tracking-tight text-rs-black uppercase">Palette Logic</h2>
-                    <div className="h-px bg-rs-gray-200 flex-grow" />
-                </div>
+            {/* Main Container */}
+            <div className="max-w-7xl mx-auto px-12 py-12 relative z-10">
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    {/* Achromatic Base */}
-                    <div className="space-y-2">
-                        <div className="h-24 w-full bg-rs-black border border-rs-gray-200"></div>
-                        <div className="font-mono text-xs">
-                            <p className="font-bold">OFF-BLACK</p>
-                            <p className="text-rs-gray-600">#1a1a1a (--rs-black)</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="h-24 w-full bg-rs-white border border-rs-gray-300"></div>
-                        <div className="font-mono text-xs">
-                            <p className="font-bold">WARM WHITE</p>
-                            <p className="text-rs-gray-600">#faf9f7 (--rs-white)</p>
-                        </div>
-                    </div>
-
-                    {/* Signals */}
-                    <div className="space-y-2">
-                        <div className="h-24 w-full bg-rs-signal"></div>
-                        <div className="font-mono text-xs">
-                            <p className="font-bold text-rs-signal">SIGNAL ORANGE</p>
-                            <p className="text-rs-gray-600">#FF611A (--rs-signal)</p>
-                            <p className="text-[10px] uppercase mt-1">Danger / Alarm Only</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="h-24 w-full bg-rs-safe"></div>
-                        <div className="font-mono text-xs">
-                            <p className="font-bold text-rs-safe">SAFE GREEN</p>
-                            <p className="text-rs-gray-600">#006742 (--rs-safe)</p>
-                            <p className="text-[10px] uppercase mt-1">Resolved / Verified</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Grays */}
-                <div className="mt-8 grid grid-cols-9 gap-2">
-                    {[900, 800, 700, 600, 500, 400, 300, 200, 100].map((num) => (
-                        <div key={num} className="space-y-1">
-                            <div style={{ backgroundColor: `var(--rs-gray-${num})` }} className="h-12 w-full"></div>
-                            <p className="font-mono text-[10px] text-center">{num}</p>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* --- TYPOGRAPHY SCALE --- */}
-            <section className="mb-24">
-                <div className="flex items-center gap-4 mb-8">
-                    <span className="font-mono text-xs text-rs-gray-400">02.0</span>
-                    <h2 className="text-xl font-bold tracking-tight text-rs-black uppercase">Cinematic Hierarchy</h2>
-                    <div className="h-px bg-rs-gray-200 flex-grow" />
-                </div>
-
-                <div className="space-y-8 border-l border-rs-gray-200 pl-8">
-                    <div>
-                        <h1 className="text-6xl font-bold tracking-tighter leading-tight">System Failure<br />Imminent.</h1>
-                        <p className="font-mono text-xs text-rs-gray-500 mt-2">Display / Headline (Tracking -0.04em)</p>
-                    </div>
-
-                    <div>
-                        <h2 className="text-3xl font-semibold tracking-tight">Analysis Report #2291</h2>
-                        <p className="font-mono text-xs text-rs-gray-500 mt-2">Section Header (Tracking -0.02em)</p>
-                    </div>
-
-                    <div className="max-w-prose">
-                        <p className="text-base leading-normal text-rs-gray-900">
-                            The automated risk assessment has identified three critical vulnerabilities in the supplied creative assets.
-                            Provenance data suggests synthetic manipulation without registered credentials. Recommendation:
-                            <span className="font-semibold text-rs-signal bg-rs-gray-100 px-1"> QUARANTINE IMMEDIATELY</span>.
-                        </p>
-                        <p className="font-mono text-xs text-rs-gray-500 mt-2">Body Copy (Inter / Normal)</p>
-                    </div>
-
-                    <div>
-                        <p className="font-mono text-sm tracking-wide bg-rs-gray-100 p-2 border border-rs-gray-300 inline-block">
-                            ID: SHA-256-AE91 • T: 140ms • V: 0.9.1
-                        </p>
-                        <p className="font-mono text-xs text-rs-gray-500 mt-2">Evidence Data (Monospace / System)</p>
-                    </div>
-                </div>
-            </section>
-
-            {/* --- SPACING GRID --- */}
-            <section className="mb-24">
-                <div className="flex items-center gap-4 mb-8">
-                    <span className="font-mono text-xs text-rs-gray-400">03.0</span>
-                    <h2 className="text-xl font-bold tracking-tight text-rs-black uppercase">4px Grid System</h2>
-                    <div className="h-px bg-rs-gray-200 flex-grow" />
-                </div>
-                <div className="flex items-end gap-1 h-32 border-b border-rs-gray-300 pb-2">
-                    {[4, 8, 12, 16, 20, 24, 32, 40, 48, 64].map((size) => (
-                        <div key={size} className="group relative cursor-crosshair">
-                            <div style={{ width: size, height: size * 2 }} className="bg-rs-gray-300 hover:bg-rs-signal transition-colors"></div>
-                            <p className="font-mono text-[10px] text-center mt-1 group-hover:text-rs-signal">{size}px</p>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* --- COMPONENT PLAYGROUND --- */}
-            <section className="mb-24">
-                <div className="flex items-center gap-4 mb-8">
-                    <span className="font-mono text-xs text-rs-gray-400">04.0</span>
-                    <h2 className="text-xl font-bold tracking-tight text-rs-black uppercase">Component Fabrication</h2>
-                    <div className="h-px bg-rs-gray-200 flex-grow" />
-                </div>
-                <div className="p-12 border border-rs-gray-200 bg-rs-gray-50/50 rounded-[4px] shadow-[var(--rs-shadow-track)]">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 items-start">
-
-                        {/* Buttons */}
+                {/* --- HEADER SYSTEM --- */}
+                <header className="mb-12 border-b border-[var(--rs-border-primary)] pb-8">
+                    <div className="flex justify-between items-end">
                         <div className="space-y-4">
-                            <h3 className="font-mono text-xs text-rs-gray-500 uppercase mb-4 border-b border-rs-gray-300 pb-2">Interaction Controls</h3>
-                            <div className="flex flex-col gap-3">
-                                <RSButton variant="primary">Init Analysis</RSButton>
-                                <RSButton variant="secondary">View Raw Log</RSButton>
-                                <RSButton variant="danger">Terminate Process</RSButton>
-                                <RSButton variant="primary" size="sm">Quick Export</RSButton>
-
-                                <div className="flex items-center justify-between bg-rs-gray-100 p-2 rounded border border-rs-gray-200 shadow-[var(--rs-shadow-track)]">
-                                    <span className="text-xs font-mono text-rs-gray-600">AUTO-LOCK</span>
-                                    <RSToggle size="md" />
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-[#FF4F00] rounded-[var(--rs-radius-element)] shadow-[var(--rs-shadow-l2)] flex items-center justify-center">
+                                    <Shield size={24} className="text-white" />
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Inputs */}
-                        <div className="space-y-4">
-                            <h3 className="font-mono text-xs text-rs-gray-500 uppercase mb-4 border-b border-rs-gray-300 pb-2">Data Entry</h3>
-                            <div className="flex flex-col gap-4">
-                                <RSInput label="Case ID" placeholder="ex: 2991-X" />
-                                <RSInput label="Target URL" placeholder="https://" fullWidth />
-                                <RSInput label="Authorization Code" placeholder="Enter logic..." error="Invalid checksum" />
-                            </div>
-                        </div>
-
-                        {/* Badges */}
-                        <div className="space-y-4">
-                            <h3 className="font-mono text-xs text-rs-gray-500 uppercase mb-4 border-b border-rs-gray-300 pb-2">Status Indicators</h3>
-                            <div className="flex flex-col gap-2 items-start">
-                                <RSRiskBadge level="critical" />
-                                <RSRiskBadge level="high" value="98%" />
-                                <RSRiskBadge level="medium" label="Suspicious" />
-                                <RSRiskBadge level="low" />
-                                <RSRiskBadge level="safe" value="Verified" />
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-
-            {/* --- RISK INSTRUMENT CLUSTER --- */}
-            <section className="mb-24">
-                <div className="flex items-center gap-4 mb-8">
-                    <span className="font-mono text-xs text-rs-gray-400">05.0</span>
-                    <h2 className="text-xl font-bold tracking-tight text-rs-black uppercase">Risk Instrument Cluster</h2>
-                    <div className="h-px bg-rs-gray-200 flex-grow" />
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                    {/* Panel 1: Critical Risk */}
-                    <RSPanel
-                        title="High Risk Detected"
-                        metadata={[
-                            { label: 'CASE', value: '881-A' },
-                            { label: 'UTC', value: '14:02:11' }
-                        ]}
-                        action={<RSRiskBadge level="critical" value="ACTION REQ" />}
-                    >
-                        <div className="flex items-center gap-8">
-                            <RSRiskScore score={88} level="critical" trend="up" />
-                            <div className="flex-1 space-y-4">
-                                <p className="text-sm text-rs-gray-600">
-                                    Likelihood of synthetic manipulation exceeds safety thresholds.
-                                </p>
-                                <RSMeter value={88} level="critical" />
-                            </div>
-                        </div>
-                    </RSPanel>
-
-                    {/* Panel 2: Verified Safe */}
-                    <RSPanel
-                        title="Verification Report"
-                        metadata={[
-                            { label: 'ID', value: 'C2PA-V1' },
-                            { label: 'SRC', value: 'ADOBE' }
-                        ]}
-                        action={<RSRiskBadge level="safe" />}
-                    >
-                        <div className="flex items-center gap-8">
-                            <RSRiskScore score={12} level="safe" trend="stable" />
-                            <div className="flex-1 space-y-4">
-                                <p className="text-sm text-rs-gray-600">
-                                    Content credentials verified. Digital signature valid.
-                                </p>
-                                <RSMeter value={12} level="safe" />
-                            </div>
-                        </div>
-                    </RSPanel>
-
-                </div>
-            </section>
-
-            {/* --- SCANNER KIT --- */}
-            <section className="pb-24">
-                <div className="flex items-center gap-4 mb-8">
-                    <span className="font-mono text-xs text-rs-gray-400">06.0</span>
-                    <h2 className="text-xl font-bold tracking-tight text-rs-black uppercase">Scanner Kit</h2>
-                    <div className="h-px bg-rs-gray-200 flex-grow" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-                    {/* Active Scan Demo */}
-                    <div className="space-y-4">
-                        <h3 className="font-mono text-xs text-rs-gray-500 uppercase">Active State (Simulated)</h3>
-                        <div className="border border-rs-gray-300 p-4 rounded-md bg-rs-gray-100">
-                            <RSPanel title="Forensic Engine V2">
-                                <RSScanner
-                                    active={true}
-                                    status="scanning"
-                                    className="mb-4"
-                                    // Placeholder image for demo
-                                    imageUrl="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop"
-                                />
-                                <RSSystemLog
-                                    logs={[
-                                        { id: 1, message: 'Initializing handshake...', status: 'done', timestamp: '00:01' },
-                                        { id: 2, message: 'Acquiring signal...', status: 'done', timestamp: '00:04' },
-                                        { id: 3, message: 'Analyzing spectrum...', status: 'active', timestamp: '00:12' },
-                                        { id: 4, message: 'Awaiting tensor result...', status: 'pending' },
-                                    ]}
-                                />
-                            </RSPanel>
-                        </div>
-                    </div>
-
-                    {/* Idle / Error States */}
-                    <div className="space-y-4">
-                        <h3 className="font-mono text-xs text-rs-gray-500 uppercase">Idle / Error States</h3>
-                        <div className="grid gap-4">
-                            <RSScanner className="h-40" />
-                            <RSSystemLog
-                                maxHeight="100px"
-                                logs={[
-                                    { id: 1, message: 'Connection lost.', status: 'error', timestamp: 'ERR' },
-                                    { id: 2, message: 'Retrying socket...', status: 'active' },
-                                ]}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- RADIAL INSTRUMENTS --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12 pt-12 border-t border-rs-gray-200">
-                    <div className="flex flex-col items-center gap-4">
-                        <span className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Composite Index</span>
-                        <RSRadialMeter value={88} level="critical" size={160} />
-                    </div>
-                    <div className="flex flex-col items-center gap-4">
-                        <span className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Brand Safety</span>
-                        <RSRadialMeter value={42} level="medium" size={120} />
-                    </div>
-                    <div className="flex flex-col items-center justify-center gap-8 border-l border-rs-gray-200 pl-8 col-span-2">
-                        <div className="flex gap-12">
-                            <RSKnob label="Sensitivity" value={75} />
-                            <RSKnob label="Threshold" value={40} min={0} max={100} />
-                            <RSKnob label="Depth" value={92} size={60} />
-                        </div>
-                        <p className="text-xs text-rs-gray-500 font-mono text-center max-w-sm">
-                            ADJUST DETECTION PARAMETERS VIA ANALOGUE INPUT
-                        </p>
-                    </div>
-                </div>
-
-                {/* --- UTILITY KIT --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 pt-12 border-t border-rs-gray-200">
-                    <div className="space-y-6">
-                        <h3 className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Forms & Interactions</h3>
-                        <div className="space-y-4 max-w-xs">
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium">Risk Policy</label>
-                                <RSTooltip content="Strict policies automatically flag content over 85% probability." />
-                            </div>
-
-                            <RSSelect
-                                placeholder="Select Jurisdiction..."
-                                options={[
-                                    { value: 'us', label: 'United States (C2PA)' },
-                                    { value: 'eu', label: 'European Union (AI Act)' },
-                                    { value: 'global', label: 'Global Standard' },
-                                ]}
-                                fullWidth
-                            />
-
-                            <div className="flex items-center justify-between text-sm text-rs-gray-600 border border-rs-gray-300 p-2 rounded-[4px]">
-                                <span>Export Report?</span>
-                                <RSTooltip content="Download PDF with cryptographic proof." side="bottom">
-                                    <span className="text-xs font-mono underline cursor-help decoration-dashed decoration-rs-gray-400">Why?</span>
-                                </RSTooltip>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        <h3 className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Prominent Callouts</h3>
-                        <div className="space-y-4">
-                            <RSCallout title="System Update" variant="info">
-                                New detection model (v2.1) deployed. Re-scan assets uploaded prior to 12/01.
-                            </RSCallout>
-                            <RSCallout title="Critical Exposure" variant="warning">
-                                3 assets in your library have been flagged for DMCA review.
-                            </RSCallout>
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- ESSENTIAL SAAS COMPONENTS --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 pt-12 border-t border-rs-gray-200">
-                    <div className="space-y-6">
-                        <h3 className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Upload & Progress</h3>
-                        <div className="space-y-6">
-                            <RSFileUpload
-                                onFileSelect={(file) => console.log('Selected:', file.name)}
-                                maxSizeMB={5}
-                            />
-
-                            <div className="space-y-4">
-                                <RSProgressBar value={45} label="Uploading..." variant="default" />
-                                <RSProgressBar value={88} label="Analyzing..." variant="signal" size="lg" />
-                                <RSProgressBar label="Processing..." variant="safe" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        <h3 className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Cards & Containers</h3>
-                        <div className="space-y-4">
-                            <RSCard header="Scan Report #2291" variant="default">
-                                <p className="text-sm text-rs-gray-600">
-                                    Analysis complete. Risk score: <span className="font-bold text-rs-signal">88%</span>
-                                </p>
-                            </RSCard>
-
-                            <RSCard
-                                header="Quick Stats"
-                                footer={<span className="text-xs text-rs-gray-500 font-mono">Last updated: 2m ago</span>}
-                                variant="elevated"
-                            >
-                                <div className="grid grid-cols-3 gap-4 text-center">
-                                    <div>
-                                        <p className="text-2xl font-bold">12</p>
-                                        <p className="text-xs text-rs-gray-500">Scans</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold text-rs-signal">3</p>
-                                        <p className="text-xs text-rs-gray-500">High Risk</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold text-rs-safe">9</p>
-                                        <p className="text-xs text-rs-gray-500">Verified</p>
-                                    </div>
-                                </div>
-                            </RSCard>
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- DEMO: EXTENDED SUITE --- */}
-                <div className="mt-24 pt-12 border-t border-rs-gray-200">
-                    <div className="flex items-center gap-4 mb-16">
-                        <span className="font-mono text-xs text-rs-gray-400">07.0</span>
-                        <h2 className="text-xl font-bold tracking-tight text-rs-black uppercase">Extended Suite</h2>
-                        <div className="h-px bg-rs-gray-200 flex-grow" />
-                    </div>
-
-                    {/* Shell Components */}
-                    <div className="space-y-8 mb-12">
-                        <h3 className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Application Shell</h3>
-                        <div className="border border-rs-gray-200 rounded-[4px] bg-rs-gray-50 overflow-hidden relative" style={{ height: '300px' }}>
-                            <RSNavbar className="absolute top-0 w-full">
-                                <RSBreadcrumb items={[{ label: 'Dashboard' }, { label: 'Scans' }, { label: '#2291', href: '#' }]} />
-                            </RSNavbar>
-                            <div className="mt-16 h-full flex">
-                                <div className="w-16 h-full bg-rs-gray-100 border-r border-rs-gray-200 flex flex-col items-center py-4 gap-4">
-                                    <div className="w-8 h-8 rounded bg-rs-black/10" />
-                                    <div className="w-8 h-8 rounded bg-rs-black/5" />
-                                    <div className="w-8 h-8 rounded bg-rs-black/5" />
-                                </div>
-                                <div className="p-8">
-                                    <h4 className="font-bold text-rs-black mb-2">Shell Context</h4>
-                                    <p className="text-sm text-rs-gray-600 max-w-sm">
-                                        Navbar and Sidebar components compose the application frame.
-                                        Breadcrumbs provide location context.
+                                <div>
+                                    <h1 className="text-4xl font-black tracking-tighter text-[var(--rs-text-primary)] uppercase mb-1">Interface Standards</h1>
+                                    <p className="font-mono text-[10px] text-[var(--rs-text-secondary)] uppercase tracking-[0.2em]">
+                                        Ref. Scientific • V3.0 • MOMA_SPEC
                                     </p>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Data Views */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                        <div className="space-y-6">
-                            <h3 className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Data Tables & Lists</h3>
-                            <RSTable
-                                columns={[
-                                    { key: 'id', header: 'ID', width: '80px' },
-                                    { key: 'name', header: 'Asset Name', sortable: true },
-                                    { key: 'status', header: 'Status' }
-                                ]}
-                                data={[
-                                    { id: '001', name: 'campaign_v1.jpg', status: <RSRiskBadge level="safe" size="sm" /> },
-                                    { id: '002', name: 'hero_banner.png', status: <RSRiskBadge level="critical" size="sm" /> },
-                                    { id: '003', name: 'logo_mark.svg', status: <RSRiskBadge level="low" size="sm" /> },
-                                ]}
-                            />
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={toggleTheme}
+                                className="w-10 h-10 rounded-full bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] flex items-center justify-center shadow-[var(--rs-shadow-l1)] text-[var(--rs-text-primary)] hover:scale-105 transition-all"
+                            >
+                                {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                            </button>
 
-                            <RSTabs
-                                tabs={[
-                                    { id: 'all', label: 'All Scans' },
-                                    { id: 'flagged', label: 'Flagged (3)' },
-                                    { id: 'archived', label: 'Archived' },
-                                ]}
-                            />
-                        </div>
-
-                        <div className="space-y-6">
-                            <h3 className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Cards & Empty States</h3>
-                            <div className="grid grid-cols-1 gap-4">
-                                <RSReportCard
-                                    id="001-ALPHA"
-                                    filename="marketing_q1.jpg"
-                                    date="Today, 10:23 AM"
-                                    score={12}
-                                    level="safe"
-                                    imageUrl="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop"
-                                />
-
-                                <RSEmptyState
-                                    title="No Flags Found"
-                                    description="Great news! Your recent library scan returned zero critical risks."
-                                    className="py-8"
-                                />
+                            {/* Tab Switcher */}
+                            <div className="flex gap-2 p-1 bg-[var(--rs-bg-element)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)]">
+                                <TabButton id="palette" label="Palette & Type" icon={Layers} />
+                                <TabButton id="components" label="Components" icon={Cpu} />
+                                <TabButton id="physics" label="Physics Engine" icon={Move} />
                             </div>
                         </div>
                     </div>
+                </header>
 
-                    {/* Inputs */}
-                    <div className="space-y-6">
-                        <h3 className="font-mono text-xs text-rs-gray-500 uppercase tracking-widest">Extended Inputs</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-4">
-                                <RSTextarea label="Scan Notes" placeholder="Add commentary to this analysis..." />
-                                <div className="flex flex-col gap-2">
-                                    <RSCheckbox label="Flag for manual review" />
-                                    <RSCheckbox label="Notify team via Slack" checked />
+                {/* --- CONTENT AREA --- */}
+                <main className="min-h-[600px]">
+
+                    {/* VIEW: PALETTE */}
+                    {activeTab === 'palette' && (
+                        <div className="space-y-24 animate-in fade-in duration-500">
+                            {/* 01.0 PALETTE */}
+                            <section>
+                                <div className="flex items-center gap-6 mb-12">
+                                    <span className="font-mono text-xs text-[#9A9691]">01.0</span>
+                                    <h2 className="text-2xl font-black tracking-tight uppercase">Industrial Palette</h2>
+                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
                                 </div>
-                            </div>
 
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-bold text-rs-gray-400">Notifications</h4>
-                                <RSToastItem title="Analysis Complete" description="Report #2291 is ready for download." variant="success" />
-                                <RSToastItem title="Upload Failed" description="Connection interrupted." variant="error" />
-                            </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                                    {[
+                                        { name: 'Clay White', hex: '#EBE7E0', use: 'Structural Shell', border: true },
+                                        { name: 'Lufthansa Grey', hex: '#B4B0AB', use: 'Secondary Deck' },
+                                        { name: 'Carbon Matte', hex: '#1A1A1A', use: 'Control Text', shadow: true },
+                                        { name: 'Vivid Signal', hex: '#FF4F00', use: 'Alert / Emergency', signal: true },
+                                        { name: 'Safe Green', hex: '#006742', use: 'Verification / Safe', safe: true },
+                                        { name: 'System Blue', hex: '#005F87', use: 'Data / Info', info: true },
+                                    ].map((color) => (
+                                        <div key={color.name} className="flex items-center gap-6 p-4 rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l2)] bg-[var(--rs-bg-surface)]">
+                                            <div
+                                                className="w-20 h-20 rounded-[var(--rs-radius-element)] shadow-[var(--rs-shadow-l1)]"
+                                                style={{ backgroundColor: color.hex }}
+                                            />
+                                            <div className="font-mono text-[11px]">
+                                                <p className="font-bold uppercase tracking-tight rs-etched">{color.name}</p>
+                                                <p className="text-[var(--rs-text-secondary)] mt-1">{color.hex}</p>
+                                                <p className="mt-2 text-[9px] text-[var(--rs-text-tertiary)] uppercase font-bold">{color.use}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* 02.0 TYPOGRAPHY */}
+                            <section>
+                                <div className="flex items-center gap-6 mb-12">
+                                    <span className="font-mono text-xs text-[#9A9691]">02.0</span>
+                                    <h2 className="text-2xl font-black tracking-tight uppercase">Cinematic Typography</h2>
+                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
+                                </div>
+                                <div className="space-y-12 pl-10 border-l border-[#FF4F00]">
+                                    <div className="mb-16">
+                                        <h1 className="text-8xl rs-header-bold-italic mb-4 text-[var(--rs-text-primary)]">
+                                            TRUST IS<br />
+                                            NO<br />
+                                            <span className="text-[#FF4F00]">LONGER</span><br />
+                                            <span className="text-[#FF4F00]">HUMAN.</span>
+                                        </h1>
+                                        <p className="font-mono text-[10px] text-[var(--rs-text-secondary)] uppercase">Display / Headline (Tracking -0.04em)</p>
+                                    </div>
+
+                                    {/* Type Spec List */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-[#DBD7D0] pt-12">
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono text-[var(--rs-text-secondary)] uppercase">Section Header (Tracking -0.02em)</p>
+                                            <h2 className="text-2xl rs-type-section text-[var(--rs-text-primary)]">
+                                                Analysis Report #2291
+                                            </h2>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono text-[var(--rs-text-secondary)] uppercase">Body Copy (Inter / Normal)</p>
+                                            <p className="rs-type-body text-[var(--rs-text-tertiary)] max-w-xs leading-relaxed">
+                                                Automated diagnostics indicate a probability of synthetic interference.
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono text-[var(--rs-text-secondary)] uppercase">Evidence Data (Monospace)</p>
+                                            <p className="rs-type-mono text-[var(--rs-text-primary)] text-xs">
+                                                ID: SHA-256-AE91 • T: 140ms • V: 0.9.1
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono text-[var(--rs-text-secondary)] uppercase">Label / Control</p>
+                                            <p className="rs-type-label text-[var(--rs-text-primary)]">
+                                                SIGNAL LOCK
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono text-[var(--rs-text-secondary)] uppercase">Micro / Metadata</p>
+                                            <p className="rs-type-micro text-[var(--rs-text-primary)]">
+                                                (STATUS: 0x99)
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
                         </div>
+                    )}
+
+                    {/* VIEW: COMPONENTS */}
+                    {activeTab === 'components' && (
+                        <div className="space-y-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                            {/* 04.0 PHYSICAL CONTROLS */}
+                            <section>
+                                <div className="flex items-center gap-6 mb-12">
+                                    <span className="font-mono text-xs text-[#9A9691]">04.0</span>
+                                    <h2 className="text-2xl font-black tracking-tight uppercase">Physical Controls</h2>
+                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                                    {/* Input Deck */}
+                                    <div className="lg:col-span-4 space-y-8">
+                                        <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] relative">
+                                            <div className="absolute top-0 left-0 w-full h-full border border-white/50 rounded-[inherit] pointer-events-none" />
+
+                                            <div className="flex items-center gap-2 mb-8 opacity-40">
+                                                <Terminal size={14} />
+                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched">Console 04: Input Deck</span>
+                                            </div>
+
+                                            <div className="space-y-8">
+                                                <RSInput label="Target Hash" defaultValue="SHA_256_VLT_992" readOnly fullWidth />
+
+                                                <div className="flex items-center justify-between p-4 bg-[var(--rs-bg-element)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)]">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] rs-etched ml-1">Signal Lock</span>
+                                                    <button
+                                                        onClick={() => setScanActive(!scanActive)}
+                                                        className={`w-12 h-6 rounded-full transition-all relative shadow-[var(--rs-shadow-l1)] ${scanActive ? 'bg-[#FF4F00]' : 'bg-[#B4B0AB]'}`}
+                                                    >
+                                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${scanActive ? 'left-7' : 'left-1'}`} />
+                                                    </button>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <RSButton variant="secondary" fullWidth>Diagnostic</RSButton>
+                                                    <RSButton variant="secondary" fullWidth>Metadata</RSButton>
+                                                    <div className="col-span-2">
+                                                        <RSButton variant="danger" fullWidth>Emergency Stop</RSButton>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] flex justify-around items-center border border-white/50">
+                                            <RSKnob label="Threshold" value={75} size={80} />
+                                            <div className="w-[1px] h-16 bg-[#DBD7D0] shadow-[1px_0_0_white]" />
+                                            <RSKnob label="Sensitivity" value={42} size={80} />
+                                        </div>
+                                    </div>
+
+                                    {/* CRT Display */}
+                                    <div className="lg:col-span-8 space-y-10">
+                                        <div className="bg-[#121212] border-[10px] border-[var(--rs-border-primary)] rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] relative overflow-hidden">
+                                            {/* Forensic Glass Overlay */}
+                                            <div className="absolute inset-0 rs-glass-analyzed z-20 pointer-events-none" />
+
+                                            <div className="p-8 space-y-6 relative z-10">
+                                                <div className="flex justify-between">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-[10px] font-mono text-[#FF4F00] font-bold tracking-widest">SCANNER_V2.0</span>
+                                                        <span className="text-[9px] font-mono text-[#FF4F00]/40">BUFFER_RDY</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-mono text-[#FF4F00]">CH_01_INPUT</span>
+                                                </div>
+
+                                                <RSScanner active={scanActive} status={scanActive ? 'Scanning QUAD_04...' : 'Standby'} />
+
+                                                <RSSystemLog logs={[
+                                                    { id: '1', timestamp: '14:02:11', message: 'Initialize secure handshake...', status: 'done' },
+                                                    { id: '2', timestamp: '14:02:14', message: 'Syncing with central node...', status: 'done' },
+                                                    { id: '3', timestamp: '14:02:18', message: 'Analyzing pixel variance...', status: 'active' },
+                                                    { id: '4', timestamp: '14:02:22', message: 'Anomalous pattern detected in Q4.', status: 'error' },
+                                                ]} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* 05.0 INSTRUMENT CLUSTER */}
+                            <section>
+                                <div className="flex items-center gap-6 mb-12">
+                                    <span className="font-mono text-xs text-[#9A9691]">05.0</span>
+                                    <h2 className="text-2xl font-black tracking-tight uppercase">Instrument Cluster</h2>
+                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                    <RSPanel
+                                        title="Risk Analysis"
+                                        metadata={[{ label: 'ID', value: '44-X' }, { label: 'VER', value: '1.0' }]}
+                                        action={<RSRiskBadge level="critical" />}
+                                    >
+                                        <div className="flex items-center gap-10">
+                                            <div className="text-5xl font-black tracking-tighter rs-etched">88%</div>
+                                            <div className="flex-1 space-y-3">
+                                                <div className="flex justify-between text-[10px] font-bold uppercase text-[#9A9691]">
+                                                    <span>Likelihood</span>
+                                                    <span className="text-[#FF4F00]">Critical</span>
+                                                </div>
+                                                <RSMeter value={88} level="critical" />
+                                            </div>
+                                        </div>
+                                    </RSPanel>
+
+                                    <RSPanel
+                                        title="Identity Check"
+                                        metadata={[{ label: 'SRC', value: 'BLOCK' }, { label: 'CRT', value: 'C2PA' }]}
+                                        action={<RSRiskBadge level="safe" />}
+                                    >
+                                        <div className="flex items-center gap-10">
+                                            <div className="text-5xl font-black tracking-tighter rs-etched">12%</div>
+                                            <div className="flex-1 space-y-3">
+                                                <div className="flex justify-between text-[10px] font-bold uppercase text-[#9A9691]">
+                                                    <span>Alteration</span>
+                                                    <span className="text-[#006742]">Nominal</span>
+                                                </div>
+                                                <RSMeter value={12} level="safe" />
+                                            </div>
+                                        </div>
+                                    </RSPanel>
+                                </div>
+                            </section>
+
+                            {/* 06.0 TELEMETRY */}
+                            <section>
+                                <div className="flex items-center gap-6 mb-12">
+                                    <span className="font-mono text-xs text-[#9A9691]">06.0</span>
+                                    <h2 className="text-2xl font-black tracking-tight uppercase">Extended Telemetry</h2>
+                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
+                                </div>
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 items-center">
+                                    <div className="flex flex-col items-center gap-8 p-12 bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-white/50">
+                                        <div className="flex items-center gap-2 opacity-50 mb-4">
+                                            <Activity size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-widest rs-etched">System Load</span>
+                                        </div>
+                                        <RSAnalogNeedle value={68} label="CPU_LOAD" />
+                                    </div>
+                                    <div className="flex flex-col items-center gap-8">
+                                        <div className="w-full shadow-[var(--rs-shadow-l2)] rounded-[3.5rem]">
+                                            <RSTelemetryStream />
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* 07.0 STRUCTURAL PATTERNS */}
+                            <section className="mb-24">
+                                <div className="flex items-center gap-6 mb-12">
+                                    <span className="font-mono text-xs text-[#9A9691]">07.0</span>
+                                    <h2 className="text-2xl font-black tracking-tight uppercase">Structural Patterns</h2>
+                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                    <RSCard
+                                        header="System Override"
+                                        footer={
+                                            <div className="flex justify-between items-center text-[10px] font-mono uppercase text-[var(--rs-text-tertiary)]">
+                                                <span>Status: Inactive</span>
+                                                <span>ID: #9921</span>
+                                            </div>
+                                        }
+                                        className="h-64 flex flex-col justify-between"
+                                    >
+                                        <div className="flex-1 flex flex-col justify-center">
+                                            <p className="rs-type-body text-sm mb-6 max-w-xs text-[var(--rs-text-secondary)]">
+                                                Manual override requires higher clearance. Please authenticate via the secure modal.
+                                            </p>
+                                            <div>
+                                                <RSButton onClick={() => setShowModal(true)}>Open Secure Link</RSButton>
+                                            </div>
+                                        </div>
+                                    </RSCard>
+
+                                    <RSCard
+                                        variant="elevated"
+                                        header={<span className="text-[#FF4F00] flex items-center gap-2"><div className="w-2 h-2 bg-[#FF4F00] rounded-full animate-pulse" /> CRITICAL ALERT</span>}
+                                        className="h-64"
+                                    >
+                                        <div className="h-full flex items-center justify-center">
+                                            <span className="rs-type-display text-4xl text-[var(--rs-text-primary)]/10">EMPTY_STATE</span>
+                                        </div>
+                                    </RSCard>
+                                </div>
+                            </section>
+
+                            <RSModal isOpen={showModal} onClose={() => setShowModal(false)} title="Secure Link Request">
+                                <div className="space-y-6">
+                                    <p className="rs-type-body text-[var(--rs-text-secondary)]">
+                                        Initiating secure handshake protocol. Please confirm your biometrics.
+                                    </p>
+                                    <div className="h-32 bg-[var(--rs-bg-well)] rounded-[var(--rs-radius-element)] border border-[var(--rs-border-primary)]/10 flex items-center justify-center">
+                                        <span className="rs-type-mono text-xs text-[var(--rs-text-secondary)] animate-pulse">Scanning...</span>
+                                    </div>
+                                    <div className="flex justify-end gap-3">
+                                        <RSButton variant="ghost" onClick={() => setShowModal(false)}>Cancel</RSButton>
+                                        <RSButton onClick={() => setShowModal(false)}>Authenticate</RSButton>
+                                    </div>
+                                </div>
+                            </RSModal>
+                        </div>
+                    )}
+
+                    {/* VIEW: PHYSICS */}
+                    {activeTab === 'physics' && (
+                        <div className="space-y-24 animate-in fade-in duration-500">
+                            <section>
+                                <div className="flex items-center gap-6 mb-12">
+                                    <span className="font-mono text-xs text-[#9A9691]">07.0</span>
+                                    <h2 className="text-2xl font-black tracking-tight uppercase">Elevation Physics (Z-Logic)</h2>
+                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
+                                </div>
+
+                                <div className="grid grid-cols-4 gap-12 text-center">
+                                    <div className="space-y-4">
+                                        <div className="h-32 w-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-secondary)]/20 rounded-[var(--rs-radius-container)] flex items-center justify-center">
+                                            <span className="text-xs font-mono text-[var(--rs-text-secondary)]">L0 (Flat)</span>
+                                        </div>
+                                        <p className="text-[10px] font-mono text-[var(--rs-text-tertiary)]">Chassis Base</p>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="h-32 w-full bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] flex items-center justify-center">
+                                            <span className="text-xs font-mono text-[var(--rs-text-secondary)]">L1 (Recessed)</span>
+                                        </div>
+                                        <p className="text-[10px] font-mono text-[var(--rs-text-tertiary)]">Wells / Inputs</p>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="h-32 w-full bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l2)] flex items-center justify-center border border-white/10">
+                                            <span className="text-xs font-mono text-[var(--rs-text-primary)]">L2 (Low)</span>
+                                        </div>
+                                        <p className="text-[10px] font-mono text-[var(--rs-text-tertiary)]">Panels / Secondary</p>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="h-32 w-full bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l3)] flex items-center justify-center border-t border-l border-white/10">
+                                            <span className="text-xs font-bold text-[var(--rs-text-primary)]">L3 (High)</span>
+                                        </div>
+                                        <p className="text-[10px] font-mono text-[var(--rs-text-tertiary)]">Primary Actions</p>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    )}
+
+                </main>
+
+                <footer className="mt-40 pt-10 border-t border-[#DBD7D0] flex justify-between items-center opacity-30 grayscale hover:grayscale-0 transition-all">
+                    <div className="flex items-center gap-4">
+                        <Shield size={20} />
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#1A1A1A]">Ref. Scientific © 2024</span>
                     </div>
+                    <div className="flex gap-8 font-mono text-[9px] font-bold uppercase tracking-widest">
+                        <span className="text-[#9A9691]">MOMA_SPEC_V3</span>
+                    </div>
+                </footer>
+            </div>
 
-                </div>
-
-            </section>
+            <style jsx global>{`
+             @keyframes scan {
+             0% { top: 0; opacity: 0; }
+             10% { opacity: 1; }
+             90% { opacity: 1; }
+             100% { top: 100%; opacity: 0; }
+             }
+             .animate-scan {
+             animation: scan 3s ease-in-out infinite;
+             }
+         `}</style>
         </div>
     );
 }

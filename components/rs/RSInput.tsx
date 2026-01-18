@@ -15,26 +15,24 @@ export function RSInput({
     ...props
 }: RSInputProps) {
     return (
-        <div className={cn("flex flex-col gap-1.5", fullWidth ? "w-full" : "w-auto")}>
+        <div className={cn("flex flex-col gap-2", fullWidth ? "w-full" : "w-auto", className)}>
             {label && (
-                <label className="text-xs font-medium text-rs-gray-700 uppercase tracking-wide">
+                <label className="text-[10px] ml-1 rs-etched">
                     {label}
                 </label>
             )}
             <input
                 className={cn(
-                    "h-10 px-3 bg-rs-white border border-rs-gray-300 rounded-[2px]",
-                    "text-rs-black text-sm placeholder:text-rs-gray-400",
-                    "focus:outline-none focus:border-rs-black focus:ring-1 focus:ring-rs-black",
-                    "font-sans focus:font-mono transition-all duration-200", // Monospace focus for data entry feel
-                    "disabled:opacity-50 disabled:bg-rs-gray-100",
-                    error ? "border-rs-signal focus:border-rs-signal focus:ring-rs-signal" : "",
-                    className
+                    "h-12 w-full rs-well rounded-[var(--rs-radius-element)]", // MOMA Recessed Well
+                    "px-4 text-[var(--rs-text-primary)] text-sm placeholder:text-[var(--rs-text-tertiary)] font-mono",
+                    "focus:outline-none focus:ring-1 focus:ring-white/20 transition-all duration-300",
+                    "disabled:opacity-50 disabled:shadow-none",
+                    error ? "shadow-[inset_0_0_0_2px_var(--rs-signal)] bg-rs-signal/5" : ""
                 )}
                 {...props}
             />
             {error && (
-                <span className="text-[10px] font-medium text-rs-signal tracking-wide">
+                <span className="text-[10px] font-medium text-rs-signal tracking-wide ml-1">
                     {error}
                 </span>
             )}

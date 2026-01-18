@@ -59,7 +59,7 @@ export function RSModal({
             {/* Modal Content */}
             <div
                 className={cn(
-                    "relative bg-rs-white rounded-[4px] shadow-2xl border border-rs-gray-300 w-full animate-in zoom-in-95 fade-in duration-200",
+                    "relative bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l3)] border border-[var(--rs-border-strong)]/20 w-full animate-in zoom-in-95 fade-in duration-300",
                     sizeClasses[size],
                     className
                 )}
@@ -67,8 +67,8 @@ export function RSModal({
             >
                 {/* Header */}
                 {title && (
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-rs-gray-200">
-                        <h2 className="text-lg font-bold tracking-tight text-rs-black">
+                    <div className="flex items-center justify-between px-8 py-6 border-b border-[var(--rs-border-strong)]/5">
+                        <h2 className="rs-type-section text-xl text-[var(--rs-text-primary)]">
                             {title}
                         </h2>
                         <button

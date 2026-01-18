@@ -29,7 +29,7 @@ export function RSRiskBadge({
         medium: "bg-rs-gray-200 text-rs-black border-rs-gray-400", // Grey Zone
         low: "bg-rs-white text-rs-gray-600 border-rs-gray-200",
         safe: "bg-rs-safe text-rs-white border-rs-safe",
-        unknown: "bg-transparent text-rs-gray-400 border-dashed border-rs-gray-300",
+        unknown: "bg-transparent text-[var(--rs-text-tertiary)] border-dashed border-[var(--rs-border-primary)]",
     };
 
     const sizeClasses = {

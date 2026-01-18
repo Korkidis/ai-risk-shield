@@ -17,24 +17,24 @@ export function RSCard({
 }: RSCardProps) {
 
     const variantClasses = {
-        default: 'bg-rs-white border border-rs-gray-200',
-        bordered: 'bg-rs-white border-2 border-rs-black',
-        elevated: 'bg-rs-white border border-rs-gray-200 shadow-[var(--rs-shadow-bevel)]'
+        default: 'bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-strong)]/20', // L2 Extruded Panel
+        bordered: 'bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[inset_0_0_0_2px_var(--rs-border-primary)]', // Flat with Border
+        elevated: 'bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l3)]' // L3 High Extrusion
     };
 
     return (
         <div
             className={cn(
-                "rounded-[4px] overflow-hidden",
+                "overflow-visible relative", // Allow shadows to spill (removed overflow-hidden unless needed)
                 variantClasses[variant],
                 className
             )}
             {...props}
         >
             {header && (
-                <div className="px-5 py-3 border-b border-rs-gray-200 bg-rs-gray-50/50">
+                <div className="px-6 py-4 border-b border-[var(--rs-border-strong)]/10">
                     {typeof header === 'string' ? (
-                        <h3 className="font-mono text-xs font-medium uppercase tracking-wider text-rs-gray-500">
+                        <h3 className="rs-type-label text-[var(--rs-text-primary)]">
                             {header}
                         </h3>
                     ) : (
@@ -48,7 +48,7 @@ export function RSCard({
             </div>
 
             {footer && (
-                <div className="px-6 py-4 border-t border-rs-gray-200 bg-rs-gray-50">
+                <div className="px-6 py-4 border-t border-[var(--rs-border-strong)]/10 rounded-b-[var(--rs-radius-container)]">
                     {footer}
                 </div>
             )}

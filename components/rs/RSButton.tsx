@@ -23,29 +23,31 @@ export function RSButton({
     );
 
     const variants = {
-        // Primary: Tactile Plastic (Off-Black)
-        primary: "bg-rs-black text-rs-white shadow-[var(--rs-shadow-bevel)] hover:bg-rs-gray-900 active:shadow-[var(--rs-shadow-pressed)] active:translate-y-[1px]",
+        // Primary: Signal Orange (Molded L3)
+        primary: "bg-[#FF4F00] text-white shadow-[var(--rs-shadow-l3)] hover:brightness-110 active:shadow-[var(--rs-shadow-l1)] active:scale-[0.98]",
 
-        // Secondary: Tactile Paper (White with border)
-        secondary: "bg-rs-white text-rs-black border border-rs-gray-200 shadow-[var(--rs-shadow-bevel)] hover:bg-rs-gray-100 hover:border-rs-gray-300 active:shadow-[var(--rs-shadow-pressed)] active:bg-rs-gray-200 active:translate-y-[1px]",
+        // Secondary: Semantic Grey (Molded L2)
+        secondary: "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l2)] hover:brightness-105 active:shadow-[var(--rs-shadow-l1)] active:scale-[0.98]",
 
-        // Danger: Tactile Signal (Red)
-        danger: "bg-rs-signal text-rs-white shadow-[var(--rs-shadow-bevel)] hover:bg-red-700 active:shadow-[var(--rs-shadow-pressed)] active:translate-y-[1px]",
+        // Danger: Inverse (Molded L3)
+        // Light: Black Button/Orange Text. Dark: White Button/Orange Text (Emergency)
+        danger: "bg-[var(--rs-bg-inverse)] text-[#FF4F00] shadow-[var(--rs-shadow-l3)] hover:brightness-110 active:shadow-[var(--rs-shadow-l1)] active:scale-[0.98]",
 
-        // Ghost: Flat text for low priority (Settings, etc)
-        ghost: "bg-transparent text-rs-gray-600 hover:text-rs-black hover:bg-rs-gray-100 active:bg-rs-gray-200",
+        // Ghost: Flat (L0)
+        ghost: "bg-transparent text-[var(--rs-text-tertiary)] hover:bg-[var(--rs-bg-element)] active:bg-[var(--rs-bg-well)]",
     };
 
     const sizes = {
-        sm: "h-8 px-3 text-[10px] uppercase tracking-wider rounded-[2px]",
-        md: "h-10 px-6 text-xs uppercase tracking-wide rounded-[4px]", // Stricter radius
-        lg: "h-12 px-8 text-sm uppercase tracking-wide rounded-[4px]",
+        sm: "h-8 px-3 text-[9px] uppercase tracking-widest rounded-[var(--rs-radius-element)]",
+        md: "h-12 px-6 text-[11px] uppercase tracking-widest rounded-[var(--rs-radius-element)] font-bold", // Taller for 'Molded' feel
+        lg: "h-14 px-8 text-xs uppercase tracking-widest rounded-[var(--rs-radius-element)] font-bold",
     };
 
     return (
         <button
             className={cn(
                 baseStyles,
+                "transition-all duration-300 ease-[var(--rs-ease-spring)]", // Spring Physics
                 variants[variant],
                 sizes[size],
                 fullWidth ? "w-full" : "",
@@ -53,8 +55,8 @@ export function RSButton({
             )}
             {...props}
         >
-            {/* Subtle top gloss for plastic feel */}
-            <span className="absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/10 pointer-events-none" />
+            {/* Parting Line (High-Gloss Edge) */}
+            <div className="absolute inset-0 rounded-[inherit] border-t border-l border-white/40 pointer-events-none" />
 
             <span className="relative z-10 flex items-center gap-2">
                 {children}

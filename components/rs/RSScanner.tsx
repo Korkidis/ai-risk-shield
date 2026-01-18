@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 interface RSScannerProps extends React.HTMLAttributes<HTMLDivElement> {
     active?: boolean;
-    status?: 'idle' | 'scanning' | 'complete' | 'error';
+    status?: string;
     imageUrl?: string; // Preview image
 }
 
@@ -22,8 +22,9 @@ export function RSScanner({
     return (
         <div
             className={cn(
-                "relative overflow-hidden bg-rs-black rounded-[4px] border border-rs-gray-800",
+                "relative overflow-hidden bg-[#121212] rounded-[8px] border-4 border-rs-gray-300", // Heavy Bezel
                 "aspect-video w-full flex items-center justify-center",
+                "shadow-[var(--rs-shadow-hull)]",
                 className
             )}
             {...props}
@@ -44,8 +45,12 @@ export function RSScanner({
                 </div>
             )}
 
-            {/* Grid Overlay (Always visible but subtle) */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+            {/* CRT Physical Layers */}
+            <div className="absolute inset-0 rs-crt-overlay opacity-30 pointer-events-none z-10" />
+            <div className="absolute inset-0 bg-[var(--rs-glass-convex)] opacity-50 z-20 pointer-events-none mix-blend-soft-light" />
+
+            {/* Grid Overlay (Recessed) */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none opacity-50" />
 
             {/* Target Corners (Camera Viewfinder feel) */}
             <div className="absolute inset-4 border border-rs-white/20 pointer-events-none" />

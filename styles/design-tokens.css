@@ -1,89 +1,61 @@
 @layer base {
     :root {
-        /* --- Core Palette (Braun / Scientific Instrument DNA) --- */
+        /* INDUSTRIAL FINISH — Mid-Century Coloration */
+        --rs-white: #EBE7E0;
+        /* "Clay White" — ABS Structural Shell */
+        --rs-gray-50: #E5E1DA;
+        --rs-gray-100: #DBD7D0;
+        --rs-gray-200: #CFCBC4;
+        --rs-gray-300: #B4B0AB;
+        /* "Lufthansa Grey" */
+        --rs-gray-400: #9A9691;
+        --rs-gray-500: #7A7671;
+        --rs-gray-600: #5A5651;
+        --rs-gray-700: #3D3935;
+        --rs-gray-800: #2A2622;
+        --rs-gray-900: #1A1A1A;
+        /* "Carbon Matte" */
+        --rs-black: #1A1A1A;
 
-        /* 1. The Chassis (Faceplate Neutrals) */
-        --rs-white: #f4f4f0;
-        /* "Warm Plastic" / Off-white (Not #ffffff) */
-        --rs-gray-50: #ebebeb;
-        /* Slight recess */
-        --rs-gray-100: #e0e0dc;
-        /* Surface border / Shallow bezel */
-        --rs-gray-200: #d1d1cd;
-        /* Deep bezel */
-        --rs-gray-300: #b8b8b4;
-        /* Structure / Panel lines */
-        --rs-gray-400: #9a9a96;
-        /* Disabled text */
-        --rs-gray-500: #70706c;
-        /* Secondary label */
-        --rs-gray-600: #52524e;
-        /* Primary label */
-        --rs-gray-700: #3d3d3a;
-        /* Darker text */
-        --rs-gray-800: #2b2b29;
-        /* High contrast ink */
-        --rs-gray-900: #1f1f1d;
-        /* Near black */
-        --rs-black: #121211;
-        /* "Obsidian" - Deepest recess / text */
-
-        /* 2. The Surgical Accents (Use sparingly) */
-        --rs-signal: #ff3b30;
-        /* "Hot" Red (Critical/Active) - Braun Red */
+        /* Functional Accents */
+        --rs-signal: #FF4F00;
+        /* "Vivid Signal" */
         --rs-safe: #006742;
-        /* Emerald Green (Verified) */
+        /* Emerald Green */
         --rs-info: #007aff;
-        /* International Blue (Select/Action) */
+        --rs-indicator: #3A6351;
+        --rs-function: #2E5A88;
 
-        /* 3. Materials & Depth (Neo-Skeuomorphism) */
-        /* Bevels (Raised) */
-        --rs-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
-        /* Card / Surface */
-        --rs-shadow-bevel:
-            0 1px 0px 0px rgba(255, 255, 255, 0.8) inset,
-            /* Top Highlight */
-            0 -1px 0px 0px rgba(0, 0, 0, 0.05) inset,
-            /* Bottom Shade */
-            0 1px 3px 0 rgba(0, 0, 0, 0.1);
-        /* Drop Shadow */
+        /* --- elevation scale (z-logic) --- */
+        /* l1: recessed */
+        --rs-shadow-l1: inset 4px 4px 8px #BEBAB2, inset -4px -4px 8px #FFFFFF;
+        /* l2: low extrusion */
+        --rs-shadow-l2: 4px 4px 8px #BEBAB2, -4px -4px 8px #FFFFFF;
+        /* l3: high extrusion */
+        --rs-shadow-l3: 8px 8px 16px #BEBAB2, -8px -8px 16px #FFFFFF;
 
-        --rs-shadow-bevel-heavy:
-            inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
-            0 2px 4px 0 rgba(0, 0, 0, 0.1),
-            0 1px 1px 0 rgba(0, 0, 0, 0.05);
+        --rs-shadow-pressed: var(--rs-shadow-l1);
 
-        /* Recesses (Pressed/Input) */
-        --rs-shadow-track:
-            0 2px 4px rgba(0, 0, 0, 0.06) inset,
-            /* Inner depth */
-            0 0 0 1px rgba(0, 0, 0, 0.08) inset;
-        /* Inner rim */
+        /* --- geometric nesting (radius) --- */
+        --rs-radius-chassis: 24px;
+        --rs-radius-container: 16px;
+        --rs-radius-element: 8px;
 
-        --rs-shadow-pressed:
-            0 1px 2px rgba(0, 0, 0, 0.15) inset;
-        /* Active button press */
+        /* --- kinetic feedback --- */
+        --rs-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-        --rs-shadow-knob:
-            0 1px 2px 0 rgba(0, 0, 0, 0.2),
-            0 2px 4px 0 rgba(0, 0, 0, 0.1);
+        /* --- high-fidelity details --- */
+        --rs-parting-line: 1px solid rgba(255, 255, 255, 0.4);
+        --rs-text-etched: 0px 1px 0px rgba(255, 255, 255, 0.8);
 
-        /* 4. Geometry */
-        --rs-radius-sm: 2px;
-        /* Precision machining (Sharp) */
-        --rs-radius-md: 4px;
-        /* Standard component */
-        --rs-radius-lg: 8px;
-        /* Panels */
-        --rs-radius-full: 9999px;
-        /* Pills/Circles only */
+        /* glass & crt effects */
+        --rs-glass-convex: radial-gradient(120% 120% at 50% -10%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 50%), radial-gradient(120% 120% at 50% 110%, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 50%);
 
-        /* 5. Typography (The Manual) */
+        --rs-texture-molded: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+
+        /* typography and spacing */
         --rs-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         --rs-font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
-
-        /* 6. Spacing */
-        --rs-space-0: 0px;
         --rs-space-1: 4px;
         --rs-space-2: 8px;
         --rs-space-3: 12px;
@@ -91,52 +63,80 @@
         --rs-space-5: 20px;
         --rs-space-6: 24px;
         --rs-space-8: 32px;
-        --rs-space-10: 40px;
-        --rs-space-12: 48px;
-        --rs-space-16: 64px;
-        --rs-space-24: 96px;
-
-        /* 7. Animation */
-        --rs-ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
-        --rs-duration-fast: 150ms;
-        --rs-duration-normal: 300ms;
-        --rs-duration-slow: 500ms;
     }
 
-    /* Global Reset / Texture */
-    body {
-        background-color: var(--rs-white);
-        color: var(--rs-black);
+    /* utility: etched label */
+    .rs-etched {
         font-family: var(--rs-font-sans);
-        -webkit-font-smoothing: antialiased;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #1A1A1A;
+        text-shadow: var(--rs-text-etched);
+        letter-spacing: 0.05em;
     }
 
-    /* Utility: Matte Plastic Texture (Subtle Noise) */
-    .rs-texture-noise {
-        position: relative;
-    }
-
-    .rs-texture-noise::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 50;
-        pointer-events: none;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-        opacity: 0.4;
-        mix-blend-mode: multiply;
-    }
-
-    /* Utility: The "Laser" Line (Separator) */
-    .rs-line {
-        height: 1px;
-        background-color: var(--rs-gray-200);
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-        /* Highlight below line */
+    /* utility: micro-dot grid */
+    .rs-bg-microdot {
+        background-color: var(--rs-white);
+        background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1.5px, transparent 1.5px);
+        background-size: 24px 24px;
     }
 }
 
-/* Keyframes for Scan Animation */
+/* global reset / texture */
+body {
+    background-color: var(--rs-white);
+    color: var(--rs-black);
+    font-family: var(--rs-font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* utility: injection molded texture */
+.rs-texture-molded {
+    position: relative;
+}
+
+.rs-texture-molded::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--rs-texture-molded);
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+}
+
+/* utility: crt scanlines */
+.rs-crt-overlay {
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 2px 100%;
+    pointer-events: none;
+}
+
+/* utility: digital noise */
+.rs-texture-noise {
+    position: relative;
+}
+
+.rs-texture-noise::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.02;
+}
+
+/* utility: the "laser" line (separator) */
+.rs-line {
+    height: 1px;
+    background-color: var(--rs-gray-200);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* keyframes for scan animation */
 @keyframes scan-line {
     0% {
         top: 0%;
@@ -157,11 +157,25 @@
     }
 }
 
-.animate-scan {
-    animation: scan-line 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-/* Global Utilities */
+.animate-scan {
+    animation: scan-line 2.5s linear infinite;
+}
+
+.animate-spin-slow {
+    animation: spin 4s linear infinite;
+}
+
+/* global utilities */
 .bg-rs-black {
     background-color: var(--rs-black);
 }

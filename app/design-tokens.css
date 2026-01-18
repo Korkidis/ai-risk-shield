@@ -1,21 +1,30 @@
 @layer base {
   :root {
-    /* --- Core Palette (Dieter Rams x Saul Bass DNA) --- */
-    --rs-black: #1a1a1a;
-    --rs-white: #faf9f7;
-    --rs-signal: #d62828;      /* Risk / Alert */
-    --rs-safe: #2d6a4f;        /* Resolved / Safe */
-    
-    /* Warm Grays for structural elements */
-    --rs-gray-900: #262624;
-    --rs-gray-800: #3d3d3a;
-    --rs-gray-700: #575752;
-    --rs-gray-600: #73736c;
-    --rs-gray-500: #919189;
-    --rs-gray-400: #b0b0a8;
-    --rs-gray-300: #cfcfc8;
-    --rs-gray-200: #e5e5df;
-    --rs-gray-100: #f2f2ed;
+    /* ═══ INDUSTRIAL FINISH — Mid-Century Coloration ═══ */
+    --rs-black: #1A1A1A;
+    /* Carbon Matte — Primary Text / Shadows */
+    --rs-white: #EBE7E0;
+    /* Clay White — ABS Structural Shell */
+    --rs-signal: #FF4F00;
+    /* Vivid Signal — Emergency / Alert */
+    --rs-safe: #006742;
+    /* Emerald Green — Verified / Resolved */
+    --rs-indicator: #3A6351;
+    /* Indicator Green — Valid / Safe Logic */
+    --rs-function: #2E5A88;
+    /* Function Blue — Secondary Context */
+
+    /* Warm Grays — Lufthansa Grey Scale */
+    --rs-gray-900: #1A1A1A;
+    --rs-gray-800: #2A2622;
+    --rs-gray-700: #3D3935;
+    --rs-gray-600: #5A5651;
+    --rs-gray-500: #7A7671;
+    --rs-gray-400: #9A9691;
+    --rs-gray-300: #B4B0AB;
+    /* Lufthansa Grey — Secondary Deck / Metal */
+    --rs-gray-200: #CFCBC4;
+    --rs-gray-100: #DBD7D0;
 
     /* --- Spacing System (4px Base Unit) --- */
     --rs-space-xs: 4px;
@@ -27,10 +36,22 @@
     --rs-space-3xl: 64px;
     --rs-space-4xl: 96px;
 
+    /* ════ PHYSICAL INTERFACE TOKENS ════ */
+    /* Shadows */
+    --rs-shadow-hull: 6px 6px 12px rgba(160, 155, 145, 0.4), -6px -6px 12px rgba(255, 255, 255, 0.8), inset 1px 1px 0px rgba(255, 255, 255, 0.5);
+    --rs-shadow-well: inset 4px 4px 8px rgba(160, 155, 145, 0.3), inset -4px -4px 8px rgba(255, 255, 255, 0.9), 0 1px 0 rgba(255, 255, 255, 0.5);
+    --rs-shadow-socket: inset 0 4px 8px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.1);
+
+    /* Textures */
+    --rs-texture-molded: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+
+    /* Glass */
+    --rs-glass-convex: radial-gradient(120% 120% at 50% -10%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 50%), radial-gradient(120% 120% at 50% 110%, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 50%);
+
     /* --- Typography (Authoritative Sans) --- */
     --rs-font-display: "Inter", -apple-system, sans-serif;
     --rs-font-body: "Inter", -apple-system, sans-serif;
-    
+
     /* Letter spacing for authority (tight) */
     --rs-tracking-tight: -0.02em;
     --rs-tracking-tighter: -0.05em;

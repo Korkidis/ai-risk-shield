@@ -78,53 +78,25 @@ export function RSKnob({
     }, [isDragging, min, max, onChange]);
 
     return (
-        <div className={cn("flex flex-col items-center gap-2 select-none", className)} {...props}>
+        <div className={cn("flex flex-col items-center gap-3 select-none", className)} {...props}>
             <div
                 ref={knobRef}
-                className="relative rounded-full cursor-ns-resize touch-none"
+                className="rounded-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l2)] flex items-center justify-center relative group cursor-ns-resize touch-none"
                 style={{ width: size, height: size }}
                 onMouseDown={handleMouseDown}
             >
-                {/* Ticks ring */}
-                <div className="absolute inset-0 rounded-full" style={{ transform: 'rotate(0deg)' }}>
-                    {Array.from({ length: 27 }).map((_, i) => (
-                        <div
-                            key={i}
-                            className="absolute w-[2px] h-[6px] bg-rs-gray-300 left-1/2 -translate-x-1/2 origin-bottom"
-                            style={{
-                                top: 0,
-                                height: '50%', // Origin is center 
-                                transformOrigin: 'bottom center',
-                                transform: `rotate(${-135 + (i * 10.38)}deg) translateY(-${size / 2 + 4}px)`
-                            }}
-                        >
-                            <div className="w-full h-[4px] bg-rs-gray-200" />
-                        </div>
-                    ))}
-                </div>
-
-                {/* Knob Body */}
                 <div
-                    className={cn(
-                        "absolute inset-1 rounded-full bg-rs-gray-100 border border-rs-gray-300",
-                        "shadow-[var(--rs-shadow-knob)]",
-                        "flex items-center justify-center transition-transform duration-75"
-                    )}
-                    style={{ transform: `rotate(${angle}deg)` }}
-                >
-                    {/* Grip texture */}
-                    <div className="absolute inset-2 rounded-full border border-rs-gray-200 opacity-50" />
-
-                    {/* Indicator Line */}
-                    <div className="absolute top-2 w-[3px] h-[12px] bg-rs-signal rounded-full shadow-sm" />
-                </div>
+                    className="absolute w-[4px] bg-[#FF4F00] rounded-full transition-transform duration-75 ease-out z-10"
+                    style={{
+                        height: '35%',
+                        top: '10%',
+                        transform: `rotate(${angle}deg)`,
+                        transformOrigin: 'bottom center'
+                    }}
+                />
+                <div className="w-[70%] h-[70%] rounded-full bg-[var(--rs-bg-element)] shadow-inner border border-[var(--rs-border-primary)]/30 relative z-0" />
             </div>
-
-            {/* Label */}
-            <div className="text-center">
-                {label && <div className="text-[10px] uppercase font-mono text-rs-gray-500 tracking-widest mb-0.5">{label}</div>}
-                <div className="font-mono text-sm font-bold text-rs-black">{Math.round(displayValue)}</div>
-            </div>
+            {label && <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">{label}</span>}
         </div>
     );
 }

@@ -27,15 +27,12 @@ export function RSMeter({
     return (
         <div className={cn("w-full flex flex-col gap-2", className)} {...props}>
             {/* The Tactile Track */}
-            <div className="relative h-4 w-full bg-rs-gray-200 rounded-sm overflow-hidden shadow-[var(--rs-shadow-track)]">
+            <div className="relative h-2 w-full bg-[var(--rs-bg-element)] rounded-full overflow-hidden shadow-inner border border-[var(--rs-border-primary)]/50">
                 {/* The Fill */}
                 <div
-                    className={cn("h-full transition-all duration-500 ease-out", fillColors[level])}
+                    className={cn("h-full transition-all duration-1000 ease-out", fillColors[level])}
                     style={{ width: `${value}%` }}
                 />
-
-                {/* Glass/Gloss Overlay for 'Meter' feel */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
             </div>
 
             {/* Scale / Hash Marks */}
@@ -43,8 +40,8 @@ export function RSMeter({
                 <div className="flex justify-between w-full px-[1px]">
                     {[0, 25, 50, 75, 100].map((tick) => (
                         <div key={tick} className="flex flex-col items-center gap-1">
-                            <div className="w-px h-1.5 bg-rs-gray-400" /> {/* Tick Mark */}
-                            <span className="font-mono text-[9px] text-rs-gray-500">{tick}</span>
+                            <div className="w-px h-1.5 bg-[var(--rs-border-primary)]" /> {/* Tick Mark */}
+                            <span className="font-mono text-[9px] text-[var(--rs-text-tertiary)]">{tick}</span>
                         </div>
                     ))}
                 </div>
