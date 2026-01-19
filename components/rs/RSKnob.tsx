@@ -85,18 +85,28 @@ export function RSKnob({
                 style={{ width: size, height: size }}
                 onMouseDown={handleMouseDown}
             >
+                {/* Precision Needle (The Indicator) */}
                 <div
-                    className="absolute w-[4px] bg-[#FF4F00] rounded-full transition-transform duration-75 ease-out z-10"
+                    className="absolute w-[4px] bg-[#FF4F00] rounded-full transition-transform duration-75 ease-out z-20"
                     style={{
-                        height: '35%',
+                        height: '40%',
                         top: '10%',
+                        left: '50%',
+                        marginLeft: '-2px',
                         transform: `rotate(${angle}deg)`,
                         transformOrigin: 'bottom center'
                     }}
                 />
-                <div className="w-[70%] h-[70%] rounded-full bg-[var(--rs-bg-element)] shadow-inner border border-[var(--rs-border-primary)]/30 relative z-0" />
+
+                {/* Inner Bezel (Recessed) */}
+                <div className="w-[70%] h-[70%] rounded-full bg-[var(--rs-bg-element)] shadow-inner border border-[var(--rs-border-primary)]/30 relative z-10" />
             </div>
-            {label && <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">{label}</span>}
+            {label && (
+                <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">{label}</span>
+                </div>
+            )}
         </div>
     );
 }
+

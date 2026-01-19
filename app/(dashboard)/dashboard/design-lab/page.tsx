@@ -19,6 +19,10 @@ import { RSMeter } from '@/components/rs/RSMeter';
 import { RSScanner } from '@/components/rs/RSScanner';
 import { RSSystemLog } from '@/components/rs/RSSystemLog';
 import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
+import { RSLED } from '@/components/rs/RSLED';
+import { RSRockerSwitch } from '@/components/rs/RSRockerSwitch';
+import { RSLever } from '@/components/rs/RSLever';
+import { RSKey } from '@/components/rs/RSKey';
 import { RSTelemetryStream } from '@/components/rs/RSTelemetryStream';
 import { RSCard } from '@/components/rs/RSCard';
 import { RSModal } from '@/components/rs/RSModal';
@@ -55,6 +59,14 @@ import { RSReportCard } from '@/components/rs/RSReportCard';
 
 export default function DesignLabPage() {
     const [activeTab, setActiveTab] = useState<'palette' | 'components' | 'physics' | 'marketing'>('components');
+    const [alertKeyActive, setAlertKeyActive] = useState(false);
+
+    // Braun Mechanical Deck States
+    const [masterLever, setMasterLever] = useState(true);
+    const [apertureLever, setApertureLever] = useState(false);
+    const [activeKey, setActiveKey] = useState<'scan' | 'grid' | 'alert'>('scan');
+
+    // System Data Generation Logic (Simplified for lab)
     const [showModal, setShowModal] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -355,7 +367,7 @@ export default function DesignLabPage() {
                                             Auxiliary_Needle_Deck
                                         </div>
                                         <span className="text-[10px] font-bold uppercase tracking-widest rs-etched mb-8 block opacity-50">Auxiliary Readout</span>
-                                        <div className="flex flex-wrap gap-8 items-center justify-around lg:justify-start">
+                                        <div className="flex flex-nowrap gap-10 items-center justify-start overflow-x-auto pb-4 scrollbar-hide">
                                             <RSAnalogNeedle value={0} label="IP Risk" powered={false} size={140} />
                                             <RSAnalogNeedle value={50} label="Brand Safety" isScanning={true} size={140} />
                                             <RSAnalogNeedle value={92} label="Provenance" level="critical" size={140} />
@@ -365,19 +377,116 @@ export default function DesignLabPage() {
                                         </p>
                                     </div>
 
-                                    {/* Manual Override Deck (Knobs) - Moved Below */}
-                                    <div className="lg:col-span-2 bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20 relative overflow-hidden">
+                                    {/* Status Indicator Deck */}
+                                    <div className="lg:col-span-1 bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20 relative overflow-hidden flex flex-col">
+                                        <div className="absolute top-4 right-4 text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest opacity-40">
+                                            Indicator_Panel_V4
+                                        </div>
+                                        <div className="mb-8">
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] rs-etched mb-6 block opacity-50">Master Warning Deck</span>
+                                            <div className="grid grid-cols-2 gap-y-5 gap-x-8">
+                                                <RSLED level="safe" label="System Power" labelPosition="right" />
+                                                <RSLED level="active" label="Logic Processor" labelPosition="right" isBlinking={true} />
+                                                <RSLED level="info" label="Network Bus" labelPosition="right" isBlinking={true} />
+                                                <RSLED level="warning" label="Thermal Fault" labelPosition="right" />
+                                                <RSLED level="critical" label="Structural Breach" labelPosition="right" isBlinking={true} />
+                                                <RSLED level="off" label="Spare Port / 01" labelPosition="right" />
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-auto pt-6 border-t border-[var(--rs-border-primary)]/10">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <RSLED level="safe" size="xs" isBlinking={true} />
+                                                    <span className="text-[9px] font-mono text-[var(--rs-text-secondary)] uppercase tracking-widest">Telemetry Stream: ACTIVE</span>
+                                                </div>
+                                                <div className="flex gap-1.5">
+                                                    <RSLED level="off" size="xs" />
+                                                    <RSLED level="off" size="xs" />
+                                                    <RSLED level="off" size="xs" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Manual Override Deck (Knobs) */}
+                                    <div className="lg:col-span-1 bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20 relative overflow-hidden">
                                         <div className="absolute top-4 right-4 text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest opacity-40">
                                             Manual_Override_Deck
                                         </div>
                                         <span className="text-[10px] font-bold uppercase tracking-widest rs-etched mb-4 block opacity-50">Control Surface</span>
                                         <div className="flex justify-center mt-6">
-                                            <div className="flex flex-col md:flex-row items-center justify-center gap-10 md:gap-16 w-full max-w-md">
-                                                <RSKnob label="Sensitivity" value={75} size={90} />
-                                                <div className="w-[1px] h-12 bg-[#DBD7D0] hidden md:block opacity-20" />
-                                                <RSKnob label="Depth" value={42} size={90} />
-                                                <div className="w-[1px] h-12 bg-[#DBD7D0] hidden md:block opacity-20" />
-                                                <RSKnob label="Threshold" value={88} size={90} />
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full items-center">
+                                                <div className="flex flex-col items-center gap-4">
+                                                    <RSKnob value={0} size={80} />
+                                                    <div className="flex items-center gap-2">
+                                                        <RSLED level="off" size="xs" />
+                                                        <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">Sensitivity</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-center gap-4">
+                                                    <RSKnob value={42} size={80} />
+                                                    <div className="flex items-center gap-2">
+                                                        <RSLED level="safe" size="xs" />
+                                                        <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">Depth</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-center gap-4">
+                                                    <RSKnob value={88} size={80} />
+                                                    <div className="flex items-center gap-2">
+                                                        <RSLED level="active" size="xs" isBlinking={true} />
+                                                        <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">Threshold</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Braun Mechanical Interface Deck */}
+                                    <div className="lg:col-span-1 bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20 relative overflow-hidden">
+                                        <div className="absolute top-4 right-4 text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest opacity-40">
+                                            Braun_Mechanical_Deck
+                                        </div>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched mb-4 block opacity-50">Mechanical Interface</span>
+                                        <div className="flex flex-col gap-10 mt-8">
+                                            {/* Lever Row */}
+                                            <div className="flex gap-12 items-center justify-center border-b border-[var(--rs-border-primary)]/5 pb-8">
+                                                <RSLever
+                                                    label="Master"
+                                                    orientation="horizontal"
+                                                    checked={masterLever}
+                                                    onCheckedChange={setMasterLever}
+                                                />
+                                                <RSLever
+                                                    label="Aperture"
+                                                    orientation="horizontal"
+                                                    checked={apertureLever}
+                                                    onCheckedChange={setApertureLever}
+                                                />
+                                            </div>
+
+                                            {/* Key Array */}
+                                            <div className="flex gap-6 items-center justify-center">
+                                                <RSKey
+                                                    label="Scan"
+                                                    active={activeKey === 'scan'}
+                                                    onClick={() => setActiveKey('scan')}
+                                                    icon={() => <div className="w-4 h-4 border-2 border-current rounded-sm" />}
+                                                />
+                                                <RSKey
+                                                    label="Grid"
+                                                    active={activeKey === 'grid'}
+                                                    onClick={() => setActiveKey('grid')}
+                                                    icon={() => <div className="w-4 h-4 border-b-2 border-r-2 border-current" />}
+                                                    color="#00FF94"
+                                                />
+                                                <RSKey
+                                                    label="Alert"
+                                                    active={activeKey === 'alert'}
+                                                    onClick={() => setActiveKey('alert')}
+                                                    icon={() => <div className="w-1 h-4 bg-current rounded-full" />}
+                                                    color="#3B82F6"
+                                                />
                                             </div>
                                         </div>
                                     </div>

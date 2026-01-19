@@ -17,7 +17,6 @@ export function RSToggle({
     size = 'md',
     ...props
 }: RSToggleProps) {
-    // Internal state if uncontrolled (simplified for sandbox)
     const [internalChecked, setInternalChecked] = React.useState(checked);
     const isChecked = onCheckedChange ? checked : internalChecked;
 
@@ -28,8 +27,8 @@ export function RSToggle({
     };
 
     const sizes = {
-        sm: { track: "w-8 h-4", thumb: "w-3 h-3 translate-x-0.5", thumbChecked: "translate-x-4.5" },
-        md: { track: "w-11 h-6", thumb: "w-5 h-5 translate-x-0.5", thumbChecked: "translate-x-5.5" },
+        sm: { track: "w-8 h-4.5", thumb: "w-3.5 h-3.5", translate: "translate-x-3.5" },
+        md: { track: "w-11 h-6", thumb: "w-5 h-5", translate: "translate-x-5" },
     };
 
     const currentSize = sizes[size];
@@ -41,25 +40,28 @@ export function RSToggle({
             aria-checked={isChecked}
             onClick={toggle}
             className={cn(
-                "relative inline-flex items-center rounded-full transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-rs-black focus:ring-offset-2",
-                // Track Styles: Deep Socket
-                "shadow-[var(--rs-shadow-socket)] border border-black/5",
-                isChecked ? "bg-rs-safe" : "bg-rs-gray-300",
+                "relative inline-flex shrink-0 cursor-pointer items-center transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rs-black focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                "bg-[var(--rs-gray-200)] border border-black/10 rounded-full",
+                "shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)]",
                 currentSize.track,
                 className
             )}
             {...props}
         >
-            <span className="sr-only">Toggle setting</span>
             <span
                 className={cn(
-                    "pointer-events-none rounded-full bg-rs-white shadow-[var(--rs-shadow-hull)] ring-0 transition-transform duration-300 cubic-bezier(0.16, 1, 0.3, 1)",
-                    // Thumb Detail
-                    "flex items-center justify-center",
-                    isChecked ? currentSize.thumbChecked : currentSize.thumb,
-                    size === 'md' ? "w-5 h-5" : "w-3 h-3"
+                    "pointer-events-none block rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_1px_rgba(255,255,255,1)] transition-transform duration-300 ease-[var(--rs-ease-spring)]",
+                    "flex items-center justify-center relative",
+                    isChecked ? currentSize.translate : "translate-x-0.5",
+                    currentSize.thumb
                 )}
-            />
+            >
+                {/* Internal Signal Dot (Braun Style) */}
+                <div className={cn(
+                    "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                    isChecked ? "bg-[var(--rs-safe)] opacity-100" : "bg-[var(--rs-gray-300)] opacity-40 shrink-0"
+                )} />
+            </span>
         </button>
     );
 }
