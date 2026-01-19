@@ -22,7 +22,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", icon: <LayoutDashboard />, href: "/dashboard" },
-    { label: "Active Scans", icon: <FileSearch />, href: "/dashboard/scans" },
+    { label: "Active Scans", icon: <FileSearch />, href: "/dashboard/scans-reports" },
     { label: "Design Lab", icon: <BookOpen />, href: "/dashboard/design-lab" }, // Added for easy access
     { label: "Risk Reports", icon: <ShieldAlert />, href: "/dashboard/reports" },
     { label: "History Log", icon: <History />, href: "/dashboard/history" },
@@ -42,7 +42,7 @@ export function RSSidebar({
     return (
         <aside
             className={cn(
-                "h-screen bg-rs-gray-50 border-r border-rs-gray-200 sticky top-0 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]",
+                "h-screen bg-rs-gray-50 border-r border-rs-gray-200 sticky top-0 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] z-[100]",
                 isCollapsed ? "w-16" : "w-64",
                 className
             )}

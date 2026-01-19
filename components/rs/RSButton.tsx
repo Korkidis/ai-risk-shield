@@ -1,10 +1,10 @@
-import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface RSButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
     size?: 'sm' | 'md' | 'lg';
     fullWidth?: boolean;
+    icon?: React.ReactNode;
 }
 
 export function RSButton({
@@ -12,6 +12,7 @@ export function RSButton({
     variant = 'primary',
     size = 'md',
     fullWidth = false,
+    icon,
     children,
     ...props
 }: RSButtonProps) {
@@ -59,6 +60,7 @@ export function RSButton({
             <div className="absolute inset-0 rounded-[inherit] border-t border-l border-white/40 pointer-events-none" />
 
             <span className="relative z-10 flex items-center gap-2">
+                {icon && <span className="flex-shrink-0">{icon}</span>}
                 {children}
             </span>
         </button>

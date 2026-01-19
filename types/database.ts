@@ -75,8 +75,16 @@ export interface ScanFinding {
   created_at: string
 }
 
+import { RiskProfile } from '@/lib/gemini'
+
 export interface ScanWithRelations extends ExtendedScan {
   assets?: Pick<ExtendedAsset, 'filename' | 'file_type'>
   scan_findings?: ScanFinding[]
   email?: string | null
+
+  // UI Helper Props (Join Results)
+  filename: string
+  file_type: string
+  image_url?: string | null
+  risk_profile?: RiskProfile | null
 }

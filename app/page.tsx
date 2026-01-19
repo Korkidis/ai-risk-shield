@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { RSBackground } from '@/components/rs/RSBackground'
 import { FreeUploadContainer } from '@/components/landing/FreeUploadContainer'
 import { ScanResultsWithGate } from '@/components/landing/ScanResultsWithGate'
 import { Header } from '@/components/layout/Header'
@@ -9,6 +10,7 @@ import { HowItWorks } from '@/components/landing/HowItWorks'
 import { CredibilitySection } from '@/components/landing/CredibilitySection'
 import { CTASection } from '@/components/landing/CTASection'
 import { RiskProfile } from '@/lib/gemini'
+import { Footer } from '@/components/landing/Footer'
 
 type ViewState = 'upload' | 'results'
 
@@ -18,17 +20,16 @@ export default function LandingPage() {
     const [riskProfile, setRiskProfile] = useState<RiskProfile | null>(null)
 
     return (
-        <div className="min-h-screen flex flex-col font-sans overflow-x-hidden bg-rs-white text-rs-black selection:bg-rs-gray-200">
+        <RSBackground variant="standard" fullScreen className="flex flex-col font-sans overflow-x-hidden selection:bg-[var(--rs-border-primary)] selection:text-[var(--rs-text-primary)]">
+            <div className="relative z-10 min-h-screen flex flex-col">
+                {/* NAVIGATION */}
+                <Header />
 
-            {/* NAVIGATION */}
-            <Header />
+                <main className="flex-grow w-full">
 
-            <main className="flex-grow w-full">
-
-                <div className="max-w-7xl mx-auto px-6 py-12 md:py-24">
-                    {/* VIEW 1: UPLOAD & PROCESSING (Encapsulated) */}
+                    {/* VIEW 1: UPLOAD & PROCESSING */}
                     {view === 'upload' && (
-                        <div className="animate-in fade-in duration-500">
+                        <div className="animate-in fade-in duration-500 w-full">
                             <FreeUploadContainer
                                 onUploadStart={() => {
                                     // Optional: Scroll to top or prepare UI
@@ -45,35 +46,28 @@ export default function LandingPage() {
 
                     {/* VIEW 2: RESULTS */}
                     {view === 'results' && riskProfile && (
-                        <div className="animate-in slide-in-from-bottom-4 duration-700">
+                        <div className="max-w-7xl mx-auto px-6 py-12 md:py-24 animate-in slide-in-from-bottom-4 duration-700">
                             <ScanResultsWithGate scanId={scanId} riskProfile={riskProfile} />
                         </div>
                     )}
-                </div>
 
-                {/* HOW IT WORKS SECTION */}
-                <HowItWorks />
+                    {/* HOW IT WORKS SECTION */}
+                    <HowItWorks />
 
-                {/* COMPARISON SECTION */}
-                <SubscriptionComparison />
+                    {/* COMPARISON SECTION */}
+                    <SubscriptionComparison />
 
-                {/* CREDIBILITY SECTION */}
-                <CredibilitySection />
+                    {/* CREDIBILITY SECTION */}
+                    <CredibilitySection />
 
-                {/* FINAL CTA SECTION */}
-                <CTASection />
+                    {/* FINAL CTA SECTION */}
+                    <CTASection />
 
-            </main>
+                </main>
 
-            {/* FOOTER */}
-            <footer className="max-w-7xl mx-auto px-6 py-10 border-t border-rs-gray-200 text-center space-y-6">
-                <p className="text-[10px] text-rs-gray-500 uppercase tracking-widest leading-loose max-w-3xl mx-auto font-medium">
-                    DISCLAIMER: Risk Shield is a diagnostic tool for forensic pattern recognition. This does NOT constitute legal advice.
-                    All final compliance decisions should be made by qualified legal counsel. Risk scores are indicators of algorithmic exposure, not definitive legal rulings.
-                </p>
-                <div className="text-[10px] text-rs-gray-400 uppercase tracking-widest">© 2024 AI Risk Shield Forensic Systems</div>
-            </footer>
-
-        </div>
+                {/* SYSTEM FOOTER */}
+                <Footer />
+            </div>
+        </RSBackground>
     )
 }

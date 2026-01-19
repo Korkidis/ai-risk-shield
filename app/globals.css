@@ -34,6 +34,8 @@
     --rs-shadow-l2: 6px 6px 12px rgba(190, 186, 178, 0.6), -6px -6px 12px rgba(255, 255, 255, 0.4);
     --rs-shadow-l3: 12px 12px 24px rgba(190, 186, 178, 0.7), -12px -12px 24px rgba(255, 255, 255, 0.4);
     --rs-shadow-pressed: var(--rs-shadow-l1);
+    --rs-shadow-bevel: var(--rs-shadow-l2);
+    --rs-shadow-socket: var(--rs-shadow-l1);
 
     /* --- geometric nesting (radius) --- */
     --rs-radius-chassis: 24px;
@@ -112,12 +114,7 @@
     letter-spacing: 0.05em;
   }
 
-  /* utility: micro-dot grid */
-  .rs-bg-microdot {
-    background-color: var(--rs-bg-surface);
-    background-image: radial-gradient(var(--rs-border-primary) 1.5px, transparent 1.5px);
-    background-size: 24px 24px;
-  }
+
 
   /* utility: physical well (recessed gradient) */
   .rs-well {
@@ -351,37 +348,4 @@ body {
 
 .animate-spin-slow {
   animation: spin 4s linear infinite;
-}
-
-/* global utilities (Restored Manually in Case Mapping Fails in some Contexts) */
-.bg-rs-black {
-  background-color: var(--rs-black);
-}
-
-.bg-rs-white {
-  background-color: var(--rs-white);
-}
-
-.bg-rs-signal {
-  background-color: var(--rs-signal);
-}
-
-.bg-rs-safe {
-  background-color: var(--rs-safe);
-}
-
-.text-rs-black {
-  color: var(--rs-black);
-}
-
-.text-rs-white {
-  color: var(--rs-white);
-}
-
-.text-rs-signal {
-  color: var(--rs-signal);
-}
-
-.text-rs-safe {
-  color: var(--rs-safe);
 }

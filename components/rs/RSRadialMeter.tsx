@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+
 import { cn } from '@/lib/utils';
 import { RiskLevel } from './RSRiskScore';
 
@@ -8,6 +9,7 @@ interface RSRadialMeterProps extends React.HTMLAttributes<HTMLDivElement> {
     value: number; // 0-100
     level: RiskLevel;
     size?: number;
+    label?: string;
 }
 
 export function RSRadialMeter({
@@ -15,6 +17,7 @@ export function RSRadialMeter({
     value,
     level,
     size = 200,
+    label,
     ...props
 }: RSRadialMeterProps) {
     // Config
@@ -60,6 +63,8 @@ export function RSRadialMeter({
         medium: "#919189",
         low: "#b0b0a8",
         safe: "var(--rs-safe)",
+        warning: "var(--rs-signal)",
+        info: "var(--rs-info)",
     };
 
     // Needle Rotation
@@ -133,7 +138,7 @@ export function RSRadialMeter({
                     textAnchor="middle"
                     className="font-mono text-[10px] uppercase fill-rs-gray-500 tracking-widest"
                 >
-                    RISK IDX
+                    {label}
                 </text>
 
             </svg>

@@ -1,21 +1,30 @@
-import { DashboardSidebar } from '@/components/dashboard/Sidebar'
-import { DashboardTopBar } from '@/components/dashboard/TopBar'
+import React from 'react';
+import { RSSidebar } from '@/components/rs/RSSidebar';
+import { RSNavbar } from '@/components/rs/RSNavbar';
+import { RSBackground } from '@/components/rs/RSBackground';
 
 export default function DashboardLayout({
     children,
 }: {
-    children: React.ReactNode
+    children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-indigo-500/30">
-            <DashboardSidebar />
+        <RSBackground variant="microdot" className="h-screen w-full overflow-hidden">
+            <div className="flex h-full w-full overflow-hidden">
+                {/* Sidebar Navigation */}
+                <RSSidebar className="z-50 shrink-0" />
 
-            <div className="pl-64 flex flex-col min-h-screen">
-                <DashboardTopBar />
-                <main className="flex-1 p-8 overflow-x-hidden">
-                    {children}
-                </main>
+                {/* Right Side: Navbar + Content */}
+                <div className="flex-1 flex flex-col h-full overflow-hidden relative z-10">
+                    {/* Top Navigation */}
+                    <RSNavbar />
+
+                    {/* Main Content Area - Scrollable */}
+                    <main className="flex-1 overflow-y-auto p-0">
+                        {children}
+                    </main>
+                </div>
             </div>
-        </div>
-    )
+        </RSBackground>
+    );
 }

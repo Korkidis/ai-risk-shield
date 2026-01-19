@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { RiskLevel } from './RSRiskScore'; // Reuse type
@@ -22,6 +24,8 @@ export function RSMeter({
         medium: "bg-rs-gray-500",
         low: "bg-rs-gray-400",
         safe: "bg-rs-safe",
+        warning: "bg-rs-signal", // Re-using signal for consistency, could use hex if needed
+        info: "bg-rs-info",
     };
 
     return (

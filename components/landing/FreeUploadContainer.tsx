@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-
+import { useState, useEffect } from 'react'
 import { RiskProfile } from '@/lib/gemini'
-import { RSUploadZone } from '../rs/RSUploadZone'
+import { RSFileUpload } from '../rs/RSFileUpload'
 import { RSProcessingPanel } from '../rs/RSProcessingPanel'
+import { RSScanner } from '../rs/RSScanner'
+import { RSPanel } from '../rs/RSPanel'
+import { RSButton } from '../rs/RSButton'
 
 type Props = {
   onUploadStart: () => void
@@ -12,26 +14,32 @@ type Props = {
 }
 
 export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) {
-  // State: 'ready' | 'processing'
-  // Note: 'results' state is handled by the parent page component switching views
-
   const [isProcessing, setIsProcessing] = useState(false)
   const [currentFile, setCurrentFile] = useState<File | null>(null)
-
-  // Processing Simulation State
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [statusMessage, setStatusMessage] = useState("Initializing forensic engine...")
 
+  /* Cleanup preview URL on unmount */
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
   const handleInitiateScan = async (file: File) => {
+    // Immediate preview for responsiveness
+    const url = URL.createObjectURL(file)
+    setPreviewUrl(url)
     setCurrentFile(file)
     setIsProcessing(true)
-    onUploadStart() // Notify parent to switch layout mode if needed
+    onUploadStart()
 
     try {
       const formData = new FormData()
       formData.append('file', file)
 
-      // Start Simulation Interval
+      // Simulation Steps
       let p = 0
       const steps = [
         "Verifying digital signature...",
@@ -43,18 +51,15 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       ]
 
       const interval = setInterval(() => {
-        p += 0.5 // Slower, more deliberate for "wow" factor
-        if (p > 90) p = 90 // Cap until real completion
-
+        p += 0.5
+        if (p > 90) p = 90
         setProgress(p)
         setStatusMessage(steps[Math.floor((p / 100) * steps.length)] || "Finalizing analysis...")
       }, 100)
 
-      // Store interval for cleanup
       const cleanupSimulation = () => clearInterval(interval)
 
-
-      // 1. Upload to API
+      // 1. Upload
       const uploadRes = await fetch('/api/scans/anonymous-upload', {
         method: 'POST',
         body: formData
@@ -68,12 +73,12 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
 
       const { scanId } = await uploadRes.json()
 
-      // 2. Poll for scan completion
+      // 2. Poll
       let attempts = 0
-      const maxAttempts = 60 // 60 seconds max wait
+      const maxAttempts = 60
 
       while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+        await new Promise(resolve => setTimeout(resolve, 1000))
 
         const statusRes = await fetch(`/api/scans/${scanId}/status`)
         if (!statusRes.ok) {
@@ -88,7 +93,6 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
           setProgress(100)
           setStatusMessage("Analysis complete. Compiling dossier.")
 
-          // Construct risk profile from scan status
           const riskProfile: RiskProfile = {
             composite_score: scanStatus.composite_score || 0,
             verdict: scanStatus.risk_level === 'critical' ? 'Critical Risk' :
@@ -97,28 +101,27 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
             ip_report: {
               score: scanStatus.ip_risk_score || 0,
               teaser: 'IP risk analysis complete',
-              reasoning: 'Analysis complete. Full details available after email capture.'
+              reasoning: 'Analysis complete.'
             },
             safety_report: {
               score: scanStatus.safety_risk_score || 0,
               teaser: 'Brand safety analysis complete',
-              reasoning: 'Analysis complete. Full details available after email capture.'
+              reasoning: 'Analysis complete.'
             },
             provenance_report: {
               score: scanStatus.provenance_risk_score || 0,
               teaser: 'Provenance analysis complete',
-              reasoning: 'Analysis complete. Full details available after email capture.'
+              reasoning: 'Analysis complete.'
             },
             c2pa_report: {
               status: 'missing'
             },
-            chief_officer_strategy: 'Free scan completed. Upgrade for full forensic analysis.'
+            chief_officer_strategy: 'Free scan completed.'
           }
 
-          // Small delay to show 100% completion before switching
           setTimeout(() => {
             onUploadComplete(riskProfile)
-          }, 1500) // Longer delay to admire the 100% state
+          }, 1500)
 
           return
         } else if (scanStatus.status === 'failed') {
@@ -133,73 +136,174 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       throw new Error('Analysis timed out. Please try again.')
 
     } catch (err: any) {
-      console.error('Upload error details:', {
-        message: err.message,
-        stack: err.stack,
-        error: err
-      })
+      console.error('Upload error details:', err)
 
-      let errorMessage = 'Analysis failed. Please try again.'
+      // DEV MODE FALLBACK: If server fails, we still want to show the visual experience for testing.
+      if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+        console.warn("Dev Mode: Server failed, running simulation fallback.");
 
-      if (err.message.includes('Scan limit reached')) {
-        errorMessage = 'Limit reached: 3 free scans per month.'
-      } else if (err.message.includes('Upload failed')) {
-        errorMessage = 'Upload connection failed.'
-      } else if (err.message.includes('Invalid file type')) {
-        errorMessage = 'Invalid format use JPG, PNG, or MP4.'
+        // Clear any previous text
+        setStatusMessage("Dev Mode: Server offline. Simulating forensic scan...");
+        setProgress(0);
+
+        let simProgress = 0;
+        const fallbackInterval = setInterval(() => {
+          simProgress += 2;
+          if (simProgress > 100) simProgress = 100;
+
+          setProgress(simProgress);
+
+          if (simProgress >= 100) {
+            clearInterval(fallbackInterval);
+            setStatusMessage("Analysis complete. Compiling dossier.");
+
+            const mockProfile: RiskProfile = {
+              composite_score: 85,
+              verdict: 'High Risk',
+              ip_report: { score: 90, teaser: 'Detected potential copyright match', reasoning: 'Visual match to known assets.' },
+              safety_report: { score: 10, teaser: 'No safety issues', reasoning: 'Content appears safe.' },
+              provenance_report: { score: 80, teaser: 'Missing C2PA credentials', reasoning: 'Metadata stripped.' },
+              c2pa_report: { status: 'missing' },
+              chief_officer_strategy: 'Dev Mode Simulation Complete.'
+            };
+
+            setTimeout(() => onUploadComplete(mockProfile), 1000);
+          }
+        }, 50);
+        return;
       }
 
-      alert(errorMessage)
+      let errorMessage = 'Analysis failed. Please try again.'
+      if (err.message.includes('Scan limit reached')) errorMessage = 'Limit reached: 3 free scans per month.'
+      else if (err.message.includes('Upload failed')) errorMessage = 'Upload connection failed.'
+      else if (err.message.includes('Invalid file type')) errorMessage = 'Invalid format. Use JPG, PNG, or MP4.'
+
+      alert(`${errorMessage}\n\nTechnical Details: ${err.message || JSON.stringify(err)}`)
       setIsProcessing(false)
       setCurrentFile(null)
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-16 py-12">
+    <div className="relative min-h-[calc(100vh-64px)] bg-[var(--rs-bg-surface)] flex items-start justify-center py-12 md:py-24 select-none overflow-hidden">
 
-      {/* Hero Text - Fade out on processing */}
-      <div className={`text-center space-y-6 transition-all duration-500 ${isProcessing ? 'opacity-50 blur-sm scale-95' : 'opacity-100'}`}>
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-none text-rs-black">
-          AI Risk <span className="text-rs-gray-400">Validation</span>
-        </h1>
-        <p className="text-rs-gray-600 text-lg max-w-xl mx-auto font-medium">
-          Forensic auditing for IP, Brand Safety, and Content Provenance.
-        </p>
-      </div>
+      {/* Molded Top Edge */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-white/40" />
 
-      {/* INTERACTIVE ZONE */}
-      <div className="w-full max-w-2xl mx-auto">
-        {!isProcessing ? (
-          <RSUploadZone
-            onFileSelect={handleInitiateScan}
-            maxSizeMB={50}
-            className="bg-rs-white shadow-[var(--rs-shadow-sm)]"
-          />
-        ) : (
-          <div className="animate-in zoom-in-95 duration-700 ease-out">
-            <RSProcessingPanel
-              filename={currentFile?.name || "unknown_asset"}
-              progress={progress}
-              statusMessage={statusMessage}
-              imageSrc={currentFile ? URL.createObjectURL(currentFile) : null}
-            />
+      <div className="max-w-7xl mx-auto px-6 md:px-12 w-full relative z-10">
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-8 md:mt-0">
+
+          {/* COLUMN 1: TYPOGRAPHY (LEFT) */}
+          <div className={`lg:col-span-7 space-y-8 transition-all duration-700 ${isProcessing ? 'opacity-40 blur-sm' : 'opacity-100'}`}>
+
+            <h1 className="text-6xl md:text-7xl lg:text-9xl rs-header-bold-italic leading-[0.85] text-[var(--rs-text-primary)] text-left tracking-tighter">
+              TRUST IS<br />
+              NO LONGER<br />
+              <span className="text-[var(--rs-signal)]">HUMAN</span>
+            </h1>
+
+            <p className="rs-type-body font-medium text-[var(--rs-text-secondary)] text-lg max-w-lg text-left leading-relaxed">
+              Professional-grade forensic tools for the synthetic age. Use our aperture scanner to detect deepfakes, synthetic grains, and identity manipulation.
+            </p>
           </div>
-        )}
-      </div>
 
-      {/* Footer Info */}
-      {!isProcessing && (
-        <div className="flex flex-col items-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-          <div className="flex items-center gap-6 text-xs font-mono text-rs-gray-400 uppercase tracking-widest">
-            <span>Free: 3 scans/mo</span>
-            <span>•</span>
-            <span>Secure Processing</span>
-            <span>•</span>
-            <span>Auto-Deletion</span>
+          {/* COLUMN 2: SCANNER (RIGHT) */}
+          <div className="w-full relative group perspective-1000 lg:col-span-5">
+            {/* APERTURE CHASSIS WRAPPER */}
+            <RSPanel className="p-4 md:p-6 border border-white/60 relative">
+
+              {/* Chassis Header */}
+              <div className="flex justify-between items-center px-2 mb-4">
+                <div className="flex items-center gap-3 opacity-90">
+                  {/* System Status Indicator - Green Diode */}
+                  <div className="relative flex items-center justify-center mr-2">
+                    <div className="w-3 h-3 rounded-full bg-[var(--rs-safe)] shadow-[0_0_8px_var(--rs-safe)] animate-pulse" />
+                    <div className="absolute w-full h-full rounded-full bg-[var(--rs-safe)] opacity-40 blur-md animate-ping" />
+                  </div>
+                  <span className="rs-type-mono text-[9px] text-[var(--rs-text-primary)] tracking-widest uppercase font-bold">SYSTEM STATUS: LIVE</span>
+                </div>
+                <div className="bg-[var(--rs-bg-secondary)] px-3 py-1.5 rounded-full shadow-inner">
+                  <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">3/3 REMAINING</span>
+                </div>
+              </div>
+
+              <RSScanner
+                active={isProcessing}
+                status={isProcessing ? 'scanning' : 'idle'}
+                className="rounded-[16px] border-none shadow-inner bg-black min-h-[340px]"
+              >
+                {!isProcessing ? (
+                  <div className="relative w-full h-full p-8 flex flex-col justify-center items-center z-40 text-center select-none group/screen">
+
+                    {/* Rams Motion Element: Active Breathing Reticle */}
+                    <div className="relative mb-10">
+                      {/* Ambient Glow */}
+                      <div className="absolute inset-0 bg-white/5 rounded-full blur-2xl animate-pulse" />
+
+                      {/* Rotating Outer Ring */}
+                      <div className="absolute inset-[-12px] border border-white/10 rounded-full border-dashed animate-spin-slow opacity-40" />
+
+                      {/* Main Circle */}
+                      <div className="w-24 h-24 rounded-full border-[2px] border-white/20 flex items-center justify-center relative z-10 shadow-[0_0_30px_rgba(255,255,255,0.05)] bg-white/5 backdrop-blur-sm group-hover/screen:border-[var(--rs-signal)] group-hover/screen:shadow-[0_0_20px_var(--rs-signal)] transition-all duration-500">
+                        {/* Upload Icon - Arrow Up */}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/60 animate-pulse group-hover/screen:text-[var(--rs-signal)]"><path d="M12 17V3" /><path d="m6 9 6-6 6 6" /><path d="M5 21h14" /></svg>
+                      </div>
+
+                      {/* Orbiting blip */}
+                      <div className="absolute inset-0 animate-spin-slow">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 w-1.5 h-1.5 bg-[var(--rs-signal)] rounded-full shadow-[0_0_10px_var(--rs-signal)] opacity-80" />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-3 opacity-80">
+                      <span className="rs-type-mono text-xs text-[var(--rs-signal)] tracking-[0.2em] uppercase font-bold animate-pulse shadow-black drop-shadow-md">UPLOAD ASSET</span>
+                      <div className="w-12 h-0.5 bg-white/20 rounded-full overflow-hidden">
+                        <div className="w-full h-full bg-[var(--rs-signal)] -translate-x-full animate-[shimmer_2s_infinite]" />
+                      </div>
+                    </div>
+
+                    <RSFileUpload
+                      onFileSelect={handleInitiateScan}
+                      maxSizeMB={50}
+                      className="absolute inset-0 opacity-0 cursor-pointer z-50"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative w-full h-full z-40">
+                    <RSProcessingPanel
+                      filename={currentFile?.name || "unknown_asset"}
+                      progress={progress}
+                      statusMessage={statusMessage}
+                      imageSrc={previewUrl}
+                      className="h-full"
+                    />
+                  </div>
+                )}
+              </RSScanner>
+
+              {/* External Control Button (Chassis Mounted) */}
+              {!isProcessing && (
+                <div className="mt-4 md:mt-6">
+                  <RSButton
+                    variant="primary"
+                    fullWidth
+                    size="lg"
+                    onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+                    icon={
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                    }
+                  >
+                    Run Free Heuristic Scan
+                  </RSButton>
+                </div>
+              )}
+
+            </RSPanel>
           </div>
         </div>
-      )}
-    </div>
+
+      </div >
+    </div >
   )
 }

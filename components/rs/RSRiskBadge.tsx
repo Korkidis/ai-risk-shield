@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+
 import { cn } from '@/lib/utils';
 
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'safe' | 'unknown';

@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +32,7 @@ export function RSScanner({
             {...props}
         >
             {/* Background / Image Layer */}
-            {imageUrl ? (
+            {imageUrl && (
                 <img
                     src={imageUrl}
                     alt="Scan Target"
@@ -39,10 +41,6 @@ export function RSScanner({
                         isScanning ? "opacity-60 grayscale-[50%]" : "opacity-90"
                     )}
                 />
-            ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-mono text-xs text-rs-gray-600 uppercase tracking-widest">No Signal</span>
-                </div>
             )}
 
             {/* CRT Physical Layers */}

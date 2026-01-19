@@ -1,147 +1,157 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { AssetViewer } from '@/components/dashboard/AssetViewer'
-import { IntelligenceRail } from '@/components/dashboard/IntelligenceRail'
-import { RiskProfile } from '@/lib/gemini'
-import { BrandGuideline } from '@/types/database'
-import { Shield, ChevronDown } from 'lucide-react'
+import React from 'react';
+import { Shield } from 'lucide-react';
+import { RSScanner } from '@/components/rs/RSScanner';
+import { RSSystemLog } from '@/components/rs/RSSystemLog';
+import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
+import { RSC2PAWidget } from '@/components/rs/RSC2PAWidget';
+import { RSMeter } from '@/components/rs/RSMeter';
+import { RSRiskBadge } from '@/components/rs/RSRiskBadge';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const [status, setStatus] = useState<'idle' | 'scanning' | 'complete'>('idle')
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
-  const [riskProfile, setRiskProfile] = useState<RiskProfile | null>(null)
-  const [guidelines, setGuidelines] = useState<BrandGuideline[]>([])
-  const [selectedGuidelineId, setSelectedGuidelineId] = useState<string>('none')
+    const [scanStatus, setScanStatus] = React.useState<'idle' | 'scanning' | 'complete'>('idle');
 
-  useEffect(() => {
-    fetchGuidelines()
-  }, [])
+    // Simulate Scan Sequence on Mount (or on click)
+    React.useEffect(() => {
+        const sequence = async () => {
+            await new Promise(r => setTimeout(r, 1000)); // Initial Idle
+            setScanStatus('scanning');
+            await new Promise(r => setTimeout(r, 3000)); // Scan Duration
+            setScanStatus('complete');
+        };
+        sequence();
+    }, []);
 
-  const fetchGuidelines = async () => {
-    try {
-      const res = await fetch('/api/guidelines')
-      const data = await res.json()
-      const list = data.guidelines || []
-      setGuidelines(list)
+    // Derived values based on state
+    const isScanning = scanStatus === 'scanning';
+    const isComplete = scanStatus === 'complete';
 
-      // Auto-select the default profile if it exists
-      const defaultProfile = list.find((g: BrandGuideline) => g.is_default)
-      if (defaultProfile) {
-        setSelectedGuidelineId(defaultProfile.id)
-      } else {
-        setSelectedGuidelineId('none')
-      }
-    } catch (err) {
-      console.error('Failed to fetch guidelines:', err)
-    }
-  }
+    // Final Results (only shown when complete, else 0 or jitter handled by component)
+    const results = {
+        ipRisk: isComplete ? 98 : 0,
+        brandSafety: isComplete ? 5 : 0,
+        provenance: isComplete ? 95 : 0
+    };
 
-  const handleFileSelect = (selectedFile: File) => {
-    setFile(selectedFile)
-    setStatus('idle')
-    setRiskProfile(null)
+    return (
+        <div className="flex flex-col lg:flex-row gap-6 h-full p-4 w-full min-h-[900px]">
 
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      setPreview(ev.target?.result as string)
-      startScan(selectedFile)
-    }
-    reader.readAsDataURL(selectedFile)
-  }
+            {/* LEFT PANE: PRIMARY SCANNER (65%) */}
+            <div className="flex-[2] bg-[#121212] rounded-[32px] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[10px] border-[var(--rs-bg-surface)] overflow-hidden">
 
-  const startScan = async (fileToScan: File) => {
-    setStatus('scanning')
+                {/* Dark Mode Chassis Overlay */}
+                <div className="absolute inset-0 rounded-[22px] pointer-events-none border border-white/5 z-20" />
 
-    try {
-      const formData = new FormData()
-      formData.append('file', fileToScan)
-      formData.append('guidelineId', selectedGuidelineId)
+                {/* Header */}
+                <div className="flex justify-between items-start mb-6 relative z-10">
+                    <div>
+                        <div className="text-[#FF4F00] font-mono text-xs font-bold tracking-widest uppercase mb-1">Scanner_v2.0</div>
+                        <div className="text-[#FF4F00]/40 font-mono text-[10px] tracking-widest uppercase">Buffer_Rdy</div>
+                    </div>
+                    <div className="text-[#FF4F00] font-mono text-[10px] tracking-widest uppercase">CH_01_INPUT</div>
+                </div>
 
-      const res = await fetch('/api/analyze', { method: 'POST', body: formData })
+                {/* Main Viewport */}
+                <div className="flex-1 flex items-center justify-center relative z-10 min-h-[400px]">
+                    <div className="w-full max-w-2xl">
+                        <RSScanner active={isScanning} status={scanStatus} className="border-0 bg-transparent shadow-none" />
+                        {!isScanning && !isComplete && (
+                            <div className="text-center mt-8">
+                                <div className="inline-flex flex-col items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center text-white/40">
+                                        <div className="w-8 h-8 border-t-2 border-white/40" />
+                                    </div>
+                                    <p className="text-white/40 font-mono text-xs uppercase tracking-widest">Drop file here or click to browse</p>
+                                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • .JPG/.PNG/.MP4</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}))
-        throw new Error(errorData.error || errorData.details || 'Analysis failed')
-      }
-
-      const data = await res.json()
-      setRiskProfile(data)
-      setStatus('complete')
-    } catch (err: any) {
-      console.error(err)
-      alert(err.message || 'Analysis failed. Please try again.')
-      setStatus('idle')
-    }
-  }
-
-  const handleClear = () => {
-    setFile(null)
-    setPreview(null)
-    setRiskProfile(null)
-    setStatus('idle')
-  }
-
-  return (
-    <div className="h-[calc(100vh-8rem)] min-h-[600px] flex flex-col gap-6">
-      {/* Policy Selector Bar */}
-      <div className="flex items-center justify-between bg-slate-900/40 border border-slate-800 px-6 py-3 rounded-2xl backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center border border-indigo-500/20">
-            <Shield className="w-4 h-4 text-indigo-500" />
-          </div>
-          <div>
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Analysis Guidelines</div>
-            <div className="flex items-center gap-2 group cursor-pointer relative">
-              <select
-                value={selectedGuidelineId}
-                onChange={(e) => setSelectedGuidelineId(e.target.value)}
-                className="bg-transparent text-sm font-bold text-white focus:outline-none appearance-none pr-8 cursor-pointer hover:text-indigo-400 transition-colors"
-              >
-                <option value="none" className="bg-[#020617]">Industry Standard (Baseline)</option>
-                <option value="default" className="bg-[#020617]">Default Brand Profile</option>
-                {guidelines.map(g => (
-                  <option key={g.id} value={g.id} className="bg-[#020617]">Custom Profile: {g.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="w-3 h-3 text-slate-500 absolute right-0 pointer-events-none" />
+                {/* System Log */}
+                <div className="mt-8 relative z-10 opacity-80">
+                    <RSSystemLog
+                        logs={[
+                            { id: '1', timestamp: '10:42:01', message: 'Initialize secure handshake...', status: 'done' },
+                            { id: '2', timestamp: '10:42:05', message: 'Syncing with control node...', status: 'done' },
+                            { id: '3', timestamp: '10:42:09', message: 'Analyzing stream...', status: isScanning ? 'active' : 'done' },
+                        ]}
+                        className="bg-black/50 border-white/10 text-white/60 h-40"
+                    />
+                </div>
             </div>
-          </div>
+
+            {/* RIGHT PANE: ANALYSIS & TELEMETRY (35%) */}
+            <div className="flex-1 flex flex-col gap-8">
+
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8 bg-[var(--rs-bg-surface)] p-4 rounded-xl border border-[var(--rs-border-primary)]/50 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 bg-[var(--rs-bg-element)] rounded-lg flex items-center justify-center border border-[var(--rs-border-primary)]">
+                            <Shield size={14} className="text-[var(--rs-text-secondary)]" />
+                        </div>
+                        <div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">Analysis Guidelines</div>
+                            <div className="text-sm font-bold text-[var(--rs-text-primary)]">Acme Wine Co. Guidelines</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* RISK SCORE CARD */}
+                <div className="bg-[var(--rs-bg-surface)] rounded-[32px] p-6 shadow-[var(--rs-shadow-l2)] flex flex-col justify-between min-h-[250px] relative">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <div className="text-[var(--rs-text-secondary)] font-mono text-xs font-bold tracking-widest uppercase">Risk Analysis</div>
+                            <div className="text-[var(--rs-text-tertiary)] font-mono text-[10px] tracking-widest uppercase mt-1">ID: -- VER: 2.4</div>
+                        </div>
+                        <RSRiskBadge level={isComplete ? "safe" : "unknown"} className={cn("text-white", isComplete ? "bg-[#006742]" : "bg-gray-500")} />
+                    </div>
+
+                    <div className="flex items-end justify-between mt-8">
+                        <div className="text-8xl font-black tracking-tighter text-[var(--rs-text-primary)] rs-etched">
+                            {isComplete ? '0%' : '--'}
+                        </div>
+                        <div className="flex-1 ml-12 pb-4">
+                            <div className="flex justify-between items-center gap-4 text-[10px] font-bold uppercase text-[var(--rs-text-tertiary)] mb-2">
+                                <span>Likelihood</span>
+                                <span>Standby</span>
+                            </div>
+                            <RSMeter value={isComplete ? 0 : 0} level="safe" />
+                            <div className="flex justify-between text-[9px] font-mono text-[var(--rs-text-tertiary)] mt-2 opacity-50">
+                                <span>0</span>
+                                <span>25</span>
+                                <span>50</span>
+                                <span>75</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* DIALS CLUSTER (CONTAINED) */}
+                <div className="bg-[var(--rs-bg-surface)] rounded-[32px] p-6 shadow-[var(--rs-shadow-l2)]">
+                    <div className="grid grid-cols-3 gap-2">
+                        <div className="flex flex-col items-center gap-4">
+                            <RSAnalogNeedle isScanning={isScanning} value={results.ipRisk} label="IP Risk" size={120} />
+                        </div>
+                        <div className="flex flex-col items-center gap-4">
+                            <RSAnalogNeedle isScanning={isScanning} value={results.brandSafety} label="Brand Safety" size={120} />
+                        </div>
+                        <div className="flex flex-col items-center gap-4">
+                            <RSAnalogNeedle isScanning={isScanning} value={results.provenance} label="Provenance" size={120} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* C2PA WIDGET (FRAMED) */}
+                <div className="bg-[var(--rs-bg-surface)] rounded-[32px] p-3 shadow-[var(--rs-shadow-l2)] flex-1 min-h-[250px] flex flex-col">
+                    <RSC2PAWidget className="flex-1 w-full h-full rounded-[24px]" />
+                </div>
+
+            </div>
         </div>
-
-        <div className="hidden md:flex items-center gap-6">
-          <div className="flex flex-col items-end">
-            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Evaluation Engine</span>
-            <span className="text-xs font-bold text-emerald-500 flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Forensic 2.5 Active
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
-        {/* Left Primary Canvas: Asset Viewer */}
-        <div className="col-span-12 lg:col-span-7 h-full">
-          <AssetViewer
-            file={file}
-            preview={preview}
-            onFileSelect={handleFileSelect}
-            onClear={handleClear}
-          />
-        </div>
-
-        {/* Right Rail: Intelligence & Actions */}
-        <div className="col-span-12 lg:col-span-5 h-full overflow-y-auto custom-scrollbar">
-          <IntelligenceRail
-            status={status}
-            profile={riskProfile}
-          />
-        </div>
-      </div>
-
-
-    </div>
-  )
+    );
 }

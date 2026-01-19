@@ -1,411 +1,164 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
 import {
     Plus,
+    Search,
     FileText,
-    Trash2,
-    CheckCircle2,
-    Upload,
-    Loader2,
-    X,
+    Shield,
     Globe,
-    Monitor,
-    Zap
+    AlertTriangle,
+    CheckCircle2,
+    MoreVertical,
+    Download
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BrandGuideline } from '@/types/database'
-import { format } from 'date-fns'
+import { RSButton } from '@/components/rs/RSButton'
+import { RSInput } from '@/components/rs/RSInput'
+import { RSSelect } from '@/components/rs/RSSelect'
+import { RSModal } from '@/components/rs/RSModal'
+import { RSTextarea } from '@/components/rs/RSTextarea'
+import { RSDraftingBoard } from '@/components/rs/RSDraftingBoard'
+
+// Mock Data
+type BrandGuideline = {
+    id: string
+    title: string
+    category: 'voice' | 'visual' | 'legal' | 'safety'
+    status: 'active' | 'draft' | 'archived'
+    last_updated: string
+    version: string
+}
+
+const MOCK_GUIDELINES: BrandGuideline[] = [
+    { id: 'BG-001', title: 'Core Voice & Tone', category: 'voice', status: 'active', last_updated: '2025-01-15', version: '2.1' },
+    { id: 'BG-002', title: 'Logo Usage Restriction', category: 'visual', status: 'active', last_updated: '2025-01-10', version: '1.4' },
+    { id: 'BG-003', title: 'Competitor Mention Policy', category: 'legal', status: 'draft', last_updated: '2025-01-20', version: '0.9' },
+    { id: 'BG-004', title: 'NSFW Content Filtering', category: 'safety', status: 'active', last_updated: '2024-12-05', version: '3.0' },
+]
 
 export default function BrandGuidelinesPage() {
-    const [guidelines, setGuidelines] = useState<BrandGuideline[]>([])
-    const [loading, setLoading] = useState(true)
-    const [selectedGuideline, setSelectedGuideline] = useState<BrandGuideline | null>(null)
-    const [isCreating, setIsCreating] = useState(false)
-    const [editingGuideline, setEditingGuideline] = useState<BrandGuideline | null>(null)
-    const [extracting, setExtracting] = useState(false)
+    const [guidelines, setGuidelines] = useState(MOCK_GUIDELINES)
+    const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [filterCategory, setFilterCategory] = useState('all')
 
-    useEffect(() => {
-        fetchGuidelines()
-    }, [])
-
-    const fetchGuidelines = async () => {
-        setLoading(true)
-        try {
-            const res = await fetch('/api/guidelines')
-            const data = await res.json()
-            setGuidelines(data.guidelines || [])
-        } catch (err) {
-            console.error('Failed to fetch guidelines:', err)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const handleSave = async (formData: any) => {
-        const method = editingGuideline ? 'PATCH' : 'POST'
-        const url = editingGuideline ? `/api/guidelines/${editingGuideline.id}` : '/api/guidelines'
-
-        try {
-            await fetch(url, {
-                method,
-                body: JSON.stringify(formData),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            setIsCreating(false)
-            setEditingGuideline(null)
-            fetchGuidelines()
-        } catch (err) {
-            console.error('Save failed:', err)
-        }
-    }
-
-    const handleSetDefault = async (id: string) => {
-        try {
-            await fetch(`/api/guidelines/${id}`, {
-                method: 'PATCH',
-                body: JSON.stringify({ is_default: true }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            fetchGuidelines()
-        } catch (err) {
-            console.error('Failed to set default:', err)
-        }
-    }
-
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this profile?')) return
-        try {
-            const res = await fetch(`/api/guidelines/${id}`, { method: 'DELETE' })
-            const data = await res.json()
-            if (data.error) alert(data.error)
-            else fetchGuidelines()
-        } catch (err) {
-            console.error('Failed to delete:', err)
-        }
-    }
-
-    const onFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
-        setExtracting(true)
-        const formData = new FormData()
-        formData.append('file', file)
-
-        try {
-            const res = await fetch('/api/guidelines/extract', {
-                method: 'POST',
-                body: formData
-            })
-            const extracted = await res.json()
-
-            // Auto-create guideline from extraction
-            await fetch('/api/guidelines', {
-                method: 'POST',
-                body: JSON.stringify({
-                    name: extracted.name || file.name.replace(/\.[^/.]+$/, ""),
-                    industry: extracted.industry,
-                    prohibitions: extracted.prohibitions,
-                    requirements: extracted.requirements,
-                    context_modifiers: extracted.context_modifiers,
-                    target_markets: extracted.target_markets,
-                    target_platforms: extracted.target_platforms
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            fetchGuidelines()
-        } catch (err) {
-            console.error('Extraction failed:', err)
-            alert('Failed to extract and create guideline.')
-        } finally {
-            setExtracting(false)
-        }
-    }
+    const filteredGuidelines = guidelines.filter(g => {
+        const matchesSearch = g.title.toLowerCase().includes(searchTerm.toLowerCase()) || g.id.toLowerCase().includes(searchTerm.toLowerCase())
+        const matchesCategory = filterCategory === 'all' || g.category === filterCategory
+        return matchesSearch && matchesCategory
+    })
 
     return (
-        <div className="flex h-full gap-6 relative overflow-hidden">
-            <div className="flex-1 flex flex-col space-y-6 overflow-hidden">
-                <div className="flex items-center justify-between">
+        <RSDraftingBoard className="flex h-full gap-6 p-6">
+            <div className="flex-1 flex flex-col space-y-6 overflow-hidden relative z-10 w-full h-full">
+                <div className="flex items-center justify-between border-b border-black/10 pb-4">
                     <div>
-                        <h1 className="text-2xl font-black text-white">Guidelines & Policies</h1>
-                        <p className="text-slate-500 text-sm">Define custom rules to tailor AI analysis to your brand.</p>
+                        <h1 className="text-[var(--rs-text-primary)] text-lg font-medium tracking-tight">POLICY_CONTROL_MODULE</h1>
+                        <p className="text-xs font-mono text-rs-text-tertiary mt-1 uppercase tracking-widest pl-5">// ACTIVE_POLICIES: {guidelines.length}</p>
                     </div>
-                    <div className="flex gap-3">
-                        <label className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all cursor-pointer">
-                            {extracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                            Auto-Extract PDF
-                            <input type="file" className="hidden" onChange={onFileUpload} accept=".pdf,image/*" disabled={extracting} />
-                        </label>
-                        <button
-                            onClick={() => setIsCreating(true)}
-                            className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all border border-slate-700"
-                        >
-                            <Plus className="w-4 h-4" />
-                            New Profile
-                        </button>
-                    </div>
+                    <RSButton variant="primary" icon={<Plus size={14} />} onClick={() => setIsCreateOpen(true)}>NEW_PROTOCOL</RSButton>
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                    {loading ? (
-                        <div className="h-64 flex flex-col items-center justify-center gap-4">
-                            <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-                            <p className="text-slate-500 text-sm font-medium animate-pulse">Loading profiles...</p>
-                        </div>
-                    ) : guidelines.length === 0 ? (
-                        <div className="h-64 flex flex-col items-center justify-center text-slate-500 border-2 border-dashed border-slate-800 rounded-3xl bg-slate-900/10 p-8 text-center">
-                            <div className="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center mb-4">
-                                <Zap className="w-8 h-8 opacity-20" />
-                            </div>
-                            <p className="font-medium">No guidelines defined</p>
-                            <p className="text-xs mt-1 max-w-xs mx-auto">Upload a brand PDF or create a manual profile to start evaluating scans against your standards.</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
-                            {guidelines.map((g) => (
-                                <GuidelineCard
-                                    key={g.id}
-                                    guideline={g}
-                                    onClick={() => setSelectedGuideline(g)}
-                                    onSetDefault={() => handleSetDefault(g.id)}
-                                    onDelete={() => handleDelete(g.id)}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <AnimatePresence>
-                {selectedGuideline && (
-                    <motion.div
-                        initial={{ x: '100%', opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: '100%', opacity: 0 }}
-                        className="fixed right-0 top-0 bottom-0 w-[450px] bg-[#020617] border-l border-slate-800 p-8 flex flex-col gap-8 shadow-2xl z-[60] overflow-y-auto custom-scrollbar"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-xl font-black text-white uppercase tracking-tight">{selectedGuideline.name}</h2>
-                                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1">{selectedGuideline.industry || 'General Industry'}</p>
-                            </div>
-                            <button onClick={() => setSelectedGuideline(null)} className="p-2 text-slate-500 hover:text-white bg-slate-900 rounded-lg border border-slate-800 transition-colors">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <Section title="Prohibitions" items={selectedGuideline.prohibitions} icon={<X className="text-red-500" />} />
-                        <Section title="Requirements" items={selectedGuideline.requirements} icon={<CheckCircle2 className="text-emerald-500" />} />
-                        <Section title="Context Modifiers" items={selectedGuideline.context_modifiers} icon={<Globe className="text-indigo-500" />} />
-
-                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800">
-                            <div>
-                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                    <Globe className="w-3 h-3" /> Markets
-                                </h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {selectedGuideline.target_markets.map(m => <span key={m} className="px-2 py-1 bg-slate-900 border border-slate-800 rounded text-[10px] font-bold text-slate-400">{m}</span>)}
-                                </div>
-                            </div>
-                            <div>
-                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                    <Monitor className="w-3 h-3" /> Platforms
-                                </h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {selectedGuideline.target_platforms.map(p => <span key={p} className="px-2 py-1 bg-slate-900 border border-slate-800 rounded text-[10px] font-bold text-slate-400">{p}</span>)}
-                                </div>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => { setEditingGuideline(selectedGuideline); setIsCreating(true); setSelectedGuideline(null); }}
-                            className="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl text-xs font-black transition-all border border-slate-700 mt-auto"
-                        >
-                            EDIT PROFILE
-                        </button>
-                    </motion.div>
-                )}
-
-                {(isCreating) && (
-                    <GuidelineModal
-                        guideline={editingGuideline}
-                        onClose={() => { setIsCreating(false); setEditingGuideline(null); }}
-                        onSave={handleSave}
+                {/* Filters */}
+                <div className="flex gap-4 items-end bg-[#EBE7E0] p-4 border border-black/5 rounded-[4px] shadow-[var(--rs-shadow-socket)]">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rs-text-tertiary" />
+                        <RSInput
+                            placeholder="SEARCH_POLICIES..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-rs-white shadow-[var(--rs-shadow-socket)]"
+                        />
+                    </div>
+                    <RSSelect
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        options={[
+                            { value: 'all', label: 'CAT: ALL' },
+                            { value: 'voice', label: 'CAT: VOICE' },
+                            { value: 'visual', label: 'CAT: VISUAL' },
+                            { value: 'legal', label: 'CAT: LEGAL' },
+                            { value: 'safety', label: 'CAT: SAFETY' }
+                        ]}
+                        className="w-48 bg-rs-white shadow-[var(--rs-shadow-socket)]"
                     />
-                )}
-            </AnimatePresence>
-        </div>
-    )
-}
-
-function GuidelineModal({ guideline, onClose, onSave }: { guideline: BrandGuideline | null, onClose: () => void, onSave: (data: any) => void }) {
-    const [name, setName] = useState(guideline?.name || '')
-    const [industry, setIndustry] = useState(guideline?.industry || '')
-    const [prohibitions, setProhibitions] = useState(guideline?.prohibitions.join('\n') || '')
-    const [requirements, setRequirements] = useState(guideline?.requirements.join('\n') || '')
-    const [context, setContext] = useState(guideline?.context_modifiers.join('\n') || '')
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        onSave({
-            name,
-            industry,
-            prohibitions: prohibitions.split('\n').filter(l => l.trim()),
-            requirements: requirements.split('\n').filter(l => l.trim()),
-            context_modifiers: context.split('\n').filter(l => l.trim()),
-            target_markets: guideline?.target_markets || ['Global'],
-            target_platforms: guideline?.target_platforms || ['All']
-        })
-    }
-
-    return (
-        <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
-        >
-            <motion.div
-                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-[#020617] border border-slate-800 w-full max-w-2xl rounded-3xl p-8 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
-            >
-                <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-black text-white uppercase">{guideline ? 'Edit Profile' : 'New Brand Profile'}</h2>
-                    <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors">
-                        <X className="w-6 h-6" />
-                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Profile Name</label>
-                            <input
-                                value={name} onChange={e => setName(e.target.value)} required
-                                className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                                placeholder="Holiday Campaign 2026"
-                            />
+                {/* Grid */}
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-20">
+                        {filteredGuidelines.map(g => (
+                            <GuidelineCard key={g.id} guideline={g} isSelected={false} onClick={() => { }} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Create Modal */}
+            <RSModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="INITIALIZE_NEW_PROTOCOL">
+                <div className="space-y-6">
+                    <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Protocol_Name</label>
+                        <RSInput placeholder="ENTER_NAME..." autoFocus />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Category</label>
+                            <RSSelect options={[{ value: 'voice', label: 'VOICE' }, { value: 'legal', label: 'LEGAL' }]} />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Industry</label>
-                            <input
-                                value={industry} onChange={e => setIndustry(e.target.value)}
-                                className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                                placeholder="Luxury Goods"
-                            />
+                        <div>
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Priority</label>
+                            <RSSelect options={[{ value: 'high', label: 'HIGH' }, { value: 'low', label: 'LOW' }]} />
                         </div>
                     </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                            <X className="w-3 h-3 text-red-500" /> Prohibitions (One per line)
-                        </label>
-                        <textarea
-                            value={prohibitions} onChange={e => setProhibitions(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 min-h-[100px] resize-none"
-                            placeholder="No alcohol imagery&#10;No political content"
-                        />
+                    <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Description_Log</label>
+                        <RSTextarea placeholder="// DESCRIBE_PROTOCOL_PARAMETERS..." minRows={4} />
                     </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Requirements (One per line)
-                        </label>
-                        <textarea
-                            value={requirements} onChange={e => setRequirements(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 min-h-[100px] resize-none"
-                            placeholder="Logo must be clearly visible&#10;Diverse representation required"
-                        />
+                    <div className="flex justify-end gap-3 pt-4 border-t border-rs-border-primary">
+                        <RSButton variant="ghost" onClick={() => setIsCreateOpen(false)}>CANCEL</RSButton>
+                        <RSButton variant="primary">INITIALIZE</RSButton>
                     </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                            <Zap className="w-3 h-3 text-indigo-500" /> Context Modifiers
-                        </label>
-                        <textarea
-                            value={context} onChange={e => setContext(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 min-h-[100px] resize-none"
-                            placeholder="We are a swimwear brand (beach nudity context is safe)"
-                        />
-                    </div>
-
-                    <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20">
-                        {guideline ? 'Update Profile' : 'Create Profile'}
-                    </button>
-                </form>
-            </motion.div>
-        </motion.div>
+                </div>
+            </RSModal>
+        </RSDraftingBoard>
     )
 }
 
-function GuidelineCard({ guideline, onClick, onSetDefault, onDelete }: {
-    guideline: BrandGuideline,
-    onClick: () => void,
-    onSetDefault: () => void,
-    onDelete: () => void
-}) {
+function GuidelineCard({ guideline, isSelected, onClick }: { guideline: BrandGuideline, isSelected: boolean, onClick: () => void }) {
     return (
         <motion.div
-            whileHover={{ y: -4 }}
-            className={`group bg-slate-900/40 border-2 rounded-2xl p-6 transition-all border-slate-800 hover:border-slate-700`}
+            layout
+            whileHover={{ y: -2 }}
+            className={`group bg-rs-white border-2 border-rs-gray-200 rounded-[6px] p-6 transition-all relative overflow-hidden cursor-pointer shadow-[var(--rs-shadow-bevel)] hover:border-rs-black hover:shadow-[0_8px_16px_rgba(0,0,0,0.1)]`}
         >
-            <div className="flex justify-between items-start mb-6">
-                <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20">
-                    <FileText className="w-6 h-6 text-indigo-500" />
+            {/* Corner Accents - Physical Feel */}
+            <div className="absolute top-0 right-0 w-8 h-8 bg-rs-gray-100 border-b border-l border-rs-gray-200 rounded-bl-[12px]" />
+
+            <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className="p-2 bg-rs-gray-50 rounded-[4px] border border-rs-gray-200 shadow-inner">
+                    {guideline.category === 'voice' && <FileText size={20} className="text-rs-text-secondary" />}
+                    {guideline.category === 'visual' && <Globe size={20} className="text-rs-text-secondary" />}
+                    {guideline.category === 'legal' && <Shield size={20} className="text-rs-text-secondary" />}
+                    {guideline.category === 'safety' && <AlertTriangle size={20} className="text-rs-text-secondary" />}
                 </div>
-                <div className="flex gap-2">
-                    {guideline.is_default && (
-                        <div className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase rounded-lg">Default</div>
-                    )}
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-2 text-slate-600 hover:text-red-500 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                <div className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-[2px] border ${guideline.status === 'active' ? 'bg-rs-safe/10 text-rs-safe border-rs-safe' : 'bg-rs-gray-100 text-rs-text-tertiary border-rs-gray-200'
+                    }`}>
+                    {guideline.status}
                 </div>
             </div>
 
-            <div onClick={onClick} className="cursor-pointer">
-                <h3 className="text-lg font-black text-white group-hover:text-indigo-400 transition-colors">{guideline.name}</h3>
-                <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-mono">
-                    {guideline.industry || 'General'} • {guideline.prohibitions.length + guideline.requirements.length} Rules
-                </p>
+            <h3 className="text-sm font-bold text-rs-text-primary mb-1 uppercase tracking-tight">{guideline.title}</h3>
+            <p className="text-[10px] font-mono text-rs-text-tertiary mb-6">ID: {guideline.id} // V{guideline.version}</p>
 
-                <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-800/50">
-                    <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
-                        Last Used: {guideline.last_used_at ? format(new Date(guideline.last_used_at), 'MMM dd') : 'Never'}
-                    </span>
-                    {!guideline.is_default && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onSetDefault(); }}
-                            className="text-[10px] text-indigo-500 hover:text-indigo-400 font-black uppercase tracking-widest"
-                        >
-                            Set Default
-                        </button>
-                    )}
-                </div>
+            <div className="flex items-center justify-between pt-4 border-t border-rs-border-primary border-dashed">
+                <span className="text-[10px] font-mono text-rs-text-tertiary">UPDATED: {guideline.last_updated}</span>
+                <button className="text-rs-text-primary hover:text-rs-signal transition-colors">
+                    <Download size={14} />
+                </button>
             </div>
         </motion.div>
-    )
-}
-
-function Section({ title, items, icon }: { title: string, items: string[], icon: React.ReactNode }) {
-    return (
-        <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                {icon} {title}
-            </h4>
-            <div className="space-y-2">
-                {items.map((item, i) => (
-                    <div key={i} className="flex gap-3 text-xs text-slate-300 font-medium leading-relaxed bg-slate-900/50 p-3 rounded-xl border border-slate-800/50">
-                        <span className="text-slate-700 pt-0.5">•</span>
-                        {item}
-                    </div>
-                ))}
-            </div>
-        </div>
     )
 }

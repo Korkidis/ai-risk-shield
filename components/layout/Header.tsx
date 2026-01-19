@@ -7,14 +7,14 @@ export function Header() {
     return (
         <nav className="border-b border-rs-gray-200 bg-rs-white/80 backdrop-blur-md sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => window.location.reload()}>
+                <Link href="/" className="flex items-center space-x-3 cursor-pointer group">
                     <div className="w-8 h-8 bg-rs-black rounded-[4px] flex items-center justify-center shadow-[var(--rs-shadow-sm)] transition-transform group-hover:scale-105">
                         <ShieldAlert className="w-5 h-5 text-rs-white" strokeWidth={2.5} />
                     </div>
                     <span className="font-bold tracking-tighter text-xl uppercase text-rs-black group-hover:text-rs-gray-700 transition-colors">
                         Risk Shield <span className="text-[10px] text-rs-gray-500 align-top ml-1 font-mono">v2.0</span>
                     </span>
-                </div>
+                </Link>
 
                 {/* Center Navigation */}
                 <div className="hidden md:flex items-center space-x-8">

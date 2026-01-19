@@ -1,9 +1,11 @@
+"use client";
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
 
 interface RSCalloutProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: 'info' | 'warning' | 'success';
+    variant?: 'info' | 'warning' | 'success' | 'danger';
     title?: string;
 }
 
@@ -27,6 +29,10 @@ export function RSCallout({
         success: {
             container: "bg-emerald-50 border-emerald-200 text-emerald-900",
             icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+        },
+        danger: {
+            container: "bg-red-50 border-red-200 text-red-900",
+            icon: <AlertCircle className="w-5 h-5 text-red-600" />
         }
     };
 

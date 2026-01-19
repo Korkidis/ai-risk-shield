@@ -1,9 +1,10 @@
 "use client";
 
 import React from 'react';
+
 import { cn } from '@/lib/utils';
 
-export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'safe';
+export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'safe' | 'warning' | 'info';
 
 interface RSRiskScoreProps extends React.HTMLAttributes<HTMLDivElement> {
     score: number; // 0-100
@@ -31,6 +32,8 @@ export function RSRiskScore({
         medium: "text-rs-gray-600",
         low: "text-rs-gray-500",
         safe: "text-rs-safe",
+        warning: "text-[#FF4F00]",
+        info: "text-[#005F87]",
     };
 
     const sizeClasses = {
