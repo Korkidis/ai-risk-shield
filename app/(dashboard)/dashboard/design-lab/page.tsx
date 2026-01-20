@@ -8,7 +8,10 @@ import {
     Move,
     Sun,
     Moon,
-    Megaphone
+    Megaphone,
+    Aperture,
+    Grid as GridIcon,
+    AlertTriangle
 } from 'lucide-react';
 
 import { RSButton } from '@/components/rs/RSButton';
@@ -20,7 +23,6 @@ import { RSScanner } from '@/components/rs/RSScanner';
 import { RSSystemLog } from '@/components/rs/RSSystemLog';
 import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
 import { RSLED } from '@/components/rs/RSLED';
-import { RSRockerSwitch } from '@/components/rs/RSRockerSwitch';
 import { RSLever } from '@/components/rs/RSLever';
 import { RSKey } from '@/components/rs/RSKey';
 import { RSTelemetryStream } from '@/components/rs/RSTelemetryStream';
@@ -31,7 +33,6 @@ import { FreeForensicReport } from '@/components/landing/FreeForensicReport';
 import { UpgradeModal } from '@/components/landing/UpgradeModal';
 // Missing Input Controls
 import { RSCheckbox } from '@/components/rs/RSCheckbox';
-import { RSToggle } from '@/components/rs/RSToggle';
 import { RSSelect } from '@/components/rs/RSSelect';
 import { RSTextarea } from '@/components/rs/RSTextarea';
 import { RSFileUpload } from '@/components/rs/RSFileUpload';
@@ -39,7 +40,6 @@ import { RSUploadZone } from '@/components/rs/RSUploadZone';
 import { RSBackground } from '@/components/rs/RSBackground';
 // Missing Data Visualization
 import { RSRadialMeter } from '@/components/rs/RSRadialMeter';
-import { RSProgressBar } from '@/components/rs/RSProgressBar';
 import { RSRiskScore } from '@/components/rs/RSRiskScore';
 import { RSC2PAWidget } from '@/components/rs/RSC2PAWidget';
 // Missing Structural Elements
@@ -59,7 +59,6 @@ import { RSReportCard } from '@/components/rs/RSReportCard';
 
 export default function DesignLabPage() {
     const [activeTab, setActiveTab] = useState<'palette' | 'components' | 'physics' | 'marketing'>('components');
-    const [alertKeyActive, setAlertKeyActive] = useState(false);
 
     // Braun Mechanical Deck States
     const [masterLever, setMasterLever] = useState(true);
@@ -279,19 +278,19 @@ export default function DesignLabPage() {
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                                     {/* Binary Controls */}
                                     <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] space-y-8">
-                                        <div className="flex items-center gap-2 mb-4 opacity-40">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest rs-etched">Binary States</span>
+                                        <div className="flex items-center gap-2 mb-8 opacity-40">
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] rs-etched">BINARY STATES</span>
                                         </div>
                                         <div className="space-y-6">
                                             <RSCheckbox label="Enable Safe Mode" checked={true} />
                                             <RSCheckbox label="Allow External Signals" checked={false} />
                                             <div className="flex items-center justify-between pt-2">
-                                                <span className="text-sm font-medium">System Power</span>
-                                                <RSToggle checked={true} />
+                                                <span className="text-sm font-medium text-[var(--rs-text-primary)]">System Power</span>
+                                                <RSLever orientation="horizontal" checked={true} className="!gap-0" />
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium">Silent Mode</span>
-                                                <RSToggle size="sm" checked={false} />
+                                                <span className="text-sm font-medium text-[var(--rs-text-primary)]">Silent Mode</span>
+                                                <RSLever orientation="horizontal" checked={false} className="!gap-0" />
                                             </div>
                                         </div>
                                     </div>
@@ -452,13 +451,13 @@ export default function DesignLabPage() {
                                             {/* Lever Row */}
                                             <div className="flex gap-12 items-center justify-center border-b border-[var(--rs-border-primary)]/5 pb-8">
                                                 <RSLever
-                                                    label="Master"
+                                                    label="MASTER"
                                                     orientation="horizontal"
                                                     checked={masterLever}
                                                     onCheckedChange={setMasterLever}
                                                 />
                                                 <RSLever
-                                                    label="Aperture"
+                                                    label="APERTURE"
                                                     orientation="horizontal"
                                                     checked={apertureLever}
                                                     onCheckedChange={setApertureLever}
@@ -471,20 +470,20 @@ export default function DesignLabPage() {
                                                     label="Scan"
                                                     active={activeKey === 'scan'}
                                                     onClick={() => setActiveKey('scan')}
-                                                    icon={() => <div className="w-4 h-4 border-2 border-current rounded-sm" />}
+                                                    icon={Aperture}
                                                 />
                                                 <RSKey
                                                     label="Grid"
                                                     active={activeKey === 'grid'}
                                                     onClick={() => setActiveKey('grid')}
-                                                    icon={() => <div className="w-4 h-4 border-b-2 border-r-2 border-current" />}
+                                                    icon={GridIcon}
                                                     color="#00FF94"
                                                 />
                                                 <RSKey
                                                     label="Alert"
                                                     active={activeKey === 'alert'}
                                                     onClick={() => setActiveKey('alert')}
-                                                    icon={() => <div className="w-1 h-4 bg-current rounded-full" />}
+                                                    icon={AlertTriangle}
                                                     color="#3B82F6"
                                                 />
                                             </div>
@@ -501,77 +500,69 @@ export default function DesignLabPage() {
                                     <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
                                 </div>
 
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
-                                    {/* Core Risk Vectors */}
-                                    <div className="bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20 relative overflow-hidden">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-12">
+                                    {/* COMPOSITE RISK ANALYSIS (Unified View) */}
+                                    <div className="lg:col-span-7 bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20 relative overflow-hidden flex flex-col">
                                         <div className="absolute top-4 right-4 text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest opacity-40">
                                             Predictive_Analysis_Deck
                                         </div>
-                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched mb-12 block opacity-50">Core Risk Vectors</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched mb-10 block opacity-50">Composite Risk Analysis</span>
 
-                                        <div className="flex flex-wrap justify-center gap-10 lg:gap-16 pt-4">
-                                            <div className="flex flex-col items-center gap-6">
-                                                <RSRadialMeter value={82} level="critical" label="IP_RISK" size={120} />
-                                                <div className="text-center space-y-1">
-                                                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-rs-signal opacity-80">CRITICAL_THREAT</span>
-                                                    <p className="text-[10px] text-[var(--rs-text-tertiary)] max-w-[120px] leading-tight">Potential copyright infringement detected.</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 mb-16">
+                                            <RSRiskScore score={92} level="critical" trend="up" label="Global Threat" />
+                                            <RSRiskScore score={12} level="safe" trend="stable" label="Safety Index" size="sm" />
+                                        </div>
+
+                                        <div className="mt-auto pt-10 border-t border-[var(--rs-border-primary)]/10">
+                                            <div className="flex flex-wrap items-center justify-between gap-6">
+                                                <div className="flex flex-col items-center gap-4 flex-1 min-w-[120px]">
+                                                    <RSRadialMeter value={82} level="critical" label="IP_RISK" size={100} />
+                                                    <div className="text-center">
+                                                        <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-rs-signal opacity-80">CRITICAL_THREAT</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-
-                                            <div className="flex flex-col items-center gap-6">
-                                                <RSRadialMeter value={24} level="safe" label="BRAND_SAFETY" size={120} />
-                                                <div className="text-center space-y-1">
-                                                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-rs-safe opacity-80">STABLE_SIGNAL</span>
-                                                    <p className="text-[10px] text-[var(--rs-text-tertiary)] max-w-[120px] leading-tight">Within acceptable safety parameters.</p>
+                                                <div className="flex flex-col items-center gap-4 flex-1 min-w-[120px]">
+                                                    <RSRadialMeter value={24} level="safe" label="BRAND_SAFETY" size={100} />
+                                                    <div className="text-center">
+                                                        <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-rs-safe opacity-80">STABLE_SIGNAL</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-
-                                            <div className="flex flex-col items-center gap-6">
-                                                <RSRadialMeter value={61} level="warning" label="PROVENANCE" size={120} />
-                                                <div className="text-center space-y-1">
-                                                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-rs-warning opacity-80">UNVERIFIED_SOURCE</span>
-                                                    <p className="text-[10px] text-[var(--rs-text-tertiary)] max-w-[120px] leading-tight">Missing or incomplete metadata chain.</p>
+                                                <div className="flex flex-col items-center gap-4 flex-1 min-w-[120px]">
+                                                    <RSRadialMeter value={61} level="warning" label="PROVENANCE" size={100} />
+                                                    <div className="text-center">
+                                                        <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-rs-warning opacity-80">UNVERIFIED</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Risk Assessment */}
-                                    <div className="bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] space-y-12">
-                                        <div className="space-y-8">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">Composite Risk Analysis</span>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                                <RSRiskScore score={92} level="critical" trend="up" label="Global Threat" />
-                                                <RSRiskScore score={12} level="safe" trend="stable" label="Safety Index" size="sm" />
+                                    {/* Telemetry Pipeline (Relocated Right) */}
+                                    <div className="lg:col-span-5 flex flex-col gap-10">
+                                        <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20 flex-1 flex flex-col">
+                                            <div className="flex justify-between items-center mb-8">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">Telemetry Pipeline</span>
+                                                <div className="flex items-center gap-2">
+                                                    <RSLED level="safe" size="xs" isBlinking={true} />
+                                                    <span className="text-[8px] font-mono text-[var(--rs-text-secondary)] uppercase">Live</span>
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        <div className="space-y-6 pt-10 border-t border-[var(--rs-border-primary)]/10">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">Instrumentation Progress</span>
-                                            <RSProgressBar value={75} label="Analysis Completion" variant="signal" />
-                                            <RSProgressBar label="Buffering Signal..." />
-                                        </div>
-                                    </div>
-
-                                    {/* Data Stream */}
-                                    <div className="flex flex-col gap-10">
-                                        <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block mb-8 opacity-50">Telemetry Pipeline</span>
-                                            <div className="shadow-inner bg-black/5 p-4 rounded-3xl">
+                                            <div className="shadow-inner bg-black/5 p-4 rounded-3xl flex-1 flex items-center justify-center">
                                                 <RSTelemetryStream />
                                             </div>
                                         </div>
+
                                         <div className="grid grid-cols-2 gap-6">
                                             <div className="bg-[var(--rs-bg-surface)] p-6 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l1)]">
                                                 <div className="flex justify-between items-center mb-3">
-                                                    <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">Latency</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Latency</span>
                                                     <span className="text-[10px] font-mono text-rs-signal">22ms</span>
                                                 </div>
                                                 <RSMeter value={22} level="safe" />
                                             </div>
                                             <div className="bg-[var(--rs-bg-surface)] p-6 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l1)]">
                                                 <div className="flex justify-between items-center mb-3">
-                                                    <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">Buffer</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Buffer</span>
                                                     <span className="text-[10px] font-mono text-rs-info">88%</span>
                                                 </div>
                                                 <RSMeter value={88} level="info" />
@@ -611,34 +602,77 @@ export default function DesignLabPage() {
                                         </div>
                                     </div>
 
-                                    {/* Logic Engine */}
+                                    {/* FREEMIUM SCANNER PIPELINE (States) */}
                                     <div className="space-y-6">
+                                        {/* STATE 1: READY */}
                                         <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
-                                            <div className="flex items-center justify-between mb-6">
-                                                <h3 className="text-sm font-bold uppercase tracking-widest">System Log Stream</h3>
-                                                <RSButton size="sm" variant="ghost">Export_Raw</RSButton>
+                                            <div className="flex items-center justify-between mb-8">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">State 01: READY_FOR_INPUT</span>
                                             </div>
-                                            <RSSystemLog logs={[
-                                                { id: 1, message: 'Initializing handshake...', status: 'done', timestamp: '00:01' },
-                                                { id: 2, message: 'Acquiring signal...', status: 'done', timestamp: '00:04' },
-                                                { id: 3, message: 'Analyzing spectrum...', status: 'active', timestamp: '00:12' },
-                                                { id: 4, message: 'Awaiting tensor result...', status: 'pending' },
-                                            ]} maxHeight="220px" />
+                                            <div className="max-w-sm mx-auto">
+                                                <div className="bg-black p-4 rounded-3xl shadow-inner relative overflow-hidden h-[240px] flex flex-col items-center justify-center">
+                                                    <div className="relative mb-6">
+                                                        <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-sm animate-pulse">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/40"><path d="M12 17V3" /><path d="m6 9 6-6 6 6" /><path d="M5 21h14" /></svg>
+                                                        </div>
+                                                        <div className="absolute inset-0 animate-spin-slow">
+                                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-1 h-1 bg-[var(--rs-signal)] rounded-full shadow-[0_0_8px_var(--rs-signal)]" />
+                                                        </div>
+                                                    </div>
+                                                    <span className="rs-type-mono text-[8px] text-[var(--rs-signal)] tracking-[0.3em] font-bold uppercase opacity-80">UPLOAD_ASSET</span>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20 flex items-center justify-between">
-                                            <div>
-                                                <h3 className="text-sm font-bold uppercase tracking-widest mb-1">Diagnostics</h3>
-                                                <p className="text-xs text-[var(--rs-text-secondary)]">Verification Cycle 0.9.1</p>
+                                        {/* STATE 2: SCANNING */}
+                                        <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
+                                            <div className="flex items-center justify-between mb-8">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">State 02: SYSTEM_LOG_SCANNING</span>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <RSButton variant="secondary" size="sm">Recalibrate</RSButton>
-                                                <RSButton variant="danger" size="sm">Panic</RSButton>
+                                            <div className="max-w-sm mx-auto">
+                                                <div className="bg-black p-6 rounded-3xl shadow-inner h-[240px] flex flex-col justify-center">
+                                                    <div className="space-y-4">
+                                                        <div className="flex justify-between text-[7px] font-mono text-white/40 uppercase mb-1">
+                                                            <span>Acquisition_Pulse</span>
+                                                            <span className="text-[var(--rs-signal)]">84%</span>
+                                                        </div>
+                                                        <div className="h-0.5 bg-white/10 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-[var(--rs-signal)] shadow-[0_0_10px_var(--rs-signal)]" style={{ width: '84%' }} />
+                                                        </div>
+                                                        <RSSystemLog logs={[
+                                                            { id: 1, message: 'Spectrum extraction...', status: 'done', timestamp: '0.2s' },
+                                                            { id: 2, message: 'Heuristic alignment...', status: 'active', timestamp: '0.8s' },
+                                                            { id: 3, message: 'Dossier compilation...', status: 'pending' },
+                                                        ]} maxHeight="80px" className="opacity-80" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* STATE 3: RESULTS */}
+                                        <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
+                                            <div className="flex items-center justify-between mb-8">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">State 03: RESULTS_AND_CTA</span>
+                                            </div>
+                                            <div className="space-y-6">
+                                                <div className="bg-[var(--rs-bg-well)] p-6 rounded-2xl border border-[var(--rs-border-primary)]/20">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)]">Risk Dossier Summary</span>
+                                                        <RSRiskBadge level="critical" />
+                                                    </div>
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="text-4xl font-black tracking-tighter rs-etched">92%</div>
+                                                        <div className="text-[10px] text-[var(--rs-text-tertiary)] italic">IP_CORRELATION_DETECTED</div>
+                                                    </div>
+                                                </div>
+                                                <RSButton variant="primary" fullWidth size="lg">
+                                                    Download Forensic Report
+                                                </RSButton>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* External Integration */}
+                                    {/* External Integration (Full Width in Grid) */}
                                     <div className="lg:col-span-2">
                                         <div className="bg-[var(--rs-bg-surface)] p-4 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
                                             <div className="flex items-center gap-4 mb-4 pl-4 pt-4">
@@ -843,30 +877,42 @@ export default function DesignLabPage() {
                                 </div>
 
                                 <div className="space-y-12">
-                                    {/* Upgrade Modal Trigger */}
+                                    {/* Upgrade Logic */}
                                     <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l1)]">
-                                        <h3 className="text-lg font-bold text-[var(--rs-text-primary)] mb-4">Upgrade Logic</h3>
+                                        <h3 className="text-sm font-bold uppercase tracking-widest mb-4">Upgrade Conversion Logic</h3>
                                         <div className="flex items-center gap-4">
                                             <RSButton onClick={() => setShowUpgradeModal(true)}>Trigger Upgrade Modal</RSButton>
-                                            <span className="text-sm text-[var(--rs-text-secondary)]">Test the conversion flow modal</span>
+                                            <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest">Test the conversion flow modal (A/B)</span>
                                         </div>
                                     </div>
 
-                                    {/* Free Forensic Report */}
-                                    <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l1)] overflow-hidden">
-                                        <h3 className="text-lg font-bold text-[var(--rs-text-primary)] mb-8">Forensic Document</h3>
-                                        <div className="scale-90 origin-top-left">
+                                    {/* Forensic Report Template (Restored) */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-bold uppercase tracking-widest mb-4">Forensic Report Template</h3>
+                                        <div className="border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-chassis)] overflow-hidden">
                                             <FreeForensicReport
-                                                assetName="Test_Evidence_File_99.jpg"
-                                                scanDate={new Date().toISOString()}
+                                                assetName="Restored_Evidence_001.jpg"
+                                                scanDate="2024-05-19"
                                                 riskProfile={{
                                                     composite_score: 88,
-                                                    verdict: 'High Risk',
-                                                    ip_report: { score: 92, teaser: 'Copyrighted material detected in visual verify.', reasoning: 'Detected known protected IP assets.' },
-                                                    provenance_report: { score: 45, teaser: 'Source indicators are ambiguous.', reasoning: 'Metadata chain is incomplete.' },
-                                                    safety_report: { score: 12, teaser: 'Clean', reasoning: 'No safety violations found.' },
+                                                    verdict: 'Critical Risk',
+                                                    ip_report: {
+                                                        score: 92,
+                                                        teaser: "High-confidence partial match found in commercial database.",
+                                                        reasoning: "Detected visual elements matching registered commercial assets with >90% confidence."
+                                                    },
+                                                    provenance_report: {
+                                                        score: 75,
+                                                        teaser: "Screenshot indicators detected.",
+                                                        reasoning: "Metadata analysis suggests source material was captured via screen recording software."
+                                                    },
+                                                    safety_report: {
+                                                        score: 95,
+                                                        teaser: "Unsafe content categorization.",
+                                                        reasoning: "Content flagged for potential brand safety violations under policy section 4.2."
+                                                    },
                                                     c2pa_report: { status: 'missing' },
-                                                    chief_officer_strategy: "Manual review recommended. Asset lacks verifiable provenance chain."
+                                                    chief_officer_strategy: "Immediate take-down recommended pending manual review."
                                                 }}
                                             />
                                         </div>
@@ -888,25 +934,32 @@ export default function DesignLabPage() {
 
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                                     <div className="space-y-4">
-                                        <div className="aspect-[4/5] md:aspect-square w-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] flex items-center justify-center">
+                                        <div className="aspect-[4/5] md:aspect-square w-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] flex items-center justify-center relative overflow-hidden">
+                                            <div className="absolute inset-0 border-t border-l border-white/20 pointer-events-none" />
+                                            <div className="absolute inset-0 border-b border-r border-black/5 pointer-events-none" />
                                             <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest">L0_Base</span>
                                         </div>
                                         <p className="text-[10px] font-bold uppercase tracking-tighter text-[var(--rs-text-secondary)]">Chassis Surface</p>
                                     </div>
                                     <div className="space-y-4">
-                                        <div className="aspect-[4/5] md:aspect-square w-full bg-[var(--rs-bg-well)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] flex items-center justify-center">
+                                        <div className="aspect-[4/5] md:aspect-square w-full bg-[var(--rs-bg-well)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] flex items-center justify-center relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
                                             <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest">L1_Well</span>
                                         </div>
                                         <p className="text-[10px] font-bold uppercase tracking-tighter text-[var(--rs-text-secondary)]">Recessed Input</p>
                                     </div>
                                     <div className="space-y-4">
-                                        <div className="aspect-[4/5] md:aspect-square w-full bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l2)] flex items-center justify-center border border-white/5">
+                                        <div className="aspect-[4/5] md:aspect-square w-full bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l2)] flex items-center justify-center relative overflow-hidden">
+                                            <div className="absolute inset-0 border-t border-l border-white/30 pointer-events-none" />
+                                            <div className="absolute inset-0 border-b border-r border-black/10 pointer-events-none" />
                                             <span className="text-[10px] font-mono text-[var(--rs-text-secondary)] uppercase tracking-widest text-[#FF4F00]">L2_Panel</span>
                                         </div>
                                         <p className="text-[10px] font-bold uppercase tracking-tighter text-[var(--rs-text-secondary)]">Floating Shield</p>
                                     </div>
                                     <div className="space-y-4">
-                                        <div className="aspect-[4/5] md:aspect-square w-full bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l3)] flex items-center justify-center border-t border-l border-white/10">
+                                        <div className="aspect-[4/5] md:aspect-square w-full bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l3)] flex items-center justify-center relative overflow-hidden">
+                                            <div className="absolute inset-0 border-t border-l border-white/40 pointer-events-none" />
+                                            <div className="absolute inset-0 border-b border-r border-black/20 pointer-events-none" />
                                             <span className="text-[10px] font-black text-[var(--rs-text-primary)] uppercase tracking-tighter">L3_Action</span>
                                         </div>
                                         <p className="text-[10px] font-bold uppercase tracking-tighter text-[var(--rs-text-secondary)]">Primary Control</p>
@@ -923,56 +976,72 @@ export default function DesignLabPage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-12">
-                                    {/* Standard Chassis */}
+                                    {/* Standard Chassis (Molded Texture) */}
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">01. Standard_Chassis</h3>
-                                            <span className="px-2 py-0.5 bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] text-[8px] font-mono text-[var(--rs-text-tertiary)] rounded-sm">BASE_FINISH</span>
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">01. Molded_Chassis</h3>
+                                            <span className="px-2 py-0.5 bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] text-[8px] font-mono text-[var(--rs-text-tertiary)] rounded-sm">ABS_FINISH</span>
                                         </div>
-                                        <RSBackground variant="standard" className="aspect-[4/1] md:aspect-[6/1] rounded-[var(--rs-radius-container)] border border-[var(--rs-border-primary)]">
-                                            <div className="flex items-center justify-center h-full w-full">
-                                                <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-[0.3em]">Pure_Structural_Polymer</span>
-                                            </div>
-                                        </RSBackground>
+                                        <div className="relative aspect-[4/1] md:aspect-[6/1] rounded-[var(--rs-radius-container)] border border-[var(--rs-border-primary)] overflow-hidden">
+                                            {/* Parting Lines */}
+                                            <div className="absolute inset-0 border-t border-l border-white/20 z-20 pointer-events-none" />
+                                            <div className="absolute inset-0 border-b border-r border-black/10 z-20 pointer-events-none" />
+
+                                            <RSBackground variant="standard" className="h-full w-full">
+                                                <div className="flex items-center justify-center h-full w-full">
+                                                    <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-[0.3em]">Pure_Structural_Polymer</span>
+                                                </div>
+                                            </RSBackground>
+                                        </div>
                                     </div>
 
-                                    {/* Microdot Grid */}
+                                    {/* Powered Well Substrate */}
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">02. Precision_Grid</h3>
-                                            <span className="px-2 py-0.5 bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] text-[8px] font-mono text-[var(--rs-text-tertiary)] rounded-sm">DASH_LOGIC</span>
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">02. Powered_Well</h3>
+                                            <span className="px-2 py-0.5 bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] text-[8px] font-mono text-[var(--rs-text-tertiary)] rounded-sm">ACTIVE_WELL</span>
                                         </div>
-                                        <RSBackground variant="microdot" className="aspect-[4/1] md:aspect-[6/1] rounded-[var(--rs-radius-container)] border border-[var(--rs-border-primary)]">
-                                            <div className="flex items-center justify-center h-full w-full">
-                                                <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-[0.3em]">Precision_Reference_24PX</span>
+                                        <div className="aspect-[4/1] md:aspect-[6/1] rounded-[var(--rs-radius-container)] border border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)] shadow-[var(--rs-shadow-l1)] relative overflow-hidden flex items-center justify-center">
+                                            <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-2 h-2 rounded-full bg-[var(--rs-signal)] shadow-[0_0_10px_var(--rs-signal)] animate-pulse" />
+                                                <span className="text-[10px] font-mono text-[var(--rs-signal)] uppercase tracking-[0.3em] font-bold">SYSTEM_ENERGIZED</span>
                                             </div>
-                                        </RSBackground>
+                                        </div>
                                     </div>
 
-                                    {/* Technical Drafting */}
+                                    {/* Forensic Glass (Composite) */}
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">03. Engineering_Spec</h3>
-                                            <span className="px-2 py-0.5 bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] text-[8px] font-mono text-[var(--rs-text-tertiary)] rounded-sm">FORENSIC_DRAFT</span>
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">03. Composite_Optic</h3>
+                                            <span className="px-2 py-0.5 bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] text-[8px] font-mono text-[var(--rs-text-tertiary)] rounded-sm">OPTIC_STACK</span>
                                         </div>
-                                        <RSBackground variant="technical" className="aspect-[4/1] md:aspect-[6/1] rounded-[var(--rs-radius-container)] border border-[var(--rs-border-primary)] overflow-hidden">
-                                            <div className="flex items-center justify-center h-full w-full">
-                                                <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-[0.3em] relative z-20 bg-[var(--rs-bg-surface)] px-4">Drafting_Substrate_V3</span>
-                                            </div>
-                                        </RSBackground>
-                                    </div>
+                                        <div className="relative aspect-[4/1] md:aspect-[6/1] rounded-[var(--rs-radius-container)] border border-[var(--rs-border-primary)] flex items-center justify-center overflow-hidden">
+                                            <div className="absolute inset-0 border-t border-l border-white/20 z-30 pointer-events-none" />
+                                            <div className="absolute inset-0 border-b border-r border-black/10 z-30 pointer-events-none" />
 
-                                    {/* Forensic Glass */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">04. Forensic_Glass</h3>
-                                            <span className="px-2 py-0.5 bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] text-[8px] font-mono text-[var(--rs-text-tertiary)] rounded-sm">OPTIC_FILTER</span>
-                                        </div>
-                                        <div className="relative aspect-[4/1] md:aspect-[6/1] rounded-[var(--rs-radius-container)] border border-[var(--rs-border-primary)] flex items-center justify-center overflow-hidden bg-white/5">
-                                            <RSBackground variant="microdot" className="absolute inset-0" />
+                                            <RSBackground variant="technical" className="absolute inset-0 opacity-40" />
                                             <RSBackground variant="glass" className="absolute inset-0">
                                                 <div className="flex items-center justify-center h-full w-full">
-                                                    <span className="text-[10px] font-mono text-white uppercase tracking-[0.3em]">Filtered_Light_Transmission</span>
+                                                    <span className="text-[10px] font-mono text-white/80 uppercase tracking-[0.3em] z-20">Filtered_Drafting_Substrate</span>
+                                                </div>
+                                            </RSBackground>
+                                        </div>
+                                    </div>
+
+                                    {/* Technical Drafting (Standalone) */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">04. Drafting_Technical</h3>
+                                            <span className="px-2 py-0.5 bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] text-[8px] font-mono text-[var(--rs-text-tertiary)] rounded-sm">ISO_GRID</span>
+                                        </div>
+                                        <div className="relative aspect-[4/1] md:aspect-[6/1] rounded-[var(--rs-radius-container)] border border-[var(--rs-border-primary)] flex items-center justify-center overflow-hidden">
+                                            <div className="absolute inset-0 border-t border-l border-white/20 z-30 pointer-events-none" />
+                                            <div className="absolute inset-0 border-b border-r border-black/10 z-30 pointer-events-none" />
+
+                                            <RSBackground variant="technical" className="absolute inset-0">
+                                                <div className="flex items-center justify-center h-full w-full">
+                                                    <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-[0.3em] bg-[var(--rs-bg-surface)]/80 px-2 py-1 backdrop-blur-sm border border-[var(--rs-border-primary)]">Calibration_Grid_Visible</span>
                                                 </div>
                                             </RSBackground>
                                         </div>

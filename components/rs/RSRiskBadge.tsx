@@ -4,7 +4,7 @@ import React from 'react';
 
 import { cn } from '@/lib/utils';
 
-export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'safe' | 'unknown';
+export type RiskLevel = 'critical' | 'high' | 'warning' | 'medium' | 'low' | 'safe' | 'unknown';
 
 interface RSRiskBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
     level: RiskLevel;
@@ -27,6 +27,7 @@ export function RSRiskBadge({
     const styles = {
         critical: "bg-rs-signal text-rs-white border-rs-signal",
         high: "bg-rs-gray-900 text-rs-white border-rs-gray-900", // Stark Black/White for High
+        warning: "bg-rs-warning text-rs-white border-rs-warning", // Warning Orange
         medium: "bg-rs-gray-200 text-rs-black border-rs-gray-400", // Grey Zone
         low: "bg-rs-white text-rs-gray-600 border-rs-gray-200",
         safe: "bg-rs-safe text-rs-white border-rs-safe",

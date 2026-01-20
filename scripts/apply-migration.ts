@@ -38,8 +38,13 @@ async function applyMigration() {
   })
 
   // Read migration file
-  const migrationPath = join(process.cwd(), 'supabase/migrations/20260103_initial_schema.sql')
-  console.log('📄 Reading migration file...')
+  const migrationFile = process.argv[2] || 'supabase/migrations/20260103_initial_schema.sql'
+  // Handle both relative (from cwd) and simple filenames (in supabase/migrations)
+  const migrationPath = migrationFile.includes('/')
+    ? join(process.cwd(), migrationFile)
+    : join(process.cwd(), 'supabase/migrations', migrationFile)
+
+  console.log(`📄 Reading migration file: ${migrationPath}...`)
 
   let migrationSql: string
   try {

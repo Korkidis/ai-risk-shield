@@ -42,8 +42,8 @@ export function FreeForensicReport({ riskProfile, assetName, scanDate }: Props) 
 
     const getRiskColor = (score: number) => {
         if (score >= 85) return 'text-[var(--rs-signal)]'
-        if (score >= 60) return 'text-orange-500' // Keep generic warning for now or define warning token
-        if (score >= 40) return 'text-yellow-500'
+        if (score >= 60) return 'text-[var(--rs-indicator)]'
+        if (score >= 40) return 'text-[var(--rs-text-secondary)]'
         return 'text-[var(--rs-safe)]'
     }
 
@@ -93,8 +93,8 @@ export function FreeForensicReport({ riskProfile, assetName, scanDate }: Props) 
                     <div className="h-3 bg-[var(--rs-bg-secondary)] rounded-full overflow-hidden shadow-inner">
                         <div
                             className={`h-full ${riskProfile.composite_score >= 85 ? 'bg-[var(--rs-signal)]' :
-                                riskProfile.composite_score >= 60 ? 'bg-orange-500' :
-                                    riskProfile.composite_score >= 40 ? 'bg-yellow-500' : 'bg-[var(--rs-safe)]'
+                                riskProfile.composite_score >= 60 ? 'bg-[var(--rs-indicator)]' :
+                                    riskProfile.composite_score >= 40 ? 'bg-[var(--rs-gray-500)]' : 'bg-[var(--rs-safe)]'
                                 }`}
                             style={{ width: `${riskProfile.composite_score}%` }}
                         />

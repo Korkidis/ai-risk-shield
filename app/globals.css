@@ -29,13 +29,13 @@
     --rs-indicator: #3A6351;
     --rs-function: #2E5A88;
 
-    /* --- elevation scale (z-logic: refined) --- */
-    --rs-shadow-l1: inset 2px 2px 6px rgba(0, 0, 0, 0.15), inset -2px -2px 4px rgba(255, 255, 255, 0.3);
-    --rs-shadow-l2: 6px 6px 12px rgba(190, 186, 178, 0.6), -6px -6px 12px rgba(255, 255, 255, 0.4);
-    --rs-shadow-l3: 12px 12px 24px rgba(190, 186, 178, 0.7), -12px -12px 24px rgba(255, 255, 255, 0.4);
-    --rs-shadow-pressed: var(--rs-shadow-l1);
-    --rs-shadow-bevel: var(--rs-shadow-l2);
-    --rs-shadow-socket: var(--rs-shadow-l1);
+    /* --- elevation scale (z-logic: surgical precision) --- */
+    --rs-shadow-l1: inset 1px 1px 3px rgba(0, 0, 0, 0.2), inset -1px -1px 2px rgba(255, 255, 255, 0.4);
+    --rs-shadow-l2: 3px 3px 6px rgba(0, 0, 0, 0.12), -2px -2px 5px rgba(255, 255, 255, 0.5);
+    --rs-shadow-l3: 6px 6px 12px rgba(0, 0, 0, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.5);
+    --rs-shadow-pressed: inset 2px 2px 4px rgba(0, 0, 0, 0.25), inset -1px -1px 2px rgba(255, 255, 255, 0.3);
+    --rs-shadow-bevel: 1px 1px 0px rgba(0, 0, 0, 0.1), inset 1px 1px 0px rgba(255, 255, 255, 0.5);
+    --rs-shadow-socket: inset 1px 1px 4px rgba(0, 0, 0, 0.2);
 
     /* --- geometric nesting (radius) --- */
     --rs-radius-chassis: 24px;

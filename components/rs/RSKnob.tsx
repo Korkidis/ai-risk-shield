@@ -87,7 +87,7 @@ export function RSKnob({
             >
                 {/* Precision Needle (The Indicator) */}
                 <div
-                    className="absolute w-[4px] bg-[#FF4F00] rounded-full transition-transform duration-75 ease-out z-20"
+                    className="absolute w-[4px] bg-[var(--rs-signal)] rounded-full transition-transform duration-75 ease-out z-20"
                     style={{
                         height: '40%',
                         top: '10%',

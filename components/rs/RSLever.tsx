@@ -43,8 +43,8 @@ export function RSLever({
             <div
                 onClick={toggle}
                 className={cn(
-                    "relative bg-[#D9D5CD] rounded-2xl cursor-pointer flex p-1.5 overflow-hidden border border-[#C7C3BB]",
-                    "shadow-[inset_2px_2px_8px_rgba(0,0,0,0.2),inset_-2px_-2px_4px_rgba(255,255,255,0.7)]",
+                    "relative bg-[var(--rs-gray-200)] rounded-2xl cursor-pointer flex p-1.5 overflow-hidden border border-[var(--rs-gray-300)]",
+                    "shadow-[var(--rs-shadow-l1)]",
                     isVertical ? "w-14 h-24 flex-col justify-between" : "w-24 h-14 justify-between"
                 )}
             >
@@ -55,25 +55,35 @@ export function RSLever({
                         isVertical ? "w-full h-1/2 flex-col" : "h-full w-1/2",
                         isChecked
                             ? isVertical
-                                ? "translate-y-full bg-[#1A1A1A] shadow-[0_-2px_4px_rgba(0,0,0,0.5)]"
-                                : "translate-x-full bg-[#1A1A1A] shadow-[-2px_0_4px_rgba(0,0,0,0.5)]"
+                                ? "translate-y-full bg-[var(--rs-gray-900)] shadow-[0_-2px_4px_rgba(0,0,0,0.5)]"
+                                : "translate-x-full bg-[var(--rs-gray-900)] shadow-[-2px_0_4px_rgba(0,0,0,0.5)]"
                             : isVertical
-                                ? "translate-y-0 bg-[#E5E1DD] shadow-[0_4px_8px_rgba(0,0,0,0.2),inset_0_1px_1px_white]"
-                                : "translate-x-0 bg-[#E5E1DD] shadow-[4px_0_8px_rgba(0,0,0,0.2),inset_1px_0_1px_white]"
+                                ? "translate-y-0 bg-[var(--rs-gray-50)] shadow-[0_4px_8px_rgba(0,0,0,0.2),inset_0_1px_1px_white]"
+                                : "translate-x-0 bg-[var(--rs-gray-50)] shadow-[4px_0_8px_rgba(0,0,0,0.2),inset_1px_0_1px_white]"
                     )}
                 >
-                    {/* Machined Dimple */}
+                    {/* Machined Dimple (Only visible in 'off' state as a recess, or as a detail) */}
+                    {!isChecked && (
+                        <div className="w-4 h-4 rounded-full bg-black/5 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.1)] border border-black/5 flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-black/10" />
+                        </div>
+                    )}
+
+                    {/* State Indicator Signal Strip (Braun Aesthetic) */}
                     <div className={cn(
-                        "w-3 h-3 rounded-full shadow-inner",
-                        isChecked ? "bg-black" : "bg-[#D1CDC7]"
+                        "absolute transition-all duration-500",
+                        isVertical
+                            ? "bottom-0 h-1 left-1/4 right-1/4"
+                            : "right-0 w-1.5 top-1/4 bottom-1/4", // Signal strip on the edge
+                        isChecked
+                            ? "bg-[var(--rs-signal)] opacity-100 shadow-[0_0_12px_var(--rs-signal)]"
+                            : "opacity-0"
                     )} />
 
-                    {/* State Indicator LED (Internal) */}
-                    <div className={cn(
-                        "absolute rounded-full blur-[1px] transition-opacity duration-500",
-                        isVertical ? "-bottom-1 w-6 h-1" : "-right-1 w-1 h-6",
-                        isChecked ? "bg-[#FF4F00] opacity-100 shadow-[0_0_8px_#FF4F00]" : "opacity-0"
-                    )} />
+                    {/* Dark State Label Tension (Manual Override) */}
+                    {isChecked && (
+                        <div className="w-1 h-4 bg-white/10 rounded-full blur-[0.5px]" />
+                    )}
                 </div>
             </div>
             {label && (

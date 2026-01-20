@@ -138,7 +138,50 @@ export interface Database {
           updated_at?: string
         }
       }
-      // Add other tables as needed
+      brand_guidelines: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          industry: string | null
+          prohibitions: Json
+          requirements: Json
+          context_modifiers: Json
+          target_markets: Json
+          target_platforms: Json
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          name: string
+          industry?: string | null
+          prohibitions?: Json
+          requirements?: Json
+          context_modifiers?: Json
+          target_markets?: Json
+          target_platforms?: Json
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          name?: string
+          industry?: string | null
+          prohibitions?: Json
+          requirements?: Json
+          context_modifiers?: Json
+          target_markets?: Json
+          target_platforms?: Json
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

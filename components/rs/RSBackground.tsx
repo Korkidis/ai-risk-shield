@@ -46,27 +46,47 @@ export const RSBackground = ({
             {/* Background Layers Wrapper */}
             <div className={cn("absolute inset-0 pointer-events-none z-0", fullScreen ? "" : "rounded-[inherit]")}>
                 {/* ... existing layers ... */}
-                {(variant === 'microdot' || variant === 'technical') && (
+                {/* Microdot Pattern (Dots) */}
+                {variant === 'microdot' && (
                     <div
-                        className="absolute inset-0 opacity-[0.4]"
+                        className="absolute inset-0 opacity-[0.15]"
                         style={{
-                            backgroundImage: `radial-gradient(var(--rs-border-primary) 1.5px, transparent 1.5px)`,
+                            backgroundImage: `radial-gradient(var(--rs-text-tertiary) 0.8px, transparent 0.8px)`,
                             backgroundSize: '24px 24px'
                         }}
                     />
                 )}
 
+                {/* Technical Pattern (Drafting Grid) */}
                 {variant === 'technical' && (
-                    <div
-                        className="absolute inset-0 opacity-[0.15]"
-                        style={{
-                            backgroundImage: `
-                             linear-gradient(to right, var(--rs-border-strong) 1px, transparent 1px),
-                             linear-gradient(to bottom, var(--rs-border-strong) 1px, transparent 1px)
-                         `,
-                            backgroundSize: '120px 120px'
-                        }}
-                    />
+                    <>
+                        {/* Minor Grid (24px) */}
+                        <div
+                            className="absolute inset-0 opacity-[0.3]"
+                            style={{
+                                backgroundImage: `
+                                    linear-gradient(to right, var(--rs-border-primary) 1px, transparent 1px),
+                                    linear-gradient(to bottom, var(--rs-border-primary) 1px, transparent 1px)
+                                `,
+                                backgroundSize: '24px 24px'
+                            }}
+                        />
+                        {/* Major Grid (120px) */}
+                        <div
+                            className="absolute inset-0 opacity-[0.4]"
+                            style={{
+                                backgroundImage: `
+                                    linear-gradient(to right, var(--rs-border-strong) 1px, transparent 1px),
+                                    linear-gradient(to bottom, var(--rs-border-strong) 1px, transparent 1px)
+                                `,
+                                backgroundSize: '120px 120px'
+                            }}
+                        />
+                    </>
+                )}
+
+                {variant === 'standard' && (
+                    <div className="absolute inset-0 rs-texture-molded opacity-40 pointer-events-none" />
                 )}
 
                 {variant === 'technical' && (
@@ -103,9 +123,10 @@ export const RSBackground = ({
                 )}
 
                 {variant === 'glass' && (
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-md border border-white/10">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-md border border-white/10 group">
+                        <div className="absolute inset-0 bg-[var(--rs-glass-convex)] opacity-50 transition-opacity duration-700 group-hover:opacity-70" />
                         <div
-                            className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none"
+                            className="absolute inset-0 opacity-[0.06] mix-blend-overlay pointer-events-none"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E")`
                             }}

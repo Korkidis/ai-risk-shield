@@ -24,24 +24,23 @@ export function RSButton({
     );
 
     const variants = {
-        // Primary: Signal Orange (Molded L3)
-        primary: "bg-[#FF4F00] text-white shadow-[var(--rs-shadow-l3)] hover:brightness-110 active:shadow-[var(--rs-shadow-l1)] active:scale-[0.98]",
+        // Primary: Signal Orange (Molded L2)
+        primary: "bg-[#FF4F00] text-white shadow-[var(--rs-shadow-l2)] hover:brightness-105 active:shadow-[var(--rs-shadow-pressed)]",
 
-        // Secondary: Semantic Grey (Molded L2)
-        secondary: "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l2)] hover:brightness-105 active:shadow-[var(--rs-shadow-l1)] active:scale-[0.98]",
+        // Secondary: Semantic Grey (Molded L1/L2 mix)
+        secondary: "bg-[var(--rs-gray-50)] text-[var(--rs-text-primary)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l2)] hover:bg-[var(--rs-gray-100)] active:shadow-[var(--rs-shadow-pressed)]",
 
-        // Danger: Inverse (Molded L3)
-        // Light: Black Button/Orange Text. Dark: White Button/Orange Text (Emergency)
-        danger: "bg-[var(--rs-bg-inverse)] text-[#FF4F00] shadow-[var(--rs-shadow-l3)] hover:brightness-110 active:shadow-[var(--rs-shadow-l1)] active:scale-[0.98]",
+        // Danger: Inverse (Molded L3) - Matches "SYSTEM PURGE" aesthetic
+        danger: "bg-[var(--rs-bg-inverse)] text-[#FF4F00] shadow-[var(--rs-shadow-l2)] hover:brightness-110 active:shadow-[var(--rs-shadow-pressed)]",
 
         // Ghost: Flat (L0)
-        ghost: "bg-transparent text-[var(--rs-text-tertiary)] hover:bg-[var(--rs-bg-element)] active:bg-[var(--rs-bg-well)]",
+        ghost: "bg-transparent text-[var(--rs-text-tertiary)] hover:bg-[var(--rs-bg-element)]/50 active:bg-[var(--rs-bg-well)]",
     };
 
     const sizes = {
         sm: "h-8 px-3 text-[9px] uppercase tracking-widest rounded-[var(--rs-radius-element)]",
-        md: "h-12 px-6 text-[11px] uppercase tracking-widest rounded-[var(--rs-radius-element)] font-bold", // Taller for 'Molded' feel
-        lg: "h-14 px-8 text-xs uppercase tracking-widest rounded-[var(--rs-radius-element)] font-bold",
+        md: "h-11 px-6 text-[10px] uppercase tracking-widest rounded-[var(--rs-radius-element)] font-bold", // Trimmed height
+        lg: "h-13 px-8 text-[11px] uppercase tracking-widest rounded-[var(--rs-radius-element)] font-bold",
     };
 
     return (
@@ -56,8 +55,9 @@ export function RSButton({
             )}
             {...props}
         >
-            {/* Parting Line (High-Gloss Edge) */}
-            <div className="absolute inset-0 rounded-[inherit] border-t border-l border-white/40 pointer-events-none" />
+            {/* Parting Line (High-Gloss Detail) */}
+            <div className="absolute inset-0 rounded-[inherit] border-t border-l border-white/20 pointer-events-none" />
+            <div className="absolute inset-0 rounded-[inherit] border-b border-r border-black/10 pointer-events-none" />
 
             <span className="relative z-10 flex items-center gap-2">
                 {icon && <span className="flex-shrink-0">{icon}</span>}

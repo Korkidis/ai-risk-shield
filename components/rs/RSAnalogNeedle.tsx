@@ -80,7 +80,7 @@ export function RSAnalogNeedle({
                         </div>
 
                         {/* Hazard Zone - Safety Orange */}
-                        <div className="absolute inset-4 rounded-full border-[6px] border-transparent border-t-[#FF4F00]/20 border-r-[#FF4F00]/20 rotate-[45deg] pointer-events-none" />
+                        <div className="absolute inset-4 rounded-full border-[6px] border-transparent border-t-[var(--rs-signal)]/20 border-r-[var(--rs-signal)]/20 rotate-[45deg] pointer-events-none" />
 
                         {/* Physical Needle Shadow */}
                         <div
@@ -95,16 +95,16 @@ export function RSAnalogNeedle({
                                 width: powered ? '2px' : '3px',
                                 height: '100px',
                                 transform: `translateX(-50%) rotate(${rotation}deg)`,
-                                backgroundColor: powered ? '#1A1A1A' : '#666',
+                                backgroundColor: powered ? 'var(--rs-black)' : 'var(--rs-gray-500)',
                                 opacity: powered ? 1 : 0.4
                             }}
                         />
 
                         {/* Machined Pivot Hub */}
-                        <div className="absolute bottom-1/2 left-1/2 w-10 h-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-[#333] shadow-[2px_2px_5px_rgba(0,0,0,0.4)] z-30 border-t border-white/10 flex items-center justify-center">
+                        <div className="absolute bottom-1/2 left-1/2 w-10 h-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-[var(--rs-gray-800)] shadow-[2px_2px_5px_rgba(0,0,0,0.4)] z-30 border-t border-white/10 flex items-center justify-center">
                             <div
                                 className="w-1.5 h-1.5 rounded-full"
-                                style={{ backgroundColor: powered ? '#1A1A1A' : '#444' }}
+                                style={{ backgroundColor: powered ? 'var(--rs-black)' : 'var(--rs-gray-600)' }}
                             />
                         </div>
 

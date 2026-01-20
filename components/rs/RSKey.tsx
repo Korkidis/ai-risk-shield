@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 
@@ -22,7 +21,7 @@ export function RSKey({
     label,
     active = false,
     onClick,
-    color = "#FF4F00",
+    color = "var(--rs-signal)",
     className
 }: RSKeyProps) {
     return (
@@ -32,8 +31,8 @@ export function RSKey({
                 className={cn(
                     "relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-100 border border-white/40",
                     active
-                        ? "bg-[#1A1A1A] text-white translate-y-[2px] shadow-[inset_2px_2px_8px_black]"
-                        : "bg-[#E5E1DD] text-black/60 shadow-[4px_4px_10px_#d1cdc7,-2px_-2px_5px_white] active:translate-y-[1px] active:shadow-inner"
+                        ? "bg-[var(--rs-gray-900)] text-[var(--rs-white)] translate-y-[2px] shadow-[inset_2px_2px_8px_rgba(0,0,0,0.8)]"
+                        : "bg-[var(--rs-gray-50)] text-[var(--rs-text-secondary)] shadow-[var(--rs-shadow-l2)] active:translate-y-[1px] active:shadow-inner"
                 )}
             >
                 {/* The Convex Lens Effect */}
@@ -50,7 +49,7 @@ export function RSKey({
                 )}
             </button>
             {label && (
-                <span className="text-[9px] font-bold uppercase tracking-widest text-black/40">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">
                     {label}
                 </span>
             )}

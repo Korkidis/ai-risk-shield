@@ -43,14 +43,14 @@ export function RSLED({
             lens: 'from-emerald-400 to-emerald-600'
         },
         warning: {
-            base: 'bg-[#FFB800]', // Standard Warning Amber (Braun style)
-            glow: 'shadow-[0_0_12px_rgba(255,184,0,0.6),inset_0_1px_2px_rgba(255,255,255,0.5)]',
-            lens: 'from-amber-300 to-amber-500'
+            base: 'bg-[var(--rs-indicator)]', // Using indicator for warning/amber
+            glow: 'shadow-[0_0_12px_rgba(58,99,81,0.6),inset_0_1px_2px_rgba(255,255,255,0.5)]',
+            lens: 'from-[var(--rs-indicator)] to-[var(--rs-gray-500)]'
         },
         critical: {
-            base: 'bg-red-600',
-            glow: 'shadow-[0_0_15px_rgba(220,38,38,0.7),inset_0_1px_2px_rgba(255,255,255,0.6)]',
-            lens: 'from-red-400 to-red-600'
+            base: 'bg-[var(--rs-signal)]',
+            glow: 'shadow-[0_0_15px_rgba(255,79,0,0.7),inset_0_1px_2px_rgba(255,255,255,0.6)]',
+            lens: 'from-orange-400 to-orange-600'
         },
         active: {
             base: 'bg-[var(--rs-signal)]',
@@ -63,13 +63,13 @@ export function RSLED({
             lens: 'from-sky-400 to-sky-600'
         },
         // Risk levels normalization
-        high: { base: 'bg-red-600', glow: 'shadow-[0_0_12px_rgba(220,38,38,0.6)]', lens: 'from-red-400 to-red-600' },
-        medium: { base: 'bg-[#FFB800]', glow: 'shadow-[0_0_12px_rgba(255,184,0,0.6)]', lens: 'from-amber-300 to-amber-500' },
+        high: { base: 'bg-[var(--rs-signal)]', glow: 'shadow-[0_0_12px_rgba(255,79,0,0.6)]', lens: 'from-orange-400 to-orange-600' },
+        medium: { base: 'bg-[var(--rs-indicator)]', glow: 'shadow-[0_0_12px_rgba(58,99,81,0.6)]', lens: 'from-[var(--rs-indicator)] to-[var(--rs-gray-500)]' },
         low: { base: 'bg-[var(--rs-info)]', glow: 'shadow-[0_0_12px_rgba(0,95,135,0.6)]', lens: 'from-sky-400 to-sky-600' },
         off: {
-            base: 'bg-[#2A2A2A]',
+            base: 'bg-[var(--rs-gray-800)]',
             glow: 'shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]',
-            lens: 'from-gray-700 to-gray-800'
+            lens: 'from-[var(--rs-gray-700)] to-[var(--rs-gray-900)]'
         }
     };
 

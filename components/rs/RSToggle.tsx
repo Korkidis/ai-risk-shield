@@ -58,9 +58,15 @@ export function RSToggle({
             >
                 {/* Internal Signal Dot (Braun Style) */}
                 <div className={cn(
-                    "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                    isChecked ? "bg-[var(--rs-safe)] opacity-100" : "bg-[var(--rs-gray-300)] opacity-40 shrink-0"
+                    "w-1.5 h-1.5 rounded-full transition-all duration-300 border",
+                    isChecked
+                        ? "bg-[var(--rs-gray-400)] border-[var(--rs-gray-400)] shadow-inner"
+                        : "bg-transparent border-[var(--rs-gray-300)] scale-90"
                 )} />
+                {/* Saul Bass Tension: Subtle shading */}
+                {isChecked && (
+                    <div className="absolute w-1.5 h-1.5 rounded-full bg-white/10 blur-[0.5px] pointer-events-none translate-x-[0.5px] translate-y-[-0.5px]" />
+                )}
             </span>
         </button>
     );

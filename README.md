@@ -1,85 +1,59 @@
 # AI Risk Shield
+**The Forensic Instrument for AI Content Validation**
 
-Complete AI Content Validation Platform - Validate AI-generated images and videos for copyright risk, brand safety, and content provenance.
-
-## Tech Stack
-
-- **Frontend:** Next.js 14 (App Router, TypeScript, Tailwind CSS)
-- **Backend:** Supabase (PostgreSQL, Auth, Storage, Edge Functions)
-- **AI Analysis:** Google Gemini 2.5 Flash
-- **Provenance:** C2PA Node
-- **Payments:** Stripe
-- **Email:** Resend
-- **Video Processing:** FFmpeg
-- **Deployment:** Vercel
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ installed
-- Supabase account
-- Google Gemini API key
-- Stripe account
-- Resend account
-
-### Installation
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Copy environment variables:
-```bash
-cp .env.local.example .env.local
-```
-
-3. Fill in your environment variables in `.env.local`:
-   - Supabase: Get from https://supabase.com/dashboard/project/_/settings/api
-   - Gemini: Get from https://aistudio.google.com/app/apikey
-   - Stripe: Get from https://dashboard.stripe.com/apikeys
-   - Resend: Get from https://resend.com/api-keys
-
-4. Run the development server:
-```bash
-npm run dev
-```
-
-5. Open [http://localhost:3000](http://localhost:3000)
-
-## Development
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
-
-## Project Structure
-
-```
-ai-risk-shield/
-├── app/                    # Next.js App Router pages
-├── components/             # React components
-├── lib/                    # Utility functions and integrations
-├── public/                 # Static assets
-├── .claude/               # Claude Code documentation
-└── ...config files
-```
-
-## Security
-
-- All API keys stored in environment variables (never committed)
-- Row Level Security (RLS) enabled on all database tables
-- Multi-tenant isolation enforced at database level
-- Input validation and sanitization on all user inputs
-- HTTPS enforced in production
-
-## License
-
-Proprietary - All rights reserved
+AI Risk Shield is a specialized platform for analyzing visual assets (images/video) to detect copyright infringement risk (IP), brand safety violations, and provenance authenticity (C2PA).
 
 ---
 
-Built with Claude Code
+## 📚 Documentation Architecture (The "Brain")
+This project is driven by a set of "Hyper-Critical" documents that serve as the source of truth.
+
+| Document | Purpose |
+| :--- | :--- |
+| **[NORTH_STAR.md](NORTH_STAR.md)** | **Strategic Vision**. The "Why". Business goals, target audience, and emotional resonance. |
+| **[FUNCTIONAL_PRD.md](FUNCTIONAL_PRD.md)** | **Execution Blueprint**. The "What". Detailed feature specs, user flows, and technical constraints. |
+| **[GEMINI_C2PA_STANDARDS.md](GEMINI_C2PA_STANDARDS.md)** | **Forensic Logic**. The "How". Detailed AI scoring rules, prompts, and C2PA verification logic. |
+| **[DATABASE_BACKEND.md](DATABASE_BACKEND.md)** | **Infrastructure Truth**. Schema audit, storage policies, and backend architecture. |
+| **[DESIGN_CONTEXT.md](DESIGN_CONTEXT.md)** | **Visual System**. Design tokens, "Forensic Instrument" aesthetic, and component rules. |
+
+---
+
+## 🛠 Tech Stack
+
+*   **Frontend**: Next.js 14 (App Router), Tailwind CSS
+*   **Database**: Supabase (PostgreSQL, RLS, Storage)
+*   **AI Engine**: Google Gemini 1.5 Flash (via Google AI Studio)
+*   **Provenance**: C2PA Node (Content Credentials)
+*   **Payments**: Stripe
+*   **Email**: Resend
+
+## 🚀 Getting Started
+
+### Prerequisites
+*   Node.js 18+
+*   Supabase Project
+*   Google AI Studio Key
+*   Stripe Account
+
+### Installation
+1.  **Clone & Install**:
+    ```bash
+    npm install
+    ```
+2.  **Environment Setup**:
+    ```bash
+    cp .env.local.example .env.local
+    # Populate keys: NEXT_PUBLIC_SUPABASE_URL, GEMINI_API_KEY, STRIPE_SECRET_KEY, etc.
+    ```
+3.  **Run Development**:
+    ```bash
+    npm run dev
+    ```
+
+## 🔐 Security & Privacy
+*   **No Persistent User Data without Consent**: Anonymous uploads are session-locked.
+*   **Ephemeral Processing**: Video assets are temporarily passed to Google Cloud for analysis and immediately deleted.
+*   **RLS Everywhere**: All database access is scoped by Tenant ID or Session ID.
+
+---
+*Built with Agentic AI*
