@@ -1,8 +1,8 @@
 'use client'
 
-import { Shield, Lock, Database, Search, Fingerprint, AlertTriangle } from 'lucide-react'
+import { Shield, Lock, CheckCircle, Component, Globe } from 'lucide-react'
 
-export function CredibilitySection() {
+export function TrustCompliance() {
     return (
         <section className="py-24 bg-[var(--rs-bg-well)] rs-bg-grid rs-edge-top relative overflow-hidden">
             {/* Ruler Gutter - Left */}
@@ -12,64 +12,66 @@ export function CredibilitySection() {
                 ))}
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 relative z-10">
-                {/* Technical ID Removed */}
+            <div className="max-w-7xl mx-auto px-6 relative z-10 w-full pl-16 md:pl-6">
+
+                {/* Section Header */}
+                <div className="flex items-center gap-4 mb-16">
+                    <div className="h-px bg-[var(--rs-border-primary)] flex-1" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] bg-[var(--rs-bg-well)] px-4">
+                        System Integrity
+                    </span>
+                    <div className="h-px bg-[var(--rs-border-primary)] flex-1" />
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-12 md:gap-24">
 
-                    {/* Security & Privacy Panel */}
+                    {/* Trust & Compliance Panel */}
                     <div className="space-y-8">
                         <div className="flex items-center space-x-4 mb-8 pb-6 border-b border-[var(--rs-border-primary)]">
                             <div className="p-2 border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-small)]">
                                 <Shield className="w-5 h-5 text-[var(--rs-text-primary)]" />
                             </div>
-                            <h3 className="text-2xl rs-type-section tracking-tight text-[var(--rs-text-primary)] uppercase">SECURITY & PRIVACY</h3>
+                            <h3 className="text-2xl rs-type-section tracking-tight text-[var(--rs-text-primary)] uppercase">TRUST & COMPLIANCE</h3>
                         </div>
 
                         <ul className="space-y-8">
                             <ListItem
-                                icon={<Database className="w-4 h-4" />}
-                                title="ZERO-RETENTION POLICY"
-                                description="Files are processed in ephemeral memory and permanently deleted immediately after analysis. We do not store your assets."
+                                icon={<Lock className="w-4 h-4" />}
+                                title="PRIVACY FIRST"
+                                description="Assets are encrypted in transit and at rest. No training on user data."
                             />
                             <ListItem
-                                icon={<Lock className="w-4 h-4" />}
-                                title="ENTERPRISE ENCRYPTION"
-                                description="All data is secured with AES-256 encryption in transit and at rest. SOC 2 Type II compliant infrastructure."
+                                icon={<CheckCircle className="w-4 h-4" />}
+                                title="C2PA NATIVE"
+                                description="Founding member of CAI. We verify provenance, we don't guess."
                             />
                             <ListItem
                                 icon={<Shield className="w-4 h-4" />}
-                                title="NO MODEL TRAINING"
-                                description="Your data is strictly isolated. We explicitly NEVER use customer uploads to train, fine-tune, or improve our detection models."
+                                title="COMPLIANCE"
+                                description="SOC 2 Type II certified. ISO 27001 mapping for global legal teams."
+                            />
+                            <ListItem
+                                icon={<Globe className="w-4 h-4" />}
+                                title="INFRASTRUCTURE"
+                                description="99.99% uptime SLA. Globally distributed forensic nodes."
                             />
                         </ul>
                     </div>
 
-                    {/* Evidence Quality Panel */}
-                    <div className="space-y-8">
-                        <div className="flex items-center space-x-4 mb-8 pb-6 border-b border-[var(--rs-border-primary)]">
-                            <div className="p-2 border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-small)]">
-                                <Search className="w-5 h-5 text-[var(--rs-text-primary)]" />
-                            </div>
-                            <h3 className="text-2xl rs-type-section tracking-tight text-[var(--rs-text-primary)] uppercase">EVIDENCE QUALITY</h3>
+                    {/* Badges / Logos Visual */}
+                    <div className="flex flex-col justify-center gap-6">
+                        <div className="border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] p-8 rounded-lg flex flex-wrap gap-8 items-center justify-center opacity-80 hover:opacity-100 transition-opacity">
+                            <Badge text="SOC2 COMPLIANT" />
+                            <Badge text="GDPR READY" />
+                            <Badge text="ISO 27001" />
+                            <Badge text="C2PA MEMBER" />
                         </div>
-
-                        <ul className="space-y-8">
-                            <ListItem
-                                icon={<Fingerprint className="w-4 h-4" />}
-                                title="IP & COPYRIGHT SIGNALS"
-                                description="Multi-vector analysis checks for visual similarity, style transfer matches, and known protected entity signatures in our proprietary registry."
-                            />
-                            <ListItem
-                                icon={<Search className="w-4 h-4" />}
-                                title="PROVENANCE VERIFICATION"
-                                description="Cryptographic C2PA/CAI validation combined with metadata forensic auditing to detect tampering or synthetic generation."
-                            />
-                            <ListItem
-                                icon={<AlertTriangle className="w-4 h-4 text-[var(--rs-signal)]" />}
-                                title="CRITICAL RISK DEFINITION"
-                                description="A 'Critical' score signals >85% confidence of copyright infringement or high-probability generative artifacts requiring immediate legal review."
-                            />
-                        </ul>
+                        <div className="p-8 border border-[var(--rs-border-primary)] border-dashed rounded-lg bg-[var(--rs-bg-secondary)]/50 text-center">
+                            <Component className="w-12 h-12 text-[var(--rs-text-tertiary)] mx-auto mb-4" />
+                            <p className="text-xs uppercase tracking-widest text-[var(--rs-text-tertiary)] font-bold">
+                                Secure Enclave Architecture
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -88,5 +90,13 @@ function ListItem({ icon, title, description }: { icon: React.ReactNode, title: 
                 <p className="text-[var(--rs-text-secondary)] text-sm leading-relaxed max-w-sm">{description}</p>
             </div>
         </li>
+    )
+}
+
+function Badge({ text }: { text: string }) {
+    return (
+        <div className="px-3 py-1.5 border border-[var(--rs-border-primary)] rounded bg-[var(--rs-bg-secondary)] text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">
+            {text}
+        </div>
     )
 }

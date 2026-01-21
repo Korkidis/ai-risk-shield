@@ -5,12 +5,12 @@ import { RSBackground } from '@/components/rs/RSBackground'
 import { FreeUploadContainer } from '@/components/landing/FreeUploadContainer'
 import { ScanResultsWithGate } from '@/components/landing/ScanResultsWithGate'
 import { Header } from '@/components/layout/Header'
-import { PricingSection } from '@/components/landing/SubscriptionComparison'
+import { SubscriptionComparison } from '@/components/landing/SubscriptionComparison'
 import { HowItWorks } from '@/components/landing/HowItWorks'
-import { TrustCompliance } from '@/components/landing/CredibilitySection'
-import { MarketExposure } from '@/components/landing/MarketExposure'
-import { Footer } from '@/components/landing/Footer'
+import { CredibilitySection } from '@/components/landing/CredibilitySection'
+import { CTASection } from '@/components/landing/CTASection'
 import { RiskProfile } from '@/lib/gemini'
+import { Footer } from '@/components/landing/Footer'
 
 type ViewState = 'upload' | 'results'
 
@@ -22,27 +22,27 @@ export default function LandingPage() {
     return (
         <RSBackground variant="standard" className="flex flex-col font-sans min-h-screen overflow-x-hidden selection:bg-[var(--rs-border-primary)] selection:text-[var(--rs-text-primary)]">
             <div className="relative z-10 min-h-screen flex flex-col">
-                {/* 1. Global Navigation & Brand */}
+                {/* NAVIGATION */}
                 <Header />
 
                 <main className="flex-grow w-full">
 
-                    {/* VIEW 1: HERO (CLEARANCE PROTOCOL) & UPLOAD */}
+                    {/* VIEW 1: HERO & UPLOAD */}
                     {view === 'upload' && (
                         <div className="w-full flex justify-center pt-16 pb-24 md:pt-32 md:pb-32 px-4 relative">
-                            <div className="max-w-4xl w-full flex flex-col items-center gap-16 z-20">
+                            <div className="max-w-4xl w-full flex flex-col items-center gap-12 z-20">
                                 {/* Hero Text */}
-                                <div className="text-center space-y-6 max-w-3xl mx-auto">
-                                    <h1 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.05] text-[var(--rs-text-primary)]">
-                                        Validation for <br />
-                                        <span className="text-[var(--rs-signal)]">Responsible AI.</span>
+                                <div className="text-center space-y-6 max-w-2xl mx-auto">
+                                    <h1 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.1] text-[var(--rs-text-primary)]">
+                                        The Standard for <br />
+                                        <span className="text-[var(--rs-signal)]">AI Verification.</span>
                                     </h1>
-                                    <p className="text-lg md:text-xl text-[var(--rs-text-secondary)] font-medium leading-relaxed max-w-2xl mx-auto">
-                                        Forensic-grade IP risk assessment for AI-generated assets. Quantify liability, verify provenance, and unblock your creative workflow.
+                                    <p className="text-lg md:text-xl text-[var(--rs-text-secondary)] font-medium leading-relaxed max-w-xl mx-auto">
+                                        Detect IP risks, verify C2PA provenance, and ensure brand safety with forensic precision.
                                     </p>
                                 </div>
 
-                                {/* 2a. The Forensic Analysis Bay (Scanner Widget) */}
+                                {/* Upload Container (Scanner) */}
                                 <div className="w-full max-w-2xl">
                                     <FreeUploadContainer
                                         onUploadStart={() => {
@@ -56,9 +56,10 @@ export default function LandingPage() {
                                         }}
                                     />
                                     {/* Trust Signals under scanner */}
-                                    <div className="flex justify-center gap-8 mt-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                                        <div className="h-4 w-24 bg-[var(--rs-text-tertiary)] rounded animate-pulse opacity-20" />
-                                        <div className="h-4 w-24 bg-[var(--rs-text-tertiary)] rounded animate-pulse opacity-20" />
+                                    <div className="flex justify-center gap-8 mt-6 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <div className="h-6 w-20 bg-rs-gray-800 rounded animate-pulse" />
+                                        <div className="h-6 w-20 bg-rs-gray-800 rounded animate-pulse" />
+                                        <div className="h-6 w-20 bg-rs-gray-800 rounded animate-pulse" />
                                     </div>
                                 </div>
                             </div>
@@ -75,21 +76,21 @@ export default function LandingPage() {
                         </div>
                     )}
 
-                    {/* 3. Market Exposure (Data Section) */}
-                    <MarketExposure />
-
-                    {/* 4. Technical Protocol (How It Works) */}
+                    {/* HOW IT WORKS SECTION */}
                     <HowItWorks />
 
-                    {/* 5. Clearance Access (Pricing) */}
-                    <PricingSection />
+                    {/* COMPARISON SECTION */}
+                    <SubscriptionComparison />
 
-                    {/* 6. Trust & Compliance */}
-                    <TrustCompliance />
+                    {/* CREDIBILITY SECTION */}
+                    <CredibilitySection />
+
+                    {/* FINAL CTA SECTION */}
+                    <CTASection />
 
                 </main>
 
-                {/* 7. Footer & Legal */}
+                {/* SYSTEM FOOTER */}
                 <Footer />
             </div>
         </RSBackground>

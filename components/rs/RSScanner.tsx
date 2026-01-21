@@ -7,6 +7,7 @@ interface RSScannerProps extends React.HTMLAttributes<HTMLDivElement> {
     active?: boolean;
     status?: string;
     imageUrl?: string; // Preview image
+    isDragActive?: boolean;
 }
 
 export function RSScanner({
@@ -14,6 +15,7 @@ export function RSScanner({
     active = false,
     status = 'idle',
     imageUrl,
+    isDragActive = false,
     children,
     ...props
 }: RSScannerProps) {
@@ -24,7 +26,8 @@ export function RSScanner({
     return (
         <div
             className={cn(
-                "relative overflow-hidden bg-[#121212] rounded-[8px] border-4 border-rs-gray-300", // Heavy Bezel
+                "relative overflow-hidden bg-[#121212] rounded-[8px] border-4 border-rs-gray-300 transition-colors duration-300", // Heavy Bezel
+                isDragActive && "border-rs-signal shadow-[0_0_20px_var(--rs-signal)]",
                 "aspect-video w-full flex items-center justify-center",
                 "shadow-[var(--rs-shadow-hull)]",
                 className
@@ -43,6 +46,16 @@ export function RSScanner({
                 />
             )}
 
+            {/* Drag Overlay - Target Lock */}
+            {isDragActive && (
+                <div className="absolute inset-0 z-40 bg-rs-signal/10 flex items-center justify-center animate-in fade-in duration-200">
+                    <div className="w-[80%] h-[80%] border-2 border-rs-signal border-dashed rounded-[12px] animate-pulse" />
+                    <div className="absolute text-rs-signal font-mono text-lg font-bold tracking-widest uppercase animate-bounce">
+                        DROP ASSET TARGET
+                    </div>
+                </div>
+            )}
+
             {/* CRT Physical Layers */}
             <div className="absolute inset-0 rs-crt-overlay opacity-30 pointer-events-none z-10" />
             <div className="absolute inset-0 bg-[var(--rs-glass-convex)] opacity-50 z-20 pointer-events-none mix-blend-soft-light" />
@@ -51,11 +64,11 @@ export function RSScanner({
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none opacity-50" />
 
             {/* Target Corners (Camera Viewfinder feel) */}
-            <div className="absolute inset-4 border border-rs-white/20 pointer-events-none" />
-            <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-rs-white opacity-50" />
-            <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-rs-white opacity-50" />
-            <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-rs-white opacity-50" />
-            <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-rs-white opacity-50" />
+            <div className={cn("absolute inset-4 border border-rs-white/20 pointer-events-none transition-colors", isDragActive && "border-rs-signal/50")} />
+            <div className={cn("absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-rs-white opacity-50 transition-colors", isDragActive && "border-rs-signal opacity-100")} />
+            <div className={cn("absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-rs-white opacity-50 transition-colors", isDragActive && "border-rs-signal opacity-100")} />
+            <div className={cn("absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-rs-white opacity-50 transition-colors", isDragActive && "border-rs-signal opacity-100")} />
+            <div className={cn("absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-rs-white opacity-50 transition-colors", isDragActive && "border-rs-signal opacity-100")} />
 
             {/* SCANNING LASER EFFECT */}
             {isScanning && (

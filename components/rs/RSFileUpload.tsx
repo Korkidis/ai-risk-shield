@@ -6,6 +6,7 @@ import { Upload, File, X } from 'lucide-react';
 
 interface RSFileUploadProps {
     onFileSelect?: (file: File) => void;
+    onDragChange?: (isDragging: boolean) => void;
     accept?: string;
     maxSizeMB?: number;
     className?: string;
@@ -13,6 +14,7 @@ interface RSFileUploadProps {
 
 export function RSFileUpload({
     onFileSelect,
+    onDragChange,
     accept = "image/*",
     maxSizeMB = 10,
     className,
@@ -45,16 +47,21 @@ export function RSFileUpload({
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
-        setIsDragging(true);
+        if (!isDragging) {
+            setIsDragging(true);
+            onDragChange?.(true);
+        }
     };
 
     const handleDragLeave = () => {
         setIsDragging(false);
+        onDragChange?.(false);
     };
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
+        onDragChange?.(false);
 
         const file = e.dataTransfer.files[0];
         if (file) handleFile(file);

@@ -1,12 +1,11 @@
 'use client'
 
 import { Scan, BrainCircuit, Activity } from 'lucide-react'
-// ... imports
 import { RSPanel } from '../rs/RSPanel'
 
 export function HowItWorks() {
     return (
-        <section id="how-it-works" className="py-24 bg-[var(--rs-bg-well)] rs-bg-grid rs-edge-top relative overflow-hidden">
+        <section id="protocol" className="py-24 bg-[var(--rs-bg-well)] rs-bg-grid rs-edge-top relative overflow-hidden">
             {/* Ruler Gutter - Left */}
             <div className="absolute left-0 top-0 bottom-0 w-12 border-r border-[var(--rs-border-primary)]/50 hidden md:flex flex-col items-center py-4 overflow-hidden bg-[var(--rs-bg-well)] z-20">
                 {Array.from({ length: 40 }).map((_, i) => (
@@ -25,13 +24,9 @@ export function HowItWorks() {
                         </div>
 
                         <h2 className="text-4xl md:text-5xl rs-header-bold-italic tracking-tighter text-[var(--rs-text-primary)] block">
-                            FORENSIC <span className="text-[var(--rs-signal)]">PROTOCOL</span>
+                            TECHNICAL <span className="text-[var(--rs-signal)]">PROTOCOL</span>
                         </h2>
                     </div>
-
-                    <p className="rs-type-body text-[var(--rs-text-secondary)] text-lg max-w-2xl mt-4 mx-auto">
-                        Standardized auditing process for visual asset verification.
-                    </p>
                 </div>
 
                 {/* Grid of Cards (Extruded from Recessed Background) */}
@@ -40,8 +35,8 @@ export function HowItWorks() {
                     {/* Step 1 */}
                     <StepCard
                         icon={<Scan className="w-6 h-6 text-[var(--rs-text-primary)]" />}
-                        title="UPLOAD ASSET"
-                        description="Input image or video file. System scans instantly for copyright risks, AI signatures, and brand safety violations."
+                        title="FORENSIC SCAN"
+                        description="Proprietary ML models scan for trademark overlap and stylistic similarity."
                         step="01"
                         delay={0}
                     />
@@ -49,8 +44,8 @@ export function HowItWorks() {
                     {/* Step 2 */}
                     <StepCard
                         icon={<BrainCircuit className="w-6 h-6 text-[var(--rs-text-primary)]" />}
-                        title="FORENSIC ANALYSIS"
-                        description="Engine analyzes visual patterns, metadata, and C2PA credentials to detect manipulation and provenance gaps."
+                        title="PROVENANCE TRAIL"
+                        description="Cryptographic C2PA verification to document asset origin and edit history."
                         step="02"
                         delay={100}
                     />
@@ -58,8 +53,8 @@ export function HowItWorks() {
                     {/* Step 3 */}
                     <StepCard
                         icon={<Activity className="w-6 h-6 text-[var(--rs-text-primary)]" />}
-                        title="RISK VERDICT"
-                        description="Receive a definitive risk score with detailed insights on exposure, allowing for confident compliance decisions."
+                        title="MITIGATION REPORT"
+                        description="Actionable remediation steps and regeneration prompts for high-risk assets."
                         step="03"
                         delay={200}
                     />

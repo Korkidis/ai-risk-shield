@@ -2,24 +2,23 @@
 
 import { RSButton } from "../rs/RSButton"
 import { RSPanel } from "../rs/RSPanel"
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 import { Check, Minus } from 'lucide-react'
 
-export function SubscriptionComparison() {
+export function PricingSection() {
     return (
         <section id="pricing" className="py-24 bg-[var(--rs-bg-surface)] rs-edge-top relative overflow-hidden">
 
             <div className="max-w-7xl mx-auto px-6 relative">
-                {/* Technical ID Removed */}
 
                 {/* Section Header */}
                 <div className="text-center mb-16 space-y-4 pt-12">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-[var(--rs-bg-secondary)] border border-[var(--rs-border-primary)] rounded-full mb-4">
                         <div className="w-1.5 h-1.5 rounded-full bg-[var(--rs-signal)] animate-pulse" />
-                        <span className="rs-type-mono text-[10px] tracking-widest text-[var(--rs-text-secondary)]">CLEARANCE_LEVEL_SELECT</span>
+                        <span className="rs-type-mono text-[10px] tracking-widest text-[var(--rs-text-secondary)]">CLEARANCE_MATRIX_P100</span>
                     </div>
                     <h2 className="text-4xl md:text-5xl rs-header-bold-italic tracking-tighter text-[var(--rs-text-primary)]">
-                        EQUIPMENT <span className="text-[var(--rs-signal)]">SPECIFICATION</span>
+                        CLEARANCE <span className="text-[var(--rs-signal)]">ACCESS</span>
                     </h2>
                     <p className="rs-type-body text-[var(--rs-text-secondary)] text-lg max-w-2xl mx-auto">
                         Determine the forensic depth required for your operational theater.
@@ -44,11 +43,11 @@ export function SubscriptionComparison() {
                                 <span className="rs-type-mono text-xs font-bold">L4</span>
                             </div>
                             <div>
-                                <h3 className="rs-type-section text-sm uppercase text-[var(--rs-text-primary)] mb-1">Enterprise / On-Premise</h3>
-                                <p className="rs-type-body text-xs text-[var(--rs-text-secondary)] max-w-md">Air-gapped deployment, custom retina training, and infinite retention.</p>
+                                <h3 className="rs-type-section text-sm uppercase text-[var(--rs-text-primary)] mb-1">Enterprise / Governance</h3>
+                                <p className="rs-type-body text-xs text-[var(--rs-text-secondary)] max-w-md">Unlimited scans, custom SLAs, SOC2 audit support, and private instance.</p>
                             </div>
                         </div>
-                        <RSButton variant="ghost" size="sm" className="border border-[var(--rs-border-primary)] text-xs tracking-widest whitespace-nowrap">REQUEST SPECS</RSButton>
+                        <RSButton variant="ghost" size="sm" className="border border-[var(--rs-border-primary)] text-xs tracking-widest whitespace-nowrap">CONTACT LEGAL SALES</RSButton>
                     </RSPanel>
                 </div>
             </div>
@@ -57,8 +56,6 @@ export function SubscriptionComparison() {
 }
 
 // --- DESKTOP VIEW ---
-
-// --- DESKTOP VIEW: ELITE GLASS SPEC SHEET ---
 
 function DesktopSpecSheet() {
     return (
@@ -70,7 +67,7 @@ function DesktopSpecSheet() {
                 className="overflow-hidden border border-[var(--rs-border-primary)] shadow-2xl bg-white/40 backdrop-blur-xl p-0 relative rounded-2xl"
             >
                 {/* High-Tech Header */}
-                <div className="grid grid-cols-5 border-b border-[var(--rs-border-primary)] bg-white/50">
+                <div className="grid grid-cols-4 border-b border-[var(--rs-border-primary)] bg-white/50">
                     <div className="p-8 flex flex-col justify-end">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-2 h-2 rounded-full bg-[var(--rs-signal)] animate-pulse" />
@@ -79,33 +76,29 @@ function DesktopSpecSheet() {
                         <span className="rs-type-display text-2xl font-black tracking-tighter text-[var(--rs-text-primary)]">CLEARANCE</span>
                     </div>
 
-                    <TierHeader title="TRIAL" code="L0" price="FREE" description="Public\nAnonymity" />
-                    <TierHeader title="INDIVIDUAL" code="L1" price="$49" description="Field\nOperative" recommended />
-                    <TierHeader title="TEAM" code="L2" price="$199" description="Unit\nDeployment" />
-                    <TierHeader title="AGENCY" code="L3" price="$599" description="Global\nCommand" />
+                    <TierHeader title="BASIC" code="L0" price="$0" description="Single Check" />
+                    <TierHeader title="ASSESSMENT" code="L1" price="$29" description="Deep Report" recommended />
+                    <TierHeader title="PROFESSIONAL" code="L2" price="$49" description="Volume Access" />
                 </div>
 
                 {/* Spec Rows High Fidelity */}
                 <div className="divide-y divide-[var(--rs-border-primary)]/50 text-sm">
-                    <SpecRow label="Daily Capacity" trial="3" individual="50" team="200" agency="1,000" />
-                    <SpecRow label="Concurrent Operators" trial="1" individual="1" team="5" agency="Unlimited" />
-                    <SpecRow label="Forensic Depth" trial="Basic Check" individual="Full Report" team="Full Report" agency="Deep Forensic" highlight />
-                    <SpecRow label="Video Signal Analysis" trial={false} individual={false} team="Standard" agency="High-Def" />
-                    <SpecRow label="Legal Compliance" trial={false} individual={false} team={true} agency={true} />
-                    <SpecRow label="API Access Port" trial={false} individual={false} team={true} agency={true} />
-                    <SpecRow label="Support Channel" trial="Public" individual="Standard" team="Priority" agency="24/7 Dedicated" />
+                    <SpecRow label="Daily Capacity" basic="3 Scans / Month" assessment="Single Deep Scan" pro="Unlimited" />
+                    <SpecRow label="Forensic Depth" basic="Verification Only" assessment="Full Legal Reasoning" pro="Custom Brand Rules" highlight />
+                    <SpecRow label="Mitigation Strategy" basic={false} assessment={true} pro={true} />
+                    <SpecRow label="Regeneration Prompts" basic={false} assessment={true} pro={true} />
+                    <SpecRow label="History Retention" basic="None" assessment="30 Days" pro="Unlimited" />
                 </div>
 
                 {/* Footer Action Bar */}
-                <div className="grid grid-cols-5 bg-white/30 backdrop-blur-sm border-t border-[var(--rs-border-primary)]">
+                <div className="grid grid-cols-4 bg-white/30 backdrop-blur-sm border-t border-[var(--rs-border-primary)]">
                     <div className="p-4" />
-                    <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth>SELECT</RSButton></div>
+                    <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth>INITIALIZE</RSButton></div>
                     <div className="p-4 flex justify-center relative">
                         <div className="absolute inset-0 bg-[var(--rs-signal)]/5 pointer-events-none" />
-                        <RSButton variant="primary" size="sm" fullWidth className="shadow-lg shadow-[var(--rs-signal)]/20">AUTHORIZE</RSButton>
+                        <RSButton variant="primary" size="sm" fullWidth className="shadow-lg shadow-[var(--rs-signal)]/20">ACCESS REPORT</RSButton>
                     </div>
-                    <div className="p-4 flex justify-center"><RSButton variant="secondary" size="sm" fullWidth>SELECT</RSButton></div>
-                    <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth>CONTACT</RSButton></div>
+                    <div className="p-4 flex justify-center"><RSButton variant="secondary" size="sm" fullWidth>SUBSCRIBE</RSButton></div>
                 </div>
             </RSPanel>
         </div>
@@ -117,60 +110,44 @@ function DesktopSpecSheet() {
 function MobilePricingView() {
     const tiers = [
         {
-            title: "TRIAL",
+            title: "BASIC",
             code: "L0-PUBLIC",
-            price: "FREE",
-            desc: "Public Anonymity",
+            price: "$0",
+            desc: "Safety Assessment",
             features: [
-                { label: "CAPACITY", val: "3 / MO" },
-                { label: "OPERATORS", val: "1" },
-                { label: "DEPTH", val: "Teaser" },
-                { label: "RESPONSE", val: "Community" }
+                { label: "CAPACITY", val: "3 / Month" },
+                { label: "DEPTH", val: "Verification" },
+                { label: "REPORT", val: "Sample Only" },
             ],
             btn: <RSButton variant="ghost" fullWidth>INITIALIZE</RSButton>
         },
         {
-            title: "INDIVIDUAL",
-            code: "L1-FIELD",
-            price: "$49",
-            sub: "/mo",
-            desc: "Freelance Operative",
+            title: "FULL REPORT",
+            code: "L1-DEEP",
+            price: "$29",
+            sub: "/scan",
+            desc: "Critical Need",
             isRecommended: true,
             features: [
-                { label: "CAPACITY", val: "50 / MO" },
-                { label: "OPERATORS", val: "1" },
-                { label: "DEPTH", val: "Full Report" },
-                { label: "RESPONSE", val: "Standard" }
+                { label: "CAPACITY", val: "Single Scan" },
+                { label: "DEPTH", val: "Deep Forensic" },
+                { label: "OUTPUT", val: "6-Page PDF" },
+                { label: "GUIDANCE", val: "Mitigation Steps" }
             ],
-            btn: <RSButton variant="primary" fullWidth>AUTHORIZE</RSButton>
+            btn: <RSButton variant="primary" fullWidth>ACCESS REPORT</RSButton>
         },
         {
-            title: "TEAM",
-            code: "L2-UNIT",
-            price: "$199",
+            title: "PROFESSIONAL",
+            code: "L2-SCALE",
+            price: "$49",
             sub: "/mo",
-            desc: "Unit Deployment",
+            desc: "Persistent Validation",
             features: [
-                { label: "CAPACITY", val: "200 / MO" },
-                { label: "OPERATORS", val: "5" },
-                { label: "VIDEO SIGNAL", val: "Enabled" },
-                { label: "API PORT", val: "Enabled" }
+                { label: "CAPACITY", val: "Unlimited" },
+                { label: "HISTORY", val: "Persistent" },
+                { label: "RULES", val: "Custom Brand" }
             ],
-            btn: <RSButton variant="secondary" fullWidth>DEPLOY UNIT</RSButton>
-        },
-        {
-            title: "AGENCY",
-            code: "L3-GLOBAL",
-            price: "$599",
-            sub: "/mo",
-            desc: "Global Command",
-            features: [
-                { label: "CAPACITY", val: "1,000 / MO" },
-                { label: "OPERATORS", val: "15+" },
-                { label: "COMPLIANCE", val: "Enabled" },
-                { label: "API PORT", val: "Dedicated" }
-            ],
-            btn: <RSButton variant="ghost" fullWidth className="border border-[var(--rs-border-primary)]">CONTACT CMD</RSButton>
+            btn: <RSButton variant="secondary" fullWidth>SUBSCRIBE</RSButton>
         }
     ];
 
@@ -190,7 +167,7 @@ function MobilePricingView() {
                     <div className="text-center mb-6 pb-6 border-b border-[var(--rs-border-primary)]">
                         {current.isRecommended && (
                             <div className="inline-block px-2 py-0.5 mb-3 bg-[var(--rs-signal)] text-white text-[9px] font-bold uppercase tracking-widest rounded-full">
-                                Standard Issue
+                                Recommended
                             </div>
                         )}
                         <span className="rs-type-mono text-[10px] text-[var(--rs-text-tertiary)] mb-2 block">{current.code}</span>
@@ -222,37 +199,36 @@ function MobilePricingView() {
 // --- SUB COMPONENTS ---
 
 
-function TierHeader({ title, code, price, description, recommended, dark }: { title: string, code: string, price: string, description: string, recommended?: boolean, dark?: boolean }) {
+function TierHeader({ title, code, price, description, recommended }: { title: string, code: string, price: string, description: string, recommended?: boolean }) {
     return (
         <div className={cn(
             "p-6 flex flex-col items-center justify-between gap-4 relative transition-all duration-300",
-            recommended ? (dark ? "bg-white/5 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] z-10 scale-[1.05] border-x border-white/20 -mx-[1px]" : "bg-[var(--rs-bg-surface)] shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-10 scale-[1.02] border-x border-[var(--rs-border-primary)] -mx-[1px]") : "hover:bg-white/5",
-            dark ? "text-white" : ""
+            recommended ? "bg-[var(--rs-bg-surface)] shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-10 scale-[1.02] border-x border-[var(--rs-border-primary)] -mx-[1px]" : "hover:bg-white/5",
         )}>
             {recommended && (
                 <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--rs-signal)]" />
             )}
             <div className="space-y-1 text-center w-full">
-                <div className={cn("rs-type-mono text-[9px] uppercase tracking-widest mb-2", recommended ? "text-[var(--rs-signal)] font-bold" : (dark ? "text-white/50" : "text-[var(--rs-text-tertiary)]"))}>
+                <div className={cn("rs-type-mono text-[9px] uppercase tracking-widest mb-2", recommended ? "text-[var(--rs-signal)] font-bold" : "text-[var(--rs-text-tertiary)]")}>
                     {code}
                 </div>
-                <div className={cn("rs-type-display text-lg font-black tracking-tighter", dark ? "text-white" : "text-[var(--rs-text-primary)]")}>
+                <div className={cn("rs-type-display text-lg font-black tracking-tighter text-[var(--rs-text-primary)]")}>
                     {title}
                 </div>
-                <div className={cn("text-[10px] font-medium uppercase tracking-wide mt-1", dark ? "text-white/60" : "text-[var(--rs-text-secondary)]")}>
+                <div className={cn("text-[10px] font-medium uppercase tracking-wide mt-1 text-[var(--rs-text-secondary)]")}>
                     {description}
                 </div>
             </div>
 
             <div className="flex items-baseline gap-0.5">
-                <span className={cn("text-3xl font-bold tracking-tighter", dark ? "text-white" : "text-[var(--rs-text-primary)]")}>{price}</span>
-                {price !== "FREE" && <span className={cn("text-[10px] font-mono", dark ? "text-white/50" : "text-[var(--rs-text-secondary)]")}>/mo</span>}
+                <span className={cn("text-3xl font-bold tracking-tighter text-[var(--rs-text-primary)]")}>{price}</span>
+                {price !== "$0" && <span className={cn("text-[10px] font-mono text-[var(--rs-text-secondary)]")}>/mo</span>}
             </div>
         </div>
     )
 }
 
-function SpecRow({ label, trial, individual, team, agency, highlight }: { label: string, trial: any, individual: any, team: any, agency: any, highlight?: boolean }) {
+function SpecRow({ label, basic, assessment, pro, highlight }: { label: string, basic: any, assessment: any, pro: any, highlight?: boolean }) {
     const renderCell = (value: any, isRecommended: boolean) => {
         if (typeof value === 'boolean') {
             return value ? <Check className="w-4 h-4 text-[var(--rs-safe)] mx-auto" /> : <Minus className="w-3 h-3 text-[var(--rs-text-tertiary)] mx-auto opacity-30" />
@@ -269,22 +245,21 @@ function SpecRow({ label, trial, individual, team, agency, highlight }: { label:
     }
 
     return (
-        <div className="grid grid-cols-5 divide-x divide-[var(--rs-border-primary)] hover:bg-[var(--rs-bg-secondary)]/30 transition-colors group">
+        <div className="grid grid-cols-4 divide-x divide-[var(--rs-border-primary)] hover:bg-[var(--rs-bg-secondary)]/30 transition-colors group">
             {/* Label */}
             <div className="p-4 flex items-center bg-[var(--rs-bg-secondary)]/10">
                 <span className="rs-type-mono text-[9px] font-bold text-[var(--rs-text-tertiary)] uppercase tracking-wider">{label}</span>
             </div>
 
             {/* Tiers */}
-            <div className="p-4 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors">{renderCell(trial, false)}</div>
+            <div className="p-4 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors">{renderCell(basic, false)}</div>
 
-            {/* Recommended Column (INDIVIDUAL) */}
+            {/* Recommended Column (ASSESSMENT) */}
             <div className="p-4 flex items-center justify-center bg-[var(--rs-bg-surface)] relative shadow-[inset_0_0_20px_rgba(0,0,0,0.02)] border-x border-[var(--rs-border-primary)] -mx-[1px] z-10">
-                {renderCell(individual, true)}
+                {renderCell(assessment, true)}
             </div>
 
-            <div className="p-4 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors">{renderCell(team, false)}</div>
-            <div className="p-4 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors">{renderCell(agency, false)}</div>
+            <div className="p-4 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors">{renderCell(pro, false)}</div>
         </div>
     )
 }

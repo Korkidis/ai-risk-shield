@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
+
 import {
     Plus,
     Search,
@@ -9,11 +9,9 @@ import {
     Shield,
     Globe,
     AlertTriangle,
-    CheckCircle2,
-    MoreVertical,
     Download
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { RSButton } from '@/components/rs/RSButton'
 import { RSInput } from '@/components/rs/RSInput'
 import { RSSelect } from '@/components/rs/RSSelect'
@@ -74,7 +72,7 @@ export default function BrandGuidelinesPage() {
                     </div>
                     <RSSelect
                         value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
+                        onChange={(value) => setFilterCategory(value)}
                         options={[
                             { value: 'all', label: 'CAT: ALL' },
                             { value: 'voice', label: 'CAT: VOICE' },
@@ -90,7 +88,11 @@ export default function BrandGuidelinesPage() {
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-20">
                         {filteredGuidelines.map(g => (
-                            <GuidelineCard key={g.id} guideline={g} isSelected={false} onClick={() => { }} />
+                            <GuidelineCard
+                                key={g.id}
+                                guideline={g}
+                                onClick={() => { setGuidelines(guidelines) }}
+                            />
                         ))}
                     </div>
                 </div>
@@ -115,7 +117,7 @@ export default function BrandGuidelinesPage() {
                     </div>
                     <div>
                         <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Description_Log</label>
-                        <RSTextarea placeholder="// DESCRIBE_PROTOCOL_PARAMETERS..." minRows={4} />
+                        <RSTextarea placeholder="// DESCRIBE_PROTOCOL_PARAMETERS..." />
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-rs-border-primary">
                         <RSButton variant="ghost" onClick={() => setIsCreateOpen(false)}>CANCEL</RSButton>
@@ -127,11 +129,12 @@ export default function BrandGuidelinesPage() {
     )
 }
 
-function GuidelineCard({ guideline, isSelected, onClick }: { guideline: BrandGuideline, isSelected: boolean, onClick: () => void }) {
+function GuidelineCard({ guideline, onClick }: { guideline: BrandGuideline, onClick: () => void }) {
     return (
         <motion.div
             layout
             whileHover={{ y: -2 }}
+            onClick={onClick}
             className={`group bg-rs-white border-2 border-rs-gray-200 rounded-[6px] p-6 transition-all relative overflow-hidden cursor-pointer shadow-[var(--rs-shadow-bevel)] hover:border-rs-black hover:shadow-[0_8px_16px_rgba(0,0,0,0.1)]`}
         >
             {/* Corner Accents - Physical Feel */}

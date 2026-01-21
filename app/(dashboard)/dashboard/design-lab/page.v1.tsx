@@ -15,11 +15,11 @@ import { RSSelect } from '@/components/rs/RSSelect';
 import { RSTooltip } from '@/components/rs/RSTooltip';
 import { RSCallout } from '@/components/rs/RSCallout';
 import { RSFileUpload } from '@/components/rs/RSFileUpload';
-import { RSModal } from '@/components/rs/RSModal';
+
 import { RSProgressBar } from '@/components/rs/RSProgressBar';
 import { RSCard } from '@/components/rs/RSCard';
 import { RSNavbar } from '@/components/rs/RSNavbar';
-import { RSAvatar } from '@/components/rs/RSAvatar';
+
 import { RSBreadcrumb } from '@/components/rs/RSBreadcrumb';
 import { RSTable } from '@/components/rs/RSTable';
 import { RSTabs } from '@/components/rs/RSTabs';

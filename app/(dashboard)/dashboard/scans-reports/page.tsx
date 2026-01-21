@@ -140,25 +140,25 @@ export default function ScansReportsPage() {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full text-xs font-mono uppercase bg-rs-white shadow-[var(--rs-shadow-socket)]"
-                                icon={<Search className="w-4 h-4 text-rs-text-tertiary" />}
+                                style={{ paddingLeft: '2.5rem' }}
                             />
                         </div>
 
                         <RSSelect
                             value={filterRisk}
-                            onChange={(e) => setFilterRisk(e.target.value)}
+                            onChange={(val) => setFilterRisk(val)}
                             options={[
                                 { value: 'all', label: 'RISK: ALL' },
-                                { value: 'safe', label: 'RISK: SAFE' },
-                                { value: 'high', label: 'RISK: HIGH' },
-                                { value: 'critical', label: 'RISK: CRITICAL' }
+                                { value: 'Low Risk', label: 'RISK: SAFE' },
+                                { value: 'High Risk', label: 'RISK: HIGH' },
+                                { value: 'Critical Risk', label: 'RISK: CRITICAL' }
                             ]}
                             className="w-40 bg-rs-white shadow-[var(--rs-shadow-socket)]"
                         />
 
                         <RSSelect
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
+                            onChange={(val) => setSortBy(val)}
                             options={[
                                 { value: 'date_desc', label: 'SORT: NEWEST' },
                                 { value: 'date_asc', label: 'SORT: OLDEST' }
@@ -244,19 +244,19 @@ export default function ScansReportsPage() {
                             <div className="p-4 bg-[var(--rs-bg-element)] border border-rs-border-primary rounded-[var(--rs-radius-small)] shadow-[var(--rs-shadow-bevel)]">
                                 <div className="flex justify-between items-start mb-2">
                                     <span className="text-[10px] uppercase tracking-widest text-rs-text-tertiary">Verdict Analysis</span>
-                                    {selectedScan.risk_profile?.verdict === 'safe' && <CheckCircle2 className="text-rs-safe w-4 h-4" />}
-                                    {selectedScan.risk_profile?.verdict === 'high' && <AlertTriangle className="text-rs-alert w-4 h-4" />}
-                                    {selectedScan.risk_profile?.verdict === 'critical' && <AlertOctagon className="text-rs-destruct w-4 h-4" />}
+                                    {selectedScan.risk_profile?.verdict === 'Low Risk' && <CheckCircle2 className="text-rs-safe w-4 h-4" />}
+                                    {selectedScan.risk_profile?.verdict === 'High Risk' && <AlertTriangle className="text-rs-alert w-4 h-4" />}
+                                    {selectedScan.risk_profile?.verdict === 'Critical Risk' && <AlertOctagon className="text-rs-destruct w-4 h-4" />}
                                 </div>
                                 <div className={cn(
                                     "text-2xl font-black uppercase tracking-tighter mb-1",
-                                    selectedScan.risk_profile?.verdict === 'critical' ? "text-rs-destruct" :
-                                        selectedScan.risk_profile?.verdict === 'high' ? "text-rs-alert" : "text-rs-safe"
+                                    selectedScan.risk_profile?.verdict === 'Critical Risk' ? "text-rs-destruct" :
+                                        selectedScan.risk_profile?.verdict === 'High Risk' ? "text-rs-alert" : "text-rs-safe"
                                 )}>
                                     {selectedScan.risk_profile?.verdict || 'PENDING'}
                                 </div>
                                 <p className="text-xs text-rs-text-secondary leading-relaxed">
-                                    {selectedScan.risk_profile?.summary || 'Analysis in progress...'}
+                                    {selectedScan.risk_profile?.chief_officer_strategy || 'Analysis in progress...'}
                                 </p>
                             </div>
 
@@ -289,7 +289,7 @@ export default function ScansReportsPage() {
                                 </div>
                                 <RSTextarea
                                     placeholder="// ENTER FIELD NOTES..."
-                                    minRows={5}
+                                    rows={5}
                                     value={selectedScan.notes || ''}
                                     onBlur={(e) => handleSaveNotes(e.target.value)}
                                     className="bg-rs-white shadow-[var(--rs-shadow-socket)]"
@@ -333,8 +333,8 @@ function ScanCard({ scan, isSelected, onClick }: { scan: ScanWithRelations; isSe
             {/* Status Indicator LED */}
             <div className={cn(
                 "absolute top-0 right-0 w-16 h-16 opacity-10 pointer-events-none transition-opacity group-hover:opacity-20",
-                scan.risk_profile?.verdict === 'critical' ? 'bg-rs-destruct' :
-                    scan.risk_profile?.verdict === 'high' ? 'bg-rs-alert' : 'bg-rs-safe'
+                scan.risk_profile?.verdict === 'Critical Risk' ? 'bg-rs-destruct' :
+                    scan.risk_profile?.verdict === 'High Risk' ? 'bg-rs-alert' : 'bg-rs-safe'
             )} style={{ filter: 'blur(20px)' }} />
 
             <div className="flex justify-between items-start relative z-10">
@@ -364,8 +364,8 @@ function ScanCard({ scan, isSelected, onClick }: { scan: ScanWithRelations; isSe
                 {/* Score Badge based on Verdict */}
                 <div className={cn(
                     "px-2 py-1 rounded-[2px] border text-[10px] font-black uppercase tracking-wider",
-                    scan.risk_profile?.verdict === 'critical' ? "bg-rs-destruct/10 border-rs-destruct text-rs-destruct" :
-                        scan.risk_profile?.verdict === 'high' ? "bg-rs-alert/10 border-rs-alert text-rs-alert" :
+                    scan.risk_profile?.verdict === 'Critical Risk' ? "bg-rs-destruct/10 border-rs-destruct text-rs-destruct" :
+                        scan.risk_profile?.verdict === 'High Risk' ? "bg-rs-alert/10 border-rs-alert text-rs-alert" :
                             "bg-rs-safe/10 border-rs-safe text-rs-safe"
                 )}>
                     {scan.risk_profile?.verdict || 'PENDING'}
@@ -377,8 +377,8 @@ function ScanCard({ scan, isSelected, onClick }: { scan: ScanWithRelations; isSe
                 <div
                     className={cn(
                         "h-full transition-all duration-500",
-                        scan.risk_profile?.verdict === 'critical' ? "bg-rs-destruct" :
-                            scan.risk_profile?.verdict === 'high' ? "bg-rs-alert" : "bg-rs-safe"
+                        scan.risk_profile?.verdict === 'Critical Risk' ? "bg-rs-destruct" :
+                            scan.risk_profile?.verdict === 'High Risk' ? "bg-rs-alert" : "bg-rs-safe"
                     )}
                     style={{ width: `${Math.max(scan.risk_profile?.ip_report?.score || 0, scan.risk_profile?.safety_report?.score || 0)}%` }}
                 />

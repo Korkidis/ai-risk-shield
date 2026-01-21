@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, BookOpen, FileQuestion, MessageCircle, Activity, ExternalLink, ChevronDown, Terminal } from 'lucide-react'
+import { BookOpen, MessageCircle, Activity, ExternalLink, ChevronDown, Terminal } from 'lucide-react'
 import Link from 'next/link'
 import { RSDraftingBoard } from '@/components/rs/RSDraftingBoard'
 

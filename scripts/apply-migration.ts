@@ -10,6 +10,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import * as dotenv from 'dotenv'
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
 
 async function applyMigration() {
   console.log('🚀 AI Risk Shield - Database Migration\n')
@@ -92,7 +96,7 @@ async function applyMigration() {
       console.log('\n⚠️  IMPORTANT: This migration must be run manually in Supabase SQL Editor')
       console.log('\n📋 Steps to apply migration:')
       console.log('1. Go to: https://supabase.com/dashboard/project/_/sql/new')
-      console.log('2. Copy the contents of: supabase/migrations/20260103_initial_schema.sql')
+      console.log(`2. Copy the contents of: ${migrationPath}`)
       console.log('3. Paste into SQL Editor')
       console.log('4. Click "Run"\n')
 
