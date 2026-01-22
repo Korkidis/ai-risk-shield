@@ -32,6 +32,12 @@ export function HowItWorks() {
                 {/* Grid of Cards (Extruded from Recessed Background) */}
                 <div className="grid md:grid-cols-3 gap-8 md:gap-12 relative pl-12 md:pl-0">
 
+                    {/* Schematic Connector Line (Desktop) */}
+                    <div className="absolute top-1/2 left-0 right-0 h-px bg-[var(--rs-border-primary)] -translate-y-1/2 hidden md:block z-0" />
+                    <div className="absolute top-1/2 left-[16%] w-2 h-2 rounded-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] -translate-y-1/2 hidden md:block z-0" />
+                    <div className="absolute top-1/2 left-[50%] w-2 h-2 rounded-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] -translate-y-1/2 hidden md:block z-0" />
+                    <div className="absolute top-1/2 left-[83%] w-2 h-2 rounded-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] -translate-y-1/2 hidden md:block z-0" />
+
                     {/* Step 1 */}
                     <StepCard
                         icon={<Scan className="w-6 h-6 text-[var(--rs-text-primary)]" />}

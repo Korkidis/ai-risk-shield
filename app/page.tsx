@@ -31,14 +31,25 @@ export default function LandingPage() {
                     {view === 'upload' && (
                         <div className="w-full flex justify-center pt-16 pb-24 md:pt-32 md:pb-32 px-4 relative">
                             <div className="max-w-4xl w-full flex flex-col items-center gap-16 z-20">
-                                {/* Hero Text */}
-                                <div className="text-center space-y-6 max-w-3xl mx-auto">
-                                    <h1 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.05] text-[var(--rs-text-primary)]">
+                                {/* Hero Text - Forensic Style */}
+                                <div className="text-center space-y-8 max-w-4xl mx-auto relative cursor-default">
+                                    {/* Top Label - Part Number/Protocol */}
+                                    <div className="flex justify-center items-center gap-3 opacity-60">
+                                        <div className="h-px w-12 bg-[var(--rs-text-tertiary)]" />
+                                        <span className="rs-type-micro text-[var(--rs-text-tertiary)] tracking-[0.2em]">
+                                            PROTOCOL: CLEARANCE_V2
+                                        </span>
+                                        <div className="h-px w-12 bg-[var(--rs-text-tertiary)]" />
+                                    </div>
+
+                                    <h1 className="rs-header-bold-italic text-5xl md:text-7xl leading-[0.9] text-[var(--rs-text-primary)]">
                                         Validation for <br />
                                         <span className="text-[var(--rs-signal)]">Responsible AI.</span>
                                     </h1>
-                                    <p className="text-lg md:text-xl text-[var(--rs-text-secondary)] font-medium leading-relaxed max-w-2xl mx-auto">
-                                        Forensic-grade IP risk assessment for AI-generated assets. Quantify liability, verify provenance, and unblock your creative workflow.
+
+                                    <p className="rs-type-body text-lg md:text-xl text-[var(--rs-text-secondary)] max-w-2xl mx-auto">
+                                        Forensic-grade IP assessment for AI-generated assets. <br className="hidden md:block" />
+                                        <span className="text-[var(--rs-text-primary)] font-medium">Quantify liability. Verify provenance. Unblock workflow.</span>
                                     </p>
                                 </div>
 

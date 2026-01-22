@@ -14,7 +14,7 @@ export function MarketExposure() {
                 {/* Section Header */}
                 <div className="flex items-center gap-4 mb-16">
                     <div className="h-px bg-[var(--rs-border-primary)] flex-1" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] bg-[var(--rs-bg-surface)] px-4">
+                    <span className="rs-type-micro text-[var(--rs-text-tertiary)] bg-[var(--rs-bg-surface)] px-4">
                         Market Exposure Data
                     </span>
                     <div className="h-px bg-[var(--rs-border-primary)] flex-1" />
@@ -29,7 +29,7 @@ export function MarketExposure() {
                                 <TrendingUp className="w-4 h-4 text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors" />
                             </div>
 
-                            <div className="text-5xl md:text-6xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
+                            <div className="rs-type-mono text-4xl md:text-5xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
                                 $680K
                             </div>
 
@@ -47,7 +47,7 @@ export function MarketExposure() {
                                 <AlertTriangle className="w-4 h-4 text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors" />
                             </div>
 
-                            <div className="text-5xl md:text-6xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
+                            <div className="rs-type-mono text-4xl md:text-5xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
                                 82%
                             </div>
 
@@ -65,7 +65,7 @@ export function MarketExposure() {
                                 <FileWarning className="w-4 h-4 text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors" />
                             </div>
 
-                            <div className="text-5xl md:text-6xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
+                            <div className="rs-type-mono text-4xl md:text-5xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
                                 2.4M
                             </div>
 

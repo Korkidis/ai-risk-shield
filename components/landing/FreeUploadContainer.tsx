@@ -189,7 +189,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   return (
     <div className="w-full relative group perspective-1000">
       {/* APERTURE CHASSIS WRAPPER */}
-      <RSPanel className="p-4 md:p-6 border border-white/60 relative bg-[var(--rs-bg-surface)] shadow-2xl">
+      <RSPanel className="p-4 md:p-6 border border-[var(--rs-border-primary)] relative bg-[var(--rs-bg-surface)] shadow-[var(--rs-shadow-l2)]">
 
         {/* Chassis Header */}
         <div className="flex justify-between items-center px-2 mb-4">
@@ -199,10 +199,10 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
               <div className="w-3 h-3 rounded-full bg-[var(--rs-safe)] shadow-[0_0_8px_var(--rs-safe)] animate-pulse" />
               <div className="absolute w-full h-full rounded-full bg-[var(--rs-safe)] opacity-40 blur-md animate-ping" />
             </div>
-            <span className="rs-type-mono text-[9px] text-[var(--rs-text-primary)] tracking-widest uppercase font-bold">SYSTEM STATUS: LIVE</span>
+            <span className="rs-type-micro text-[var(--rs-text-primary)] tracking-widest uppercase font-bold">SYSTEM STATUS: LIVE</span>
           </div>
           <div className="bg-[var(--rs-bg-secondary)] px-3 py-1.5 rounded-full shadow-inner border border-[var(--rs-border-primary)]">
-            <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">3/3 REMAINING</span>
+            <span className="rs-type-micro font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">3/3 REMAINING</span>
           </div>
         </div>
 
@@ -210,7 +210,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
           active={isProcessing}
           status={isProcessing ? 'scanning' : 'idle'}
           isDragActive={isDragActive}
-          className="rounded-[16px] border-none shadow-inner bg-black min-h-[340px] relative overflow-hidden"
+          className="rounded-[16px] border-none shadow-[var(--rs-shadow-l1)] bg-black min-h-[340px] relative overflow-hidden"
         >
           {!isProcessing ? (
             <div className="relative w-full h-full p-8 flex flex-col justify-center items-center z-40 text-center select-none group/screen">
