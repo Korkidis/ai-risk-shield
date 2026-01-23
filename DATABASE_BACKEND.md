@@ -12,7 +12,7 @@ The existing Supabase schema provides a **solid, enterprise-grade foundation**. 
 ## 2. Schema Audit
 
 ### Core Architecture (Multi-Tenant)
-*   **`tenants`**: Central entity. Correctly includes `plan`, `stripe_customer_id`, and `monthly_scan_limit`.
+*   **`tenants`**: Central entity. Includes `parent_tenant_id` (for Agency/Client hierarchy), `plan`, `stripe_customer_id`, and `monthly_scan_limit`.
 *   **`profiles`**: Links users to tenants. Role-based (`owner`, `admin`, `member`).
 *   **`rls_policies`**: START RLS enabled on all tables. Isolation enforced via `user_tenant_id()` helper function. **Result:** Bulletproof isolation.
 
@@ -105,6 +105,12 @@ CREATE TABLE referral_events (...);
 
 -- 3. Invite System
 CREATE TABLE tenant_invites (...);
+
+-- 4. Hierarchical Tenancy (Agency/Enterprise)
+-- Implemented via 20260122_hierarchical_tenancy.sql
+ALTER TABLE tenants ADD COLUMN parent_tenant_id UUID REFERENCES tenants(id);
+CREATE TABLE tenant_switch_audit (...);
+-- RLS updated to support 'active_tenant' switching for Agency Admins.
 ```
 
 ---

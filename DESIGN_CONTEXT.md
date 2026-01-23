@@ -15,7 +15,16 @@ The interface is not a "web app" but a **precision instrument**. It draws inspir
 *   **The Substrates**: We do not use generic CSS backgrounds. We use defined materials:
     *   `Molded Polymer`: Subtle noise + matte finish for containers.
     *   `Analyzed Glass`: High-gloss, refractive overlays for data views.
-    *   `Technical Grid`: 24px/120px ISO drafting grids. **Usage Rule**: This is ALWAYS the bottom-most layer. Surfaces and components sit *on top* of the grid. It is used in reports, help sections, and landing pages to break visual monotony and imply precision engineering.
+    *   `Technical Grid`: 24px/120px ISO drafting grids. **Usage Rule**: This is the foundational substrate. Surfaces sit "calibrated" on this grid.
+        *   **Dots**: 6% Opacity (`rgba(0,0,0,0.06)`).
+        *   **Lines**: 4% Opacity (`rgba(0,0,0,0.04)`).
+        *   **Meta**: Rulers & Corner Stamps imply forensic precision.
+
+### **Axiom 4: Neo-Skeuomorphism (High-Fidelity)**
+We are pushing beyond flat design to **"Tactile Realism"**.
+*   **Faceplates**: Login and critical panels behave like physical "Faceplates" (`rounded-[32px]`, heavy borders, engraved headers).
+*   **Recessed Bays**: Inputs are no longer just floating rectangles. They are **"Recessed Bays"** carved into the chassis using deep inset shadows (`inset 2px 2px 6px`) instead of borders.
+*   **Integrated Labels**: Typography is treated as "Print on Plastic"—indent labels with `pl-1` to align with the physical recess.
 
 ### **Axiom 2: Color as Signal**
 We strictly limit color to functional signaling. There are no "brand colors" for decoration.

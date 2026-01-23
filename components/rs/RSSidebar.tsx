@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { TenantSwitcher } from '@/components/dashboard/TenantSwitcher';
 
 interface NavItem {
     label: string;
@@ -91,9 +92,14 @@ export function RSSidebar({
 
             {/* Footer */}
             <div className={cn(
-                "p-4 border-t border-rs-gray-200 transition-opacity duration-300",
+                "p-4 border-t border-rs-gray-200 transition-opacity duration-300 space-y-4",
                 isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
             )}>
+                <div className="w-full">
+                    <label className="text-[10px] font-bold text-rs-gray-400 uppercase tracking-wider mb-2 block">Workspace</label>
+                    <TenantSwitcher />
+                </div>
+
                 <div className="bg-rs-gray-200/50 rounded p-3 text-xs text-rs-gray-500">
                     <p className="font-bold text-rs-black mb-1">PRO PLAN</p>
                     <p>User License: 291-A</p>

@@ -24,6 +24,7 @@ export interface Database {
           name: string
           plan: string
           monthly_scan_limit: number
+          parent_tenant_id: string | null
           created_at: string
           updated_at: string
         }
@@ -180,6 +181,44 @@ export interface Database {
           is_default?: boolean
           created_at?: string
           updated_at?: string
+        }
+      }
+      tenant_switch_audit: {
+        Row: {
+          id: string
+          actor_user_id: string | null
+          actor_session_id: string | null
+          from_tenant_id: string | null
+          to_tenant_id: string
+          ip: string | null
+          user_agent: string | null
+          reason: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          actor_user_id?: string | null
+          actor_session_id?: string | null
+          from_tenant_id?: string | null
+          to_tenant_id: string
+          ip?: string | null
+          user_agent?: string | null
+          reason?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          actor_user_id?: string | null
+          actor_session_id?: string | null
+          from_tenant_id?: string | null
+          to_tenant_id?: string
+          ip?: string | null
+          user_agent?: string | null
+          reason?: string | null
+          metadata?: Json | null
+          created_at?: string
         }
       }
     }

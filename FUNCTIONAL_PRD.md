@@ -78,7 +78,7 @@ This document is the execution blueprint for the full AI Risk Shield platform.
 *   **Acceptance Criteria**:
     *   [ ] RLS policies enforce team-only access.
     *   [ ] Admin can revoke access.
-    *   [ ] "Workspace" concept isolates data between clients.
+    *   [ ] "Workspace" concept isolates data between clients. (**Backend Implemented Jan 2026**: `parent_tenant_id` + Switching API).
 
 ### Feature 6: Admin Context (Brand Guidelines)
 *(To be developed - Placeholder)*

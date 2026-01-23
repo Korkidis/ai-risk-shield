@@ -633,6 +633,7 @@ Track major decisions here to maintain context:
 | Jan 2026 | Chose Gemini api | multimodal and reasoning + costst | TBD |
 | Jan 2026 | Freemium over paid-only | Lower barrier, email list growth | TBD |
 | Jan 2026 | backend decisions to add  plus ther important ones
+| Jan 2026 | Hierarchical Tenancy | Implemented Parent/Child tenants + `switch-tenant` API for Agencies | SUCCESS |
 
 *(Update this table as major architectural decisions are made)*
 

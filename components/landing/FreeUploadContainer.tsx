@@ -70,7 +70,10 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       if (!uploadRes.ok) {
         cleanupSimulation()
         const errorData = await uploadRes.json()
-        throw new Error(errorData.error || 'Upload failed')
+        const errorMessage = errorData.details
+          ? `${errorData.error}: ${errorData.details}`
+          : errorData.error || 'Upload failed'
+        throw new Error(errorMessage)
       }
 
       const { scanId } = await uploadRes.json()

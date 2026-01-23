@@ -17,9 +17,9 @@ export function RSInput({
     ...props
 }: RSInputProps) {
     return (
-        <div className={cn("flex flex-col gap-2", fullWidth ? "w-full" : "w-auto", className)}>
+        <div className={cn("flex flex-col gap-1.5", fullWidth ? "w-full" : "w-auto", className)}>
             {label && (
-                <label className="text-[10px] ml-1 rs-etched">
+                <label className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1">
                     {label}
                 </label>
             )}

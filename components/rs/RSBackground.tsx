@@ -64,11 +64,8 @@ export const RSBackground = ({
                         <div
                             className="absolute inset-0 opacity-[0.3]"
                             style={{
-                                backgroundImage: `
-                                    linear-gradient(to right, var(--rs-border-primary) 1px, transparent 1px),
-                                    linear-gradient(to bottom, var(--rs-border-primary) 1px, transparent 1px)
-                                `,
-                                backgroundSize: '24px 24px'
+                                backgroundImage: `radial-gradient(var(--rs-border-primary) 1px, transparent 1px)`,
+                                backgroundSize: '12px 12px'
                             }}
                         />
                         {/* Major Grid (120px) */}
