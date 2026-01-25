@@ -17,6 +17,9 @@ import { analyzeIP } from './ip-detection'
 import { analyzeBrandSafety } from './brand-safety'
 import { extractFrames, cleanupFrames } from '@/lib/video/processor'
 import { promises as fs } from 'fs'
+import path from 'path'
+import os from 'os'
+import { verifyContentCredentials } from '@/lib/c2pa'
 
 export type ProcessScanResult = {
   success: boolean
@@ -90,6 +93,23 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // Extract frames
       const frames = await extractFrames(fileBuffer, 5) // Analyze 5 frames max for MVP
 
+      // VIDEO C2PA CHECK
+      try {
+        const tempPath = path.join(os.tmpdir(), `scan-${scanId}-${Date.now()}.mp4`);
+        await fs.writeFile(tempPath, fileBuffer);
+        const c2paReport = await verifyContentCredentials(tempPath);
+        await fs.unlink(tempPath).catch(() => { }); // ignore cleanup error
+
+        c2paResult.hasManifest = c2paReport.status !== 'missing';
+        c2paResult.valid = c2paReport.status === 'verified';
+
+        if (c2paReport.status === 'verified') provenanceScore = 0;
+        else if (c2paReport.status === 'invalid') provenanceScore = 100;
+        else provenanceScore = 50; // Missing or Untrusted
+      } catch (e) {
+        console.error("Video C2PA Check failed:", e);
+      }
+
       let maxIpScore = 0
       let maxSafetyScore = 0
 
@@ -130,6 +150,13 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // Calculate composite for video
       compositeRisk = calculateCompositeRisk(ipResult.riskScore, brandSafetyResult.riskScore)
 
+      // Adjust composite with provenance for video
+      // If invalid provenance, force critical
+      if (provenanceScore >= 90) {
+        compositeRisk = { score: 100, level: 'critical' };
+      }
+
+
     } else {
       // IMAGE PIPELINE - Use full enterprise analysis
       const { analyzeImageMultiPersona } = await import('@/lib/gemini')
@@ -146,6 +173,10 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       }
       // Get provenance score
       provenanceScore = riskProfile.provenance_report.score
+
+      // Sync local c2paResult with the one from Gemini
+      c2paResult.hasManifest = riskProfile.c2pa_report.status !== 'missing';
+      c2paResult.valid = riskProfile.c2pa_report.status === 'verified';
 
       // Hybrid "Red Flag" Composite Calculation
       // If ANY score is critically high (>=85), it's a dealbreaker - show the max

@@ -14,7 +14,13 @@ import {
     AlertTriangle
 } from 'lucide-react';
 
+import { RSChassisCard } from '@/components/rs/RSChassisCard';
+import { RSScannerViewport } from '@/components/rs/RSScannerViewport';
+import { RSMetricCard } from '@/components/rs/RSMetricCard';
+import { RSSectionHeader } from '@/components/rs/RSSectionHeader';
+
 import { RSButton } from '@/components/rs/RSButton';
+import { RSInput } from '@/components/rs/RSInput';
 import { RSRiskBadge } from '@/components/rs/RSRiskBadge';
 import { RSKnob } from '@/components/rs/RSKnob';
 import { RSPanel } from '@/components/rs/RSPanel';
@@ -141,11 +147,7 @@ export default function DesignLabPage() {
                         <div className="space-y-24 animate-in fade-in duration-500">
                             {/* 01.0 PALETTE */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">01.0</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Industrial Palette</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="01.0" title="Industrial Palette" />
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                                     {[
@@ -173,11 +175,7 @@ export default function DesignLabPage() {
 
                             {/* 02.0 TYPOGRAPHY */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">02.0</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Cinematic Typography</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="02.0" title="Cinematic Typography" />
                                 <div className="space-y-12 pl-10 border-l border-[#FF4F00]">
                                     {/* Type Scale Definition */}
                                     <div className="grid grid-cols-1 gap-8 mb-16 border-b border-[var(--rs-border-primary)] pb-16">
@@ -269,11 +267,7 @@ export default function DesignLabPage() {
 
                             {/* 04.1 CONTROL INPUTS */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">04.1</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Control Inputs</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="04.1" title="Control Inputs" />
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                                     {/* Binary Controls */}
@@ -314,7 +308,7 @@ export default function DesignLabPage() {
                                     </div>
 
                                     {/* Action Hardware */}
-                                    <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] space-y-8">
+                                    <RSChassisCard className="p-8 space-y-8">
                                         <div className="flex items-center gap-2 mb-4 opacity-40">
                                             <span className="text-[10px] font-bold uppercase tracking-widest rs-etched">Action Hardware</span>
                                         </div>
@@ -326,7 +320,7 @@ export default function DesignLabPage() {
                                             </div>
                                             <RSButton variant="danger" fullWidth>System Purge</RSButton>
                                         </div>
-                                    </div>
+                                    </RSChassisCard>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10">
@@ -340,11 +334,7 @@ export default function DesignLabPage() {
 
                             {/* 05.1 ANALOG INSTRUMENTS */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">05.1</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Analog Instruments</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="05.1" title="Analog Instruments" />
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                     {/* Dials Cluster (Radial Telemetry) */}
@@ -494,11 +484,7 @@ export default function DesignLabPage() {
 
                             {/* 06.1 ANALYTICAL MONITORING */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">06.1</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Analytical Monitoring</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="06.1" title="Analytical Monitoring" />
 
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-12">
                                     {/* COMPOSITE RISK ANALYSIS (Unified View) */}
@@ -567,6 +553,8 @@ export default function DesignLabPage() {
                                                 </div>
                                                 <RSMeter value={88} level="info" />
                                             </div>
+                                            <RSMetricCard label="Standardized Latency" value={22} unit="ms" level="safe" />
+                                            <RSMetricCard label="Standardized Buffer" value={88} unit="%" level="info" />
                                         </div>
                                     </div>
                                 </div>
@@ -574,11 +562,7 @@ export default function DesignLabPage() {
 
                             {/* 07.1 SCANNER ARCHITECTURE */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">07.1</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Scanner Architecture</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="07.1" title="Scanner Architecture" />
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                     {/* Active Viewport */}
@@ -600,12 +584,17 @@ export default function DesignLabPage() {
                                                 />
                                             </div>
                                         </div>
+                                        {/* Standardized Component Verification */}
+                                        <div className="opacity-50 hover:opacity-100 transition-opacity">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest rs-etched mb-2 block">Standardized Component Verification</span>
+                                            <RSScannerViewport />
+                                        </div>
                                     </div>
 
                                     {/* FREEMIUM SCANNER PIPELINE (States) */}
                                     <div className="space-y-6">
                                         {/* STATE 1: READY */}
-                                        <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
+                                        <RSChassisCard className="p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
                                             <div className="flex items-center justify-between mb-8">
                                                 <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">State 01: READY_FOR_INPUT</span>
                                             </div>
@@ -622,7 +611,7 @@ export default function DesignLabPage() {
                                                     <span className="rs-type-mono text-[8px] text-[var(--rs-signal)] tracking-[0.3em] font-bold uppercase opacity-80">UPLOAD_ASSET</span>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </RSChassisCard>
 
                                         {/* STATE 2: SCANNING */}
                                         <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
@@ -652,33 +641,17 @@ export default function DesignLabPage() {
                                         {/* STATE 3: RESULTS */}
                                         <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
                                             <div className="flex items-center justify-between mb-8">
-                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">State 03: RESULTS_AND_CTA</span>
-                                            </div>
-                                            <div className="space-y-6">
-                                                <div className="bg-[var(--rs-bg-well)] p-6 rounded-2xl border border-[var(--rs-border-primary)]/20">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)]">Risk Dossier Summary</span>
-                                                        <RSRiskBadge level="critical" />
-                                                    </div>
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="text-4xl font-black tracking-tighter rs-etched">92%</div>
-                                                        <div className="text-[10px] text-[var(--rs-text-tertiary)] italic">IP_CORRELATION_DETECTED</div>
-                                                    </div>
-                                                </div>
-                                                <RSButton variant="primary" fullWidth size="lg">
-                                                    Download Forensic Report
-                                                </RSButton>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* External Integration (Full Width in Grid) */}
-                                    <div className="lg:col-span-2">
-                                        <div className="bg-[var(--rs-bg-surface)] p-4 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
-                                            <div className="flex items-center gap-4 mb-4 pl-4 pt-4">
-                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">C2PA Verification Protocol</span>
+                                        {/* External Integration (Full Width in Grid) */}
+                                        <div className="lg:col-span-2">
+                                            <div className="bg-[var(--rs-bg-surface)] p-4 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
+                                                <div className="flex items-center gap-4 mb-4 pl-4 pt-4">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">C2PA Verification Protocol</span>
+                                                </div>
+                                                <RSC2PAWidget className="h-64" />
                                             </div>
-                                            <RSC2PAWidget className="h-64" />
                                         </div>
                                     </div>
                                 </div>
@@ -686,11 +659,7 @@ export default function DesignLabPage() {
 
                             {/* 08.1 STRUCTURAL DECK */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">08.1</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Structural Deck</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="08.1" title="Structural Deck" />
 
                                 <div className="space-y-12">
                                     {/* Component Panels */}
@@ -753,11 +722,7 @@ export default function DesignLabPage() {
 
                             {/* 09.1 INTERFACE UTILITIES */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">09.1</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Interface Utilities</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="09.1" title="Interface Utilities" />
 
                                 <div className="bg-[var(--rs-bg-surface)] p-10 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] space-y-10">
                                     <div className="space-y-4">
@@ -788,11 +753,7 @@ export default function DesignLabPage() {
 
                             {/* 10.1 SIGNAL FEEDBACK */}
                             <section className="mb-24">
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">10.1</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Signal Feedback</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="10.1" title="Signal Feedback" />
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                                     {/* Callouts */}
@@ -969,11 +930,7 @@ export default function DesignLabPage() {
 
                             {/* 07.1 SUBSTRATE SYSTEM */}
                             <section>
-                                <div className="flex items-center gap-6 mb-12">
-                                    <span className="font-mono text-xs text-[#9A9691]">07.1</span>
-                                    <h2 className="text-2xl font-black tracking-tight uppercase">Substrate System (RSBackground)</h2>
-                                    <div className="h-[1px] bg-[#DBD7D0] flex-grow" />
-                                </div>
+                                <RSSectionHeader sectionNumber="07.1" title="Substrate System (RSBackground)" />
 
                                 <div className="grid grid-cols-1 gap-12">
                                     {/* Standard Chassis (Molded Texture) */}
@@ -1062,7 +1019,7 @@ export default function DesignLabPage() {
                         <span className="text-[#9A9691]">MOMA_SPEC_V3</span>
                     </div>
                 </footer>
-            </div>
+            </div >
 
             {/* Modals outside main flow */}
             {showUpgradeModal && <UpgradeModal scanId="test-scan-id" onClose={() => setShowUpgradeModal(false)} />}
@@ -1078,6 +1035,6 @@ export default function DesignLabPage() {
              animation: scan 3s ease-in-out infinite;
              }
          `}</style>
-        </div>
+        </div >
     );
 }

@@ -1,38 +1,137 @@
 "use client";
 
-import React from 'react';
-import { Shield } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Upload } from 'lucide-react';
 import { RSScanner } from '@/components/rs/RSScanner';
 import { RSSystemLog } from '@/components/rs/RSSystemLog';
-import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
 import { RSC2PAWidget } from '@/components/rs/RSC2PAWidget';
-import { RSMeter } from '@/components/rs/RSMeter';
+import { RSPanel } from '@/components/rs/RSPanel';
 import { RSRiskBadge } from '@/components/rs/RSRiskBadge';
+import { RSMeter } from '@/components/rs/RSMeter';
+import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
+import { RSFindingsDossier } from '@/components/rs/RSFindingsDossier';
 import { cn } from '@/lib/utils';
 
-export default function DashboardPage() {
-    const [scanStatus, setScanStatus] = React.useState<'idle' | 'scanning' | 'complete'>('idle');
+// Interface matching the backend response
+interface RiskProfile {
+    composite_score: number;
+    verdict: string;
+    ip_report: { score: number; teaser: string; };
+    safety_report: { score: number; teaser: string; };
+    provenance_report: { score: number; teaser: string; };
+    c2pa_report: { status: string; };
+}
 
-    // Simulate Scan Sequence on Mount (or on click)
-    React.useEffect(() => {
-        const sequence = async () => {
-            await new Promise(r => setTimeout(r, 1000)); // Initial Idle
-            setScanStatus('scanning');
-            await new Promise(r => setTimeout(r, 3000)); // Scan Duration
+export default function DashboardPage() {
+    const [scanStatus, setScanStatus] = React.useState<'idle' | 'scanning' | 'complete' | 'error'>('idle');
+    const [analysisResult, setAnalysisResult] = React.useState<RiskProfile | null>(null);
+    const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+    const [previewUrl, setPreviewUrl] = React.useState<string | undefined>(undefined);
+
+    // Telemetry State
+    const [logs, setLogs] = React.useState<Array<{ id: string, timestamp: string, message: string, status: 'pending' | 'active' | 'done' | 'error' }>>([
+        { id: '0', timestamp: 'SYSTEM', message: 'Forensic core initialized. Ready.', status: 'done' }
+    ]);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Initial "Ready" log
+    useEffect(() => {
+        if (scanStatus === 'idle') {
+            setLogs([{ id: '0', timestamp: 'SYSTEM', message: 'Forensic core initialized. Ready for input.', status: 'done' }]);
+        }
+    }, [scanStatus]);
+
+    const addLog = (message: string, status: 'active' | 'done' | 'error' = 'active') => {
+        setLogs(prev => {
+            // Mark previous active as done
+            const newLogs = prev.map(l => l.status === 'active' ? { ...l, status: 'done' as const } : l);
+            return [...newLogs, {
+                id: Date.now().toString(),
+                timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                message,
+                status
+            }].slice(-6); // Keep last 6
+        });
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // 1. Setup Preview
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+
+        // 2. Start Scan State
+        setScanStatus('scanning');
+        setErrorMessage(null);
+        setAnalysisResult(null);
+        setLogs([]); // Clear old logs
+
+        // 3. Telemetry Simulation
+        addLog(`Acquired asset: ${file.name.substring(0, 15)}...`, 'done');
+
+        await new Promise(r => setTimeout(r, 600));
+        addLog(`Analyzing metadata structure (${file.type})...`, 'active');
+
+        // 4. API Call
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('guidelineId', 'default');
+
+        try {
+            // Simulate waiting steps while API runs in background
+            const telemetryInterval = setInterval(() => {
+                const steps = [
+                    "Verifying C2PA digital signature chain...",
+                    "Extracting visual feature vectors...",
+                    "Checking global IP blocklists...",
+                    "Synthesizing risk profile..."
+                ];
+                const msg = steps[Math.floor(Math.random() * steps.length)];
+                addLog(msg, 'active');
+            }, 1200);
+
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                body: formData,
+            });
+
+            clearInterval(telemetryInterval);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Analysis failed');
+            }
+
+            const data: RiskProfile = await response.json();
+
+            // 5. Completion
+            addLog("Analysis complete. Risk profile generated.", 'done');
+            setAnalysisResult(data);
             setScanStatus('complete');
-        };
-        sequence();
-    }, []);
+
+        } catch (err: any) {
+            console.error(err);
+            setScanStatus('error');
+            setErrorMessage(err.message || "Connection lost.");
+            addLog(`CRITICAL FAILURE: ${err.message}`, 'error');
+        }
+    };
 
     // Derived values based on state
     const isScanning = scanStatus === 'scanning';
     const isComplete = scanStatus === 'complete';
+    const isError = scanStatus === 'error';
 
-    // Final Results (only shown when complete, else 0 or jitter handled by component)
+    // Map API results to UI requirements
     const results = {
-        ipRisk: isComplete ? 98 : 0,
-        brandSafety: isComplete ? 5 : 0,
-        provenance: isComplete ? 95 : 0
+        ipRisk: analysisResult?.ip_report.score ?? 0,
+        brandSafety: analysisResult?.safety_report.score ?? 0,
+        provenance: analysisResult?.provenance_report.score ?? 0,
+        composite: analysisResult?.composite_score ?? 0,
+        verdict: analysisResult?.verdict ?? 'READY'
     };
 
     return (
@@ -48,7 +147,10 @@ export default function DashboardPage() {
                 <div className="flex justify-between items-start mb-6 relative z-10">
                     <div>
                         <div className="text-[#FF4F00] font-mono text-xs font-bold tracking-widest uppercase mb-1">Scanner_v2.0</div>
-                        <div className="text-[#FF4F00]/40 font-mono text-[10px] tracking-widest uppercase">Buffer_Rdy</div>
+                        <div className="text-[#FF4F00]/40 font-mono text-[10px] tracking-widest uppercase flex items-center gap-2">
+                            <span className={cn("w-2 h-2 rounded-full", isScanning ? "bg-[#FF4F00] animate-pulse" : "bg-rs-gray-600")} />
+                            {isScanning ? 'ACQUIRING_DATA...' : isComplete ? 'ANALYSIS_COMPLETE' : 'BUFFER_READY'}
+                        </div>
                     </div>
                     <div className="text-[#FF4F00] font-mono text-[10px] tracking-widest uppercase">CH_01_INPUT</div>
                 </div>
@@ -56,100 +158,98 @@ export default function DashboardPage() {
                 {/* Main Viewport */}
                 <div className="flex-1 flex items-center justify-center relative z-10 min-h-[400px]">
                     <div className="w-full max-w-2xl">
-                        <RSScanner active={isScanning} status={scanStatus} className="border-0 bg-transparent shadow-none" />
-                        {!isScanning && !isComplete && (
+                        <RSScanner
+                            active={isScanning}
+                            status={scanStatus === 'error' ? 'error' : scanStatus === 'complete' ? 'complete' : isScanning ? 'scanning' : 'idle'}
+                            imageUrl={previewUrl}
+                            className="border-0 bg-transparent shadow-none"
+                        />
+
+                        {!isScanning && (
                             <div className="text-center mt-8">
-                                <div className="inline-flex flex-col items-center gap-4">
-                                    <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center text-white/40">
-                                        <div className="w-8 h-8 border-t-2 border-white/40" />
+                                <label className="inline-flex flex-col items-center gap-4 cursor-pointer group">
+                                    <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center text-white/40 group-hover:border-[#FF4F00] group-hover:text-[#FF4F00] transition-colors">
+                                        <div className="w-8 h-8 relative">
+                                            {isError ? <div className="text-red-500 font-bold">!</div> : <div className="border-t-2 border-current w-full h-full absolute top-1/2" />}
+                                            {!isError && <Upload className="w-6 h-6" />}
+                                        </div>
                                     </div>
-                                    <p className="text-white/40 font-mono text-xs uppercase tracking-widest">Drop file here or click to browse</p>
-                                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • .JPG/.PNG/.MP4</p>
-                                </div>
+                                    <div className="space-y-1">
+                                        <p className="text-white/40 font-mono text-xs uppercase tracking-widest group-hover:text-white transition-colors">
+                                            {isError ? 'Scan Failed - Retry?' : 'Drop file here or click to browse'}
+                                        </p>
+                                        <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • .JPG/.PNG/.MP4</p>
+                                        {isError && <p className="text-red-500 font-mono text-[10px] uppercase tracking-widest">{errorMessage}</p>}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="image/jpeg,image/png,image/webp,video/mp4"
+                                        onChange={handleFileUpload}
+                                    />
+                                </label>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* System Log */}
-                <div className="mt-8 relative z-10 opacity-80">
-                    <RSSystemLog
-                        logs={[
-                            { id: '1', timestamp: '10:42:01', message: 'Initialize secure handshake...', status: 'done' },
-                            { id: '2', timestamp: '10:42:05', message: 'Syncing with control node...', status: 'done' },
-                            { id: '3', timestamp: '10:42:09', message: 'Analyzing stream...', status: isScanning ? 'active' : 'done' },
-                        ]}
-                        className="bg-black/50 border-white/10 text-white/60 h-40"
-                    />
+                {/* System Log / Provenance Log Replacement */}
+                <div className="mt-8 relative z-10">
+                    {!isComplete ? (
+                        <RSSystemLog
+                            logs={logs}
+                            className="bg-black/50 border-white/10 text-white/60 h-40"
+                        />
+                    ) : (
+                        <RSC2PAWidget
+                            className="w-full h-[320px]"
+                            isComplete={isComplete}
+                        />
+                    )}
                 </div>
             </div>
 
             {/* RIGHT PANE: ANALYSIS & TELEMETRY (35%) */}
-            <div className="flex-1 flex flex-col gap-8">
+            <div className="flex-1 flex flex-col gap-6 min-h-0 pt-2">
 
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8 bg-[var(--rs-bg-surface)] p-4 rounded-xl border border-[var(--rs-border-primary)]/50 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-[var(--rs-bg-element)] rounded-lg flex items-center justify-center border border-[var(--rs-border-primary)]">
-                            <Shield size={14} className="text-[var(--rs-text-secondary)]" />
+                {/* UNIFIED RISK INSTRUMENT PANEL */}
+                <RSPanel
+                    title="Risk Analysis Panel"
+                    metadata={[{ label: 'ID', value: isComplete ? '44-X' : '--' }]}
+                    action={isComplete && <RSRiskBadge level={results.composite > 80 ? 'critical' : results.composite > 40 ? 'warning' : 'safe'} />}
+                >
+                    {/* TOP SECTION: COMPOSITE SCORE */}
+                    <div className="flex items-center gap-10 mb-6">
+                        <div className="text-5xl font-black tracking-tighter rs-etched leading-none">
+                            {isComplete ? `${results.composite}%` : '00%'}
                         </div>
-                        <div>
-                            <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">Analysis Guidelines</div>
-                            <div className="text-sm font-bold text-[var(--rs-text-primary)]">Acme Wine Co. Guidelines</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* RISK SCORE CARD */}
-                <div className="bg-[var(--rs-bg-surface)] rounded-[32px] p-6 shadow-[var(--rs-shadow-l2)] flex flex-col justify-between min-h-[250px] relative">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <div className="text-[var(--rs-text-secondary)] font-mono text-xs font-bold tracking-widest uppercase">Risk Analysis</div>
-                            <div className="text-[var(--rs-text-tertiary)] font-mono text-[10px] tracking-widest uppercase mt-1">ID: -- VER: 2.4</div>
-                        </div>
-                        <RSRiskBadge level={isComplete ? "safe" : "unknown"} className={cn("text-white", isComplete ? "bg-[#006742]" : "bg-gray-500")} />
-                    </div>
-
-                    <div className="flex items-end justify-between mt-8">
-                        <div className="text-8xl font-black tracking-tighter text-[var(--rs-text-primary)] rs-etched">
-                            {isComplete ? '0%' : '--'}
-                        </div>
-                        <div className="flex-1 ml-12 pb-4">
-                            <div className="flex justify-between items-center gap-4 text-[10px] font-bold uppercase text-[var(--rs-text-tertiary)] mb-2">
+                        <div className="flex-1 space-y-3">
+                            <div className="flex justify-between text-[10px] font-black uppercase text-[#9A9691] tracking-widest">
                                 <span>Likelihood</span>
-                                <span>Standby</span>
+                                <span className={cn(
+                                    results.composite > 80 ? "text-[#FF4F00]" : results.composite > 40 ? "text-orange-500" : "text-emerald-600",
+                                    !isComplete && "opacity-0"
+                                )}>
+                                    {results.composite > 80 ? 'Critical' : results.composite > 40 ? 'Warning' : 'Safe'}
+                                </span>
                             </div>
-                            <RSMeter value={isComplete ? 0 : 0} level="safe" />
-                            <div className="flex justify-between text-[9px] font-mono text-[var(--rs-text-tertiary)] mt-2 opacity-50">
-                                <span>0</span>
-                                <span>25</span>
-                                <span>50</span>
-                                <span>75</span>
-                                <span>100</span>
-                            </div>
+                            <RSMeter value={isComplete ? results.composite : 0} level={results.composite > 80 ? 'critical' : results.composite > 40 ? 'warning' : 'safe'} />
                         </div>
                     </div>
-                </div>
 
-                {/* DIALS CLUSTER (CONTAINED) */}
-                <div className="bg-[var(--rs-bg-surface)] rounded-[32px] p-6 shadow-[var(--rs-shadow-l2)]">
-                    <div className="grid grid-cols-3 gap-2">
-                        <div className="flex flex-col items-center gap-4">
-                            <RSAnalogNeedle isScanning={isScanning} value={results.ipRisk} label="IP Risk" size={120} />
-                        </div>
-                        <div className="flex flex-col items-center gap-4">
-                            <RSAnalogNeedle isScanning={isScanning} value={results.brandSafety} label="Brand Safety" size={120} />
-                        </div>
-                        <div className="flex flex-col items-center gap-4">
-                            <RSAnalogNeedle isScanning={isScanning} value={results.provenance} label="Provenance" size={120} />
+                    {/* BOTTOM SECTION: ANALOG TELEMETRY */}
+                    <div className="pt-4 border-t border-[#1A1A1A]/5">
+                        <div className="flex justify-center items-start gap-8">
+                            <RSAnalogNeedle value={results.ipRisk} label="IP Risk" isScanning={isScanning} powered={isScanning || isComplete} size={150} />
+                            <RSAnalogNeedle value={results.brandSafety} label="Brand Safety" isScanning={isScanning} powered={isScanning || isComplete} size={150} />
+                            <RSAnalogNeedle value={results.provenance} label="Provenance" isScanning={isScanning} powered={isScanning || isComplete} size={150} />
                         </div>
                     </div>
-                </div>
+                </RSPanel>
 
-                {/* C2PA WIDGET (FRAMED) */}
-                <div className="bg-[var(--rs-bg-surface)] rounded-[32px] p-3 shadow-[var(--rs-shadow-l2)] flex-1 min-h-[250px] flex flex-col">
-                    <RSC2PAWidget className="flex-1 w-full h-full rounded-[24px]" />
-                </div>
+                <RSFindingsDossier isComplete={isComplete} results={results} />
+
 
             </div>
         </div>
