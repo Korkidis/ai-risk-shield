@@ -114,13 +114,6 @@ export async function POST(req: NextRequest) {
         const riskProfile: RiskProfile = await analyzeImageMultiPersona(buffer, file.type, file.name, guideline);
 
         // 7. Update Scan Record with Results
-        const provenanceStatusMap: Record<string, string> = {
-            'verified': 'valid',
-            'untrusted': 'invalid',
-            'invalid': 'invalid',
-            'missing': 'missing'
-        };
-
         const { error: updateError } = await adminSupabase
             .from('scans')
             .update({
@@ -132,12 +125,66 @@ export async function POST(req: NextRequest) {
                 ip_risk_score: riskProfile.ip_report.score,
                 safety_risk_score: riskProfile.safety_report.score,
                 provenance_risk_score: riskProfile.provenance_report.score,
-                provenance_status: provenanceStatusMap[riskProfile.c2pa_report.status] || 'missing',
+                provenance_status: riskProfile.c2pa_report.status,
                 provenance_data: riskProfile.c2pa_report
             } as any)
             .eq('id', (scan as any).id)
 
         if (updateError) console.error("Failed to save scan results:", updateError);
+
+        // 8. Save Detailed Forensic Findings
+        const findings: any[] = [
+            {
+                tenant_id: tenantId,
+                scan_id: (scan as any).id,
+                finding_type: 'provenance_issue',
+                severity: riskProfile.c2pa_report.status === 'valid' ? 'low' :
+                    riskProfile.c2pa_report.status === 'invalid' ? 'critical' : 'high',
+                title: 'C2PA Provenance Verification',
+                description: riskProfile.provenance_report.teaser,
+                recommendation: riskProfile.c2pa_report.status === 'valid'
+                    ? 'Asset is armored with verified Content Credentials. Maintain this chain for legal defensibility.'
+                    : 'Absence of cryptographic provenance. In IP disputes, your legal defensibility may be hindered without a verified chain of custody.',
+                evidence: {
+                    status: riskProfile.c2pa_report.status,
+                    issuer: riskProfile.c2pa_report.issuer,
+                    tool: riskProfile.c2pa_report.tool
+                }
+            }
+        ];
+
+        // Add IP finding if high
+        if (riskProfile.ip_report.score > 50) {
+            findings.push({
+                tenant_id: tenantId,
+                scan_id: (scan as any).id,
+                finding_type: 'ip_violation',
+                severity: riskProfile.ip_report.score > 85 ? 'critical' : 'high',
+                title: 'Potential IP Infringement Detected',
+                description: riskProfile.ip_report.teaser,
+                recommendation: 'Remove or license the detected protected elements immediately.',
+                evidence: { score: riskProfile.ip_report.score, reasoning: riskProfile.ip_report.reasoning }
+            });
+        }
+
+        await adminSupabase.from('scan_findings').insert(findings);
+
+        // 9. If VALID, preserve complete provenance details
+        if (riskProfile.c2pa_report.status === 'valid') {
+            await adminSupabase.from('provenance_details').insert({
+                scan_id: (scan as any).id,
+                tenant_id: tenantId,
+                creator_name: riskProfile.c2pa_report.creator,
+                creation_tool: riskProfile.c2pa_report.tool,
+                creation_tool_version: riskProfile.c2pa_report.tool_version,
+                creation_timestamp: riskProfile.c2pa_report.timestamp,
+                signature_status: 'valid',
+                certificate_issuer: riskProfile.c2pa_report.issuer,
+                certificate_serial: riskProfile.c2pa_report.serial,
+                edit_history: riskProfile.c2pa_report.history,
+                raw_manifest: riskProfile.c2pa_report.raw_manifest
+            });
+        }
 
         // Update guideline usage
         if (guideline) {

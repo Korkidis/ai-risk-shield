@@ -20,7 +20,6 @@ import { RSMetricCard } from '@/components/rs/RSMetricCard';
 import { RSSectionHeader } from '@/components/rs/RSSectionHeader';
 
 import { RSButton } from '@/components/rs/RSButton';
-import { RSInput } from '@/components/rs/RSInput';
 import { RSRiskBadge } from '@/components/rs/RSRiskBadge';
 import { RSKnob } from '@/components/rs/RSKnob';
 import { RSPanel } from '@/components/rs/RSPanel';
@@ -646,12 +645,7 @@ export default function DesignLabPage() {
 
                                         {/* External Integration (Full Width in Grid) */}
                                         <div className="lg:col-span-2">
-                                            <div className="bg-[var(--rs-bg-surface)] p-4 rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20">
-                                                <div className="flex items-center gap-4 mb-4 pl-4 pt-4">
-                                                    <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">C2PA Verification Protocol</span>
-                                                </div>
-                                                <RSC2PAWidget className="h-64" />
-                                            </div>
+                                            <RSC2PAWidget className="h-[320px]" />
                                         </div>
                                     </div>
                                 </div>

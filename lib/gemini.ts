@@ -402,39 +402,45 @@ export async function analyzeImageMultiPersona(
             }
         }
 
-        // 4. Calculate Base Composite (Weighted: IP 50%, Safety 30%, Provenance 20%)
-        let composite = Math.round((ip.score * 0.5) + (safety.score * 0.3) + (provenance.score * 0.2));
+        // 4. Calculate Provenance Score based on C2PA Outcome (Legal Defensibility Weighting)
+        const c2paScores = { valid: 0, missing: 80, invalid: 100, error: 50 };
+        const c2paDerivedScore = c2paScores[c2paReport.status] || 80;
 
-        // 5. COMPOUND RISK MULTIPLIER
+        // 5. Calculate Composite (IP 40%, Safety 40%, Provenance 20%)
+        // This ensures C2PA validity has a direct 20% impact on the final 'ClearCheck' score
+        let composite = Math.round((ip.score * 0.4) + (safety.score * 0.4) + (c2paDerivedScore * 0.2));
+
+        // 6. COMPOUND RISK MULTIPLIER
         // If IP is high (likely infringement) AND Provenance is risky (can't prove ownership)
-        // This is the worst case: Using someone else's IP without proof of license
-        if (ip.score >= 80 && provenance.score >= 60) {
-            const boost = Math.round((ip.score + provenance.score) / 10);
+        if (ip.score >= 80 && c2paDerivedScore >= 60) {
+            const boost = Math.round((ip.score + c2paDerivedScore) / 10);
             composite = Math.min(100, composite + boost);
         }
 
-        // 6. CRITICAL OVERRIDE (THE "TAYLOR SWIFT RULE")
-        // If IP is Critical (90+), the Asset is Critical. Period. 
-        // Do not let "Brand Safety = 0" (wholesome content) drag down the risk score of stolen IP.
+        // 7. CRITICAL OVERRIDE
         if (ip.score >= 90) {
-            composite = Math.max(composite, 95); // Force Critical Risk
+            composite = Math.max(composite, 95);
         } else if (ip.score >= 80) {
-            composite = Math.max(composite, 85); // Force High Risk
+            composite = Math.max(composite, 85);
         }
 
-        // 7. Verdict Logic
+        // 8. Verdict Logic
         let verdict: RiskProfile['verdict'] = "Low Risk";
         if (composite >= 80) verdict = "Critical Risk";
         else if (composite >= 60) verdict = "High Risk";
         else if (composite >= 35) verdict = "Medium Risk";
 
-        // 8. Generate Chief Strategy
-        const strategy = await generateChiefStrategy([ip, safety, provenance]);
+        // 9. Generate Chief Strategy
+        const strategy = await generateChiefStrategy([ip, safety, { score: c2paDerivedScore, teaser: '', reasoning: '' }]);
 
         return {
             ip_report: ip,
             safety_report: safety,
-            provenance_report: provenance,
+            provenance_report: {
+                score: c2paDerivedScore,
+                teaser: c2paReport.status === 'valid' ? "Cryptographically Verified" : "Provenance Gap Detected",
+                reasoning: provenance.reasoning
+            },
             c2pa_report: c2paReport,
             composite_score: composite,
             verdict,

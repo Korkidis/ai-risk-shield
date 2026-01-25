@@ -1,8 +1,10 @@
 "use client";
 
-import React from 'react';
-import { AlertTriangle, CheckCircle2, FileText, ChevronRight } from 'lucide-react';
+import { Terminal, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RSGridPattern } from './RSGridPattern';
+import { RSRiskBadge } from './RSRiskBadge';
+import { RSButton } from './RSButton';
 
 interface RSFindingsDossierProps {
     isComplete: boolean;
@@ -16,76 +18,108 @@ interface RSFindingsDossierProps {
 export function RSFindingsDossier({ isComplete, results }: RSFindingsDossierProps) {
     if (!isComplete) return null;
 
-    // Mock findings 
     const findings = [
         results.ipRisk > 50 ? {
             id: 1,
-            type: 'critical',
+            type: 'critical' as const,
             title: 'IP / Copyright',
             score: results.ipRisk,
-            text: 'The asset displays a direct and unmistakable reproduction of protected intellectual property. This character is extensively protected by both copyright and trademark law globally. The specific depiction is a standard, widely recognized iteration of the character.'
+            text: 'Asset displays direct reproduction of protected intellectual property. depiction is a standard, widely recognized iteration.'
         } : null,
         results.brandSafety > 0 ? {
             id: 2,
-            type: 'safe',
+            type: 'safe' as const,
             title: 'Brand Safety',
             score: results.brandSafety,
-            text: 'The image features recognized family-friendly characters. Per brand guidelines, these are considered low safety risk. The visual contains no elements of violence, suggestive content, hate speech, illegal activities.'
+            text: 'Image features recognized family-friendly characters. Considered low safety risk per standard brand guidelines.'
         } : null,
         results.provenance > 0 ? {
             id: 3,
-            type: 'critical',
-            title: 'C2PA Signature',
+            type: results.provenance > 50 ? ('critical' as const) : ('warning' as const),
+            title: 'Provenance Gap',
             score: results.provenance,
-            text: 'The C2PA signature is missing. This absence prevents the verification of the asset\'s origin and any modifications made since its creation, raising concerns about its trustworthiness.'
+            text: 'Absence of Content Credentials prevents verification of origin. Significant evidentiary gap in cryptographically verifiable chain.'
         } : {
             id: 3,
-            type: 'safe',
-            title: 'C2PA Signature',
-            score: results.provenance,
-            text: 'The C2PA signature is verified, confirming the asset\'s provenance and authenticity. Content origin is traceable.'
+            type: 'safe' as const,
+            title: 'Verified Armor',
+            score: 0,
+            text: 'C2PA digital signature verified. Asset is protected by a verifiable cryptographic chain, providing high legal defensibility.'
         }
     ].filter(Boolean);
 
     return (
-        <div className="bg-[#EAE5D9] rounded-[24px] p-6 border border-[#D6CEC1] flex-1 flex flex-col shadow-inner overflow-hidden text-[#1A1A1A] animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Paper Header */}
-            <div className="flex justify-between items-center mb-6 border-b-2 border-[#1A1A1A] pb-2">
-                <div className="font-mono text-sm font-bold uppercase tracking-widest">Key Findings</div>
-                <div className="font-mono text-xs opacity-50">REF: 842-Alpha</div>
-            </div>
+        <div
+            className="bg-[#EAE5D9] rounded-[24px] border border-[#D6CEC1] flex-1 flex flex-col shadow-inner overflow-hidden text-[#1A1A1A] animate-in fade-in slide-in-from-bottom-4 duration-700 relative"
+        >
+            <RSGridPattern dotOpacity={0.08} gridOpacity={0.05} />
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto pr-2 space-y-6">
-                {findings.length > 0 ? findings.map((f: any) => (
-                    <div key={f.id} className="group">
-                        <div className="flex justify-between items-baseline mb-2">
-                            <div className="flex items-center gap-2">
-                                <div className={cn(
-                                    "w-2 h-2 rounded-full ring-1 ring-offset-1 ring-offset-[#EAE5D9]",
-                                    f.type === 'critical' ? "bg-red-600 ring-red-600" : "bg-emerald-600 ring-emerald-600"
-                                )} />
-                                <span className="font-bold text-base uppercase tracking-tight">{f.title}</span>
-                            </div>
-                            <span className="font-mono font-bold text-sm opacity-60">{f.score}/100</span>
-                        </div>
-                        <p className="font-mono text-xs leading-relaxed text-justify opacity-80 pl-4 border-l border-[#1A1A1A]/10">
-                            {f.text}
-                        </p>
+            {/* Content Container */}
+            <div className="relative z-10 flex flex-col h-full p-6 pt-8">
+
+                {/* Header */}
+                <div className="flex justify-between items-start mb-6 border-b-2 border-[#1A1A1A] pb-3">
+                    <div className="space-y-0.5">
+                        <div className="font-mono text-sm font-bold uppercase tracking-widest text-[#1A1A1A]">Key Findings</div>
+                        <div className="font-mono text-[9px] opacity-40 uppercase tracking-widest">Doc_Ref_842-ALPHA</div>
                     </div>
-                )) : (
-                    <div className="text-center py-8 opacity-50 font-mono text-xs">No significant findings reported.</div>
-                )}
-            </div>
+                </div>
 
-            {/* Footer / CTA */}
-            <div className="mt-6 pt-4 border-t border-[#1A1A1A]/10">
-                <button
-                    className="w-full bg-[#1A1A1A] hover:bg-[#333] text-[#EAE5D9] font-mono text-xs font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors uppercase tracking-wider"
-                >
-                    <FileText size={14} />
-                    Generate Mitigation Report
-                </button>
+                {/* Scrollable Findings */}
+                <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-black/10 scrollbar-track-transparent">
+                    {findings.length > 0 ? findings.map((f: any) => (
+                        <div key={f.id} className="group relative pl-5 border-l border-[#1A1A1A]/10 py-0.5">
+                            {/* Marker */}
+                            <div className="absolute left-[-5px] top-2.5 w-[10px] h-[10px] rounded-full bg-[#EAE5D9] border border-[#D6CEC1] flex items-center justify-center">
+                                <div className={cn(
+                                    "w-1 h-1 rounded-full",
+                                    f.type === 'critical' ? "bg-red-600" : "bg-emerald-600"
+                                )} />
+                            </div>
+
+                            <div className="flex justify-between items-center mb-0.5">
+                                <div className="flex items-center gap-3">
+                                    <span className="font-bold text-xs uppercase tracking-tight text-[#1A1A1A]">{f.title}</span>
+                                    <RSRiskBadge
+                                        level={f.type}
+                                        size="sm"
+                                        value={f.score}
+                                        className="scale-[0.85] origin-left"
+                                    />
+                                </div>
+                            </div>
+                            <p className="font-mono text-[9px] leading-snug text-[#1A1A1A]/70 pr-2">
+                                {f.text}
+                            </p>
+                        </div>
+                    )) : (
+                        <div className="flex flex-col items-center justify-center py-6 gap-2 opacity-20">
+                            <Terminal size={18} />
+                            <div className="font-mono text-[9px] font-black uppercase tracking-widest text-center">
+                                No_Significant_Deltas_Detected
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Technical Footnote / Action Area */}
+                <div className="mt-4 pt-4 border-t border-[#1A1A1A]/10 flex flex-col gap-3">
+                    <div className="flex items-center gap-3 px-1">
+                        <Info size={11} className="text-[#1A1A1A]/30" />
+                        <div className="font-mono text-[7px] text-[#1A1A1A]/40 uppercase tracking-widest leading-tight">
+                            Calibration: ISO_882_PRIME // Verified Forensic Dataset
+                        </div>
+                    </div>
+
+                    <RSButton
+                        variant="danger"
+                        fullWidth
+                        size="lg"
+                        className="font-bold tracking-[0.3em] shadow-lg"
+                    >
+                        Generate Mitigation Report
+                    </RSButton>
+                </div>
             </div>
         </div>
     );

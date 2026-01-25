@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { RSScanner } from '@/components/rs/RSScanner';
 import { RSSystemLog } from '@/components/rs/RSSystemLog';
@@ -10,6 +10,7 @@ import { RSRiskBadge } from '@/components/rs/RSRiskBadge';
 import { RSMeter } from '@/components/rs/RSMeter';
 import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
 import { RSFindingsDossier } from '@/components/rs/RSFindingsDossier';
+import { RSProvenanceDrawer } from '@/components/rs/RSProvenanceDrawer';
 import { cn } from '@/lib/utils';
 
 // Interface matching the backend response
@@ -25,35 +26,29 @@ interface RiskProfile {
 export default function DashboardPage() {
     const [scanStatus, setScanStatus] = React.useState<'idle' | 'scanning' | 'complete' | 'error'>('idle');
     const [analysisResult, setAnalysisResult] = React.useState<RiskProfile | null>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
     const [previewUrl, setPreviewUrl] = React.useState<string | undefined>(undefined);
 
     // Telemetry State
     const [logs, setLogs] = React.useState<Array<{ id: string, timestamp: string, message: string, status: 'pending' | 'active' | 'done' | 'error' }>>([
-        { id: '0', timestamp: 'SYSTEM', message: 'Forensic core initialized. Ready.', status: 'done' }
+        { id: '0', timestamp: 'SYSTEM', message: 'Forensic core initialized. Standing by for ingestion...', status: 'done' }
     ]);
-
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Initial "Ready" log
-    useEffect(() => {
-        if (scanStatus === 'idle') {
-            setLogs([{ id: '0', timestamp: 'SYSTEM', message: 'Forensic core initialized. Ready for input.', status: 'done' }]);
-        }
-    }, [scanStatus]);
 
     const addLog = (message: string, status: 'active' | 'done' | 'error' = 'active') => {
         setLogs(prev => {
-            // Mark previous active as done
             const newLogs = prev.map(l => l.status === 'active' ? { ...l, status: 'done' as const } : l);
+            const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             return [...newLogs, {
-                id: Date.now().toString(),
+                id,
                 timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
                 message,
                 status
-            }].slice(-6); // Keep last 6
+            }].slice(-6);
         });
     };
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -67,13 +62,10 @@ export default function DashboardPage() {
         setScanStatus('scanning');
         setErrorMessage(null);
         setAnalysisResult(null);
-        setLogs([]); // Clear old logs
 
-        // 3. Telemetry Simulation
+        // Technical Onboarding
         addLog(`Acquired asset: ${file.name.substring(0, 15)}...`, 'done');
-
-        await new Promise(r => setTimeout(r, 600));
-        addLog(`Analyzing metadata structure (${file.type})...`, 'active');
+        addLog("Initializing forensic deep-scan protocol...", 'active');
 
         // 4. API Call
         const formData = new FormData();
@@ -81,16 +73,22 @@ export default function DashboardPage() {
         formData.append('guidelineId', 'default');
 
         try {
-            // Simulate waiting steps while API runs in background
+            // Concurrent Telemetry (The "Impressive" layer)
+            const telemetrySteps = [
+                "Cross-referencing global IP datasets...",
+                "Combing federal trademark repositories...",
+                "Reasoning against known celebrity biometric database...",
+                "Scouring metadata for non-congruent timestamps...",
+                "Verifying content authenticity via neural signatures...",
+                "Synthesizing forensic risk profile..."
+            ];
+
+            let currentStep = 0;
             const telemetryInterval = setInterval(() => {
-                const steps = [
-                    "Verifying C2PA digital signature chain...",
-                    "Extracting visual feature vectors...",
-                    "Checking global IP blocklists...",
-                    "Synthesizing risk profile..."
-                ];
-                const msg = steps[Math.floor(Math.random() * steps.length)];
-                addLog(msg, 'active');
+                if (currentStep < telemetrySteps.length) {
+                    addLog(telemetrySteps[currentStep], 'active');
+                    currentStep++;
+                }
             }, 1200);
 
             const response = await fetch('/api/analyze', {
@@ -102,13 +100,13 @@ export default function DashboardPage() {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                addLog(`CRITICAL FAILURE: ${errorData.error}`, 'error');
                 throw new Error(errorData.error || 'Analysis failed');
             }
 
             const data: RiskProfile = await response.json();
 
-            // 5. Completion
-            addLog("Analysis complete. Risk profile generated.", 'done');
+            addLog("Analysis finalized. Provenance chain secure.", 'done');
             setAnalysisResult(data);
             setScanStatus('complete');
 
@@ -116,7 +114,7 @@ export default function DashboardPage() {
             console.error(err);
             setScanStatus('error');
             setErrorMessage(err.message || "Connection lost.");
-            addLog(`CRITICAL FAILURE: ${err.message}`, 'error');
+            addLog(`SCAN ABORTED: ${err.message}`, 'error');
         }
     };
 
@@ -137,8 +135,8 @@ export default function DashboardPage() {
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-full p-4 w-full min-h-[900px]">
 
-            {/* LEFT PANE: PRIMARY SCANNER (65%) */}
-            <div className="flex-[2] bg-[#121212] rounded-[32px] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[10px] border-[var(--rs-bg-surface)] overflow-hidden">
+            {/* LEFT PANE: PRIMARY SCANNER (50%) */}
+            <div className="flex-1 bg-[#121212] rounded-[32px] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[10px] border-[var(--rs-bg-surface)] overflow-hidden">
 
                 {/* Dark Mode Chassis Overlay */}
                 <div className="absolute inset-0 rounded-[22px] pointer-events-none border border-white/5 z-20" />
@@ -156,56 +154,58 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Main Viewport */}
-                <div className="flex-1 flex items-center justify-center relative z-10 min-h-[400px]">
-                    <div className="w-full max-w-2xl">
-                        <RSScanner
-                            active={isScanning}
-                            status={scanStatus === 'error' ? 'error' : scanStatus === 'complete' ? 'complete' : isScanning ? 'scanning' : 'idle'}
-                            imageUrl={previewUrl}
-                            className="border-0 bg-transparent shadow-none"
-                        />
-
-                        {!isScanning && (
-                            <div className="text-center mt-8">
-                                <label className="inline-flex flex-col items-center gap-4 cursor-pointer group">
-                                    <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center text-white/40 group-hover:border-[#FF4F00] group-hover:text-[#FF4F00] transition-colors">
-                                        <div className="w-8 h-8 relative">
-                                            {isError ? <div className="text-red-500 font-bold">!</div> : <div className="border-t-2 border-current w-full h-full absolute top-1/2" />}
-                                            {!isError && <Upload className="w-6 h-6" />}
-                                        </div>
+                <div className="flex-1 relative z-10 w-full mb-8">
+                    <RSScanner
+                        active={isScanning}
+                        status={scanStatus === 'error' ? 'error' : scanStatus === 'complete' ? 'complete' : isScanning ? 'scanning' : 'idle'}
+                        imageUrl={previewUrl}
+                        className="w-full h-full border-white/10"
+                    >
+                        {(!isComplete && !isScanning && !previewUrl) && (
+                            <label className="flex flex-col items-center justify-center text-center p-12 cursor-pointer group w-full h-full">
+                                <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center text-white/40 group-hover:border-[#FF4F00] group-hover:text-[#FF4F00] transition-all duration-300 group-hover:scale-110 mb-6">
+                                    <div className="w-8 h-8 relative flex items-center justify-center">
+                                        {isError ? <div className="text-red-500 font-bold text-xl">!</div> : <Upload className="w-6 h-6" />}
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-white/40 font-mono text-xs uppercase tracking-widest group-hover:text-white transition-colors">
-                                            {isError ? 'Scan Failed - Retry?' : 'Drop file here or click to browse'}
-                                        </p>
-                                        <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • .JPG/.PNG/.MP4</p>
-                                        {isError && <p className="text-red-500 font-mono text-[10px] uppercase tracking-widest">{errorMessage}</p>}
-                                    </div>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/jpeg,image/png,image/webp,video/mp4"
-                                        onChange={handleFileUpload}
-                                    />
-                                </label>
-                            </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="text-white/40 font-mono text-xs uppercase tracking-[0.2em] group-hover:text-white transition-colors">
+                                        {isError ? 'Scan Failed - Retry?' : 'Drop file here or click to browse'}
+                                    </p>
+                                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • .JPG/.PNG/.MP4</p>
+                                    {isError && <p className="text-red-500 font-mono text-[10px] uppercase tracking-widest mt-2">{errorMessage}</p>}
+                                </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/jpeg,image/png,image/webp,video/mp4"
+                                    onChange={handleFileUpload}
+                                />
+                            </label>
                         )}
-                    </div>
+                    </RSScanner>
                 </div>
 
-                {/* System Log / Provenance Log Replacement */}
-                <div className="mt-8 relative z-10">
-                    {!isComplete ? (
-                        <RSSystemLog
-                            logs={logs}
-                            className="bg-black/50 border-white/10 text-white/60 h-40"
-                        />
+                {/* Dynamic Telemetry Viewport */}
+                <div className="mt-8 relative z-10 transition-all duration-500">
+                    {!isComplete && !isError ? (
+                        <div className="animate-in fade-in duration-500">
+                            <RSSystemLog
+                                logs={logs}
+                                className="bg-black/40 border-white/5 text-white/60 h-[320px] rounded-[var(--rs-radius-chassis)] shadow-inner"
+                                maxHeight="320px"
+                            />
+                        </div>
                     ) : (
-                        <RSC2PAWidget
-                            className="w-full h-[320px]"
-                            isComplete={isComplete}
-                        />
+                        <div className="animate-in slide-in-from-bottom-4 fade-in duration-700">
+                            <RSC2PAWidget
+                                className="w-full h-[320px]"
+                                isComplete={isComplete}
+                                status={analysisResult?.c2pa_report?.status as any}
+                                onViewDetails={() => setIsDrawerOpen(true)}
+                            />
+                        </div>
                     )}
                 </div>
             </div>
@@ -249,9 +249,14 @@ export default function DashboardPage() {
                 </RSPanel>
 
                 <RSFindingsDossier isComplete={isComplete} results={results} />
-
-
             </div>
+
+            <RSProvenanceDrawer
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                status={analysisResult?.c2pa_report?.status as any}
+                details={analysisResult?.c2pa_report as any}
+            />
         </div>
     );
 }
