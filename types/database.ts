@@ -87,4 +87,5 @@ export interface ScanWithRelations extends ExtendedScan {
   file_type: string
   image_url?: string | null
   risk_profile?: RiskProfile | null
+  brand_guidelines?: BrandGuideline | null
 }

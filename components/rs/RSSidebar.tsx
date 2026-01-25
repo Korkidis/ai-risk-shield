@@ -6,7 +6,6 @@ import {
     LayoutDashboard,
     FileSearch,
     ShieldAlert,
-    History,
     BookOpen,
     ChevronLeft,
     ChevronRight
@@ -23,10 +22,10 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", icon: <LayoutDashboard />, href: "/dashboard" },
-    { label: "Active Scans", icon: <FileSearch />, href: "/dashboard/scans-reports" },
-    { label: "Design Lab", icon: <BookOpen />, href: "/dashboard/design-lab" }, // Added for easy access
-    { label: "Risk Reports", icon: <ShieldAlert />, href: "/dashboard/reports" },
-    { label: "History Log", icon: <History />, href: "/dashboard/history" },
+    { label: "Scans & Reports", icon: <FileSearch />, href: "/dashboard/scans-reports" },
+    { label: "Guidelines & Policies", icon: <ShieldAlert />, href: "/dashboard/brand-guidelines" },
+    { label: "Help & Documentation", icon: <BookOpen />, href: "/dashboard/help" },
+    { label: "Design Lab", icon: <BookOpen />, href: "/dashboard/design-lab" },
 ];
 
 interface RSSidebarProps extends React.HTMLAttributes<HTMLDivElement> {

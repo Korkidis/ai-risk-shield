@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { RSChassisCard } from '@/components/rs/RSChassisCard';
+import { RSTechnicalDraftingSubstrate } from '@/components/rs/RSTechnicalDraftingSubstrate';
 
 export default function AuthLayout({
     children,
@@ -8,29 +9,32 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#E5E1DA] rs-texture-molded relative overflow-hidden">
-            {/* Ambient Lighting/Shadows for 'Room' Feel */}
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.4)_0%,rgba(0,0,0,0.1)_100%)]" />
+        <RSTechnicalDraftingSubstrate contentPadding="p-0">
+            {/* Calibration Centered Module */}
+            <div className="flex flex-col items-center justify-center min-h-screen relative z-10 p-4">
+                <div className="w-full max-w-[520px] relative">
+                    {/* Focal Crosshairs for Auth Module */}
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-[1px] h-8 bg-rs-signal/20" />
+                    <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-[1px] h-8 bg-rs-signal/20" />
 
-            <div className="w-full max-w-[520px] relative z-10 group">
+                    <RSChassisCard className="p-8 sm:p-10 shadow-[var(--rs-shadow-socket)]">
+                        <div className="pt-2">
+                            {children}
+                        </div>
+                    </RSChassisCard>
 
-                <RSChassisCard className="p-8 sm:p-10">
-                    <div className="pt-2">
-                        {children}
+                    {/* Bottom Navigation - Detached Schematic Navigation */}
+                    <div className="mt-12 flex items-center justify-center gap-8">
+                        <Link href="/" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
+                            ← SYSTEM_EXIT
+                        </Link>
+                        <div className="w-1 h-1 bg-rs-signal/20 rounded-full" />
+                        <Link href="/help" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
+                            HELP_MANUAL
+                        </Link>
                     </div>
-                </RSChassisCard>
-
-                {/* Bottom Navigation - Clean & detached */}
-                <div className="mt-8 flex items-center justify-center gap-6 opacity-40 hover:opacity-100 transition-opacity duration-300">
-                    <Link href="/" className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] transition-colors">
-                        ← RETURN_TO_SYSTEM
-                    </Link>
-                    <div className="w-[1px] h-3 bg-[var(--rs-border-strong)] opacity-30" />
-                    <Link href="/help" className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] transition-colors">
-                        HELP_CENTER
-                    </Link>
                 </div>
             </div>
-        </div>
+        </RSTechnicalDraftingSubstrate>
     );
 }
