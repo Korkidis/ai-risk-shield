@@ -296,7 +296,7 @@ function ScansReportsContent() {
                             <RSButton
                                 icon={<Plus size={16} />}
                                 className="bg-[var(--rs-risk-high)] text-white shadow-[var(--rs-shadow-l2)] hover:brightness-110"
-                                onClick={() => setShowUploadModal(true)}
+                                onClick={() => router.push('/dashboard')}
                             >
                                 NEW_VALIDATION
                             </RSButton>
@@ -506,6 +506,37 @@ function ScansReportsContent() {
                                             </div>
                                         ))}
                                     </div>
+
+                                    {/* C2PA Forensic Manifest */}
+                                    <div className="border border-rs-border-primary bg-white p-5">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Cryptographic_Manifest</span>
+                                            <div className={cn(
+                                                "px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-[1px]",
+                                                selectedScan?.risk_profile?.c2pa_report?.status === 'valid' ? "bg-rs-safe text-white" : "bg-rs-gray-200 text-rs-text-tertiary"
+                                            )}>
+                                                {selectedScan?.risk_profile?.c2pa_report?.status || 'UNKNOWN'}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3 font-mono text-[10px]">
+                                            <div className="flex justify-between border-b border-rs-border-primary/30 pb-2">
+                                                <span className="text-rs-text-tertiary">ISSUER_SIGNATURE</span>
+                                                <span className="text-rs-text-primary text-right">{selectedScan?.risk_profile?.c2pa_report?.issuer || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b border-rs-border-primary/30 pb-2">
+                                                <span className="text-rs-text-tertiary">GENERATOR_TOOL</span>
+                                                <span className="text-rs-text-primary text-right">{selectedScan?.risk_profile?.c2pa_report?.tool || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-rs-text-tertiary">TIMESTAMP</span>
+                                                <span className="text-rs-text-primary text-right">
+                                                    {selectedScan?.risk_profile?.c2pa_report?.timestamp
+                                                        ? new Date(selectedScan.risk_profile.c2pa_report.timestamp).toLocaleString()
+                                                        : 'MISSING'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Internal Annotations */}
@@ -563,13 +594,13 @@ function ScansReportsContent() {
                 >
                     <div className="space-y-4">
                         <div className="p-4 bg-rs-gray-50 border border-rs-border-primary/50 text-[11px] text-rs-text-secondary leading-relaxed">
-                            Upload media assets for forensic analysis. Supported formats: JPG, PNG, MP4.
+                            Upload media assets for forensic analysis. Supported formats: JPG, PNG, MP4, MOV, AVI, MKV.
                             Analysis includes AI-driven IP detection, brand safety checks, and C2PA provenance verification.
                         </div>
 
                         <RSFileUpload
                             onFileSelect={handleUpload}
-                            accept="image/*,video/*"
+                            accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm,.wmv"
                             maxSizeMB={50}
                         />
 
@@ -646,14 +677,26 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                 {/* Image Container */}
                 <div className="w-full h-full relative group/thumb overflow-hidden bg-white shadow-sm ring-1 ring-black/5 rounded-[var(--rs-radius-element)]">
                     {!imgError && imgSrc ? (
-                        <img
-                            src={imgSrc}
-                            onError={handleImgError}
-                            className="w-full h-full object-cover transition-all duration-700 grayscale-[0.1] contrast-[1.05] group-hover:grayscale-0"
-                            alt={scan.filename}
-                        />
+                        scan.file_type === 'video' && (imgError || imgSrc === scan.asset_url) ? (
+                            <video
+                                src={imgSrc}
+                                className="w-full h-full object-cover"
+                                muted
+                                loop
+                                playsInline
+                                onMouseOver={e => e.currentTarget.play()}
+                                onMouseOut={e => e.currentTarget.pause()}
+                            />
+                        ) : (
+                            <img
+                                src={imgSrc}
+                                onError={handleImgError}
+                                className="w-full h-full object-cover transition-all duration-700 grayscale-[0.1] contrast-[1.05] group-hover:grayscale-0"
+                                alt={scan.filename}
+                            />
+                        )
                     ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden">
+                        <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden bg-rs-gray-100">
                             <div
                                 className="absolute inset-0 opacity-20"
                                 style={{
@@ -668,11 +711,18 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                                     </div>
                                 </div>
                             )}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10 text-[var(--rs-text-primary)]">
-                                {scan.file_type === 'video' ?
-                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" /><line x1="7" y1="2" x2="7" y2="22" /><line x1="17" y1="2" x2="17" y2="22" /><line x1="2" y1="12" x2="22" y2="12" /><line x1="2" y1="7" x2="7" y2="7" /><line x1="2" y1="17" x2="7" y2="17" /><line x1="17" y1="17" x2="22" y2="17" /><line x1="17" y1="7" x2="22" y2="7" /></svg> :
-                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                                }
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 text-[var(--rs-text-primary)] flex flex-col items-center gap-2">
+                                {scan.file_type === 'video' ? (
+                                    <>
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" /><line x1="7" y1="2" x2="7" y2="22" /><line x1="17" y1="2" x2="17" y2="22" /><line x1="2" y1="12" x2="22" y2="12" /><line x1="2" y1="7" x2="7" y2="7" /><line x1="2" y1="17" x2="7" y2="17" /><line x1="17" y1="17" x2="22" y2="17" /><line x1="17" y1="7" x2="22" y2="7" /></svg>
+                                        <span className="text-[8px] font-mono uppercase tracking-widest">NO_PREVIEW</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                                        <span className="text-[8px] font-mono uppercase tracking-widest">ASSET_MISSING</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}

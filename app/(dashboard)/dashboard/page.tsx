@@ -29,6 +29,7 @@ export default function DashboardPage() {
     const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
     const [previewUrl, setPreviewUrl] = React.useState<string | undefined>(undefined);
+    const [isDragging, setIsDragging] = React.useState(false);
 
     // Telemetry State
     const [logs, setLogs] = React.useState<Array<{ id: string, timestamp: string, message: string, status: 'pending' | 'active' | 'done' | 'error' }>>([
@@ -50,10 +51,7 @@ export default function DashboardPage() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    const handleFileProcess = async (file: File) => {
         // 1. Setup Preview
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
@@ -154,11 +152,31 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Main Viewport */}
-                <div className="flex-1 relative z-10 w-full mb-8">
+                <div
+                    className="flex-1 relative z-10 w-full mb-8"
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(true);
+                    }}
+                    onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(false);
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragging(false);
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handleFileProcess(file);
+                    }}
+                >
                     <RSScanner
                         active={isScanning}
                         status={scanStatus === 'error' ? 'error' : scanStatus === 'complete' ? 'complete' : isScanning ? 'scanning' : 'idle'}
                         imageUrl={previewUrl}
+                        isDragActive={isDragging}
                         className="w-full h-full border-white/10"
                     >
                         {(!isComplete && !isScanning && !previewUrl) && (
@@ -172,15 +190,18 @@ export default function DashboardPage() {
                                     <p className="text-white/40 font-mono text-xs uppercase tracking-[0.2em] group-hover:text-white transition-colors">
                                         {isError ? 'Scan Failed - Retry?' : 'Drop file here or click to browse'}
                                     </p>
-                                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • .JPG/.PNG/.MP4</p>
+                                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • JPG, PNG, MP4, MOV, MKV</p>
                                     {isError && <p className="text-red-500 font-mono text-[10px] uppercase tracking-widest mt-2">{errorMessage}</p>}
                                 </div>
                                 <input
                                     type="file"
                                     ref={fileInputRef}
                                     className="hidden"
-                                    accept="image/jpeg,image/png,image/webp,video/mp4"
-                                    onChange={handleFileUpload}
+                                    accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm,.wmv"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleFileProcess(file);
+                                    }}
                                 />
                             </label>
                         )}

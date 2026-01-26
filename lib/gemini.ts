@@ -403,7 +403,7 @@ export async function analyzeImageMultiPersona(
         }
 
         // 4. Calculate Provenance Score based on C2PA Outcome (Legal Defensibility Weighting)
-        const c2paScores = { valid: 0, missing: 80, invalid: 100, error: 50 };
+        const c2paScores = { valid: 0, caution: 20, missing: 80, invalid: 100, error: 50 };
         const c2paDerivedScore = c2paScores[c2paReport.status] || 80;
 
         // 5. Calculate Composite (IP 40%, Safety 40%, Provenance 20%)
@@ -433,12 +433,16 @@ export async function analyzeImageMultiPersona(
         // 9. Generate Chief Strategy
         const strategy = await generateChiefStrategy([ip, safety, { score: c2paDerivedScore, teaser: '', reasoning: '' }]);
 
+        let c2paTeaser = "Provenance Gap Detected";
+        if (c2paReport.status === 'valid') c2paTeaser = "Cryptographically Verified";
+        if (c2paReport.status === 'caution') c2paTeaser = "Verified (Non-Standard)";
+
         return {
             ip_report: ip,
             safety_report: safety,
             provenance_report: {
                 score: c2paDerivedScore,
-                teaser: c2paReport.status === 'valid' ? "Cryptographically Verified" : "Provenance Gap Detected",
+                teaser: c2paTeaser,
                 reasoning: provenance.reasoning
             },
             c2pa_report: c2paReport,

@@ -248,9 +248,11 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
               </div>
 
               <RSFileUpload
+                id="anonymous-upload-input"
                 onFileSelect={handleInitiateScan}
                 onDragChange={setIsDragActive}
                 maxSizeMB={50}
+                accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm,.wmv"
                 className="absolute inset-0 opacity-0 cursor-pointer z-50"
               />
             </div>
@@ -262,6 +264,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
                 statusMessage={statusMessage}
                 imageSrc={previewUrl}
                 className="h-full"
+                isVideo={currentFile?.type.startsWith('video/')}
               />
             </div>
           )}
@@ -274,7 +277,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
               variant="primary"
               fullWidth
               size="lg"
-              onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+              onClick={() => document.getElementById('anonymous-upload-input')?.click()}
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
               }

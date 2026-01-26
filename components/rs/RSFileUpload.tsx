@@ -10,6 +10,7 @@ interface RSFileUploadProps {
     accept?: string;
     maxSizeMB?: number;
     className?: string;
+    id?: string;
 }
 
 export function RSFileUpload({
@@ -18,6 +19,7 @@ export function RSFileUpload({
     accept = "image/*",
     maxSizeMB = 10,
     className,
+    id,
 }: RSFileUploadProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -100,6 +102,7 @@ export function RSFileUpload({
                     accept={accept}
                     onChange={handleInputChange}
                     className="hidden"
+                    id={id}
                 />
 
                 {!selectedFile ? (
@@ -119,7 +122,7 @@ export function RSFileUpload({
                                 Drop file here or click to browse
                             </p>
                             <p className="text-xs text-rs-gray-500 font-mono">
-                                Max {maxSizeMB}MB • {accept.replace('image/', '').toUpperCase()}
+                                Max {maxSizeMB}MB • {accept.includes('video') ? 'IMAGE & VIDEO' : accept.replace('image/', '').toUpperCase()}
                             </p>
                         </div>
                     </div>

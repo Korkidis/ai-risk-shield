@@ -9,6 +9,7 @@ interface RSProcessingPanelProps {
     statusMessage: string;
     imageSrc?: string | null; // The uploaded image preview URL
     className?: string;
+    isVideo?: boolean;
 }
 
 interface LogEntry {
@@ -22,7 +23,8 @@ export function RSProcessingPanel({
     progress,
     statusMessage,
     imageSrc,
-    className
+    className,
+    isVideo = false
 }: RSProcessingPanelProps) {
     const [logs, setLogs] = useState<LogEntry[]>([]);
 
@@ -52,11 +54,22 @@ export function RSProcessingPanel({
             <div className="relative flex-grow overflow-hidden group">
                 {/* Image Preview */}
                 {imageSrc ? (
-                    <img
-                        src={imageSrc}
-                        alt="Scanning Target"
-                        className="absolute inset-0 w-full h-full object-contain opacity-90 transition-opacity duration-500"
-                    />
+                    isVideo ? (
+                        <video
+                            src={imageSrc}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            className="absolute inset-0 w-full h-full object-contain opacity-90 transition-opacity duration-500"
+                        />
+                    ) : (
+                        <img
+                            src={imageSrc}
+                            alt="Scanning Target"
+                            className="absolute inset-0 w-full h-full object-contain opacity-90 transition-opacity duration-500"
+                        />
+                    )
                 ) : (
                     <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,#1a1a1a_25%,transparent_25%,transparent_75%,#1a1a1a_75%,#1a1a1a),linear-gradient(45deg,#1a1a1a_25%,transparent_25%,transparent_75%,#1a1a1a_75%,#1a1a1a)] bg-[size:20px_20px] bg-[position:0_0,10px_10px]" />
                 )}

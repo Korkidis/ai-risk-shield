@@ -138,17 +138,18 @@ export async function POST(req: NextRequest) {
                 tenant_id: tenantId,
                 scan_id: (scan as any).id,
                 finding_type: 'provenance_issue',
-                severity: riskProfile.c2pa_report.status === 'valid' ? 'low' :
+                severity: (riskProfile.c2pa_report.status === 'valid' || riskProfile.c2pa_report.status === 'caution') ? 'low' :
                     riskProfile.c2pa_report.status === 'invalid' ? 'critical' : 'high',
                 title: 'C2PA Provenance Verification',
                 description: riskProfile.provenance_report.teaser,
-                recommendation: riskProfile.c2pa_report.status === 'valid'
+                recommendation: (riskProfile.c2pa_report.status === 'valid' || riskProfile.c2pa_report.status === 'caution')
                     ? 'Asset is armored with verified Content Credentials. Maintain this chain for legal defensibility.'
                     : 'Absence of cryptographic provenance. In IP disputes, your legal defensibility may be hindered without a verified chain of custody.',
                 evidence: {
                     status: riskProfile.c2pa_report.status,
                     issuer: riskProfile.c2pa_report.issuer,
-                    tool: riskProfile.c2pa_report.tool
+                    tool: riskProfile.c2pa_report.tool,
+                    note: riskProfile.c2pa_report.status === 'caution' ? 'Verified via fallback manifest (Non-Standard Structure)' : undefined
                 }
             }
         ];
@@ -169,8 +170,8 @@ export async function POST(req: NextRequest) {
 
         await adminSupabase.from('scan_findings').insert(findings);
 
-        // 9. If VALID, preserve complete provenance details
-        if (riskProfile.c2pa_report.status === 'valid') {
+        // 9. If VALID (or CAUTION), preserve complete provenance details
+        if (['valid', 'caution'].includes(riskProfile.c2pa_report.status)) {
             await adminSupabase.from('provenance_details').insert({
                 scan_id: (scan as any).id,
                 tenant_id: tenantId,
@@ -178,7 +179,7 @@ export async function POST(req: NextRequest) {
                 creation_tool: riskProfile.c2pa_report.tool,
                 creation_tool_version: riskProfile.c2pa_report.tool_version,
                 creation_timestamp: riskProfile.c2pa_report.timestamp,
-                signature_status: 'valid',
+                signature_status: riskProfile.c2pa_report.status,
                 certificate_issuer: riskProfile.c2pa_report.issuer,
                 certificate_serial: riskProfile.c2pa_report.serial,
                 edit_history: riskProfile.c2pa_report.history,
