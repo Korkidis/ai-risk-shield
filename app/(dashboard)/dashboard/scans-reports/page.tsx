@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
@@ -8,34 +8,39 @@ import {
     ChevronRight,
     Loader2,
     AlertOctagon,
+    Plus,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScanWithRelations } from '@/types/database'
 import { formatDistanceToNow } from 'date-fns'
-import { RSInput } from '@/components/rs/RSInput'
 import { RSTextarea } from '@/components/rs/RSTextarea'
 import { RSButton } from '@/components/rs/RSButton'
 import { RSBulkActionBar } from '@/components/rs/RSBulkActionBar'
-import { RSCardActionOverlay } from '@/components/rs/RSCardActionOverlay'
+import { getRiskTier } from '@/lib/risk-utils'
 import { RSTechnicalDraftingSubstrate } from '@/components/rs/RSTechnicalDraftingSubstrate'
+import { RSModal } from '@/components/rs/RSModal'
+import { RSFileUpload } from '@/components/rs/RSFileUpload'
 
-// Helper for risk colors matching Braun aesthetic
-const getRiskColor = (v: string) => {
-    const lowerV = v.toLowerCase();
-    if (lowerV.includes('safe') || lowerV.includes('low')) return 'var(--rs-safe)';
-    if (lowerV.includes('review')) return 'var(--rs-signal)';
-    if (lowerV.includes('high')) return 'var(--rs-alert)';
-    if (lowerV.includes('critical')) return 'var(--rs-destruct)';
-    return 'var(--rs-text-tertiary)';
+// Wrapper to handle Suspense boundary for useSearchParams
+export default function ScansReportsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-rs-text-tertiary" />
+            </div>
+        }>
+            <ScansReportsContent />
+        </Suspense>
+    );
 }
 
-export default function ScansReportsPage() {
+function ScansReportsContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const pathname = usePathname()
 
     const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '')
-    const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'date_desc')
+    const [sortBy] = useState(searchParams.get('sort') || 'date_desc')
     const [filterRisk, setFilterRisk] = useState(searchParams.get('risk') || 'all')
     const [page, setPage] = useState(1)
     const itemsPerPage = 20
@@ -47,7 +52,13 @@ export default function ScansReportsPage() {
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid')
     const [showDetails, setShowDetails] = useState(false)
     const [updating, setUpdating] = useState(false)
+
     const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+    // Upload State
+    const [showUploadModal, setShowUploadModal] = useState(false)
+    const [isUploading, setIsUploading] = useState(false)
+    const [uploadError, setUploadError] = useState<string | null>(null)
 
     // URL Sync
     const updateUrl = useCallback(() => {
@@ -72,14 +83,17 @@ export default function ScansReportsPage() {
         setIsLoading(true)
         setError(null)
         try {
-            const response = await fetch('/api/scans/list')
+            const response = await fetch('/api/scans/list', { cache: 'no-store' })
             if (!response.ok) throw new Error('Failed to fetch records')
             const data = await response.json()
 
             const mappedScans: ScanWithRelations[] = data.scans.map((s: any) => ({
                 ...s,
+                // Normalize status: DB stores 'complete', frontend expects 'completed'
+                status: s.status === 'complete' ? 'completed' : s.status,
                 filename: s.assets?.filename || 'Unnamed Asset',
                 file_type: s.assets?.file_type || 'image',
+                scan_findings: s.scan_findings || [],
                 risk_profile: s.risk_profile || {
                     verdict: s.risk_level === 'critical' ? 'Critical Risk' :
                         s.risk_level === 'high' ? 'High Risk' :
@@ -152,6 +166,35 @@ export default function ScansReportsPage() {
         }, 800)
     }
 
+    const handleUpload = async (file: File) => {
+        setIsUploading(true)
+        setUploadError(null)
+
+        const formData = new FormData()
+        formData.append('file', file)
+
+        try {
+            const res = await fetch('/api/scans/upload', {
+                method: 'POST',
+                body: formData
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Upload failed')
+            }
+
+            // Success
+            setShowUploadModal(false)
+            fetchScans() // Refresh list
+        } catch (err: any) {
+            setUploadError(err.message)
+        } finally {
+            setIsUploading(false)
+        }
+    }
+
     const filteredScans = useMemo(() => {
         return scans
             .filter(s => {
@@ -186,11 +229,11 @@ export default function ScansReportsPage() {
                     <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-6">
                         {/* Title & Quota */}
                         <div className="flex items-center gap-6 shrink-0">
-                            <h1 className="text-rs-text-primary text-xl font-black tracking-tight rs-type-section whitespace-nowrap">
+                            <h1 className="text-xl rs-header-bold-italic tracking-tight text-rs-text-primary whitespace-nowrap rs-etched">
                                 VALIDATION_ARCHIVE
                             </h1>
-                            <div className="hidden lg:flex items-center gap-3 px-3 py-1 bg-[#f8f8f7] border border-rs-border-primary/30 rounded-[2px]">
-                                <span className="text-[9px] font-mono text-rs-text-tertiary uppercase tracking-widest">Usage_Quota:</span>
+                            <div className="hidden lg:flex items-center gap-3 px-3 py-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l1)] rounded-[var(--rs-radius-element)]">
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] rs-etched opacity-60">Usage_Quota</span>
                                 <span className="text-[10px] font-mono font-bold text-rs-text-primary">15/50_SCANS</span>
                             </div>
                         </div>
@@ -198,50 +241,51 @@ export default function ScansReportsPage() {
                         {/* Horizontal Control Bay */}
                         <div className="flex-1 flex items-center justify-center gap-3 max-w-4xl">
                             {/* Search Registry */}
-                            <div className="relative w-full max-w-[280px]">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rs-text-tertiary" />
-                                <RSInput
+                            <div className="relative w-full max-w-[320px]">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--rs-text-tertiary)]" />
+                                <input
+                                    type="text"
                                     placeholder="QUERY_ARCHIVE..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full h-8 pl-9 bg-white border-rs-border-primary text-[10px] font-mono uppercase focus:ring-1 focus:ring-rs-text-primary rounded-[2px] transition-all placeholder:text-rs-text-tertiary/50"
+                                    className="w-full h-10 pl-10 pr-4 bg-[var(--rs-bg-well)] border-none text-[10px] font-bold font-mono uppercase text-[var(--rs-text-primary)] rounded-[var(--rs-radius-element)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-[var(--rs-text-primary)] transition-all placeholder:text-[var(--rs-text-tertiary)]"
                                 />
                             </div>
 
                             {/* Filter Segmented Control */}
-                            <div className="flex items-center p-0.5 bg-rs-gray-50 border border-rs-border-primary rounded-[2px] h-8">
+                            <div className="flex items-center p-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] h-10">
                                 {(['all', 'high', 'critical'] as const).map((risk) => (
                                     <button
                                         key={risk}
                                         onClick={() => setFilterRisk(risk)}
                                         className={cn(
-                                            "h-full px-3 text-[9px] font-black uppercase tracking-widest transition-all rounded-[1px] flex items-center",
+                                            "h-8 px-4 text-[9px] font-bold uppercase tracking-widest transition-all rounded-[var(--rs-radius-element)] flex items-center",
                                             filterRisk === risk
-                                                ? "bg-white text-rs-text-primary shadow-sm ring-1 ring-black/5"
-                                                : "text-rs-text-tertiary hover:text-rs-text-primary hover:bg-black/5"
+                                                ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)]"
+                                                : "text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] hover:bg-[var(--rs-bg-element)]/50"
                                         )}
                                     >
-                                        {risk === 'all' ? 'All' : risk}
+                                        <span className={filterRisk === risk ? "rs-etched" : ""}>{risk === 'all' ? 'All' : risk}</span>
                                     </button>
                                 ))}
                             </div>
 
                             {/* View Toggle */}
-                            <div className="flex items-center p-0.5 bg-rs-gray-50 border border-rs-border-primary rounded-[2px] h-8">
+                            <div className="flex items-center p-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] h-10">
                                 {(['grid', 'list'] as const).map((mode) => (
                                     <button
                                         key={mode}
                                         onClick={() => setViewMode(mode)}
                                         className={cn(
-                                            "w-8 h-full flex items-center justify-center transition-all rounded-[1px]",
+                                            "w-8 h-8 flex items-center justify-center transition-all rounded-[var(--rs-radius-element)]",
                                             viewMode === mode
-                                                ? "bg-white text-rs-text-primary shadow-sm ring-1 ring-black/5"
-                                                : "text-rs-text-tertiary hover:text-rs-text-primary hover:bg-black/5"
+                                                ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)]"
+                                                : "text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)]"
                                         )}
                                     >
                                         {mode === 'grid'
-                                            ? <div className="w-3 h-3 border-2 border-current rounded-[0.5px]" />
-                                            : <div className="w-3 h-[2px] bg-current rounded-[0.5px]" />}
+                                            ? <div className="w-3 h-3 border-2 border-current rounded-[1px]" />
+                                            : <div className="w-3 h-[2px] bg-current rounded-[1px]" />}
                                     </button>
                                 ))}
                             </div>
@@ -249,7 +293,11 @@ export default function ScansReportsPage() {
 
                         {/* Primary Action */}
                         <div className="flex items-center gap-4 shrink-0">
-                            <RSButton variant="primary" className="h-8 px-6 text-[10px] font-black tracking-widest uppercase bg-rs-text-primary hover:bg-rs-text-primary/95 text-white rounded-[2px] shadow-sm">
+                            <RSButton
+                                icon={<Plus size={16} />}
+                                className="bg-[var(--rs-risk-high)] text-white shadow-[var(--rs-shadow-l2)] hover:brightness-110"
+                                onClick={() => setShowUploadModal(true)}
+                            >
                                 NEW_VALIDATION
                             </RSButton>
                         </div>
@@ -275,7 +323,7 @@ export default function ScansReportsPage() {
                                 <div className={cn(
                                     "grid gap-8",
                                     viewMode === 'grid'
-                                        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+                                        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" // Max 4 cols
                                         : "grid-cols-1"
                                 )}>
                                     <AnimatePresence mode="popLayout">
@@ -343,7 +391,7 @@ export default function ScansReportsPage() {
                                 <div className="relative aspect-video bg-[#F2F2F0] border border-rs-border-primary p-2 group shadow-inner">
                                     <div className="w-full h-full relative overflow-hidden border border-rs-border-primary/50 bg-white">
                                         <img
-                                            src={selectedScan?.image_url || '/placeholder.png'}
+                                            src={selectedScan?.asset_url || '/placeholder.png'}
                                             alt="Asset_Visual"
                                             className="w-full h-full object-contain grayscale-[0.2] transition-all group-hover:grayscale-0"
                                         />
@@ -354,46 +402,110 @@ export default function ScansReportsPage() {
                                 </div>
 
                                 {/* Risk Diagnostic Summary */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Forensic_Verdict</span>
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className="w-1.5 h-1.5 rounded-full animate-pulse"
-                                                style={{ backgroundColor: getRiskColor(selectedScan?.risk_profile?.verdict || '') }}
-                                            />
-                                            <span className="text-[10px] font-black font-mono text-rs-text-primary uppercase">Risk_Level_{selectedScan?.risk_profile?.composite_score}</span>
-                                        </div>
-                                    </div>
-
+                                <div className="space-y-6">
                                     <div className="p-5 bg-white border border-rs-border-primary relative overflow-hidden shadow-sm">
-                                        <div
-                                            className="text-2xl font-black uppercase tracking-tighter mb-2"
-                                            style={{ color: getRiskColor(selectedScan?.risk_profile?.verdict || '') }}
-                                        >
-                                            {selectedScan?.risk_profile?.verdict?.replace('_', ' ') || 'PENDING'}
-                                        </div>
-                                        <p className="text-[10px] text-rs-text-secondary leading-relaxed font-medium">
-                                            {selectedScan?.risk_profile?.chief_officer_strategy || 'Forensic analysis suggest provenance signature with system confidence of ' + selectedScan?.risk_profile?.composite_score + '%.'}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Modular Metrics Bay */}
-                                <div className="grid grid-cols-2 gap-px bg-rs-border-primary border border-rs-border-primary">
-                                    {[
-                                        { label: 'IP_PROVENANCE', score: selectedScan?.risk_profile?.ip_report?.score, max: 100 },
-                                        { label: 'SAFETY_THRESHOLD', score: selectedScan?.risk_profile?.safety_report?.score, max: 100 },
-                                        { label: 'C2PA_INTEGRITY', score: selectedScan?.risk_profile?.c2pa_report?.status === 'valid' ? 'VALID' : 'VOID', type: 'status' },
-                                        { label: 'CHRONO_REF', score: formatDistanceToNow(new Date(selectedScan?.created_at || new Date())).toUpperCase(), type: 'date' }
-                                    ].map((metric, i) => (
-                                        <div key={i} className="bg-white p-3 space-y-1 hover:bg-rs-gray-50 transition-colors">
-                                            <span className="text-[8px] font-mono text-rs-text-tertiary uppercase tracking-widest">{metric.label}</span>
-                                            <div className="text-[11px] font-black text-rs-text-primary uppercase tracking-tight">
-                                                {metric.score !== undefined ? metric.score : 'N/A'}{metric.max ? `/${metric.max}` : ''}
+                                        <div className="flex items-center justify-between mb-4 relative z-10">
+                                            <div>
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary block mb-1">Forensic_Verdict</span>
+                                                <div
+                                                    className="text-2xl font-black uppercase tracking-tighter"
+                                                    style={{ color: getRiskTier(selectedScan?.risk_profile?.composite_score || 0).colorVar }}
+                                                >
+                                                    {getRiskTier(selectedScan?.risk_profile?.composite_score || 0).label}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-4xl font-black tracking-tighter text-rs-text-primary">
+                                                    {selectedScan?.risk_profile?.composite_score}
+                                                </div>
+                                                <span className="text-[9px] font-bold uppercase tracking-widest text-rs-text-tertiary">Global_Score</span>
                                             </div>
                                         </div>
-                                    ))}
+
+                                        {/* Horizontal Meter */}
+                                        <div className="w-full h-1.5 bg-rs-gray-100 rounded-full overflow-hidden relative z-10">
+                                            <div
+                                                className="h-full transition-all duration-1000 ease-out"
+                                                style={{
+                                                    width: `${selectedScan?.risk_profile?.composite_score}%`,
+                                                    backgroundColor: getRiskTier(selectedScan?.risk_profile?.composite_score || 0).colorVar
+                                                }}
+                                            />
+                                        </div>
+
+                                        <p className="text-[10px] text-rs-text-secondary leading-relaxed font-medium mt-4 relative z-10">
+                                            {selectedScan?.risk_profile?.chief_officer_strategy || `Forensic analysis suggests provenance signature with system confidence of ${selectedScan?.risk_profile?.composite_score}%.`}
+                                        </p>
+
+                                        {/* Background Watermark */}
+                                        <div className="absolute -bottom-8 -right-8 text-9xl font-black text-rs-gray-50 z-0 select-none opacity-50">
+                                            {selectedScan?.risk_profile?.composite_score}
+                                        </div>
+                                    </div>
+
+                                    {/* Findings List (Timeline Style) */}
+                                    <div className="border border-rs-border-primary bg-white">
+                                        <div className="px-5 py-3 border-b border-rs-border-primary bg-rs-gray-50/50 flex items-center justify-between">
+                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Detected_Anomalies</span>
+                                            <div className="px-2 py-0.5 bg-rs-text-primary text-white text-[9px] font-bold rounded-[1px]">
+                                                {selectedScan?.scan_findings?.length || 0}
+                                            </div>
+                                        </div>
+                                        <div className="p-6">
+                                            {selectedScan?.scan_findings && selectedScan.scan_findings.length > 0 ? (
+                                                <div className="relative border-l border-dashed border-rs-border-primary space-y-8 ml-2">
+                                                    {selectedScan.scan_findings.map((finding: any) => (
+                                                        <div key={finding.id} className="relative pl-6">
+                                                            {/* Timeline Dot */}
+                                                            <div className={cn(
+                                                                "absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white",
+                                                                finding.severity === 'critical' ? 'bg-rs-destruct' :
+                                                                    finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
+                                                            )} />
+
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-[10px] font-bold text-rs-text-primary uppercase tracking-tight">{finding.title}</span>
+                                                                    <span className="text-[9px] font-mono text-rs-text-tertiary">{finding.confidence_score}%_CONF</span>
+                                                                </div>
+                                                                <p className="text-[10px] text-rs-text-secondary leading-relaxed bg-rs-gray-50 p-3 rounded-[2px] border border-rs-border-primary/50 relative">
+                                                                    {/* Speech bubble notch */}
+                                                                    <span className="absolute top-2 -left-1 w-2 h-2 bg-rs-gray-50 border-t border-l border-rs-border-primary/50 -rotate-45" />
+                                                                    {finding.description}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-4">
+                                                    <span className="text-[10px] font-mono text-rs-text-tertiary uppercase tracking-widest opacity-50">No_Anomalies_Recorded</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Score Breakdown (Horizontal Bars) */}
+                                    <div className="border border-rs-border-primary bg-white divide-y divide-rs-border-primary/40">
+                                        {[
+                                            { label: 'IP_PROVENANCE', score: selectedScan?.risk_profile?.ip_report?.score || 0 },
+                                            { label: 'SAFETY_THRESHOLD', score: selectedScan?.risk_profile?.safety_report?.score || 0 },
+                                            { label: 'PROVENANCE_INTEGRITY', score: selectedScan?.risk_profile?.provenance_report?.score || 0 },
+                                        ].map((metric, i) => (
+                                            <div key={i} className="p-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">{metric.label}</span>
+                                                    <span className="text-[10px] font-bold text-rs-text-primary">{metric.score}/100</span>
+                                                </div>
+                                                <div className="w-full h-1 bg-rs-gray-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-rs-text-primary"
+                                                        style={{ width: `${metric.score}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* Internal Annotations */}
@@ -441,8 +553,42 @@ export default function ScansReportsPage() {
                         }
                     }}
                 />
+
+
+                {/* Upload Modal */}
+                <RSModal
+                    isOpen={showUploadModal}
+                    onClose={() => setShowUploadModal(false)}
+                    title="NEW_FORENSIC_VALIDATION"
+                >
+                    <div className="space-y-4">
+                        <div className="p-4 bg-rs-gray-50 border border-rs-border-primary/50 text-[11px] text-rs-text-secondary leading-relaxed">
+                            Upload media assets for forensic analysis. Supported formats: JPG, PNG, MP4.
+                            Analysis includes AI-driven IP detection, brand safety checks, and C2PA provenance verification.
+                        </div>
+
+                        <RSFileUpload
+                            onFileSelect={handleUpload}
+                            accept="image/*,video/*"
+                            maxSizeMB={50}
+                        />
+
+                        {isUploading && (
+                            <div className="flex items-center justify-center py-8 gap-3 text-rs-text-primary animate-pulse">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span className="text-xs font-mono uppercase tracking-widest">Uploading_&_Processing...</span>
+                            </div>
+                        )}
+
+                        {uploadError && (
+                            <div className="p-3 bg-red-50 border border-rs-destruct/20 text-rs-destruct text-xs font-mono">
+                                ERROR: {uploadError}
+                            </div>
+                        )}
+                    </div>
+                </RSModal>
             </div>
-        </RSTechnicalDraftingSubstrate>
+        </RSTechnicalDraftingSubstrate >
     )
 }
 
@@ -453,8 +599,28 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
     onBulkToggle: (checked: boolean) => void;
     onClick: () => void
 }) {
-    const verdict = scan.risk_profile?.verdict || 'PENDING';
     const score = scan.risk_profile?.composite_score || 0;
+    const thumbnailPath = scan.tenant_id && scan.asset_id ? `${scan.tenant_id}/${scan.asset_id}_thumb.jpg` : null;
+    const thumbnailUrl = thumbnailPath ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${thumbnailPath}` : null;
+    const [imgSrc, setImgSrc] = useState(thumbnailUrl || scan.asset_url || scan.image_url);
+    const [imgError, setImgError] = useState(false);
+
+    const riskTier = getRiskTier(score);
+
+    // Reset image state when scan changes
+    useEffect(() => {
+        setImgSrc(thumbnailUrl || scan.asset_url || scan.image_url);
+        setImgError(false);
+    }, [scan.id, thumbnailUrl, scan.asset_url, scan.image_url]);
+
+    const handleImgError = () => {
+        // If we were trying to load the thumbnail and failed, try the full asset URL
+        if (imgSrc === thumbnailUrl && scan.asset_url) {
+            setImgSrc(scan.asset_url);
+        } else {
+            setImgError(true);
+        }
+    };
 
     return (
         <motion.div
@@ -464,101 +630,148 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
             exit={{ opacity: 0 }}
             onClick={onClick}
             className={cn(
-                "group/card cursor-pointer bg-white relative transition-all duration-300 overflow-hidden shadow-sm",
-                "hover:shadow-md",
+                "group/card cursor-pointer bg-[var(--rs-bg-surface)] relative transition-all duration-300 overflow-hidden flex flex-col",
+                "h-[325px] w-full", // Fixed height per spec
+                "rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20",
+                "hover:scale-[1.01] hover:shadow-[var(--rs-shadow-l3)]",
                 isSelected ? "ring-2 ring-rs-text-primary z-10" : ""
             )}
         >
+            {/* Physics: Parting Line */}
+            <div className="absolute inset-0 rounded-[inherit] border-t border-l border-white/40 pointer-events-none z-20" />
+            <div className="absolute inset-0 rounded-[inherit] border-b border-r border-black/10 pointer-events-none z-20" />
+
             {/* 1. Thumbnail Area (60%) */}
-            <div className="relative aspect-[16/10] w-full bg-[#FAFAF9] overflow-hidden p-3 transition-colors group-hover/card:bg-[#F2F2F0]">
-                {/* Image Container with precise border */}
-                <div className="w-full h-full relative group/thumb overflow-hidden bg-white shadow-sm ring-1 ring-black/5">
-                    {scan.image_url ? (
+            <div className="relative h-[60%] w-full bg-[#FAFAF9] overflow-hidden p-3 transition-colors group-hover/card:bg-[#F2F2F0]">
+                {/* Image Container */}
+                <div className="w-full h-full relative group/thumb overflow-hidden bg-white shadow-sm ring-1 ring-black/5 rounded-[var(--rs-radius-element)]">
+                    {!imgError && imgSrc ? (
                         <img
-                            src={scan.image_url}
-                            className="w-full h-full object-cover transition-all duration-700 grayscale-[0.1] contrast-[1.05] group-hover:grayscale-0 group-hover:scale-105"
+                            src={imgSrc}
+                            onError={handleImgError}
+                            className="w-full h-full object-cover transition-all duration-700 grayscale-[0.1] contrast-[1.05] group-hover:grayscale-0"
                             alt={scan.filename}
                         />
                     ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-50 relative">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-rs-gray-50/50 to-white/20" />
-                            <div className="w-12 h-12 rounded-full border border-rs-border-primary flex items-center justify-center mb-2 bg-white/50 backdrop-blur-sm">
-                                <div className="text-[10px] font-black opacity-30">IMG</div>
+                        <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden">
+                            <div
+                                className="absolute inset-0 opacity-20"
+                                style={{
+                                    background: `linear-gradient(135deg, var(--rs-gray-50) 0%, ${riskTier.colorVar} 100%)`
+                                }}
+                            />
+                            {/* Processing Overlay */}
+                            {(scan.status === 'processing' || scan.status === 'pending') && (
+                                <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center">
+                                    <div className="w-full h-[2px] bg-rs-gray-200 overflow-hidden absolute bottom-0 left-0">
+                                        <div className="h-full bg-rs-text-primary animate-subtle-progress" />
+                                    </div>
+                                </div>
+                            )}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10 text-[var(--rs-text-primary)]">
+                                {scan.file_type === 'video' ?
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" /><line x1="7" y1="2" x2="7" y2="22" /><line x1="17" y1="2" x2="17" y2="22" /><line x1="2" y1="12" x2="22" y2="12" /><line x1="2" y1="7" x2="7" y2="7" /><line x1="2" y1="17" x2="7" y2="17" /><line x1="17" y1="17" x2="22" y2="17" /><line x1="17" y1="7" x2="22" y2="7" /></svg> :
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                                }
                             </div>
-                            <div className="text-[32px] font-black opacity-10 tracking-tighter">{score}</div>
                         </div>
                     )}
-
-                    {/* Score Badge (Top-Right) */}
-                    <div className={cn(
-                        "absolute top-0 right-0 w-12 h-10 flex flex-col items-center justify-center text-white z-20 transition-transform group-hover/thumb:scale-105 shadow-md backdrop-blur-sm",
-                        verdict.toLowerCase().includes('critical') ? "bg-rs-destruct/90" :
-                            verdict.toLowerCase().includes('high') ? "bg-rs-alert/90" :
-                                verdict.toLowerCase().includes('review') ? "bg-rs-signal/90" : "bg-rs-safe/90"
-                    )}>
-                        <span className="text-[14px] font-black leading-none tracking-tight">{score}</span>
-                        <span className="text-[7px] font-mono opacity-80 mt-[1px]">/100</span>
-                    </div>
-
-                    {/* File Type Icon (Top-Left) */}
-                    <div className="absolute top-2 left-2 p-1.5 bg-rs-text-primary/10 backdrop-blur-md border border-white/20 text-rs-text-primary z-10 opacity-70 group-hover/card:opacity-100 transition-opacity">
-                        {scan.file_type === 'video' ? <div className="w-3 h-3 border-t-[5px] border-t-transparent border-l-[8px] border-l-current border-b-[5px] border-b-transparent ml-0.5" /> : <div className="w-3 h-3 border-[1.5px] border-current rounded-[1px]" />}
-                    </div>
-
-                    {/* Hover Action Overlay Integration */}
-                    <RSCardActionOverlay
-                        onDownload={(e) => { e.stopPropagation(); console.log('Download', scan.id); }}
-                        onShare={(e) => { e.stopPropagation(); console.log('Share', scan.id); }}
-                        className="opacity-0 group-hover/thumb:opacity-100 transition-opacity duration-200"
-                    />
                 </div>
 
-                {/* Bulk Selector */}
+                {/* A. Status Badge (Top-Right) */}
                 <div
-                    className="absolute top-1 left-1 z-40 p-1.5"
+                    className="absolute top-[8px] right-[8px] h-[28px] px-2 flex items-center justify-center rounded-full z-30 shadow-md backdrop-blur-sm"
+                    style={{
+                        backgroundColor:
+                            scan.status === 'processing' || scan.status === 'pending' ? 'var(--rs-text-tertiary)' :
+                                scan.status === 'failed' ? 'var(--rs-destruct)' :
+                                    riskTier.colorVar
+                    }}
+                >
+                    <span className="text-[10px] font-bold text-white uppercase tracking-wider leading-none flex items-center gap-1">
+                        {(scan.status === 'processing' || scan.status === 'pending') && <Loader2 className="w-3 h-3 animate-spin" />}
+                        {scan.status === 'processing' || scan.status === 'pending' ? 'ANALYZING' :
+                            scan.status === 'failed' ? 'FAILED' :
+                                riskTier.label === 'CRITICAL RISK' ? 'CRITICAL' :
+                                    riskTier.label === 'HIGH RISK' ? 'HIGH RISK' :
+                                        riskTier.label === 'REVIEW REQ' ? 'REVIEW' : 'SAFE'}
+                    </span>
+                </div>
+
+                {/* B. Checkbox (Top-Left) */}
+                <div
+                    className="absolute top-[12px] left-[12px] z-40"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <input
-                        type="checkbox"
-                        checked={isBulkSelected}
-                        onChange={(e) => onBulkToggle(e.target.checked)}
-                        className={cn(
-                            "w-4 h-4 appearance-none border border-rs-border-primary bg-white shadow-sm transition-all cursor-pointer rounded-[2px]",
-                            "checked:bg-rs-text-primary checked:border-rs-text-primary relative",
-                            "after:content-[''] after:hidden checked:after:block after:w-2 after:h-2 after:bg-white after:absolute after:top-1 after:left-1 after:rounded-[1px]"
-                        )}
-                    />
+                    <div className="relative w-[24px] h-[24px] bg-white/80 rounded-full flex items-center justify-center shadow-sm backdrop-blur-sm">
+                        <input
+                            type="checkbox"
+                            checked={isBulkSelected}
+                            onChange={(e) => onBulkToggle(e.target.checked)}
+                            className={cn(
+                                "w-5 h-5 appearance-none border-2 border-rs-border-primary bg-transparent transition-all cursor-pointer rounded-[2px]",
+                                "checked:bg-[#1E40AF] checked:border-[#1E40AF] relative",
+                                "after:content-[''] after:hidden checked:after:block after:w-2 after:h-2 after:bg-white after:absolute after:top-[3px] after:left-[3px] after:rounded-[1px]"
+                            )}
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* 2. Metadata Area */}
-            <div className="px-4 pb-5 pt-2 space-y-3 bg-white">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <div className={cn("w-1.5 h-1.5 rounded-full",
-                            verdict.toLowerCase().includes('critical') ? "bg-rs-destruct" :
-                                verdict.toLowerCase().includes('high') ? "bg-rs-alert" :
-                                    verdict.toLowerCase().includes('review') ? "bg-rs-signal" : "bg-rs-safe"
-                        )} />
-                        <span className="text-[10px] font-black uppercase tracking-widest leading-none" style={{ color: getRiskColor(verdict) }}>
-                            {verdict.replace('_', ' ')}
+            {/* 2-5. Metadata & Actions Area */}
+            <div className="flex-1 w-full px-3 pb-3 pt-3 flex flex-col relative z-10">
+                {/* 2. Score Number */}
+                <div className="flex items-baseline gap-1" style={{ color: scan.status === 'completed' ? riskTier.colorVar : 'var(--rs-text-tertiary)' }}>
+                    {scan.status === 'completed' ? (
+                        <>
+                            <span className="text-[32px] font-bold font-mono leading-none tracking-tighter">{score}</span>
+                            <span className="text-[18px] font-mono opacity-60 leading-none">/100</span>
+                        </>
+                    ) : (
+                        <span className="text-[14px] font-mono font-bold tracking-widest uppercase">
+                            {scan.status === 'failed' ? 'ERROR' : 'PENDING...'}
                         </span>
-                    </div>
-                    <h3 className="text-[11px] font-bold text-rs-text-primary uppercase tracking-normal leading-tight truncate">
-                        {scan.filename}
-                    </h3>
+                    )}
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-rs-border-primary/40">
-                    <div className="flex items-center gap-2 text-[9px] font-mono text-rs-text-tertiary uppercase tracking-normal">
-                        <span>{formatDistanceToNow(new Date(scan.created_at), { addSuffix: true }).replace('about ', '')}</span>
-                    </div>
+                {/* 3. Filename */}
+                <div className="mt-[6px] flex items-center gap-1.5 overflow-hidden">
+                    {scan.file_type === 'video' ?
+                        <svg className="w-4 h-4 text-rs-text-secondary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" /><line x1="7" y1="2" x2="7" y2="22" /><line x1="17" y1="2" x2="17" y2="22" /><line x1="2" y1="12" x2="22" y2="12" /><line x1="2" y1="7" x2="7" y2="7" /><line x1="2" y1="17" x2="7" y2="17" /><line x1="17" y1="17" x2="22" y2="17" /><line x1="17" y1="7" x2="22" y2="7" /></svg> :
+                        <svg className="w-4 h-4 text-rs-text-secondary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                    }
+                    <span className="text-[13px] font-medium text-rs-text-primary truncate" title={scan.filename}>
+                        {scan.filename}
+                    </span>
+                </div>
 
-                    <div className="flex items-center gap-1.5 opacity-60">
-                        <span className="text-[9px] font-black text-rs-text-tertiary uppercase tracking-widest">
-                            {scan.id.slice(-4)}
-                        </span>
-                    </div>
+                {/* 4. Metadata */}
+                <div className="mt-[4px] flex items-center gap-2 text-[10px] text-rs-text-tertiary">
+                    <span>{formatDistanceToNow(new Date(scan.created_at || new Date()))} ago</span>
+                    <span className="w-0.5 h-0.5 rounded-full bg-current" />
+                    <span>2.4 MB</span>
+                </div>
+
+                {/* Spacer to push actions to bottom */}
+                <div className="flex-1" />
+
+                {/* 5. Action Buttons (Standard Row) */}
+                <div className="mt-[8px] flex items-center gap-2">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); console.log('Download', scan.id); }}
+                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-rs-gray-50 transition-all group/btn"
+                        title="Download report"
+                    >
+                        <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    </button>
+
+                    <button
+                        onClick={(e) => { e.stopPropagation(); console.log('Share', scan.id); }}
+                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-rs-gray-50 transition-all group/btn"
+                        title="Share scan"
+                    >
+                        <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
+                    </button>
                 </div>
             </div>
         </motion.div>

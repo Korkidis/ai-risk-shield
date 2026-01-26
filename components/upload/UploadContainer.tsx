@@ -14,6 +14,7 @@ import { useCallback } from 'react'
 import { UploadZone } from './UploadZone'
 import { uploadFile } from '@/lib/upload/storage'
 import { createScan } from '@/app/(dashboard)/dashboard/actions'
+import { uploadThumbnail } from '@/lib/thumbnails'
 import { useRouter } from 'next/navigation'
 
 type UploadContainerProps = {
@@ -53,9 +54,14 @@ export function UploadContainer({ userId, monthlyUsage }: UploadContainerProps) 
         fileType
       )
 
-      if (!scanResult.success) {
+      if (!scanResult.success || !scanResult.assetId || !scanResult.tenantId) {
         throw new Error(scanResult.error || 'Failed to create scan')
       }
+
+      // Generate and upload thumbnail (non-blocking, best effort)
+      uploadThumbnail(file, scanResult.assetId, scanResult.tenantId).catch(err => {
+        console.error("Thumbnail upload failed", err);
+      });
 
       // Trigger AI analysis in background (non-blocking)
       if (scanResult.scanId) {

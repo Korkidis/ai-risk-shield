@@ -101,9 +101,9 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         await fs.unlink(tempPath).catch(() => { }); // ignore cleanup error
 
         c2paResult.hasManifest = c2paReport.status !== 'missing';
-        c2paResult.valid = c2paReport.status === 'verified';
+        c2paResult.valid = c2paReport.status === 'valid';
 
-        if (c2paReport.status === 'verified') provenanceScore = 0;
+        if (c2paReport.status === 'valid') provenanceScore = 0;
         else if (c2paReport.status === 'invalid') provenanceScore = 100;
         else provenanceScore = 50; // Missing or Untrusted
       } catch (e) {
@@ -176,7 +176,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
       // Sync local c2paResult with the one from Gemini
       c2paResult.hasManifest = riskProfile.c2pa_report.status !== 'missing';
-      c2paResult.valid = riskProfile.c2pa_report.status === 'verified';
+      c2paResult.valid = riskProfile.c2pa_report.status === 'valid';
 
       // Hybrid "Red Flag" Composite Calculation
       // If ANY score is critically high (>=85), it's a dealbreaker - show the max

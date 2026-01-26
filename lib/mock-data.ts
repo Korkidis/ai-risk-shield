@@ -11,12 +11,12 @@ export const MOCK_SCANS: ScanWithRelations[] = [
         file_type: 'image',
         status: 'completed',
         risk_profile: {
-            verdict: 'safe',
+            verdict: 'Low Risk',
             summary: 'Content appears safe for general distribution. No significant copyright matches found.',
             ip_report: { score: 12, teaser: "No IP detected.", reasoning: "Standard commercial imagery." },
             safety_report: { score: 5, teaser: "Brand safe.", reasoning: "No objectionable content." },
             provenance_report: { score: 10, teaser: "Verified Origin.", reasoning: "C2PA signature valid." },
-            c2pa_report: { status: 'verified', issuer: 'Adobe', timestamp: '2023-10-25T10:00:00Z' },
+            c2pa_report: { status: 'valid', issuer: 'Adobe', timestamp: '2023-10-25T10:00:00Z' },
             composite_score: 12,
             chief_officer_strategy: "Clear for global distribution."
         } as RiskProfile,
@@ -32,7 +32,7 @@ export const MOCK_SCANS: ScanWithRelations[] = [
         file_type: 'image',
         status: 'completed',
         risk_profile: {
-            verdict: 'high',
+            verdict: 'High Risk',
             summary: 'High potential for trademark infringement detected. Competitor logos identified.',
             ip_report: { score: 85, teaser: "Trademark Violation.", reasoning: "Competitor logo detected." },
             safety_report: { score: 10, teaser: "Safe content.", reasoning: "No safety issues." },
@@ -53,7 +53,7 @@ export const MOCK_SCANS: ScanWithRelations[] = [
         file_type: 'image',
         status: 'completed',
         risk_profile: {
-            verdict: 'critical',
+            verdict: 'Critical Risk',
             summary: 'Critical safety violation: NSFW content detected in background.',
             ip_report: { score: 45, teaser: "Possible unauthorized usage.", reasoning: "Internet meme format." },
             safety_report: { score: 98, teaser: "NSFW Content.", reasoning: "Adult themes detected." },

@@ -3,10 +3,10 @@
 import { RSButton } from "@/components/rs/RSButton";
 import { RSInput } from "@/components/rs/RSInput";
 import { RSLED } from "@/components/rs/RSLED";
-import { AlertCircle, ArrowRight, Shield } from "lucide-react";
+import { AlertCircle, ArrowRight, Shield, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
-import { useActionState } from "react";
+import { useActionState, Suspense } from "react";
 import { login } from "../actions";
 
 const initialState = {
@@ -39,6 +39,18 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-rs-text-tertiary" />
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
+    );
+}
+
+function LoginContent() {
     const searchParams = useSearchParams();
     const errorParam = searchParams.get('error');
     // @ts-ignore - useActionState types might need generic adjustment depending on react version

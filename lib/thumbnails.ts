@@ -1,50 +1,122 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createClient } from '@/lib/supabase/client';
 
 /**
- * Precision Thumbnail Service
- * Handles generation and archival of asset thumbnails.
+ * Generates a thumbnail from an image file client-side.
+ * Resizes to max width of 400px while maintaining aspect ratio.
  */
-export async function generateAndStoreThumbnail(
-    assetId: string,
-    tenantId: string,
-    sourceUrl: string,
-    fileType: 'image' | 'video'
-): Promise<string | null> {
-    try {
-        // For images, we can use a client-side or server-side resizing proxy
-        // For this implementation, we assume a server-side route handles the heavy lifting
-        // or we use Supabase's built-in image transformation if available.
+export async function generateImageThumbnail(file: File): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Failed to get canvas context'));
+                return;
+            }
 
-        // Placeholder logic for thumbnail pathing as per spec
-        const thumbPath = `${tenantId}/thumbnails/${assetId}_thumb.jpg`;
+            const maxWidth = 400;
+            const scale = maxWidth / img.width;
+            const width = maxWidth;
+            const height = img.height * scale;
 
-        // In a real implementation, we would:
-        // 1. Fetch source asset
-        // 2. Resize to 400px wide
-        // 3. Upload to 'assets' bucket at thumbPath
+            canvas.width = width;
+            canvas.height = height;
 
-        // For now, we return the expected path or the source URL if transformation is transparent
-        return thumbPath;
-    } catch (error) {
-        console.error('[THUMBNAIL_ERROR]', error);
-        return null;
-    }
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error('Thumbnail generation failed'));
+            }, 'image/jpeg', 0.85); // 85% quality JPEG
+        };
+        img.onerror = (err) => reject(err);
+        img.src = URL.createObjectURL(file);
+    });
 }
 
-export async function getSignedThumbnailUrl(path: string): Promise<string | null> {
-    const { data, error } = await supabase.storage
-        .from('assets')
-        .createSignedUrl(path, 3600); // 1-hour expiration per spec
+/**
+ * Generates a thumbnail from a video file client-side.
+ * Seeks to 3.0 seconds (or 50%) and captures a frame.
+ */
+export async function generateVideoThumbnail(file: File): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.src = URL.createObjectURL(file);
+        video.muted = true;
+        video.playsInline = true;
 
-    if (error) {
-        console.error('[SIGNED_URL_ERROR]', error);
+        video.onloadedmetadata = () => {
+            // Seek to 3 seconds or middle if video is shorter
+            video.currentTime = Math.min(3.0, video.duration / 2);
+        };
+
+        video.onseeked = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Failed to get canvas context'));
+                return;
+            }
+
+            const maxWidth = 400;
+            const scale = maxWidth / video.videoWidth;
+            const width = maxWidth;
+            const height = video.videoHeight * scale;
+
+            canvas.width = width;
+            canvas.height = height;
+
+            ctx.drawImage(video, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error('Video thumbnail generation failed'));
+            }, 'image/jpeg', 0.85);
+        };
+
+        video.onerror = (err) => reject(err);
+    });
+}
+
+/**
+ * Uploads a thumbnail to Supabase Storage.
+ * Path: `thumbnails/{tenant_id}/{asset_id}.jpg`
+ */
+export async function uploadThumbnail(
+    file: File,
+    assetId: string,
+    tenantId: string
+): Promise<string | null> {
+    const supabase = createClient();
+    try {
+        let thumbnailBlob: Blob;
+
+        if (file.type.startsWith('image/')) {
+            thumbnailBlob = await generateImageThumbnail(file);
+        } else if (file.type.startsWith('video/')) {
+            thumbnailBlob = await generateVideoThumbnail(file);
+        } else {
+            return null; // Unsupported type
+        }
+
+        const path = `${tenantId}/${assetId}_thumb.jpg`;
+        const { error } = await supabase.storage
+            .from('thumbnails') // Ensure this bucket exists
+            .upload(path, thumbnailBlob, {
+                contentType: 'image/jpeg',
+                upsert: true
+            });
+
+        if (error) throw error;
+
+        // Get Public URL (assuming public bucket, or use signed URL if private)
+        const { data } = supabase.storage.from('thumbnails').getPublicUrl(path);
+        return data.publicUrl;
+
+    } catch (error) {
+        console.error('Thumbnail upload failed:', error);
         return null;
     }
-
-    return data.signedUrl;
 }

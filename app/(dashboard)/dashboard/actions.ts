@@ -16,6 +16,8 @@ import { getCurrentUser, getCurrentProfile, getTenant } from '@/lib/supabase/aut
 export type UploadResult = {
   success: boolean
   scanId?: string
+  assetId?: string
+  tenantId?: string
   error?: string
 }
 
@@ -118,6 +120,8 @@ export async function createScan(
     return {
       success: true,
       scanId: (scan as any).id,
+      assetId: (asset as any).id,
+      tenantId: (tenant as any).id,
     }
   } catch (err) {
     console.error('Unexpected error in createScan:', err)

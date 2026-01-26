@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { RSButton } from './RSButton';
+
 
 interface RSUploadZoneProps {
     onFileSelect: (file: File) => void;

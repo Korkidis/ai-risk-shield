@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Shield, Circle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Shield } from 'lucide-react'
+
 
 export function Header() {
     return (

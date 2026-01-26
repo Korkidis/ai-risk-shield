@@ -1,6 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser, getTenantId } from '@/lib/supabase/auth'
 import { NextRequest, NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/scans/list
@@ -55,7 +57,30 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch scans' }, { status: 500 })
     }
 
-    return NextResponse.json({ scans })
+    // Use service role client for signed URLs (bypasses storage RLS)
+    const adminClient = await createServiceRoleClient()
+
+    const enrichedScans = await Promise.all(scans.map(async (scan: any) => {
+      let assetUrl = null
+      if (scan.assets?.storage_path) {
+        // Generate signed URL for the original asset (1 hour expiry)
+        const { data, error: signError } = await adminClient.storage
+          .from('uploads')
+          .createSignedUrl(scan.assets.storage_path, 3600)
+
+        if (signError) {
+          console.error(`[Scans/List] Signed URL error for ${scan.assets.storage_path}:`, signError.message)
+        } else {
+          assetUrl = data?.signedUrl
+        }
+      }
+      return {
+        ...scan,
+        asset_url: assetUrl
+      }
+    }))
+
+    return NextResponse.json({ scans: enrichedScans })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -24,7 +24,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 async function applyMigration() {
     console.log('🚀 Applying brand_guidelines migration...\n')
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!, {
         auth: {
             autoRefreshToken: false,
             persistSession: false

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!; // Using NEXT_PUBLIC_ for URL as is common, but code checks process.env.SUPABASE_URL
+// const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!; 
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const TTL_SECONDS = 900; // 15 minutes
 

@@ -29,6 +29,18 @@
     --rs-indicator: #3A6351;
     --rs-function: #2E5A88;
 
+    /* 5-Tier Risk Definitions (MOMA_SPEC) */
+    --rs-risk-safe: #006742;
+    /* 0-25: Safe Green */
+    --rs-risk-caution: #EAB308;
+    /* 26-50: Yellow-500 */
+    --rs-risk-review: #F97316;
+    /* 51-75: Orange-500 */
+    --rs-risk-high: #EA580C;
+    /* 76-90: Orange-600 */
+    --rs-risk-critical: #FF4F00;
+    /* 91-100: Vivid Signal */
+
     /* --- elevation scale (z-logic: surgical precision) --- */
     --rs-shadow-l1: inset 1px 1px 3px rgba(0, 0, 0, 0.2), inset -1px -1px 2px rgba(255, 255, 255, 0.4);
     --rs-shadow-l2: 3px 3px 6px rgba(0, 0, 0, 0.12), -2px -2px 5px rgba(255, 255, 255, 0.5);
@@ -148,6 +160,13 @@ html {
   --color-rs-info: var(--rs-info);
   --color-rs-indicator: var(--rs-indicator);
   --color-rs-function: var(--rs-function);
+
+  /* 5-Tier Risk Scale System */
+  --color-rs-risk-safe: var(--rs-risk-safe);
+  --color-rs-risk-caution: var(--rs-risk-caution);
+  --color-rs-risk-review: var(--rs-risk-review);
+  --color-rs-risk-high: var(--rs-risk-high);
+  --color-rs-risk-critical: var(--rs-risk-critical);
 
   /* Fonts */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

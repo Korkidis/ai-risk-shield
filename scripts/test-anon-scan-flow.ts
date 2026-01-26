@@ -1,9 +1,5 @@
 
-import fs from 'fs';
-import path from 'path';
-
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-const COOKIE_NAME = 'ars_session_id';
 
 async function runTest() {
     console.log('🚀 Starting Anonymous Scan Flow Verification...');

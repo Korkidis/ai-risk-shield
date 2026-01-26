@@ -12,11 +12,10 @@ import { cn } from '@/lib/utils'
 export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, riskProfile: RiskProfile }) {
 
     const [showUpgrade, setShowUpgrade] = useState(false)
-    const [mounted, setMounted] = useState(false)
+    // const [mounted, setMounted] = useState(false)
     const [logs, setLogs] = useState<{ id: string, message: string, status: 'pending' | 'active' | 'done' | 'error', timestamp: string }[]>([])
 
     useEffect(() => {
-        setMounted(true)
         // Simulate log loading
         const initialLogs = [
             { id: '1', message: "ANALYZING_VISUAL_SPECTRUM", status: 'done', timestamp: '00:01' },

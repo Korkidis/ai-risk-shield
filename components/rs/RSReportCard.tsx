@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+
 import { cn } from '@/lib/utils';
 import { RSRiskScore, RiskLevel } from './RSRiskScore';
 import { RSRiskBadge } from './RSRiskBadge';

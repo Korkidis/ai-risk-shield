@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
 
         const { data, error } = await supabase
             .from('brand_guidelines')
+            // @ts-ignore
             .insert({
                 name: body.name,
                 industry: body.industry,

@@ -46,13 +46,13 @@ export interface ExtendedScan {
   analyzed_by?: string | null // User ID who analyzed
   asset_id: string
   guideline_id?: string
-  status: 'processing' | 'completed' | 'failed'
+  status: 'pending' | 'processing' | 'completed' | 'failed'
   is_video?: boolean
   ip_risk_score?: number
   safety_risk_score?: number
   provenance_risk_score?: number
   composite_score?: number
-  risk_level?: 'critical' | 'high' | 'review' | 'safe'
+  risk_level?: 'critical' | 'high' | 'review' | 'caution' | 'safe'
   email?: string | null // For anonymous email capture
   purchased?: boolean | null
   purchase_type?: string | null
@@ -86,6 +86,7 @@ export interface ScanWithRelations extends ExtendedScan {
   filename: string
   file_type: string
   image_url?: string | null
+  asset_url?: string | null
   risk_profile?: RiskProfile | null
   brand_guidelines?: BrandGuideline | null
 }

@@ -38,7 +38,7 @@ export const RSTechnicalDraftingSubstrate = ({
     return (
         <div
             className={cn(
-                "relative min-h-screen w-full bg-[var(--rs-bg-surface)] overflow-auto group scrollbar-hide",
+                "relative h-full w-full bg-[var(--rs-bg-surface)] overflow-auto group scrollbar-hide",
                 className
             )}
             {...props}
@@ -71,7 +71,7 @@ export const RSTechnicalDraftingSubstrate = ({
 
             {/* Layer 4: Content Layer - Rigid Top-Left Alignment */}
             <div className={cn(
-                "relative z-10 w-full min-h-screen",
+                "relative z-10 w-full h-full",
                 contentPadding,
                 contentClassName
             )}>
