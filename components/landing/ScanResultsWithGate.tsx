@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { UpgradeModal } from './UpgradeModal'
-import { RiskProfile } from '@/lib/gemini'
+import { RiskProfile } from '@/lib/gemini-types'
 import { RSRadialMeter } from '../rs/RSRadialMeter'
 import { RSPanel } from '../rs/RSPanel'
 import { RSSystemLog } from '../rs/RSSystemLog'

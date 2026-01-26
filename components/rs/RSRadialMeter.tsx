@@ -109,8 +109,8 @@ export function RSRadialMeter({
                     return (
                         <line
                             key={i}
-                            x1={p1.x} y1={p1.y}
-                            x2={p2.x} y2={p2.y}
+                            x1={p1.x.toFixed(2)} y1={p1.y.toFixed(2)}
+                            x2={p2.x.toFixed(2)} y2={p2.y.toFixed(2)}
                             stroke="var(--rs-gray-400)"
                             strokeWidth={i % 5 === 0 ? 2 : 1}
                         />

@@ -20,6 +20,8 @@ import { getRiskTier } from '@/lib/risk-utils'
 import { RSTechnicalDraftingSubstrate } from '@/components/rs/RSTechnicalDraftingSubstrate'
 import { RSModal } from '@/components/rs/RSModal'
 import { RSFileUpload } from '@/components/rs/RSFileUpload'
+import { ProvenanceTelemetryStream } from '@/components/rs/ProvenanceTelemetryStream'
+import { RSProcessingPanel } from '@/components/rs/RSProcessingPanel'
 
 // Wrapper to handle Suspense boundary for useSearchParams
 export default function ScansReportsPage() {
@@ -94,6 +96,8 @@ function ScansReportsContent() {
                 filename: s.assets?.filename || 'Unnamed Asset',
                 file_type: s.assets?.file_type || 'image',
                 scan_findings: s.scan_findings || [],
+                // Provenance Details mapping (handle array from join)
+                provenance_details: Array.isArray(s.provenance_details) ? s.provenance_details[0] : s.provenance_details,
                 risk_profile: s.risk_profile || {
                     verdict: s.risk_level === 'critical' ? 'Critical Risk' :
                         s.risk_level === 'high' ? 'High Risk' :
@@ -128,6 +132,15 @@ function ScansReportsContent() {
             setShowDetails(true)
         }
     }
+
+    // Polling Logic
+    useEffect(() => {
+        const hasActiveScans = scans.some(s => s.status === 'pending' || s.status === 'processing');
+        if (hasActiveScans) {
+            const interval = setInterval(fetchScans, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [scans]);
 
     const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation()
@@ -318,6 +331,22 @@ function ScansReportsContent() {
                                 <span className="text-[10px] uppercase font-mono tracking-widest text-rs-destruct font-bold">{error}</span>
                                 <RSButton variant="ghost" onClick={fetchScans} className="mt-10 uppercase tracking-widest text-xs">Re-Establish_Link</RSButton>
                             </div>
+                        ) : scans.length === 0 ? (
+                            <div className="w-full aspect-[2/1] min-h-[400px] flex flex-col items-center justify-center border border-rs-border-primary border-dashed bg-white/50">
+                                <div className="w-16 h-16 rounded-full bg-rs-gray-100 flex items-center justify-center mb-6">
+                                    <div className="w-1.5 h-1.5 bg-rs-text-tertiary rounded-full" />
+                                </div>
+                                <h3 className="text-sm font-black uppercase tracking-widest text-rs-text-primary mb-2">Archive_Empty</h3>
+                                <p className="text-[10px] text-rs-text-secondary max-w-xs text-center mb-8 leading-relaxed">
+                                    No forensic validations have been recorded for this tenant. Initialize a new scan to begin analysis.
+                                </p>
+                                <RSButton
+                                    onClick={() => setShowUploadModal(true)}
+                                    className="bg-rs-text-primary text-white shadow-lg shadow-rs-text-primary/20 hover:scale-105 transition-transform"
+                                >
+                                    INITIALIZE_SCAN
+                                </RSButton>
+                            </div>
                         ) : (
                             <>
                                 <div className={cn(
@@ -507,35 +536,12 @@ function ScansReportsContent() {
                                         ))}
                                     </div>
 
-                                    {/* C2PA Forensic Manifest */}
-                                    <div className="border border-rs-border-primary bg-white p-5">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Cryptographic_Manifest</span>
-                                            <div className={cn(
-                                                "px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-[1px]",
-                                                selectedScan?.risk_profile?.c2pa_report?.status === 'valid' ? "bg-rs-safe text-white" : "bg-rs-gray-200 text-rs-text-tertiary"
-                                            )}>
-                                                {selectedScan?.risk_profile?.c2pa_report?.status || 'UNKNOWN'}
-                                            </div>
-                                        </div>
-                                        <div className="space-y-3 font-mono text-[10px]">
-                                            <div className="flex justify-between border-b border-rs-border-primary/30 pb-2">
-                                                <span className="text-rs-text-tertiary">ISSUER_SIGNATURE</span>
-                                                <span className="text-rs-text-primary text-right">{selectedScan?.risk_profile?.c2pa_report?.issuer || 'N/A'}</span>
-                                            </div>
-                                            <div className="flex justify-between border-b border-rs-border-primary/30 pb-2">
-                                                <span className="text-rs-text-tertiary">GENERATOR_TOOL</span>
-                                                <span className="text-rs-text-primary text-right">{selectedScan?.risk_profile?.c2pa_report?.tool || 'N/A'}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-rs-text-tertiary">TIMESTAMP</span>
-                                                <span className="text-rs-text-primary text-right">
-                                                    {selectedScan?.risk_profile?.c2pa_report?.timestamp
-                                                        ? new Date(selectedScan.risk_profile.c2pa_report.timestamp).toLocaleString()
-                                                        : 'MISSING'}
-                                                </span>
-                                            </div>
-                                        </div>
+                                    {/* C2PA Forensic Manifest Stream */}
+                                    <div className="pt-2">
+                                        <ProvenanceTelemetryStream
+                                            details={selectedScan?.provenance_details}
+                                            scanStatus={selectedScan?.status || 'completed'}
+                                        />
                                     </div>
                                 </div>
 
@@ -623,6 +629,17 @@ function ScansReportsContent() {
     )
 }
 
+const ANALYSIS_STEPS = [
+    "Initializing Vision Model...",
+    "Extracting Features...",
+    "Querying IP Database...",
+    "Matching Assets...",
+    "Analyzing Safety...",
+    "Verifying C2PA...",
+    "Validating Signatures...",
+    "Finalizing Score..."
+];
+
 function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
     scan: ScanWithRelations;
     isSelected: boolean;
@@ -635,6 +652,18 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
     const thumbnailUrl = thumbnailPath ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${thumbnailPath}` : null;
     const [imgSrc, setImgSrc] = useState(thumbnailUrl || scan.asset_url || scan.image_url);
     const [imgError, setImgError] = useState(false);
+
+    // Telemetry Animation State
+    const [stepIndex, setStepIndex] = useState(0);
+
+    useEffect(() => {
+        if (scan.status === 'processing' || scan.status === 'pending') {
+            const interval = setInterval(() => {
+                setStepIndex(prev => (prev + 1) % ANALYSIS_STEPS.length);
+            }, 800); // Change step every 800ms
+            return () => clearInterval(interval);
+        }
+    }, [scan.status]);
 
     const riskTier = getRiskTier(score);
 
@@ -703,14 +732,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                                     background: `linear-gradient(135deg, var(--rs-gray-50) 0%, ${riskTier.colorVar} 100%)`
                                 }}
                             />
-                            {/* Processing Overlay */}
-                            {(scan.status === 'processing' || scan.status === 'pending') && (
-                                <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center">
-                                    <div className="w-full h-[2px] bg-rs-gray-200 overflow-hidden absolute bottom-0 left-0">
-                                        <div className="h-full bg-rs-text-primary animate-subtle-progress" />
-                                    </div>
-                                </div>
-                            )}
+
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 text-[var(--rs-text-primary)] flex flex-col items-center gap-2">
                                 {scan.file_type === 'video' ? (
                                     <>
@@ -724,6 +746,19 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                                     </>
                                 )}
                             </div>
+                        </div>
+                    )}
+
+                    {/* Live Telemetry Overlay for Processing/Pending */}
+                    {(scan.status === 'processing' || scan.status === 'pending') && (
+                        <div className="absolute inset-0 z-20">
+                            <RSProcessingPanel
+                                filename={scan.filename}
+                                progress={((stepIndex + 1) / ANALYSIS_STEPS.length) * 100}
+                                statusMessage={ANALYSIS_STEPS[stepIndex]}
+                                imageSrc={imgSrc}
+                                isVideo={scan.file_type === 'video'}
+                            />
                         </div>
                     )}
                 </div>

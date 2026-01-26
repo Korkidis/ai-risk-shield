@@ -1,6 +1,6 @@
 'use client'
 
-import { RiskProfile } from '@/lib/gemini'
+import { RiskProfile } from '@/lib/gemini-types'
 import { Lock, TrendingUp, Shield, FileText } from 'lucide-react'
 import { RSButton } from '../rs/RSButton'
 import { RSPanel } from '../rs/RSPanel'

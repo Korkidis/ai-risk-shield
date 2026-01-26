@@ -48,6 +48,9 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       throw new Error('Scan not found: ' + scanId)
     }
 
+    // Update status to 'processing'
+    await supabase.from('scans').update({ status: 'processing' }).eq('id', scanId);
+
     const asset = (scan as any).assets
 
     if (!asset) {

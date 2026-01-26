@@ -1,5 +1,5 @@
 import { ScanWithRelations } from '@/types/database'
-import { RiskProfile } from '@/lib/gemini'
+import { RiskProfile } from '@/lib/gemini-types'
 
 export const MOCK_SCANS: ScanWithRelations[] = [
     {

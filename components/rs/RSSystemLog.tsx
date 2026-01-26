@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
-interface LogEntry {
+export interface LogEntry {
     id: string | number;
     message: string;
     status: 'pending' | 'active' | 'done' | 'error';

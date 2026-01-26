@@ -75,7 +75,7 @@ export interface ScanFinding {
   created_at: string
 }
 
-import { RiskProfile } from '@/lib/gemini'
+import { RiskProfile } from '@/lib/gemini-types'
 
 export interface ScanWithRelations extends ExtendedScan {
   assets?: Pick<ExtendedAsset, 'filename' | 'file_type'>
@@ -89,4 +89,34 @@ export interface ScanWithRelations extends ExtendedScan {
   asset_url?: string | null
   risk_profile?: RiskProfile | null
   brand_guidelines?: BrandGuideline | null
+  provenance_details?: ProvenanceDetails | null
+}
+
+export interface ProvenanceDetails {
+  id: string
+  scan_id: string
+  manifest_store: 'detected' | 'missing'
+  claim_signature: 'valid' | 'invalid' | 'missing'
+  signature_algorithm?: string
+  cert_authority?: string
+  c2pa_version?: string
+  assertion_store_count?: number
+  creator_identity?: string
+  generation_tool?: string
+  model_version?: string
+  tool_chain?: string[]
+  timestamp?: string
+  edit_count?: number
+  action_sequence?: string[]
+  ai_generated?: 'confirmed' | 'undeclared'
+  ai_training_allowed?: boolean
+  generative_model?: string
+  thumbnail_hash?: 'verified' | 'missing'
+  geolocation?: string
+  device_info?: string
+  ingredient_count?: number
+  chain_custody: 'full' | 'partial' | 'incomplete' | 'broken'
+  overall_status: 'verified' | 'invalid' | 'incomplete'
+  raw_manifest?: any
+  created_at: string
 }

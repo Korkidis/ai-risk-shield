@@ -1,6 +1,6 @@
 'use client'
 
-import { RiskProfile } from '@/lib/gemini'
+import { RiskProfile } from '@/lib/gemini-types'
 import { AlertTriangle, CheckCircle2, Shield, Fingerprint, FileSearch, Download, Share2 } from 'lucide-react'
 
 type Props = {

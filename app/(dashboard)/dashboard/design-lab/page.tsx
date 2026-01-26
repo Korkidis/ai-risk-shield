@@ -31,6 +31,8 @@ import { RSLED } from '@/components/rs/RSLED';
 import { RSLever } from '@/components/rs/RSLever';
 import { RSKey } from '@/components/rs/RSKey';
 import { RSTelemetryStream } from '@/components/rs/RSTelemetryStream';
+import { ProvenanceTelemetryStream } from '@/components/rs/ProvenanceTelemetryStream';
+import { RSTelemetryPanel } from '@/components/rs/RSTelemetryPanel';
 import { RSCard } from '@/components/rs/RSCard';
 import { RSModal } from '@/components/rs/RSModal';
 import { cn } from '@/lib/utils';
@@ -535,6 +537,7 @@ export default function DesignLabPage() {
                                             <div className="shadow-inner bg-black/5 p-4 rounded-3xl flex-1 flex items-center justify-center">
                                                 <RSTelemetryStream />
                                             </div>
+
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-6">
@@ -796,6 +799,147 @@ export default function DesignLabPage() {
                                             date="2024-05-19"
                                             score={91}
                                             level="critical"
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* 11.1 PROVENANCE STATES */}
+                            <section className="mb-24">
+                                <RSSectionHeader sectionNumber="11.1" title="Provenance States" />
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                    <div className="space-y-4">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">State: Verified (Full C2PA)</span>
+                                        <div className="shadow-inner bg-black/5 p-4 rounded-3xl flex items-center justify-center">
+                                            <ProvenanceTelemetryStream
+                                                scanStatus="completed"
+                                                customRows={[
+                                                    { id: '0xMNFST', label: 'MANIFEST_STORE', value: 'DETECTED', barWidth: 92, status: 'success' },
+                                                    { id: '0xSIG_V', label: 'CLAIM_SIGNATURE', value: 'VALID', barWidth: 98, status: 'success' },
+                                                    { id: '0xSIG_ALG', label: 'SIGNATURE_ALGORITHM', value: 'SHA256', barWidth: 100, status: 'info' },
+                                                    { id: '0xCERT', label: 'CERT_AUTHORITY', value: 'ADOBE_INC', barWidth: 100, status: 'info' },
+                                                    { id: '0xC2PA_V', label: 'C2PA_VERSION', value: '1.3', barWidth: 100, status: 'info' },
+                                                    { id: '0xIDENT', label: 'CREATOR_IDENTITY', value: 'VERIFIED', barWidth: 85, status: 'success' },
+                                                    { id: '0xTOOL', label: 'GENERATION_TOOL', value: 'ADOBE_FIREFLY', barWidth: 90, status: 'success' },
+                                                    { id: '0xMODEL', label: 'MODEL_VERSION', value: '1.0.0', barWidth: 100, status: 'info' },
+                                                    { id: '0xTIME', label: 'TIMESTAMP', value: '2026-01-26T04:39', barWidth: 100, status: 'info' },
+                                                    { id: '0xEDITS', label: 'EDIT_HISTORY', value: '2_ACTIONS', barWidth: 80, status: 'info' },
+                                                    { id: '0xAI_MK', label: 'AI_GENERATED', value: 'CONFIRMED', barWidth: 90, status: 'info' },
+                                                    { id: '0xTRAIN', label: 'AI_TRAINING_ALLOWED', value: 'NO', barWidth: 100, status: 'info' },
+                                                    { id: '0xCHAIN', label: 'CHAIN_CUSTODY', value: 'FULL', barWidth: 95, status: 'success' },
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">State: No Provenance</span>
+                                        <div className="shadow-inner bg-black/5 p-4 rounded-3xl flex items-center justify-center">
+                                            <ProvenanceTelemetryStream
+                                                scanStatus="completed"
+                                                details={{
+                                                    id: 'mock-2',
+                                                    scan_id: 'scan-y',
+                                                    manifest_store: 'missing',
+                                                    claim_signature: 'missing',
+                                                    assertion_store_count: 0,
+                                                    creator_identity: undefined,
+                                                    generation_tool: undefined,
+                                                    model_version: undefined,
+                                                    timestamp: undefined,
+                                                    edit_count: 0,
+                                                    ai_generated: 'undeclared',
+                                                    chain_custody: 'broken',
+                                                    overall_status: 'invalid',
+                                                    created_at: new Date().toISOString()
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* 11.2 TELEMETRY (RAMS VARIANT) */}
+                            <section className="mb-24">
+                                <RSSectionHeader sectionNumber="11.2" title="Telemetry Analysis Console" />
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                    {/* STATE 1: STANDBY */}
+                                    <div className="space-y-4">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">State: Standby</span>
+                                        <RSTelemetryPanel
+                                            state="idle"
+                                            rows={[]}
+                                            hideButton={true}
+                                        />
+                                    </div>
+
+                                    {/* STATE 2: ACTIVE SCANNING (TELEMETRY) */}
+                                    <div className="space-y-4">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">State: SCAN_IN_PROGRESS</span>
+                                        <RSTelemetryPanel
+                                            state="scanning"
+                                            rows={[]}
+                                            logEntries={[
+                                                { id: 1, message: 'Initializing Vision Model (ViT-H/14)...', status: 'done', timestamp: '00.12' },
+                                                { id: 2, message: 'Extracting High-Dim Features...', status: 'done', timestamp: '00.24' },
+                                                { id: 3, message: 'Computing Perceptual Hash (pHash)...', status: 'done', timestamp: '00.38' },
+                                                { id: 4, message: 'Querying Global IP Database...', status: 'active', timestamp: '00.55' },
+                                                { id: 5, message: 'Matching Commercial Assets...', status: 'pending' },
+                                                { id: 6, message: 'Analyzing Brand Safety Risks...', status: 'pending' },
+                                                { id: 7, message: 'Verifying C2PA/JUMBF Manifest...', status: 'pending' },
+                                                { id: 8, message: 'Validating Cryptographic Signatures...', status: 'pending' },
+                                                { id: 9, message: 'Calculating Composite Risk Score...', status: 'pending' },
+                                                { id: 10, message: 'Finalizing Forensic Dossier...', status: 'pending' }
+                                            ]}
+                                            hideButton={true}
+                                        />
+                                    </div>
+
+                                    {/* STATE 3: VERIFIED (EXISTING SUCCESS) */}
+                                    <div className="space-y-4">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">State: Verified (Full C2PA)</span>
+                                        <RSTelemetryPanel
+                                            state="complete"
+                                            statusLabel="VERIFIED_PROVENANCE"
+                                            footerText="Cryptographic seal verified. Chain of custody remains unbroken."
+                                            rows={[
+                                                { id: '0xMNFST', label: 'MANIFEST_STORE', value: 'DETECTED', barWidth: 92, status: 'success' },
+                                                { id: '0xSIG_V', label: 'CLAIM_SIGNATURE', value: 'VALID', barWidth: 98, status: 'success' },
+                                                { id: '0xSIG_ALG', label: 'SIGNATURE_ALGORITHM', value: 'SHA256', barWidth: 100, status: 'info' },
+                                                { id: '0xCERT', label: 'CERT_AUTHORITY', value: 'ADOBE_INC', barWidth: 100, status: 'info' },
+                                                { id: '0xC2PA_V', label: 'C2PA_VERSION', value: '1.3', barWidth: 100, status: 'info' },
+                                                { id: '0xIDENT', label: 'CREATOR_IDENTITY', value: 'VERIFIED', barWidth: 85, status: 'success' },
+                                                { id: '0xTOOL', label: 'GENERATION_TOOL', value: 'ADOBE_FIREFLY', barWidth: 90, status: 'success' },
+                                                { id: '0xMODEL', label: 'MODEL_VERSION', value: '1.0.0', barWidth: 100, status: 'info' },
+                                                { id: '0xTIME', label: 'TIMESTAMP', value: '2026-01-26T04:39', barWidth: 100, status: 'info' },
+                                                { id: '0xEDITS', label: 'EDIT_HISTORY', value: '2_ACTIONS', barWidth: 80, status: 'info' },
+                                                { id: '0xAI_MK', label: 'AI_GENERATED', value: 'CONFIRMED', barWidth: 90, status: 'info' },
+                                                { id: '0xTRAIN', label: 'AI_TRAINING_ALLOWED', value: 'NO', barWidth: 100, status: 'info' },
+                                                { id: '0xCHAIN', label: 'CHAIN_CUSTODY', value: 'FULL', barWidth: 95, status: 'success' },
+                                            ]}
+                                        />
+                                    </div>
+
+                                    {/* STATE 4: MISSING/BROKEN (FAILURE) */}
+                                    <div className="space-y-4">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">State: Missing / Broken</span>
+                                        <RSTelemetryPanel
+                                            state="error"
+                                            statusLabel="MISSING / NOT FOUND"
+                                            buttonText="GET C2PA"
+                                            footerText="No cryptographic signature found. Asset provenance cannot be verified."
+                                            rows={[
+                                                { id: '0xMNFST', label: 'MANIFEST_STORE', value: 'MISSING', barWidth: 0, status: 'error' },
+                                                { id: '0xSIG_V', label: 'CLAIM_SIGNATURE', value: 'NOT_FOUND', barWidth: 0, status: 'error' },
+                                                { id: '0xSIG_ALG', label: 'SIGNATURE_ALGORITHM', value: 'UNKNOWN', barWidth: 0, status: 'warning' },
+                                                { id: '0xCERT', label: 'CERT_AUTHORITY', value: 'UNKNOWN', barWidth: 0, status: 'warning' },
+                                                { id: '0xIDENT', label: 'CREATOR_IDENTITY', value: 'UNVERIFIED', barWidth: 0, status: 'error' },
+                                                { id: '0xTOOL', label: 'GENERATION_TOOL', value: 'UNKNOWN', barWidth: 0, status: 'warning' },
+                                                { id: '0xAI_MK', label: 'AI_GENERATED', value: 'SUSPECTED', barWidth: 70, status: 'warning' },
+                                                { id: '0xCHAIN', label: 'CHAIN_CUSTODY', value: 'BROKEN', barWidth: 20, status: 'error' },
+                                            ]}
                                         />
                                     </div>
                                 </div>

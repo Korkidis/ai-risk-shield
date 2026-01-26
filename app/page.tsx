@@ -10,7 +10,7 @@ import { HowItWorks } from '@/components/landing/HowItWorks'
 import { TrustCompliance } from '@/components/landing/CredibilitySection'
 import { MarketExposure } from '@/components/landing/MarketExposure'
 import { Footer } from '@/components/landing/Footer'
-import { RiskProfile } from '@/lib/gemini'
+import { RiskProfile } from '@/lib/gemini-types'
 
 type ViewState = 'upload' | 'results'
 

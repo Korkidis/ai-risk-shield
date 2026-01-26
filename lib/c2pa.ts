@@ -1,18 +1,7 @@
 import { createC2pa } from 'c2pa-node';
+import { C2PAReport } from './c2pa-types';
 
-export type C2PAReport = {
-    status: 'valid' | 'missing' | 'invalid' | 'error' | 'caution';
-    creator?: string;
-    tool?: string;
-    tool_version?: string;
-    timestamp?: string;
-    issuer?: string;
-    serial?: string;
-    history?: Array<{ action: string, tool: string, date: string }>;
-    raw_manifest?: any;
-    validation_errors?: string[];
-    manifest_source?: string;
-}
+export type { C2PAReport };
 
 export async function verifyContentCredentials(filePath: string): Promise<C2PAReport> {
     try {

@@ -3,27 +3,16 @@ import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { verifyContentCredentials, C2PAReport } from './c2pa';
+import { verifyContentCredentials } from './c2pa';
 import { BrandGuideline } from '@/types/database';
+
+// Import and re-export types from separate types file
+import type { SpecialistReport, RiskProfile } from './gemini-types';
+import type { C2PAReport } from './c2pa-types';
+export type { SpecialistReport, RiskProfile };
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
-
-export type SpecialistReport = {
-    score: number;
-    teaser: string;
-    reasoning: string;
-}
-
-export type RiskProfile = {
-    ip_report: SpecialistReport;
-    safety_report: SpecialistReport;
-    provenance_report: SpecialistReport;
-    c2pa_report: C2PAReport; // NEW
-    composite_score: number;
-    verdict: "Low Risk" | "Medium Risk" | "High Risk" | "Critical Risk";
-    chief_officer_strategy: string;
-}
 
 // ============================================================================
 // FILE MANAGER HELPERS
@@ -406,31 +395,35 @@ export async function analyzeImageMultiPersona(
         const c2paScores = { valid: 0, caution: 20, missing: 80, invalid: 100, error: 50 };
         const c2paDerivedScore = c2paScores[c2paReport.status] || 80;
 
-        // 5. Calculate Composite (IP 40%, Safety 40%, Provenance 20%)
-        // This ensures C2PA validity has a direct 20% impact on the final 'ClearCheck' score
+        // 5. C2PA TRUST OVERRIDE (The "Firefly Rule")
+        // If content has VALID C2PA credentials (e.g. Adobe Firefly), we trust the license/origin.
+        // Therefore, AI-hallucinated "IP Risk" should be suppressed.
+        if (c2paReport.status === 'valid') {
+            ip.score = Math.min(ip.score, 10); // Cap IP risk at 10 if we have signed credentials
+            ip.reasoning = `[C2PA TRUSTED] Content has valid cryptographic credentials. IP Risk suppressed. Original reasoning: ${ip.reasoning}`;
+        }
+
+        // 6. Calculate Composite (IP 40%, Safety 40%, Provenance 20%)
         let composite = Math.round((ip.score * 0.4) + (safety.score * 0.4) + (c2paDerivedScore * 0.2));
 
-        // 6. COMPOUND RISK MULTIPLIER
-        // If IP is high (likely infringement) AND Provenance is risky (can't prove ownership)
+        // 7. COMPOUND RISK MULTIPLIER (Only if C2PA is missing/invalid)
         if (ip.score >= 80 && c2paDerivedScore >= 60) {
             const boost = Math.round((ip.score + c2paDerivedScore) / 10);
             composite = Math.min(100, composite + boost);
         }
 
-        // 7. CRITICAL OVERRIDE
+        // 8. CRITICAL OVERRIDE
         if (ip.score >= 90) {
             composite = Math.max(composite, 95);
-        } else if (ip.score >= 80) {
-            composite = Math.max(composite, 85);
         }
 
-        // 8. Verdict Logic
+        // 9. Verdict Logic
         let verdict: RiskProfile['verdict'] = "Low Risk";
         if (composite >= 80) verdict = "Critical Risk";
         else if (composite >= 60) verdict = "High Risk";
         else if (composite >= 35) verdict = "Medium Risk";
 
-        // 9. Generate Chief Strategy
+        // 10. Generate Chief Strategy
         const strategy = await generateChiefStrategy([ip, safety, { score: c2paDerivedScore, teaser: '', reasoning: '' }]);
 
         let c2paTeaser = "Provenance Gap Detected";

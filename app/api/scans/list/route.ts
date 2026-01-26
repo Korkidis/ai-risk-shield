@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
         *,
         assets(filename, file_type, storage_path, mime_type),
         scan_findings(*)
+        // TODO: Re-enable provenance_details(*) after running migration 20260125_provenance_enhancements.sql
+        // provenance_details(*)
       `)
       .eq('tenant_id', tenantId)
 

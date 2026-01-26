@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { RiskProfile } from '@/lib/gemini'
+import { RiskProfile } from '@/lib/gemini-types'
 import { RSFileUpload } from '../rs/RSFileUpload'
 import { RSProcessingPanel } from '../rs/RSProcessingPanel'
 import { RSScanner } from '../rs/RSScanner'
