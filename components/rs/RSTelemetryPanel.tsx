@@ -108,16 +108,18 @@ export function RSTelemetryPanel({
                             <motion.div
                                 key="scanning"
                                 initial={{ opacity: 0 }}
+                                initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="flex-1 flex flex-col items-center justify-center space-y-4 w-full"
+                                className="flex-1 flex flex-col items-start justify-start space-y-4 w-full"
                             >
                                 {logEntries && logEntries.length > 0 ? (
-                                    <div className="w-full h-full flex items-center justify-center px-4">
+                                    <div className="w-full h-full flex items-start justify-start px-4">
                                         <RSSystemLog
                                             logs={logEntries}
-                                            className="w-full border-none bg-transparent"
+                                            className="w-full border-none bg-transparent p-0"
                                             maxHeight="320px"
+                                            hideHeader={true}
                                         />
                                     </div>
                                 ) : (
@@ -134,10 +136,11 @@ export function RSTelemetryPanel({
                             </motion.div>
                         )}
 
+
                         {displayState === 'grid' && (
                             <motion.div
                                 key="grid"
-                                className="space-y-1"
+                                className="space-y-3"
                             >
                                 {rows.map((row, i) => (
                                     <motion.div
@@ -145,39 +148,51 @@ export function RSTelemetryPanel({
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.03, duration: 0.2 }}
-                                        className="group flex items-center h-7 px-2 -mx-2 hover:bg-white/5 rounded transition-colors"
+                                        className="group flex items-center h-6 hover:bg-white/[0.02] rounded transition-colors"
                                     >
-                                        {/* Label Column */}
-                                        <div className="w-8 shrink-0 text-[10px] font-bold text-white/30 flex items-center">
-                                            {/* Status Dot */}
+                                        {/* Label */}
+                                        <div className="w-4 shrink-0 flex justify-center">
                                             <div
-                                                className="w-1 h-1 rounded-full mr-2"
-                                                style={{ backgroundColor: getStatusColor(row.status) }}
+                                                className="w-1.5 h-1.5 rounded-full"
+                                                style={{ backgroundColor: getStatusColor(row.status), boxShadow: `0 0 6px ${getStatusColor(row.status)}` }}
                                             />
                                         </div>
 
-                                        <div className="w-40 shrink-0 text-[10px] uppercase font-bold text-white/60 truncate">
+                                        <div className="w-32 shrink-0 text-[10px] uppercase font-bold text-white/40 tracking-wider truncate pl-2">
                                             {row.label.replace(/_/g, ' ')}
                                         </div>
 
-                                        {/* Bar Chart Visualization */}
-                                        <div className="flex-1 mx-4 h-1 bg-white/10 rounded-full overflow-hidden">
+                                        {/* Braun-style Diffused Light Bar */}
+                                        <div className="flex-1 mx-4 h-2 bg-[#050505] rounded-full overflow-hidden relative shadow-[inset_0_1px_3px_rgba(0,0,0,1)] border border-white/5">
                                             <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${row.barWidth}%` }}
-                                                transition={{ delay: 0.3 + (i * 0.05), duration: 0.5, type: "spring" }}
-                                                className="h-full rounded-full relative"
-                                                style={{ backgroundColor: getStatusColor(row.status) }}
+                                                initial={{ width: 0, opacity: 0 }}
+                                                animate={{ width: `${row.barWidth}%`, opacity: 1 }}
+                                                transition={{ delay: 0.3 + (i * 0.05), duration: 0.6, ease: "easeOut" }}
+                                                className="h-full relative"
                                             >
-                                                <div className="absolute right-0 top-0 bottom-0 w-2 bg-white/20" />
+                                                {/* The Light Source */}
+                                                <div
+                                                    className="absolute inset-0 opacity-80"
+                                                    style={{
+                                                        backgroundColor: getStatusColor(row.status),
+                                                        filter: 'blur(0.5px)'
+                                                    }}
+                                                />
+                                                {/* Diffusion Gradient */}
+                                                <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent mix-blend-overlay" />
+                                                {/* Glass Reflection */}
+                                                <div className="absolute top-0 left-0 right-0 h-[1px] bg-white/30 opacity-50" />
                                             </motion.div>
                                         </div>
 
-                                        {/* Value Column */}
-                                        <div className="w-24 shrink-0 text-right">
+                                        {/* Value - Fixed width to prevent bleed */}
+                                        <div className="w-32 shrink-0 text-right">
                                             <span
-                                                className="text-[9px] font-bold uppercase tracking-wider"
-                                                style={{ color: getStatusColor(row.status) }}
+                                                className="text-[10px] font-bold uppercase tracking-widest truncate block"
+                                                style={{
+                                                    color: getStatusColor(row.status),
+                                                    textShadow: `0 0 10px ${getStatusColor(row.status)}40`
+                                                }}
                                             >
                                                 {row.value}
                                             </span>
@@ -185,17 +200,37 @@ export function RSTelemetryPanel({
                                     </motion.div>
                                 ))}
 
-                                {/* Footer Summary */}
+                                {/* Footer Controls (Braun Interface Style) */}
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    transition={{ delay: 1 }}
-                                    className="mt-6 pt-4 border-t border-white/10 flex justify-between items-end"
+                                    transition={{ delay: 1.2 }}
+                                    className="pt-6 mt-2 flex justify-between items-center"
                                 >
-                                    <div className="text-[9px] text-white/60 max-w-[150px] leading-relaxed font-medium">
-                                        {footerText || "System telemetry active."}
+                                    {/* Left Status Text */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-[2px] w-8 bg-white/10" />
+                                        <span className="text-[9px] text-white/30 uppercase tracking-[0.2em] font-medium">
+                                            Cryptographic Seal Verified
+                                        </span>
                                     </div>
-                                    {/* 'Secure' text removed to make room for CTA */}
+
+                                    {/* Right CTA Button */}
+                                    {!hideButton && onAction && (
+                                        <button
+                                            onClick={onAction}
+                                            className="group flex items-center gap-3 pl-6 pr-4 py-2 bg-[#1A1A1A] border border-white/10 hover:border-[#FF4F00]/50 rounded text-white/60 hover:text-[#FF4F00] transition-all"
+                                        >
+                                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">
+                                                {buttonText || 'View Manifest'}
+                                            </span>
+                                            <div className="w-4 h-4 flex items-center justify-center border border-white/10 rounded-full group-hover:border-[#FF4F00] transition-colors">
+                                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                                </svg>
+                                            </div>
+                                        </button>
+                                    )}
                                 </motion.div>
                             </motion.div>
                         )}
@@ -207,37 +242,10 @@ export function RSTelemetryPanel({
                                 animate={{ opacity: 1 }}
                                 className="flex-1 flex flex-col items-center justify-center opacity-30"
                             >
-                                <span className="text-[10px] uppercase tracking-widest text-white/40">Awating Input Stream</span>
+                                <span className="text-[10px] uppercase tracking-widest text-white/40">Buffer_Ready</span>
                             </motion.div>
                         )}
                     </AnimatePresence>
-
-                    {/* Precision Hardware Action Button - Full Desktop CTA */}
-                    {!hideButton && (
-                        <div className="absolute bottom-6 right-6 z-50">
-                            <button
-                                onClick={onAction}
-                                className="group relative flex items-center gap-3 px-6 py-3 rounded-[4px] bg-[#0A0A0A] border border-white/10 shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-all hover:bg-[#151515] active:translate-y-[1px] active:shadow-none overflow-hidden"
-                            >
-                                {/* Machined Texture Overlay */}
-                                <div className="absolute inset-0 opacity-20 bg-[url('/noise.png')] bg-[length:64px] pointer-events-none" />
-
-                                {/* Inner Bezel Highlight */}
-                                <div className="absolute inset-0 border border-white/5 rounded-[4px] pointer-events-none" />
-
-                                <span className="relative z-10 font-mono text-xs font-bold text-[#FF4F00] uppercase tracking-widest group-hover:text-[#FF6A2B] transition-colors">
-                                    {buttonText || 'View Full Manifest'}
-                                </span>
-
-                                <div className="relative z-10 text-[#FF4F00] group-hover:translate-x-1 transition-transform">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                    </svg>
-                                </div>
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

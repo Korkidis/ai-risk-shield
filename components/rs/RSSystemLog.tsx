@@ -14,6 +14,7 @@ interface RSSystemLogProps extends React.HTMLAttributes<HTMLDivElement> {
     logs: LogEntry[];
     maxHeight?: string;
     autoScroll?: boolean;
+    hideHeader?: boolean;
 }
 
 export function RSSystemLog({
@@ -21,6 +22,7 @@ export function RSSystemLog({
     logs,
     maxHeight = "200px",
     autoScroll = true,
+    hideHeader = false,
     ...props
 }: RSSystemLogProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -40,14 +42,16 @@ export function RSSystemLog({
             style={{ height: maxHeight }}
             {...props}
         >
-            <div className="flex items-center justify-between pb-2 border-b border-rs-gray-800 mb-2 select-none">
-                <span className="text-rs-gray-500 uppercase tracking-wider text-[10px]">System Log</span>
-                <div className="flex gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rs-gray-700 animate-pulse" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-rs-gray-700" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-rs-gray-700" />
+            {!hideHeader && (
+                <div className="flex items-center justify-between pb-2 border-b border-rs-gray-800 mb-2 select-none">
+                    <span className="text-rs-gray-500 uppercase tracking-wider text-[10px]">System Log</span>
+                    <div className="flex gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rs-gray-700 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-rs-gray-700" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-rs-gray-700" />
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div
                 ref={scrollRef}
