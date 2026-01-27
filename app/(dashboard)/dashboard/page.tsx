@@ -225,6 +225,7 @@ export default function DashboardPage() {
                                 isComplete={isComplete}
                                 status={analysisResult?.c2pa_report?.status as any}
                                 onViewDetails={() => setIsDrawerOpen(true)}
+                                showOverlay={false}
                             />
                         </div>
                     )}

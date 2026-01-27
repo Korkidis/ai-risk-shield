@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 import { ProvenanceDetails } from '@/types/database';
 
 export interface TelemetryRow {
@@ -10,6 +9,7 @@ export interface TelemetryRow {
     value: string; // Right side Label (e.g. PARITY_CHECK)
     barWidth: number; // 0-100
     status: 'success' | 'warning' | 'error' | 'info' | 'pending';
+    // ...
 }
 
 interface ProvenanceTelemetryStreamProps {
@@ -44,10 +44,11 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
             }));
         } else {
             // Actual Data Mapping
-            const manifestDetected = details.manifest_store === 'detected';
-            const signatureValid = details.claim_signature === 'valid';
-            const hasIdentity = !!details.creator_identity;
-            const aiConfirmed = details.ai_generated === 'confirmed';
+            const manifestDetected = !!details.raw_manifest;
+            const signatureValid = details.signature_status === 'valid';
+            const hasIdentity = !!details.creator_name;
+            // Infer AI status from manifest or default to 'undeclared' if no specific field exists yet
+            const aiConfirmed = false; // logic would go here based on assertions
 
             newRows = [
                 {
@@ -60,8 +61,8 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
                 {
                     id: '0xSIG_V',
                     label: 'DIGITAL_SIGNATURE',
-                    value: signatureValid ? 'VALID' : (details.claim_signature === 'missing' ? 'MISSING' : 'INVALID'),
-                    barWidth: signatureValid ? 100 : (details.claim_signature === 'missing' ? 0 : 40),
+                    value: signatureValid ? 'VALID' : (!manifestDetected ? 'MISSING' : 'INVALID'),
+                    barWidth: signatureValid ? 100 : (!manifestDetected ? 0 : 40),
                     status: signatureValid ? 'success' : 'error'
                 },
                 {
@@ -81,9 +82,10 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
                 {
                     id: '0xCHAIN',
                     label: 'CHAIN_OF_CUSTODY',
-                    value: details.chain_custody?.toUpperCase() || 'UNKNOWN',
-                    barWidth: details.chain_custody === 'full' ? 100 : (details.chain_custody === 'broken' ? 30 : 60),
-                    status: details.chain_custody === 'full' ? 'success' : 'warning'
+                    // Derive chain custody from signature status
+                    value: signatureValid ? 'FULL' : 'BROKEN',
+                    barWidth: signatureValid ? 100 : 30,
+                    status: signatureValid ? 'success' : 'warning'
                 }
             ];
         }

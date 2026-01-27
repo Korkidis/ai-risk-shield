@@ -126,7 +126,8 @@ This document is the execution blueprint for the full AI Risk Shield platform.
 *   `assets`: `id`, `session_id` (nullable), `storage_path`, `tenant_id`.
 *   `scans`: `id`, `asset_id`, `risk_score` (0-100), `email`, `purchased` (bool), `tenant_id`.
 *   `scan_findings`: `scan_id`, `type` (ip/safety/c2pa), `severity`, `description`.
-*   `tenants`: `id`, `name`, `plan` (free/pro/enterprise).
+*   `tenants`: `id`, `name`, `plan`, `monthly_scan_limit`, `scans_used_this_month`, `parent_tenant_id`.
+*   `provenance_details`: `id`, `signature_status`, `raw_manifest` (JSONB), `edit_history` (JSONB).
 *   `users`: `id`, `email`, `tenant_id` (FK).
 
 ---

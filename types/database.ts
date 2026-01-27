@@ -92,31 +92,43 @@ export interface ScanWithRelations extends ExtendedScan {
   provenance_details?: ProvenanceDetails | null
 }
 
+// ... (previous interfaces)
+
+export interface ExtendedTenant {
+  id: string
+  name: string
+  plan: 'free' | 'individual' | 'team' | 'agency' | 'enterprise'
+  monthly_scan_limit: number
+  scans_used_this_month: number
+  usage_limit_mitigation: number
+  parent_tenant_id?: string | null // For Agency/Enterprise hierarchy
+  stripe_customer_id?: string | null
+  subscription_status?: 'active' | 'past_due' | 'canceled' | 'trialing' | 'incomplete' | null
+  created_at: string
+}
+
 export interface ProvenanceDetails {
   id: string
   scan_id: string
-  manifest_store: 'detected' | 'missing'
-  claim_signature: 'valid' | 'invalid' | 'missing'
-  signature_algorithm?: string
-  cert_authority?: string
-  c2pa_version?: string
-  assertion_store_count?: number
-  creator_identity?: string
-  generation_tool?: string
-  model_version?: string
-  tool_chain?: string[]
-  timestamp?: string
-  edit_count?: number
-  action_sequence?: string[]
-  ai_generated?: 'confirmed' | 'undeclared'
-  ai_training_allowed?: boolean
-  generative_model?: string
-  thumbnail_hash?: 'verified' | 'missing'
-  geolocation?: string
-  device_info?: string
-  ingredient_count?: number
-  chain_custody: 'full' | 'partial' | 'incomplete' | 'broken'
-  overall_status: 'verified' | 'invalid' | 'incomplete'
-  raw_manifest?: any
+  tenant_id: string
+
+  // -- Core Metadata --
+  creator_name?: string | null
+  creator_link?: string | null
+  creation_tool?: string | null
+  creation_tool_version?: string | null
+  creation_timestamp?: string | null
+
+  // -- Cryptography --
+  signature_status: 'valid' | 'invalid' | 'caution'
+  certificate_issuer?: string | null
+  certificate_serial?: string | null
+  hashing_algorithm: string // default 'sha256'
+
+  // -- Deep Data (JSONB) --
+  // These replace the flat columns that were previously assumed
+  edit_history: any[] | null // JSONB array of edit actions
+  raw_manifest?: any | null // JSONB full c2pa manifest
+
   created_at: string
 }

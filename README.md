@@ -27,6 +27,14 @@ This project is driven by a set of "Hyper-Critical" documents that serve as the 
 *   **Payments**: Stripe
 *   **Email**: Resend
 
+
+## ✅ Current Tenant Capabilities (Phase 1)
+*   **Secure Uploads**: Drag-and-drop analysis with deep file inspection.
+*   **Quota Enforcement**: Strict monthly scan limits per tenant plan (e.g., Free = 3 scans/mo).
+*   **Provenance Analysis**: Detection of C2PA manifests, digital signatures, and edit history.
+*   **Design Lab**: A component sandbox demonstrating the "Forensic Instrument" UI system.
+*   **Hierarchical Teams**: Agency admins can manage sub-tenant accounts.
+
 ## 🚀 Getting Started
 
 ### Prerequisites

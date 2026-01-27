@@ -34,6 +34,28 @@ export async function POST(request: Request) {
         const fileType = isImage ? 'image' : 'video'
 
         const supabase = await createClient()
+
+        // 1. Check Usage Quota
+        const { data: tenant, error: tenantError } = await supabase
+            .from('tenants')
+            .select('monthly_scan_limit, scans_used_this_month')
+            .eq('id', tenantId)
+            .single() as unknown as { data: any, error: any }
+
+        if (tenantError) {
+            return NextResponse.json({ error: 'Failed to fetch tenant usage' }, { status: 500 })
+        }
+
+        const limit = tenant.monthly_scan_limit || 3 // Default low limit if missing
+        const used = tenant.scans_used_this_month || 0
+
+        if (used >= limit) {
+            return NextResponse.json({
+                error: 'Monthly scan limit reached',
+                details: `You have used ${used} of ${limit} scans. Please upgrade your plan.`
+            }, { status: 403 })
+        }
+
         // Use service role client for storage (bypasses RLS folder restrictions)
         const adminClient = await createServiceRoleClient()
 
@@ -98,6 +120,18 @@ export async function POST(request: Request) {
 
         if (scanError) {
             return NextResponse.json({ error: 'Failed to create scan' }, { status: 500 })
+        }
+
+        // 2. Increment Usage (Fire and Forget or Await?)
+        // We await to ensure data integrity, though it adds latency.
+        const { error: rpcError } = await (supabase.rpc as any)('increment_scans_used', {
+            p_tenant: tenantId
+        })
+
+        if (rpcError) {
+            console.error('Failed to increment scan usage', rpcError)
+            // We do NOT fail the request here, as the scan was created successfully.
+            // Just log it for audit.
         }
 
         // Trigger background processing

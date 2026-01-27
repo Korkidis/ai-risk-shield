@@ -25,6 +25,7 @@ export interface Database {
           plan: string
           monthly_scan_limit: number
           parent_tenant_id: string | null
+          scans_used_this_month: number
           created_at: string
           updated_at: string
         }
@@ -33,6 +34,7 @@ export interface Database {
           name: string
           plan?: string
           monthly_scan_limit?: number
+          scans_used_this_month?: number
           created_at?: string
           updated_at?: string
         }
@@ -41,6 +43,7 @@ export interface Database {
           name?: string
           plan?: string
           monthly_scan_limit?: number
+          scans_used_this_month?: number
           created_at?: string
           updated_at?: string
         }
@@ -95,6 +98,11 @@ export interface Database {
           completed_at: string | null
           created_at: string
           updated_at: string
+          error_message: string | null
+          provenance_status: string | null
+          frames_analyzed: number | null
+          analysis_duration_ms: number | null
+          gemini_model_version: string | null
         }
         Insert: {
           id?: string
@@ -116,6 +124,11 @@ export interface Database {
           completed_at?: string | null
           created_at?: string
           updated_at?: string
+          error_message?: string | null
+          provenance_status?: string | null
+          frames_analyzed?: number | null
+          analysis_duration_ms?: number | null
+          gemini_model_version?: string | null
         }
         Update: {
           id?: string
@@ -137,6 +150,11 @@ export interface Database {
           completed_at?: string | null
           created_at?: string
           updated_at?: string
+          error_message?: string | null
+          provenance_status?: string | null
+          frames_analyzed?: number | null
+          analysis_duration_ms?: number | null
+          gemini_model_version?: string | null
         }
       }
       brand_guidelines: {
@@ -226,18 +244,11 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      consume_quota: {
+      increment_scans_used: {
         Args: {
-          p_tenant_id: string
-          p_amount?: number
+          p_tenant: string
         }
-        Returns: {
-          allowed: boolean
-          current_usage: number
-          monthly_limit: number
-          remaining: number
-          overage: number
-        }[]
+        Returns: void
       }
     }
     Enums: {

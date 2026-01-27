@@ -49,6 +49,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     }
 
     // Update status to 'processing'
+    // @ts-ignore
     await supabase.from('scans').update({ status: 'processing' }).eq('id', scanId);
 
     const asset = (scan as any).assets

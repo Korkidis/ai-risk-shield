@@ -647,8 +647,17 @@ export default function DesignLabPage() {
                                         </div>
 
                                         {/* External Integration (Full Width in Grid) */}
-                                        <div className="lg:col-span-2">
-                                            <RSC2PAWidget className="h-[320px]" />
+
+                                        {/* External Integration (Full Width in Grid) */}
+                                        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-10">
+                                            <div className="space-y-4">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">Standard Verified</span>
+                                                <RSC2PAWidget className="h-[320px]" />
+                                            </div>
+                                            <div className="space-y-4">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest rs-etched opacity-50">Deficiency Overlay (Preserved)</span>
+                                                <RSC2PAWidget className="h-[320px]" status="missing" showOverlay={true} />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -841,17 +850,18 @@ export default function DesignLabPage() {
                                                 details={{
                                                     id: 'mock-2',
                                                     scan_id: 'scan-y',
-                                                    manifest_store: 'missing',
-                                                    claim_signature: 'missing',
-                                                    assertion_store_count: 0,
-                                                    creator_identity: undefined,
-                                                    generation_tool: undefined,
-                                                    model_version: undefined,
-                                                    timestamp: undefined,
-                                                    edit_count: 0,
-                                                    ai_generated: 'undeclared',
-                                                    chain_custody: 'broken',
-                                                    overall_status: 'invalid',
+                                                    tenant_id: 'mock-tenant',
+                                                    signature_status: 'invalid',
+                                                    hashing_algorithm: 'sha256',
+                                                    edit_history: [],
+                                                    raw_manifest: null,
+                                                    certificate_issuer: null,
+                                                    certificate_serial: null,
+                                                    creator_name: null,
+                                                    creator_link: null,
+                                                    creation_tool: null,
+                                                    creation_tool_version: null,
+                                                    creation_timestamp: null,
                                                     created_at: new Date().toISOString()
                                                 }}
                                             />

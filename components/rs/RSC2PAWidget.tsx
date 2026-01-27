@@ -10,9 +10,10 @@ interface RSC2PAWidgetProps {
     isComplete?: boolean;
     status?: 'valid' | 'missing' | 'invalid' | 'error';
     onViewDetails?: () => void;
+    showOverlay?: boolean;
 }
 
-export function RSC2PAWidget({ className, isComplete = false, status = 'valid', onViewDetails }: RSC2PAWidgetProps) {
+export function RSC2PAWidget({ className, isComplete = false, status = 'valid', onViewDetails, showOverlay = true }: RSC2PAWidgetProps) {
 
     const getStatusConfig = () => {
         switch (status) {
@@ -54,6 +55,7 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
         }
     };
 
+
     const config = getStatusConfig();
     const isErrorState = status !== 'valid';
 
@@ -73,7 +75,7 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
 
                 {/* Main Audit History - Always Visible */}
                 <div className="flex-1 relative min-h-0">
-                    <div className={cn("space-y-6 animate-in fade-in duration-700", isErrorState && "opacity-20 blur-[1px]")}>
+                    <div className={cn("space-y-6 animate-in fade-in duration-700", isErrorState && showOverlay && "opacity-20 blur-[1px]")}>
                         <div className="grid grid-cols-4 gap-6 p-5 bg-white/[0.02] rounded-2xl border border-white/5 shadow-inner leading-none">
                             <MiniFact icon={<UserCheck size={12} />} label="Creator" value={status === 'valid' ? "Verified" : "--"} />
                             <MiniFact icon={<Cpu size={12} />} label="Tool" value={status === 'valid' ? "Trusted" : "--"} />
@@ -92,7 +94,7 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
                     </div>
 
                     {/* Warning Overlay */}
-                    {isErrorState && (
+                    {isErrorState && showOverlay && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center animate-in zoom-in-95 fade-in duration-500 z-20">
                             <div className="bg-rs-black/80 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-2xl max-w-sm">
                                 <div className={cn("w-14 h-14 rounded-full flex items-center justify-center bg-white/5 border border-white/5 mx-auto mb-6", config.color)}>

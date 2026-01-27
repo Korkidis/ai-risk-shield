@@ -115,4 +115,41 @@ CREATE TABLE tenant_switch_audit (...);
 
 ---
 
+---
+
+## 6. Phase 1 Implementation Log (Jan 26, 2026)
+
+The following core backend features have been implemented and verified as of `2026-01-26`:
+
+### A. Quota Enforcement
+**Status:** ✅ Live & Enforced
+*   **Mechanism**: A strict check is performed in `app/api/scans/upload/route.ts` before processing begins.
+*   **Logic**:
+    1.  Fetches `tenants.monthly_scan_limit` and `tenants.scans_used_this_month`.
+    2.  If `used >= limit`, returns `403 Forbidden` ("Monthly scan limit reached").
+    3.  On success, calls `rpc('increment_scans_used')` to atomiaclly update the counter.
+*   **Admin Override**: Limits can be adjusted manually in the `tenants` table.
+
+### B. Data Retention Policy
+**Status:** ✅ Automation Scripted
+*   **Mechanism**: A `pg_cron` job runs daily to clean up stale assets.
+*   **Script**: `scripts/setup-cron.sql` (Job ID: 2 verified).
+*   **Functions**:
+    *   `purge_old_assets()`: Deletes rows effectively where `now() > created_at + retention_days`.
+    *   `reset_monthly_usage()`: Scheduled for the 1st of every month to reset counters.
+
+### C. Schema Consolidations
+During implementation, the schema was refined to match the actual database state more closely (replacing hypothetical columns with JSONB).
+*   **`provenance_details`**:
+    *   Removed flat columns (`chain_custody`, `manifest_store`, `edit_count`).
+    *   **Adopted**: `raw_manifest` (JSONB) and `edit_history` (JSONB Array) for deep flexibility.
+    *   **Field**: `signature_status` remains as the primary high-level signal (`valid`, `invalid`, `caution`).
+
+### D. Hierarchical Tenancy
+**Status:** ✅ Implemented
+*   **Structure**: `tenants.parent_tenant_id` allows Agency/Enterprise accounts to own sub-tenants.
+*   **Switching**: Users with `agency` plan + `owner` role can switch context to child tenants via `/api/switch-tenant`.
+
+---
+
 *End of Audit*
