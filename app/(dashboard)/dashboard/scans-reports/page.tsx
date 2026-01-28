@@ -81,8 +81,8 @@ function ScansReportsContent() {
     }, [updateUrl])
 
     // Data Fetching
-    const fetchScans = async () => {
-        setIsLoading(true)
+    const fetchScans = async (isBackground = false) => {
+        if (!isBackground) setIsLoading(true)
         setError(null)
         try {
             const response = await fetch('/api/scans/list', { cache: 'no-store' })
@@ -137,7 +137,7 @@ function ScansReportsContent() {
     useEffect(() => {
         const hasActiveScans = scans.some(s => s.status === 'pending' || s.status === 'processing');
         if (hasActiveScans) {
-            const interval = setInterval(fetchScans, 3000);
+            const interval = setInterval(() => fetchScans(true), 3000);
             return () => clearInterval(interval);
         }
     }, [scans]);
@@ -329,7 +329,7 @@ function ScansReportsContent() {
                             <div className="w-full aspect-[2/1] min-h-[400px] flex flex-col items-center justify-center border border-rs-destruct/10 bg-rs-destruct/5">
                                 <AlertOctagon className="w-10 h-10 text-rs-destruct mb-6" />
                                 <span className="text-[10px] uppercase font-mono tracking-widest text-rs-destruct font-bold">{error}</span>
-                                <RSButton variant="ghost" onClick={fetchScans} className="mt-10 uppercase tracking-widest text-xs">Re-Establish_Link</RSButton>
+                                <RSButton variant="ghost" onClick={() => fetchScans()} className="mt-10 uppercase tracking-widest text-xs">Re-Establish_Link</RSButton>
                             </div>
                         ) : scans.length === 0 ? (
                             <div className="w-full aspect-[2/1] min-h-[400px] flex flex-col items-center justify-center border border-rs-border-primary border-dashed bg-white/50">

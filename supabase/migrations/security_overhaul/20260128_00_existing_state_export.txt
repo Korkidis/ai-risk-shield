@@ -1,0 +1,40 @@
+-- EXPORTED STATE (2026-01-27)
+
+-- Row-level policies (public schema)
+-- Assets
+-- "Anonymous users can read own assets" — USING: (session_id IS NOT NULL AND session_id = current_session_id())
+-- "Anonymous users can upload assets" — WITH CHECK: (session_id IS NOT NULL AND uploaded_by IS NULL AND tenant_id IS NULL)
+-- "Assets: select only for active tenant" — USING: (tenant_id = get_active_tenant())
+-- "Assets: insert only into active tenant" — WITH CHECK: (tenant_id = get_active_tenant())
+-- "Assets: update only within active tenant" — USING: (tenant_id = get_active_tenant()) WITH CHECK: (tenant_id = get_active_tenant())
+-- "Assets: delete only within active tenant" — USING: (tenant_id = get_active_tenant())
+
+-- Audit_log
+-- "Service role can insert audit logs" — WITH CHECK: true
+-- "Users can view audit logs in their tenant" — USING: (tenant_id = user_tenant_id())
+
+-- Brand_guidelines / Brand_profiles
+-- Policies restricting CRUD to tenant_id = user_tenant_id()
+
+-- Profiles
+-- "Users can insert profile" — WITH CHECK: id = auth.uid()
+-- "Users can update own profile" — USING: id = auth.uid()
+-- "Users can view profiles in their tenant" — USING: tenant_id = user_tenant_id()
+
+-- Scan_findings / Scans
+-- Anonymous access rules for session-based reads/inserts
+-- Tenant-scoped policies for authenticated user operations using user_tenant_id()
+
+-- Subscriptions / Usage_ledger / Video_frames
+-- Service role policies for management and tenant-scoped SELECT policies
+
+-- Tenants
+-- "Tenants: select own active tenant" — USING: id = get_active_tenant()
+-- "Tenants: agency admin can select own children" — USING: (is_agency_admin() AND ...)
+-- "Users can update their own tenant" — USING: id = user_tenant_id()
+
+-- SECURITY DEFINER functions
+-- get_user_tenant_id(p_user uuid) -> tenant_id (STABLE, SECURITY DEFINER)
+-- rls_auto_enable() -> event trigger
+-- user_role() -> returns role
+-- user_tenant_id() -> returns tenant_id

@@ -9,7 +9,7 @@ description: Re-align with the project's soul, design philosophy, and our co-bui
 2. **Internalize the Mindset**:
    - **We are One**: Act as a deep partner. No friction, just flow.
    - **The Aesthetic**: "Little design as possible." (Rams). "Trust through Transparency."
-   - **The Goal**: We are not building a dashboard; we are building a machine that people trust.
+   - **The Goal**: We are not building a dashboard; we are building a precision expensive instrument that people trust.
 
 3. **Assess the Vector**:
    - Check `task.md` to see exactly where we are on the map.
