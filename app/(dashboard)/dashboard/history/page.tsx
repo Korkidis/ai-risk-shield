@@ -1,11 +1,11 @@
 "use client";
 
-import { RSDraftingBoard } from '@/components/rs/RSDraftingBoard'
+import { RSBackground } from '@/components/rs/RSBackground'
 import { History } from 'lucide-react'
 
 export default function HistoryPage() {
     return (
-        <RSDraftingBoard className="flex items-center justify-center h-full p-6">
+        <RSBackground className="flex items-center justify-center h-full p-6">
             <div className="text-center space-y-4 opacity-50">
                 <div className="w-16 h-16 bg-rs-gray-200 rounded-full flex items-center justify-center mx-auto text-rs-text-tertiary">
                     <History size={32} />
@@ -15,6 +15,6 @@ export default function HistoryPage() {
                     <p className="text-xs font-mono text-rs-text-tertiary mt-2">Status: Offline / Under Construction</p>
                 </div>
             </div>
-        </RSDraftingBoard>
+        </RSBackground>
     )
 }

@@ -51,14 +51,14 @@ export function RSBulkActionBar({
                     <div className="flex items-center gap-4">
                         <button
                             onClick={onDownload}
-                            className="h-10 px-6 border border-white/20 hover:border-white text-white text-[10px] font-black uppercase tracking-widest transition-all rounded-[2px] hover:bg-white/5 flex items-center gap-2"
+                            className="h-10 px-6 rs-bevel hover:border-white text-white text-[10px] font-black uppercase tracking-widest transition-all rounded-[2px] hover:bg-white/5 flex items-center gap-2"
                         >
                             <Download className="w-4 h-4" />
                             <span>Download</span>
                         </button>
                         <button
                             onClick={onShare}
-                            className="h-10 px-6 border border-white/20 hover:border-white text-white text-[10px] font-black uppercase tracking-widest transition-all rounded-[2px] hover:bg-white/5 flex items-center gap-2"
+                            className="h-10 px-6 rs-bevel hover:border-white text-white text-[10px] font-black uppercase tracking-widest transition-all rounded-[2px] hover:bg-white/5 flex items-center gap-2"
                         >
                             <Share2 className="w-4 h-4" />
                             <span>Share</span>

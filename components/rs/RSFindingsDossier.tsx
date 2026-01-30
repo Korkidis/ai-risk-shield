@@ -2,7 +2,7 @@
 
 import { Terminal, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { RSGridPattern } from './RSGridPattern';
+
 import { RSRiskBadge } from './RSRiskBadge';
 import { RSButton } from './RSButton';
 
@@ -52,7 +52,7 @@ export function RSFindingsDossier({ isComplete, results }: RSFindingsDossierProp
         <div
             className="bg-[#EAE5D9] rounded-[24px] border border-[#D6CEC1] flex-1 flex flex-col shadow-inner overflow-hidden text-[#1A1A1A] animate-in fade-in slide-in-from-bottom-4 duration-700 relative"
         >
-            <RSGridPattern dotOpacity={0.08} gridOpacity={0.05} />
+
 
             {/* Content Container */}
             <div className="relative z-10 flex flex-col h-full p-6 pt-8">

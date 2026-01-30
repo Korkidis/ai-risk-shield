@@ -76,7 +76,7 @@ export function RSProcessingPanel({
 
                 {/* Scan FX Layers */}
                 <div className="absolute inset-0 bg-rs-signal/10 mix-blend-overlay" />
-                <div className="absolute inset-x-0 h-[2px] bg-rs-signal shadow-[0_0_20px_2px_#FF4F00] z-20 animate-[scanSmooth_2s_ease-in-out_infinite]" />
+                <div className="absolute inset-x-0 h-[2px] bg-rs-signal shadow-[0_0_20px_2px_var(--rs-signal)] z-20 animate-[scanSmooth_2s_ease-in-out_infinite]" />
 
                 {/* Grid Overlay */}
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />

@@ -228,7 +228,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
                   <div className="absolute inset-[-12px] border border-white/10 rounded-full border-dashed animate-spin-slow opacity-40" />
 
                   {/* Main Circle */}
-                  <div className="w-24 h-24 rounded-full border-[2px] border-white/20 flex items-center justify-center relative z-10 shadow-[0_0_30px_rgba(255,255,255,0.05)] bg-white/5 backdrop-blur-sm group-hover/screen:border-[var(--rs-signal)] group-hover/screen:shadow-[0_0_20px_var(--rs-signal)] transition-all duration-500">
+                  <div className="w-24 h-24 rounded-full rs-bevel flex items-center justify-center relative z-10 shadow-[0_0_30px_rgba(255,255,255,0.05)] bg-white/5 backdrop-blur-sm group-hover/screen:border-[var(--rs-signal)] group-hover/screen:shadow-[0_0_20px_var(--rs-signal)] transition-all duration-500">
                     {/* Upload Icon - Arrow Up */}
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/60 animate-pulse group-hover/screen:text-[var(--rs-signal)]"><path d="M12 17V3" /><path d="m6 9 6-6 6 6" /><path d="M5 21h14" /></svg>
                   </div>

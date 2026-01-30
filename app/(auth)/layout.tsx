@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { RSChassisCard } from '@/components/rs/RSChassisCard';
-import { RSTechnicalDraftingSubstrate } from '@/components/rs/RSTechnicalDraftingSubstrate';
+import { RSBackground } from '@/components/rs/RSBackground';
 
 export default function AuthLayout({
     children,
@@ -9,7 +9,7 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <RSTechnicalDraftingSubstrate contentPadding="p-0">
+        <RSBackground variant="technical">
             {/* Calibration Centered Module */}
             <div className="flex flex-col items-center justify-center min-h-screen relative z-10 p-4">
                 <div className="w-full max-w-[520px] relative">
@@ -35,6 +35,6 @@ export default function AuthLayout({
                     </div>
                 </div>
             </div>
-        </RSTechnicalDraftingSubstrate>
+        </RSBackground>
     );
 }

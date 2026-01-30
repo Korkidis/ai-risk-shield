@@ -38,28 +38,28 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
             />
 
             {/* Drawer */}
-            <div className="relative w-full max-w-xl bg-[#EAE6D9] h-full shadow-[-20px_0_50px_rgba(0,0,0,0.2)] flex flex-col animate-in slide-in-from-right duration-500 ease-out border-l border-[#D6CEC1]">
+            <div className="relative w-full max-w-xl bg-rs-bg-surface-2 h-full shadow-[var(--rs-shadow-l3)] flex flex-col animate-in slide-in-from-right duration-500 ease-out border-l border-rs-border-primary">
                 {/* Header */}
-                <div className="p-8 border-b border-[#D6CEC1] flex justify-between items-center bg-[#E2DDCF]">
+                <div className="p-8 border-b border-rs-border-primary flex justify-between items-center bg-rs-bg-surface">
                     <div>
-                        <h2 className="text-xl font-black uppercase tracking-tight text-[#1A1A1A]">Forensic Provenance Review</h2>
+                        <h2 className="text-xl font-black uppercase tracking-tight text-white">Forensic Provenance Review</h2>
                         <div className="flex items-center gap-2 mt-1">
                             <div className={cn(
                                 "w-2 h-2 rounded-full",
-                                status === 'valid' ? "bg-emerald-500" :
-                                    status === 'invalid' ? "bg-red-500" :
-                                        status === 'missing' ? "bg-orange-500" : "bg-gray-400"
+                                status === 'valid' ? "bg-rs-safe" :
+                                    status === 'invalid' ? "bg-rs-signal" :
+                                        status === 'missing' ? "bg-rs-risk-review" : "bg-rs-gray-400"
                             )} />
-                            <span className="font-mono text-[10px] uppercase font-bold text-[#1A1A1A]/60">
+                            <span className="font-mono text-[10px] uppercase font-bold text-rs-text-tertiary">
                                 Status: {status.toUpperCase()}
                             </span>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#1A1A1A]/5 transition-colors"
+                        className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-rs-bg-menu-hover/10 transition-colors"
                     >
-                        <X size={20} className="text-[#1A1A1A]" />
+                        <X size={20} className="text-rs-text-secondary" />
                     </button>
                 </div>
 
@@ -67,12 +67,12 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
                 <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
 
                     {/* Legal Context Note */}
-                    <div className="bg-[#1A1A1A]/5 rounded-2xl p-6 border border-[#1A1A1A]/10">
+                    <div className="bg-rs-bg-surface-3 rounded-2xl p-6 border border-rs-border-secondary">
                         <div className="flex gap-3">
-                            <Info size={18} className="text-[#FF4F00] shrink-0 mt-0.5" />
+                            <Info size={18} className="text-rs-signal shrink-0 mt-0.5" />
                             <div className="space-y-2">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#1A1A1A]">Defense Utility Note</h4>
-                                <p className="text-xs text-[#1A1A1A]/70 leading-relaxed italic">
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-rs-text-primary">Defense Utility Note</h4>
+                                <p className="text-xs text-rs-text-secondary leading-relaxed italic">
                                     {status === 'valid'
                                         ? "This asset is armored with C2PA Content Credentials. In the event of an IP dispute, this manifest serves as cryptographically verifiable evidence of your acquisition and generation chain."
                                         : status === 'missing'
@@ -85,8 +85,8 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
 
                     {/* Primary Facts Table */}
                     <section className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1A1A1A]/40 pl-1">Primary Assertions</h3>
-                        <div className="bg-white/50 border border-[#D6CEC1] rounded-2xl overflow-hidden divide-y divide-[#D6CEC1]">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary pl-1">Primary Assertions</h3>
+                        <div className="bg-rs-bg-surface-3 border border-rs-border-secondary rounded-2xl overflow-hidden divide-y divide-rs-border-secondary">
                             <FactRow label="Creator Identity" value={details?.creator || 'Unknown / Unsigned'} icon={<UserCheck size={14} />} />
                             <FactRow label="Generation Tool" value={details?.tool || 'Generic AI Engine'} icon={<Cpu size={14} />} />
                             <FactRow label="Acquisition Date" value={details?.date || 'Undetermined'} icon={<Calendar size={14} />} />
@@ -97,7 +97,7 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
                     {/* Visual Edit History Chain */}
                     <section className="space-y-6 pt-4">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1A1A1A]/40 pl-1">Provenance Timeline</h3>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary pl-1">Provenance Timeline</h3>
                             <span className="text-[9px] font-mono text-[#1A1A1A]/40">C2PA_VER_1.3</span>
                         </div>
 
@@ -106,7 +106,7 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
                                 <div key={idx} className="relative group">
                                     <div className="absolute -left-[25px] top-1.5 w-[14px] h-[14px] rounded-full bg-[#EAE6D9] border-2 border-[#1A1A1A] z-10" />
                                     <div className="space-y-1">
-                                        <div className="text-[10px] font-black uppercase tracking-widest text-[#FF4F00]">{entry.action}</div>
+                                        <div className="text-[10px] font-black uppercase tracking-widest text-rs-signal">{entry.action}</div>
                                         <div className="text-sm font-bold text-[#1A1A1A]">{entry.tool}</div>
                                         <div className="text-[10px] font-mono opacity-40">{entry.date}</div>
                                     </div>

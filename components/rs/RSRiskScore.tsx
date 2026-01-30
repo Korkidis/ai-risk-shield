@@ -32,7 +32,7 @@ export function RSRiskScore({
         medium: "text-rs-gray-600",
         low: "text-rs-gray-500",
         safe: "text-rs-safe",
-        warning: "text-[#FF4F00]",
+        warning: "text-rs-signal",
         info: "text-[#005F87]",
     };
 

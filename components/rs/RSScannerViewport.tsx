@@ -32,9 +32,9 @@ export function RSScannerViewport({
                 <div className="flex items-center gap-3">
                     <div className={cn(
                         "w-2 h-2 rounded-full",
-                        active ? "bg-[#FF4F00] animate-pulse" : "bg-gray-600"
+                        active ? "bg-rs-signal animate-pulse" : "bg-gray-600"
                     )} />
-                    <span className="text-[10px] font-mono text-[#FF4F00] font-bold tracking-widest uppercase">{label}</span>
+                    <span className="text-[10px] font-mono text-rs-signal font-bold tracking-widest uppercase">{label}</span>
                 </div>
                 <span className="text-[9px] font-mono text-white/30 uppercase italic">Ref: 00-1-A</span>
             </div>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { RSGridPattern } from './RSGridPattern';
+
 
 interface RSScannerProps extends React.HTMLAttributes<HTMLDivElement> {
     active?: boolean;
@@ -48,10 +48,7 @@ export function RSScanner({
                 />
             )}
 
-            {/* Official Grid Pattern Integration */}
-            <div className="absolute inset-0 z-0">
-                <RSGridPattern dotOpacity={0.06} gridOpacity={0.04} />
-            </div>
+
 
             {/* Drag Overlay - Target Lock */}
             {isDragActive && (

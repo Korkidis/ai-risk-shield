@@ -1,0 +1,16 @@
+CREATE INDEX IF NOT EXISTS idx_assets_tenant_id ON public.assets(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_tenant_id ON public.audit_log(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_brand_guidelines_tenant_id ON public.brand_guidelines(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_brand_profiles_tenant_id ON public.brand_profiles(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_mitigation_reports_tenant_id ON public.mitigation_reports(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_tenant_id ON public.profiles(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_provenance_details_tenant_id ON public.provenance_details(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_referral_events_tenant_id ON public.referral_events(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_scan_findings_tenant_id ON public.scan_findings(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_scans_tenant_id ON public.scans(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant_id ON public.subscriptions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_invites_tenant_id ON public.tenant_invites(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_switch_audit_to_tenant_id ON public.tenant_switch_audit(to_tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenants_parent_tenant_id ON public.tenants(parent_tenant_id);
+CREATE INDEX IF NOT EXISTS idx_usage_ledger_tenant_id ON public.usage_ledger(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_video_frames_tenant_id ON public.video_frames(tenant_id);

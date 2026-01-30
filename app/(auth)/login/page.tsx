@@ -98,7 +98,7 @@ function LoginContent() {
                             placeholder="user@organization.com"
                             fullWidth
                             // Deep Recess Override
-                            className="bg-[#E6E2DB] shadow-[inset_2px_2px_6px_rgba(0,0,0,0.1),inset_-1px_-1px_2px_rgba(255,255,255,0.5)] border-none focus:ring-0 rounded-[var(--rs-radius-element)]"
+                            className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                         />
                     </div>
 
@@ -115,7 +115,7 @@ function LoginContent() {
                             placeholder="••••••••••••"
                             fullWidth
                             // Deep Recess Override
-                            className="bg-[#E6E2DB] shadow-[inset_2px_2px_6px_rgba(0,0,0,0.1),inset_-1px_-1px_2px_rgba(255,255,255,0.5)] border-none focus:ring-0 rounded-[var(--rs-radius-element)]"
+                            className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                         />
                         <div className="flex justify-end mt-1">
                             <a href="/forgot-password" className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-1">

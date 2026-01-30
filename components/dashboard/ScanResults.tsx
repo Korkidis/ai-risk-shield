@@ -102,12 +102,12 @@ export function ScanResults({ tenantId: _tenantId }: Props) {
 function ScanCard({ scan }: { scan: ScanResult }) {
   const getRiskColor = (level?: string) => {
     switch (level) {
-      case 'safe': return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-      case 'caution': return 'text-amber-400 border-amber-500/30 bg-amber-500/10'
-      case 'review': return 'text-orange-400 border-orange-500/30 bg-orange-500/10'
-      case 'high': return 'text-red-400 border-red-500/30 bg-red-500/10'
-      case 'critical': return 'text-red-500 border-red-500/50 bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
-      default: return 'text-slate-400 border-slate-700 bg-slate-800/50'
+      case 'safe': return 'text-rs-safe border-rs-safe/30 bg-rs-safe/10'
+      case 'caution': return 'text-rs-risk-caution border-rs-risk-caution/30 bg-rs-risk-caution/10'
+      case 'review': return 'text-rs-risk-review border-rs-risk-review/30 bg-rs-risk-review/10'
+      case 'high': return 'text-rs-risk-high border-rs-risk-high/30 bg-rs-risk-high/10'
+      case 'critical': return 'text-rs-signal border-rs-signal/50 bg-rs-signal/20 shadow-[0_0_15px_rgba(255,79,0,0.3)]'
+      default: return 'text-rs-gray-400 border-rs-gray-500 bg-rs-gray-600/50'
     }
   }
 
@@ -125,13 +125,13 @@ function ScanCard({ scan }: { scan: ScanResult }) {
         )
       case 'complete':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rs-safe/10 text-rs-safe border border-rs-safe/20">
             Completed
           </span>
         )
       case 'failed':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rs-signal/10 text-rs-signal border border-rs-signal/20">
             Failed
           </span>
         )
@@ -194,9 +194,9 @@ function ScanCard({ scan }: { scan: ScanResult }) {
               className="bg-slate-900/30 rounded-xl p-4 border-l-[4px] border border-slate-800/50 hover:bg-slate-900/60 transition-colors"
               style={{
                 borderLeftColor:
-                  finding.severity === 'critical' ? '#EF4444' :
-                    finding.severity === 'high' ? '#F97316' :
-                      finding.severity === 'medium' ? '#F59E0B' : '#64748B'
+                  finding.severity === 'critical' ? 'var(--rs-signal)' :
+                    finding.severity === 'high' ? 'var(--rs-risk-high)' :
+                      finding.severity === 'medium' ? 'var(--rs-risk-review)' : 'var(--rs-gray-500)'
               }}
             >
               <div className="flex items-start justify-between">

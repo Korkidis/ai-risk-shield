@@ -34,8 +34,8 @@ export function RSTelemetryStream() {
                     {/* Top Metadata */}
                     <div className="flex justify-between items-start">
                         <div className="space-y-1">
-                            <div className="text-[#FF4F00] text-xs font-black tracking-widest flex items-center gap-2">
-                                <div className="w-2 h-2 bg-[#FF4F00] rounded-full animate-ping shadow-[0_0_8px_#FF4F00]" />
+                            <div className="text-rs-signal text-xs font-black tracking-widest flex items-center gap-2">
+                                <div className="w-2 h-2 bg-rs-signal rounded-full animate-ping shadow-[0_0_8px_var(--rs-signal)]" />
                                 LOG_TELEMETRY_STREAM
                             </div>
                             <div className="text-[9px] text-white/20 uppercase tracking-[0.3em]">Module: BRAVO-RACK-09</div>
@@ -53,7 +53,7 @@ export function RSTelemetryStream() {
                                     <div className="text-[9px] text-[#00FF94] w-24">0x44F1_{i}</div>
                                     <div className="h-1 bg-white/10 flex-1 mx-4 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-[#FF4F00]/40 transition-all duration-500 ease-in-out"
+                                            className="h-full bg-rs-signal/40 transition-all duration-500 ease-in-out"
                                             style={{ width: `${width}%` }}
                                         />
 
@@ -70,7 +70,7 @@ export function RSTelemetryStream() {
                             <span>Buffer: Ready</span>
                             <span>Rec: Tracking</span>
                         </div>
-                        <div className="px-4 py-1.5 bg-white/10 rounded text-[9px] text-[#FF4F00] font-black tracking-[0.2em] uppercase border border-[#FF4F00]/20 hover:bg-[#FF4F00]/20 cursor-pointer transition-colors">
+                        <div className="px-4 py-1.5 bg-white/10 rounded text-[9px] text-rs-signal font-black tracking-[0.2em] uppercase border border-rs-signal/20 hover:bg-rs-signal/20 cursor-pointer transition-colors">
                             Emergency Stop
                         </div>
                     </div>

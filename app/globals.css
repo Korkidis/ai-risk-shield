@@ -30,7 +30,7 @@
     --rs-function: #2E5A88;
 
     /* 5-Tier Risk Definitions (MOMA_SPEC) */
-    --rs-risk-safe: #006742;
+    --rs-risk-safe: var(--rs-safe);
     /* 0-25: Safe Green */
     --rs-risk-caution: #EAB308;
     /* 26-50: Yellow-500 */
@@ -38,7 +38,7 @@
     /* 51-75: Orange-500 */
     --rs-risk-high: #EA580C;
     /* 76-90: Orange-600 */
-    --rs-risk-critical: #FF4F00;
+    --rs-risk-critical: var(--rs-signal);
     /* 91-100: Vivid Signal */
 
     /* --- elevation scale (z-logic: surgical precision) --- */
@@ -132,6 +132,43 @@
   .rs-well {
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0) 100%), var(--rs-bg-well);
     box-shadow: var(--rs-shadow-l1);
+  }
+}
+
+/* utility: bevels (high-fidelity edges) */
+@layer utilities {
+  .rs-bevel {
+    position: relative;
+  }
+
+  .rs-bevel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .rs-bevel-inset {
+    position: relative;
+  }
+
+  .rs-bevel-inset::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 10;
   }
 }
 

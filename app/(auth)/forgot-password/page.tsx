@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
                         type="email"
                         placeholder="user@organization.com"
                         fullWidth
-                        className="bg-[#E6E2DB] shadow-[inset_2px_2px_6px_rgba(0,0,0,0.1),inset_-1px_-1px_2px_rgba(255,255,255,0.5)] border-none focus:ring-0 rounded-[var(--rs-radius-element)]"
+                        className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                     />
                 </div>
 

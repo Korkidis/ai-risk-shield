@@ -62,7 +62,7 @@ export default function RegisterPage() {
                             name="fullName"
                             placeholder="John Doe"
                             fullWidth
-                            className="bg-[#E6E2DB] shadow-[inset_2px_2px_6px_rgba(0,0,0,0.1),inset_-1px_-1px_2px_rgba(255,255,255,0.5)] border-none focus:ring-0 rounded-[var(--rs-radius-element)]"
+                            className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                         />
                     </div>
                     <div className="space-y-1 group">
@@ -73,7 +73,7 @@ export default function RegisterPage() {
                             name="organizationName"
                             placeholder="Acme Corp"
                             fullWidth
-                            className="bg-[#E6E2DB] shadow-[inset_2px_2px_6px_rgba(0,0,0,0.1),inset_-1px_-1px_2px_rgba(255,255,255,0.5)] border-none focus:ring-0 rounded-[var(--rs-radius-element)]"
+                            className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                         />
                     </div>
                     <div className="space-y-1 group">
@@ -85,7 +85,7 @@ export default function RegisterPage() {
                             type="email"
                             placeholder="user@organization.com"
                             fullWidth
-                            className="bg-[#E6E2DB] shadow-[inset_2px_2px_6px_rgba(0,0,0,0.1),inset_-1px_-1px_2px_rgba(255,255,255,0.5)] border-none focus:ring-0 rounded-[var(--rs-radius-element)]"
+                            className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                         />
                     </div>
                     <div className="space-y-1 group">
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                             type="password"
                             placeholder="••••••••••••"
                             fullWidth
-                            className="bg-[#E6E2DB] shadow-[inset_2px_2px_6px_rgba(0,0,0,0.1),inset_-1px_-1px_2px_rgba(255,255,255,0.5)] border-none focus:ring-0 rounded-[var(--rs-radius-element)]"
+                            className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                         />
                         <p className="text-[8px] text-[var(--rs-text-tertiary)] uppercase tracking-wider pl-1 pt-1 opacity-70">
                             Must contain 12+ chars, uppercase, lowercase, number.

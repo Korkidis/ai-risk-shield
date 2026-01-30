@@ -33,7 +33,6 @@ export function RSTelemetryPanel({
     hideButton,
     statusLabel,
     buttonText,
-    footerText,
     className,
     onAction
 }: RSTelemetryPanelProps) {
@@ -56,11 +55,11 @@ export function RSTelemetryPanel({
 
     const getStatusColor = (status: TelemetryRow['status']) => {
         switch (status) {
-            case 'success': return '#10B981'; // Emerald 500
-            case 'warning': return '#F59E0B'; // Amber 500
-            case 'error': return '#EF4444';   // Red 500
-            case 'info': return '#06B6D4';    // Cyan 500
-            default: return '#6B7280';        // Gray 500
+            case 'success': return 'var(--rs-safe)'; // Brand Green
+            case 'warning': return 'var(--rs-risk-caution)'; // Amber
+            case 'error': return 'var(--rs-signal)';   // Brand Red (Signal)
+            case 'info': return 'var(--rs-info)';    // Cyan
+            default: return 'var(--rs-gray-500)';        // Gray
         }
     };
 
@@ -72,11 +71,11 @@ export function RSTelemetryPanel({
     return (
         <div className={cn(
             "relative w-full overflow-hidden rounded-xl font-mono text-xs select-none",
-            "bg-[#e5e5e5] p-[2px]", // Outer casing (Rams Grey)
+            "bg-rs-bg-surface-2 p-[2px]", // Outer casing (Rams Grey)
             className
         )}>
             {/* Physical Casing Bezel */}
-            <div className="relative w-full h-full bg-[#1a1a1a] rounded-[10px] overflow-hidden shadow-inner">
+            <div className="relative w-full h-full bg-rs-black rounded-[10px] overflow-hidden shadow-inner">
 
                 {/* 1. Glass/Diffuser Layer */}
                 <div className="absolute inset-0 z-50 pointer-events-none mix-blend-overlay opacity-30 bg-[url('/noise.png')] bg-[length:128px]" />
@@ -88,8 +87,8 @@ export function RSTelemetryPanel({
                     <div className="flex items-center gap-2">
                         <div className={cn(
                             "w-2 h-2 rounded-full",
-                            state === 'scanning' ? "bg-amber-500 animate-pulse" :
-                                state === 'complete' ? "bg-emerald-500" : "bg-red-500"
+                            state === 'scanning' ? "bg-rs-risk-caution animate-pulse" :
+                                state === 'complete' ? "bg-rs-safe" : "bg-rs-signal"
                         )} />
                         <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">
                             {currentStatusLabel}
@@ -107,7 +106,6 @@ export function RSTelemetryPanel({
                         {displayState === 'scanning' && (
                             <motion.div
                                 key="scanning"
-                                initial={{ opacity: 0 }}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
@@ -219,12 +217,12 @@ export function RSTelemetryPanel({
                                     {!hideButton && onAction && (
                                         <button
                                             onClick={onAction}
-                                            className="group flex items-center gap-3 pl-6 pr-4 py-2 bg-[#1A1A1A] border border-white/10 hover:border-[#FF4F00]/50 rounded text-white/60 hover:text-[#FF4F00] transition-all"
+                                            className="group flex items-center gap-3 pl-6 pr-4 py-2 bg-rs-black border border-white/10 hover:border-rs-signal/50 rounded text-white/60 hover:text-rs-signal transition-all"
                                         >
                                             <span className="text-[10px] font-bold tracking-[0.2em] uppercase">
                                                 {buttonText || 'View Manifest'}
                                             </span>
-                                            <div className="w-4 h-4 flex items-center justify-center border border-white/10 rounded-full group-hover:border-[#FF4F00] transition-colors">
+                                            <div className="w-4 h-4 flex items-center justify-center border border-white/10 rounded-full group-hover:border-rs-signal transition-colors">
                                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                     <path d="M5 12h14M12 5l7 7-7 7" />
                                                 </svg>

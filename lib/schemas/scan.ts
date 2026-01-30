@@ -10,7 +10,7 @@ export const ScanSchema = z.object({
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
     risk_score: z.number().min(0).max(100).optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
     // Additional strict fields can be added here as needed
 });
 

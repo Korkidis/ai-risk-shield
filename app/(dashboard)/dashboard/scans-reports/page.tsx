@@ -17,7 +17,7 @@ import { RSTextarea } from '@/components/rs/RSTextarea'
 import { RSButton } from '@/components/rs/RSButton'
 import { RSBulkActionBar } from '@/components/rs/RSBulkActionBar'
 import { getRiskTier } from '@/lib/risk-utils'
-import { RSTechnicalDraftingSubstrate } from '@/components/rs/RSTechnicalDraftingSubstrate'
+import { RSBackground } from '@/components/rs/RSBackground'
 import { RSModal } from '@/components/rs/RSModal'
 import { RSFileUpload } from '@/components/rs/RSFileUpload'
 import { ProvenanceTelemetryStream } from '@/components/rs/ProvenanceTelemetryStream'
@@ -228,12 +228,9 @@ function ScansReportsContent() {
     }, [filteredScans, page])
 
     return (
-        <RSTechnicalDraftingSubstrate
-            showRulers={false}
-            showWatermark={true}
-            showFocalPoint={false}
-            showGridLines={true}
-            contentPadding="p-0"
+        <RSBackground
+            variant="technical"
+            showGrid={true}
             className="bg-[#F9F8F6]"
         >
             <div className="flex flex-col h-full w-full overflow-hidden">
@@ -625,7 +622,7 @@ function ScansReportsContent() {
                     </div>
                 </RSModal>
             </div>
-        </RSTechnicalDraftingSubstrate >
+        </RSBackground>
     )
 }
 

@@ -57,14 +57,18 @@ export default function DashboardPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileProcess = async (file: File) => {
+        console.log('[SCANNER] handleFileProcess called with:', file.name, file.size, file.type);
+
         // 1. Setup Preview
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
+        console.log('[SCANNER] Preview URL set');
 
         // 2. Start Scan State
         setScanStatus('scanning');
         setErrorMessage(null);
         setAnalysisResult(null);
+        console.log('[SCANNER] Scan status set to scanning');
 
         // Technical Onboarding
         addLog(`Acquired asset: ${file.name.substring(0, 15)}...`, 'done');
@@ -292,7 +296,7 @@ export default function DashboardPage() {
         <div className="flex flex-col lg:flex-row gap-6 h-full p-4 w-full min-h-[900px]">
 
             {/* LEFT PANE: PRIMARY SCANNER (50%) */}
-            <div className="flex-1 bg-[#121212] rounded-[32px] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[10px] border-[var(--rs-bg-surface)] overflow-hidden">
+            <div className="flex-1 bg-rs-black rounded-[32px] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[10px] border-[var(--rs-bg-surface)] overflow-hidden">
 
                 {/* Dark Mode Chassis Overlay */}
                 <div className="absolute inset-0 rounded-[22px] pointer-events-none border border-white/5 z-20" />
@@ -300,13 +304,13 @@ export default function DashboardPage() {
                 {/* Header */}
                 <div className="flex justify-between items-start mb-6 relative z-10">
                     <div>
-                        <div className="text-[#FF4F00] font-mono text-xs font-bold tracking-widest uppercase mb-1">Scanner_v2.0</div>
-                        <div className="text-[#FF4F00]/40 font-mono text-[10px] tracking-widest uppercase flex items-center gap-2">
-                            <span className={cn("w-2 h-2 rounded-full", isScanning ? "bg-[#FF4F00] animate-pulse" : "bg-rs-gray-600")} />
+                        <div className="text-rs-signal font-mono text-xs font-bold tracking-widest uppercase mb-1">Scanner_v2.0</div>
+                        <div className="text-rs-signal/40 font-mono text-[10px] tracking-widest uppercase flex items-center gap-2">
+                            <span className={cn("w-2 h-2 rounded-full", isScanning ? "bg-rs-signal animate-pulse" : "bg-rs-gray-600")} />
                             {isScanning ? 'ACQUIRING_DATA...' : isComplete ? 'ANALYSIS_COMPLETE' : 'BUFFER_READY'}
                         </div>
                     </div>
-                    <div className="text-[#FF4F00] font-mono text-[10px] tracking-widest uppercase">CH_01_INPUT</div>
+                    <div className="text-rs-signal font-mono text-[10px] tracking-widest uppercase">CH_01_INPUT</div>
                 </div>
 
                 {/* Main Viewport */}
@@ -339,9 +343,9 @@ export default function DashboardPage() {
                     >
                         {(!isComplete && !isScanning && !previewUrl) && (
                             <label className="flex flex-col items-center justify-center text-center p-12 cursor-pointer group w-full h-full">
-                                <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center text-white/40 group-hover:border-[#FF4F00] group-hover:text-[#FF4F00] transition-all duration-300 group-hover:scale-110 mb-6">
+                                <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center text-white/40 group-hover:border-rs-signal group-hover:text-rs-signal transition-all duration-300 group-hover:scale-110 mb-6">
                                     <div className="w-8 h-8 relative flex items-center justify-center">
-                                        {isError ? <div className="text-red-500 font-bold text-xl">!</div> : <Upload className="w-6 h-6" />}
+                                        {isError ? <div className="text-rs-signal font-bold text-xl">!</div> : <Upload className="w-6 h-6" />}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -349,7 +353,7 @@ export default function DashboardPage() {
                                         {isError ? 'Scan Failed - Retry?' : 'Drop file here or click to browse'}
                                     </p>
                                     <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • JPG, PNG, MP4, MOV, MKV</p>
-                                    {isError && <p className="text-red-500 font-mono text-[10px] uppercase tracking-widest mt-2">{errorMessage}</p>}
+                                    {isError && <p className="text-rs-signal font-mono text-[10px] uppercase tracking-widest mt-2">{errorMessage}</p>}
                                 </div>
                                 <input
                                     type="file"
@@ -399,7 +403,7 @@ export default function DashboardPage() {
                             <div className="flex justify-between text-[10px] font-black uppercase text-[#9A9691] tracking-widest">
                                 <span>Likelihood</span>
                                 <span className={cn(
-                                    results.composite > 80 ? "text-[#FF4F00]" : results.composite > 40 ? "text-orange-500" : "text-emerald-600",
+                                    results.composite > 80 ? "text-rs-signal" : results.composite > 40 ? "text-rs-risk-high" : "text-rs-safe",
                                     !isComplete && "opacity-0"
                                 )}>
                                     {results.composite > 80 ? 'Critical' : results.composite > 40 ? 'Warning' : 'Safe'}
@@ -410,7 +414,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* BOTTOM SECTION: ANALOG TELEMETRY */}
-                    <div className="pt-4 border-t border-[#1A1A1A]/5">
+                    <div className="pt-4 border-t border-rs-black/5">
                         <div className="flex justify-center items-start gap-8">
                             <RSAnalogNeedle value={results.ipRisk} label="IP Risk" isScanning={isScanning} powered={isScanning || isComplete} size={150} />
                             <RSAnalogNeedle value={results.brandSafety} label="Brand Safety" isScanning={isScanning} powered={isScanning || isComplete} size={150} />

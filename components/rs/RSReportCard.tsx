@@ -60,7 +60,7 @@ export function RSReportCard({
                 {/* Mini Footer / Action line could go here */}
                 <div className="w-full h-1 bg-rs-gray-100 rounded-full overflow-hidden">
                     <div
-                        className={cn("h-full", level === 'critical' ? 'bg-rs-signal' : level === 'high' ? 'bg-orange-500' : 'bg-rs-safe')}
+                        className={cn("h-full", level === 'critical' ? 'bg-rs-signal' : level === 'high' ? 'bg-rs-risk-high' : level === 'safe' ? 'bg-rs-safe' : 'bg-rs-risk-review')}
                         style={{ width: `${score}%` }}
                     />
                 </div>

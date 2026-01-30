@@ -1,7 +1,7 @@
 import React from 'react';
 import { RSSidebar } from '@/components/rs/RSSidebar';
 import { RSNavbar } from '@/components/rs/RSNavbar';
-import { RSTechnicalDraftingSubstrate } from '@/components/rs/RSTechnicalDraftingSubstrate';
+import { RSBackground } from '@/components/rs/RSBackground';
 
 export default function DashboardLayout({
     children,
@@ -20,9 +20,9 @@ export default function DashboardLayout({
 
                 {/* Main Content Area - Technical Substrate */}
                 <main className="flex-1 overflow-hidden relative">
-                    <RSTechnicalDraftingSubstrate contentPadding="p-0">
+                    <RSBackground variant="technical" className="h-full w-full overflow-auto scrollbar-hide">
                         {children}
-                    </RSTechnicalDraftingSubstrate>
+                    </RSBackground>
                 </main>
             </div>
         </div>

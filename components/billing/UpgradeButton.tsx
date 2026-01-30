@@ -50,7 +50,7 @@ export function UpgradeButton({ scanId }: { scanId: string }) {
             onClick={handleUpgrade}
             disabled={loading}
             type="button"
-            className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient text-white px-8 py-4 rounded-xl font-black uppercase tracking-[0.15em] hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-white/20"
+            className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient text-white px-8 py-4 rounded-xl font-black uppercase tracking-[0.15em] hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed rs-bevel overflow-hidden"
         >
             {loading ? 'Processing Transaction...' : 'Upgrade Clearance'}
         </button>

@@ -96,9 +96,9 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
 
     const getStatusColor = (status: TelemetryRow['status']) => {
         switch (status) {
-            case 'success': return '#00FF94'; // Brand Green
-            case 'warning': return '#FFB000'; // Amber
-            case 'error': return '#FF4F00';   // Brand Red
+            case 'success': return 'var(--rs-safe)'; // Brand Green
+            case 'warning': return 'var(--rs-risk-caution)'; // Amber
+            case 'error': return 'var(--rs-signal)';   // Brand Red (Signal)
             case 'info': return '#00DDFF';    // Brand Cyan
             case 'pending': default: return '#FFFFFF';
         }
@@ -118,8 +118,8 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
                     {/* Top Metadata */}
                     <div className="flex justify-between items-start mb-6">
                         <div className="space-y-1">
-                            <div className="text-[#FF4F00] text-xs font-black tracking-widest flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-[#FF4F00] rounded-full animate-ping shadow-[0_0_8px_#FF4F00]" />
+                            <div className="text-rs-signal text-xs font-black tracking-widest flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-rs-signal rounded-full animate-ping shadow-[0_0_8px_var(--rs-signal)]" />
                                 LOG_TELEMETRY_STREAM
                             </div>
                             <div className="text-[9px] text-white/20 uppercase tracking-[0.3em]">Module: BRAVO-RACK-09</div>
@@ -169,7 +169,7 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
                         {onDetailsClick && (
                             <button
                                 onClick={onDetailsClick}
-                                className="px-4 py-1.5 bg-white/10 rounded text-[9px] text-[#FF4F00] font-black tracking-[0.2em] uppercase border border-[#FF4F00]/20 hover:bg-[#FF4F00]/20 cursor-pointer transition-colors"
+                                className="px-4 py-1.5 bg-white/10 rounded text-[9px] text-rs-signal font-black tracking-[0.2em] uppercase border border-rs-signal/20 hover:bg-rs-signal/20 cursor-pointer transition-colors"
                             >
                                 FULL_DIAGNOSTIC
                             </button>

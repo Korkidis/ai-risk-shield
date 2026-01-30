@@ -20,22 +20,22 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
             case 'valid':
                 return {
                     label: 'PROVENANCE_STORE_VERIFIED',
-                    color: 'text-emerald-500',
-                    dot: 'bg-emerald-500',
+                    color: 'text-rs-safe',
+                    dot: 'bg-rs-safe',
                     desc: 'C2PA Manifest Validated • Legally Defensible',
                 };
             case 'missing':
                 return {
                     label: 'NO_PROVENANCE_DETECTED',
-                    color: 'text-orange-500',
-                    dot: 'bg-orange-500',
+                    color: 'text-rs-risk-review',
+                    dot: 'bg-rs-risk-review',
                     desc: 'Missing Metadata • Elevated Content Risk',
                 };
             case 'invalid':
                 return {
                     label: 'C2PA_TAMPER_DETECTED',
-                    color: 'text-red-500',
-                    dot: 'bg-red-500',
+                    color: 'text-rs-signal',
+                    dot: 'bg-rs-signal',
                     desc: 'Broken Signature • Unauthorized Edits Detected',
                 };
             case 'error':
@@ -48,8 +48,8 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
             default:
                 return {
                     label: 'Provenance_Chain_Log',
-                    color: 'text-[#FF4F00]',
-                    dot: 'bg-[#FF4F00]',
+                    color: 'text-rs-signal',
+                    dot: 'bg-rs-signal',
                     desc: 'Protocol: C2PA v1.3 / ISO 21812',
                 };
         }
@@ -66,8 +66,8 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
                 {/* Header */}
                 <div className="flex flex-col gap-1 mb-6">
                     <div className="flex items-center gap-3">
-                        <div className={cn("w-2 h-2 rounded-full", isComplete ? config.dot : "bg-[#FF4F00] animate-pulse shadow-[0_0_8px_#FF4F00]")} />
-                        <h3 className={cn("text-[11px] font-black tracking-[0.15em] uppercase", isComplete ? config.color : "text-[#FF4F00]")}>
+                        <div className={cn("w-2 h-2 rounded-full", isComplete ? config.dot : "bg-rs-signal animate-pulse shadow-[0_0_8px_var(--rs-signal)]")} />
+                        <h3 className={cn("text-[11px] font-black tracking-[0.15em] uppercase", isComplete ? config.color : "text-rs-signal")}>
                             {isComplete ? config.label : 'PROVENANCE_CHAIN_LOG'}
                         </h3>
                     </div>
@@ -128,7 +128,7 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
                         <RSButton
                             variant="ghost"
                             size="sm"
-                            className="text-white/60 hover:text-[#FF4F00] flex gap-2 text-[9px] font-black tracking-widest uppercase transition-colors"
+                            className="text-white/60 hover:text-rs-signal flex gap-2 text-[9px] font-black tracking-widest uppercase transition-colors"
                             onClick={onViewDetails}
                         >
                             <FileSearch size={14} />
@@ -159,12 +159,12 @@ function FinalStep({ label, result, status }: { label: string, result: string, s
             <div className="flex items-center gap-3">
                 <span className={cn(
                     "text-[9px] font-black uppercase tracking-widest",
-                    status === 'success' ? "text-emerald-500" : status === 'warning' ? "text-orange-500" : "text-red-500"
+                    status === 'success' ? "text-rs-safe" : status === 'warning' ? "text-rs-risk-review" : "text-rs-signal"
                 )}>
                     {result}
                 </span>
                 <div className={cn("w-1 h-1 rounded-full",
-                    status === 'success' ? "bg-emerald-500" : status === 'warning' ? "bg-orange-500" : "bg-red-500"
+                    status === 'success' ? "bg-rs-safe" : status === 'warning' ? "bg-rs-risk-review" : "bg-rs-signal"
                 )} />
             </div>
         </div>
