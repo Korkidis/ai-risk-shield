@@ -23,7 +23,7 @@ export function RSTelemetryStream() {
             <div className="absolute -inset-[12px] bg-[var(--rs-bg-surface)] rounded-[3.5rem] border-t border-l border-[var(--rs-border-primary)] border-b border-r border-black/20 shadow-xl" />
 
             {/* CRT Glass & Screen */}
-            <div className="relative bg-[#0A0A0A] rounded-[2.5rem] border-[14px] border-[var(--rs-border-primary)] shadow-[inset_0_0_60px_rgba(0,0,0,1),20px_20px_40px_rgba(0,0,0,0.4)] overflow-hidden aspect-video flex flex-col font-mono">
+            <div className="relative bg-rs-black rounded-[2.5rem] border-[14px] border-[var(--rs-border-primary)] shadow-[inset_0_0_60px_rgba(0,0,0,1),20px_20px_40px_rgba(0,0,0,0.4)] overflow-hidden aspect-video flex flex-col font-mono">
 
                 {/* Phosphor & Scan-line Overlay */}
                 <div className="absolute inset-0 pointer-events-none z-20 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.05)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] bg-[length:100%_3px,3px_100%]" />
@@ -50,7 +50,7 @@ export function RSTelemetryStream() {
                         <div className="w-full space-y-2 opacity-50">
                             {widths.map((width, i) => (
                                 <div key={i} className="h-4 bg-white/5 rounded flex items-center px-4 overflow-hidden border border-white/5">
-                                    <div className="text-[9px] text-[#00FF94] w-24">0x44F1_{i}</div>
+                                    <div className="text-[9px] text-[var(--rs-safe)] w-24">0x44F1_{i}</div>
                                     <div className="h-1 bg-white/10 flex-1 mx-4 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-rs-signal/40 transition-all duration-500 ease-in-out"

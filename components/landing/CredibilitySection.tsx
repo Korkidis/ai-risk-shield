@@ -95,7 +95,7 @@ function ListItem({ icon, title, description }: { icon: React.ReactNode, title: 
 
 function Badge({ text }: { text: string }) {
     return (
-        <div className="px-3 py-1.5 border border-[var(--rs-border-primary)] rounded bg-[var(--rs-bg-secondary)] text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">
+        <div className="px-3 py-1.5 border border-[var(--rs-border-primary)] rounded bg-[var(--rs-bg-element)] text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">
             {text}
         </div>
     )

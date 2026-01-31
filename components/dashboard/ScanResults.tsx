@@ -72,20 +72,20 @@ export function ScanResults({ tenantId: _tenantId }: Props) {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500 mx-auto shadow-lg shadow-indigo-500/50"></div>
-        <p className="mt-4 text-sm text-indigo-300 uppercase tracking-widest font-bold">Scanning Neural Network...</p>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--rs-action-primary)] mx-auto shadow-lg shadow-[var(--rs-action-primary)]/50"></div>
+        <p className="mt-4 text-sm text-[var(--rs-action-primary)] uppercase tracking-widest font-bold">Scanning Neural Network...</p>
       </div>
     )
   }
 
   if (scans.length === 0) {
     return (
-      <div className="text-center text-slate-500 py-16 border-2 border-dashed border-slate-800 rounded-3xl bg-slate-900/30">
-        <svg className="mx-auto h-16 w-16 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="text-center text-[var(--rs-text-secondary)] py-16 border-2 border-dashed border-[var(--rs-border-secondary)] rounded-3xl bg-[var(--rs-bg-element)]/30">
+        <svg className="mx-auto h-16 w-16 text-[var(--rs-text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <p className="mt-4 text-sm uppercase tracking-wider font-bold">No Operations Logged</p>
-        <p className="text-xs text-slate-600 mt-1">Initialize a new scan to begin forensic analysis.</p>
+        <p className="text-xs text-[var(--rs-text-tertiary)] mt-1">Initialize a new scan to begin forensic analysis.</p>
       </div>
     )
   }
@@ -115,8 +115,8 @@ function ScanCard({ scan }: { scan: ScanResult }) {
     switch (status) {
       case 'processing':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-            <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[var(--rs-action-primary)]/10 text-[var(--rs-action-primary)] border border-[var(--rs-action-primary)]/20">
+            <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-[var(--rs-action-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -125,13 +125,13 @@ function ScanCard({ scan }: { scan: ScanResult }) {
         )
       case 'complete':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rs-safe/10 text-rs-safe border border-rs-safe/20">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[var(--rs-safe)]/10 text-[var(--rs-safe)] border border-[var(--rs-safe)]/20">
             Completed
           </span>
         )
       case 'failed':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rs-signal/10 text-rs-signal border border-rs-signal/20">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[var(--rs-signal)]/10 text-[var(--rs-signal)] border border-[var(--rs-signal)]/20">
             Failed
           </span>
         )
@@ -141,17 +141,17 @@ function ScanCard({ scan }: { scan: ScanResult }) {
   }
 
   return (
-    <div className="glass-panel rounded-2xl p-6 border border-slate-800/60 hover:border-indigo-500/30 transition-all group hover:bg-slate-800/40">
+    <div className="glass-panel rounded-2xl p-6 border border-[var(--rs-border-secondary)] hover:border-[var(--rs-action-primary)]/30 transition-all group hover:bg-[var(--rs-bg-element)]/40">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center space-x-4 mb-2">
-            <h3 className="text-lg font-bold text-white group-hover:text-indigo-200 transition-colors">
+            <h3 className="text-lg font-bold text-[var(--rs-text-primary)] group-hover:text-[var(--rs-action-primary)] transition-colors">
               {scan.assets?.filename || 'Unknown asset'}
             </h3>
             {getStatusBadge(scan.status)}
           </div>
-          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+          <p className="text-xs text-[var(--rs-text-secondary)] font-medium uppercase tracking-wider">
             Detected: {new Date(scan.created_at).toLocaleString()}
           </p>
         </div>
@@ -167,18 +167,18 @@ function ScanCard({ scan }: { scan: ScanResult }) {
       {/* Scores */}
       {scan.status === 'complete' && (
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">IP Exposure</div>
-            <div className="text-xl font-bold text-white">{scan.ip_risk_score || 0}%</div>
-            <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
-              <div className="h-full bg-indigo-500" style={{ width: `${scan.ip_risk_score || 0}%` }}></div>
+          <div className="bg-[var(--rs-bg-element)]/50 rounded-xl p-4 border border-[var(--rs-border-primary)]">
+            <div className="text-[10px] text-[var(--rs-text-tertiary)] uppercase tracking-wider font-bold mb-1">IP Exposure</div>
+            <div className="text-xl font-bold text-[var(--rs-text-primary)]">{scan.ip_risk_score || 0}%</div>
+            <div className="w-full h-1 bg-[var(--rs-bg-well)] rounded-full mt-2 overflow-hidden">
+              <div className="h-full bg-[var(--rs-action-primary)]" style={{ width: `${scan.ip_risk_score || 0}%` }}></div>
             </div>
           </div>
-          <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">Brand Safety</div>
-            <div className="text-xl font-bold text-white">{scan.safety_risk_score || 0}%</div>
-            <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
-              <div className="h-full bg-purple-500" style={{ width: `${scan.safety_risk_score || 0}%` }}></div>
+          <div className="bg-[var(--rs-bg-element)]/50 rounded-xl p-4 border border-[var(--rs-border-primary)]">
+            <div className="text-[10px] text-[var(--rs-text-tertiary)] uppercase tracking-wider font-bold mb-1">Brand Safety</div>
+            <div className="text-xl font-bold text-[var(--rs-text-primary)]">{scan.safety_risk_score || 0}%</div>
+            <div className="w-full h-1 bg-[var(--rs-bg-well)] rounded-full mt-2 overflow-hidden">
+              <div className="h-full bg-[var(--rs-action-secondary)]" style={{ width: `${scan.safety_risk_score || 0}%` }}></div>
             </div>
           </div>
         </div>
@@ -187,11 +187,11 @@ function ScanCard({ scan }: { scan: ScanResult }) {
       {/* Findings */}
       {scan.scan_findings && scan.scan_findings.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Threat Intelligence</h4>
+          <h4 className="text-xs font-bold text-[var(--rs-text-tertiary)] uppercase tracking-widest mb-3">Threat Intelligence</h4>
           {scan.scan_findings.map((finding) => (
             <div
               key={finding.id}
-              className="bg-slate-900/30 rounded-xl p-4 border-l-[4px] border border-slate-800/50 hover:bg-slate-900/60 transition-colors"
+              className="bg-[var(--rs-bg-element)]/30 rounded-xl p-4 border-l-[4px] border border-[var(--rs-border-secondary)] hover:bg-[var(--rs-bg-element)]/60 transition-colors"
               style={{
                 borderLeftColor:
                   finding.severity === 'critical' ? 'var(--rs-signal)' :
@@ -202,14 +202,14 @@ function ScanCard({ scan }: { scan: ScanResult }) {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-1">
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-[var(--rs-bg-well)] text-[var(--rs-text-secondary)]">
                       {finding.severity}
                     </span>
-                    <span className="text-sm font-bold text-white">{finding.title}</span>
+                    <span className="text-sm font-bold text-[var(--rs-text-primary)]">{finding.title}</span>
                   </div>
-                  <p className="text-sm text-slate-400 leading-relaxed">{finding.description}</p>
+                  <p className="text-sm text-[var(--rs-text-secondary)] leading-relaxed">{finding.description}</p>
                 </div>
-                <span className="ml-4 text-xs font-bold text-slate-500 isolate bg-slate-900 px-2 py-1 rounded">{finding.confidence_score}% Conf.</span>
+                <span className="ml-4 text-xs font-bold text-[var(--rs-text-tertiary)] isolate bg-[var(--rs-bg-well)] px-2 py-1 rounded">{finding.confidence_score}% Conf.</span>
               </div>
             </div>
           ))}
@@ -217,16 +217,16 @@ function ScanCard({ scan }: { scan: ScanResult }) {
       )}
 
       {scan.status === 'complete' && (!scan.scan_findings || scan.scan_findings.length === 0) && (
-        <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 flex items-center gap-3">
-          <div className="p-1 bg-emerald-500/20 rounded-full text-emerald-400">
+        <div className="bg-[var(--rs-safe)]/5 border border-[var(--rs-safe)]/10 rounded-xl p-4 flex items-center gap-3">
+          <div className="p-1 bg-[var(--rs-safe)]/20 rounded-full text-[var(--rs-safe)]">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
           </div>
-          <span className="text-sm font-bold text-emerald-400">Analysis Clean - No Anomalies Detected</span>
+          <span className="text-sm font-bold text-[var(--rs-safe)]">Analysis Clean - No Anomalies Detected</span>
         </div>
       )}
 
       {scan.status === 'failed' && (
-        <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4 text-sm font-bold text-red-400">
+        <div className="bg-[var(--rs-signal)]/5 border border-[var(--rs-signal)]/10 rounded-xl p-4 text-sm font-bold text-[var(--rs-signal)]">
           Analysis Failed - System Error
         </div>
       )}

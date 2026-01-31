@@ -62,7 +62,7 @@ export function TenantSwitcher() {
     };
 
     if (loading) {
-        return <div className="h-10 w-48 bg-rs-gray-200 animate-pulse rounded-[4px]" />;
+        return <div className="h-10 w-48 bg-[var(--rs-bg-element)] animate-pulse rounded-[4px]" />;
     }
 
     if (tenants.length <= 1) {
@@ -72,7 +72,7 @@ export function TenantSwitcher() {
         if (!current) return null;
 
         return (
-            <div className="flex items-center gap-2 px-3 h-10 border border-transparent text-sm text-rs-gray-600 font-medium">
+            <div className="flex items-center gap-2 px-3 h-10 border border-transparent text-sm text-[var(--rs-text-secondary)] font-medium">
                 <span className="truncate max-w-[150px]">{current.name}</span>
             </div>
         );
@@ -92,13 +92,13 @@ export function TenantSwitcher() {
             />
             {isPending && (
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <Loader2 className="w-4 h-4 animate-spin text-rs-gray-400" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[var(--rs-text-tertiary)]" />
                 </div>
             )}
 
             {/* Simple Toast for feedback */}
             {toastMessage && (
-                <div className="fixed bottom-4 right-4 bg-rs-black text-rs-white px-4 py-2 rounded shadow-lg text-sm z-50 animate-in fade-in slide-in-from-bottom-2">
+                <div className="fixed bottom-4 right-4 bg-[var(--rs-bg-inverse)] text-[var(--rs-text-inverse)] px-4 py-2 rounded shadow-lg text-sm z-50 animate-in fade-in slide-in-from-bottom-2">
                     {toastMessage}
                 </div>
             )}

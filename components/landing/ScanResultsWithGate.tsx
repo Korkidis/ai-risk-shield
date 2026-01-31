@@ -72,7 +72,7 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                     <div className={cn(
                                         "text-3xl font-black uppercase tracking-tighter leading-none",
                                         riskLevel === 'critical' ? 'text-[var(--rs-signal)]' :
-                                            riskLevel === 'high' ? 'text-amber-500' :
+                                            riskLevel === 'high' ? 'text-[var(--rs-risk-high)]' :
                                                 'text-[var(--rs-text-primary)]'
                                     )}>
                                         {riskProfile.verdict}
@@ -104,7 +104,7 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                     </div>
 
                     {/* ACTIONS PANEL */}
-                    <RSPanel className="bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)]">
+                    <RSPanel className="bg-[var(--rs-bg-element)] border-[var(--rs-border-primary)]">
                         <div className="space-y-4">
                             <div className="flex items-start gap-3">
                                 <div className="p-2 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded">
@@ -130,7 +130,7 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                         id="email-input-forensic"
                                     />
                                 </div>
-                                <div className="p-1 rounded-[var(--rs-radius-element)] border border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] shadow-[var(--rs-shadow-l1)]">
+                                <div className="p-1 rounded-[var(--rs-radius-element)] border border-[var(--rs-border-primary)] bg-[var(--rs-bg-element)] shadow-[var(--rs-shadow-l1)]">
                                     <RSButton
                                         className="w-full justify-center tracking-widest text-xs font-bold"
                                         variant="primary"
@@ -163,7 +163,7 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
 function RiskMetric({ label, value }: { label: string, value: number }) {
     const getColorStyle = (v: number) => {
         if (v >= 70) return 'text-[var(--rs-signal)]'
-        if (v >= 40) return 'text-amber-500' // amber
+        if (v >= 40) return 'text-[var(--rs-risk-caution)]'
         return 'text-[var(--rs-safe)]'
     }
 

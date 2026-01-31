@@ -22,7 +22,7 @@ export function RSScannerViewport({
     return (
         <div
             className={cn(
-                "bg-[#121212] border-[10px] border-[var(--rs-border-primary)] rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] relative overflow-hidden h-[450px] flex flex-col",
+                "bg-[var(--rs-bg-surface)] border-[10px] border-[var(--rs-border-primary)] rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] relative overflow-hidden h-[450px] flex flex-col",
                 className
             )}
             {...props}

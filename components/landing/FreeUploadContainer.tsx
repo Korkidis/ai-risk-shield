@@ -213,7 +213,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
           active={isProcessing}
           status={isProcessing ? 'scanning' : 'idle'}
           isDragActive={isDragActive}
-          className="rounded-[16px] border-none shadow-[var(--rs-shadow-l1)] bg-black min-h-[340px] relative overflow-hidden"
+          className="rounded-[16px] border-none shadow-[var(--rs-shadow-l1)] bg-rs-black min-h-[340px] relative overflow-hidden"
         >
           {!isProcessing ? (
             <div className="relative w-full h-full p-8 flex flex-col justify-center items-center z-40 text-center select-none group/screen">

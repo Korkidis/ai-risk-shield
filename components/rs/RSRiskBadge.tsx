@@ -25,13 +25,13 @@ export function RSRiskBadge({
     // Saul Bass Logic: Shape and Color tension
     // Critical = Red, Safe = Green, Others = Grayscale/Neutral to avoid "Christmas Tree" effect
     const styles = {
-        critical: "bg-rs-signal text-rs-white border-rs-signal",
-        high: "bg-rs-gray-900 text-rs-white border-rs-gray-900", // Stark Black/White for High
-        warning: "bg-rs-warning text-rs-white border-rs-warning", // Warning Orange
-        medium: "bg-rs-gray-200 text-rs-black border-rs-gray-400", // Grey Zone
-        low: "bg-rs-white text-rs-gray-600 border-rs-gray-200",
-        safe: "bg-rs-safe text-rs-white border-rs-safe",
-        info: "bg-[#005F87] text-white border-[#005F87]",
+        critical: "bg-[var(--rs-risk-critical)] text-[var(--rs-text-inverse)] border-[var(--rs-risk-critical)]",
+        high: "bg-[var(--rs-risk-high)] text-[var(--rs-text-inverse)] border-[var(--rs-risk-high)]",
+        warning: "bg-[var(--rs-risk-review)] text-[var(--rs-text-inverse)] border-[var(--rs-risk-review)]",
+        medium: "bg-[var(--rs-risk-caution)] text-[var(--rs-text-primary)] border-[var(--rs-risk-caution)]",
+        low: "bg-[var(--rs-bg-element)] text-[var(--rs-text-secondary)] border-[var(--rs-border-primary)]",
+        safe: "bg-[var(--rs-risk-safe)] text-[var(--rs-text-inverse)] border-[var(--rs-risk-safe)]",
+        info: "bg-[var(--rs-info)] text-white border-[var(--rs-info)]",
         unknown: "bg-transparent text-[var(--rs-text-tertiary)] border-dashed border-[var(--rs-border-primary)]",
     };
 

@@ -50,7 +50,7 @@ export function RSFindingsDossier({ isComplete, results }: RSFindingsDossierProp
 
     return (
         <div
-            className="bg-[#EAE5D9] rounded-[24px] border border-[#D6CEC1] flex-1 flex flex-col shadow-inner overflow-hidden text-[#1A1A1A] animate-in fade-in slide-in-from-bottom-4 duration-700 relative"
+            className="bg-[var(--rs-bg-surface)] rounded-[24px] border border-[var(--rs-border-primary)] flex-1 flex flex-col shadow-inner overflow-hidden text-[var(--rs-text-primary)] animate-in fade-in slide-in-from-bottom-4 duration-700 relative"
         >
 
 
@@ -58,9 +58,9 @@ export function RSFindingsDossier({ isComplete, results }: RSFindingsDossierProp
             <div className="relative z-10 flex flex-col h-full p-6 pt-8">
 
                 {/* Header */}
-                <div className="flex justify-between items-start mb-6 border-b-2 border-[#1A1A1A] pb-3">
+                <div className="flex justify-between items-start mb-6 border-b-2 border-[var(--rs-border-strong)] pb-3">
                     <div className="space-y-0.5">
-                        <div className="font-mono text-sm font-bold uppercase tracking-widest text-[#1A1A1A]">Key Findings</div>
+                        <div className="font-mono text-sm font-bold uppercase tracking-widest text-[var(--rs-text-primary)]">Key Findings</div>
                         <div className="font-mono text-[9px] opacity-40 uppercase tracking-widest">Doc_Ref_842-ALPHA</div>
                     </div>
                 </div>
@@ -68,18 +68,18 @@ export function RSFindingsDossier({ isComplete, results }: RSFindingsDossierProp
                 {/* Scrollable Findings */}
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-black/10 scrollbar-track-transparent">
                     {findings.length > 0 ? findings.map((f: any) => (
-                        <div key={f.id} className="group relative pl-5 border-l border-[#1A1A1A]/10 py-0.5">
+                        <div key={f.id} className="group relative pl-5 border-l border-[var(--rs-border-primary)] py-0.5">
                             {/* Marker */}
-                            <div className="absolute left-[-5px] top-2.5 w-[10px] h-[10px] rounded-full bg-[#EAE5D9] border border-[#D6CEC1] flex items-center justify-center">
+                            <div className="absolute left-[-5px] top-2.5 w-[10px] h-[10px] rounded-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] flex items-center justify-center">
                                 <div className={cn(
                                     "w-1 h-1 rounded-full",
-                                    f.type === 'critical' ? "bg-red-600" : "bg-emerald-600"
+                                    f.type === 'critical' ? "bg-[var(--rs-risk-critical)]" : "bg-[var(--rs-risk-safe)]"
                                 )} />
                             </div>
 
                             <div className="flex justify-between items-center mb-0.5">
                                 <div className="flex items-center gap-3">
-                                    <span className="font-bold text-xs uppercase tracking-tight text-[#1A1A1A]">{f.title}</span>
+                                    <span className="font-bold text-xs uppercase tracking-tight text-[var(--rs-text-primary)]">{f.title}</span>
                                     <RSRiskBadge
                                         level={f.type}
                                         size="sm"
@@ -88,7 +88,7 @@ export function RSFindingsDossier({ isComplete, results }: RSFindingsDossierProp
                                     />
                                 </div>
                             </div>
-                            <p className="font-mono text-[9px] leading-snug text-[#1A1A1A]/70 pr-2">
+                            <p className="font-mono text-[9px] leading-snug text-[var(--rs-text-secondary)] pr-2">
                                 {f.text}
                             </p>
                         </div>
@@ -103,10 +103,10 @@ export function RSFindingsDossier({ isComplete, results }: RSFindingsDossierProp
                 </div>
 
                 {/* Technical Footnote / Action Area */}
-                <div className="mt-4 pt-4 border-t border-[#1A1A1A]/10 flex flex-col gap-3">
+                <div className="mt-4 pt-4 border-t border-[var(--rs-border-primary)] flex flex-col gap-3">
                     <div className="flex items-center gap-3 px-1">
-                        <Info size={11} className="text-[#1A1A1A]/30" />
-                        <div className="font-mono text-[7px] text-[#1A1A1A]/40 uppercase tracking-widest leading-tight">
+                        <Info size={11} className="text-[var(--rs-text-tertiary)]" />
+                        <div className="font-mono text-[7px] text-[var(--rs-text-tertiary)] uppercase tracking-widest leading-tight">
                             Calibration: ISO_882_PRIME // Verified Forensic Dataset
                         </div>
                     </div>

@@ -60,7 +60,7 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
     const isErrorState = status !== 'valid';
 
     return (
-        <div className={cn("bg-[#121212] rounded-[var(--rs-radius-chassis)] border border-white/5 relative overflow-hidden", className)}>
+        <div className={cn("bg-rs-black rounded-[var(--rs-radius-chassis)] border border-[var(--rs-border-primary)] relative overflow-hidden", className)}>
             <div className="p-8 h-full flex flex-col justify-between relative z-10 font-mono text-xs">
 
                 {/* Header */}
@@ -76,7 +76,7 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
                 {/* Main Audit History - Always Visible */}
                 <div className="flex-1 relative min-h-0">
                     <div className={cn("space-y-6 animate-in fade-in duration-700", isErrorState && showOverlay && "opacity-20 blur-[1px]")}>
-                        <div className="grid grid-cols-4 gap-6 p-5 bg-white/[0.02] rounded-2xl border border-white/5 shadow-inner leading-none">
+                        <div className="grid grid-cols-4 gap-6 p-5 bg-[var(--rs-bg-element)]/50 rounded-2xl border border-[var(--rs-border-secondary)] shadow-inner leading-none">
                             <MiniFact icon={<UserCheck size={12} />} label="Creator" value={status === 'valid' ? "Verified" : "--"} />
                             <MiniFact icon={<Cpu size={12} />} label="Tool" value={status === 'valid' ? "Trusted" : "--"} />
                             <MiniFact icon={<Calendar size={12} />} label="Signed" value={status === 'valid' ? "Valid" : "--"} />
@@ -84,7 +84,7 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
                         </div>
 
                         <div className="space-y-4 pt-2">
-                            <div className="text-[8px] font-black text-white/20 tracking-[0.2em] uppercase pl-2">Provenance_Audit_History</div>
+                            <div className="text-[8px] font-black text-[var(--rs-text-tertiary)] tracking-[0.2em] uppercase pl-2">Provenance_Audit_History</div>
                             <div className="space-y-3">
                                 <FinalStep label="Signature Check" result={status === 'valid' ? "Verified" : "Missing"} status={status === 'valid' ? "success" : "danger"} />
                                 <FinalStep label="Manifest Integrity" result={status === 'valid' ? "Authenticated" : "Unverified"} status={status === 'valid' ? "success" : "danger"} />
@@ -114,7 +114,7 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
                 </div>
 
                 {/* Footer Controls */}
-                <div className="mt-8 flex items-center justify-between border-t border-white/[0.03] pt-6 relative z-30">
+                <div className="mt-8 flex items-center justify-between border-t border-[var(--rs-border-secondary)] pt-6 relative z-30">
                     <div className="flex gap-8 text-[9px] font-bold tracking-widest text-white/20 uppercase">
                         <span className="flex items-center gap-2">
                             <Fingerprint size={12} />
@@ -154,8 +154,8 @@ function MiniFact({ icon, label, value }: { icon: React.ReactNode, label: string
 
 function FinalStep({ label, result, status }: { label: string, result: string, status: 'success' | 'warning' | 'danger' }) {
     return (
-        <div className="flex items-center justify-between px-3 py-2 bg-white/[0.02] border border-white/[0.03] rounded-lg">
-            <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{label}</span>
+        <div className="flex items-center justify-between px-3 py-2 bg-[var(--rs-bg-element)]/30 border border-[var(--rs-border-secondary)] rounded-lg">
+            <span className="text-[9px] font-bold text-[var(--rs-text-tertiary)] uppercase tracking-widest">{label}</span>
             <div className="flex items-center gap-3">
                 <span className={cn(
                     "text-[9px] font-black uppercase tracking-widest",
