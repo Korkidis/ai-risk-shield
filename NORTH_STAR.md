@@ -634,6 +634,9 @@ Track major decisions here to maintain context:
 | Jan 2026 | Freemium over paid-only | Lower barrier, email list growth | TBD |
 | Jan 2026 | backend decisions to add  plus ther important ones
 | Jan 2026 | Hierarchical Tenancy | Implemented Parent/Child tenants + `switch-tenant` API for Agencies | SUCCESS |
+| Feb 2026 | **5-Tier Pricing Model** | FREE/PRO/TEAM/AGENCY/ENTERPRISE with punishing PRO overage to drive upgrades | See `SUBSCRIPTION_STRATEGY.md` |
+| Feb 2026 | **Supabase Realtime over Polling** | Polling caused 139GB egress, image flickering; Realtime is included in plan | SUCCESS |
+| Feb 2026 | **RLS Hardening** | Fixed all WARN-level linter issues, wrapped auth calls in SELECT subqueries | SUCCESS |
 
 *(Update this table as major architectural decisions are made)*
 

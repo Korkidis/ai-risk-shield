@@ -1,6 +1,7 @@
 ---
 description: Catch up on project status and outline the critical path
 ---
+
 1. Search for core documentation and recent logs:
    - Identify files like `NORTH_STAR.md`, `DESIGN_CONTEXT.md`, `README.md`, `FUNCTIONAL_PRD.md`.
    - Check the `brain/` directory in the artifact path for the most recent `walkthrough.md`.
