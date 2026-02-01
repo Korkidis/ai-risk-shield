@@ -475,12 +475,12 @@ This is the single source of truth for product vision, user needs, and implement
 - [ ] Free tier quota enforcement (3 scans/month)
 - [ ]Video support (with thumbnails)
 - [ ]Brand guidelines
-- [ ] Stripe integration (checkout + webhooks)
-- [ ] $29 one-time report purchase
-- [ ] Full 6-page report generation
-- [ ] $49/mo Individual plan subscription
-- [ ] Quota tracking + overage billing
-- [ ] Billing & Usage page
+- [x] Stripe integration (checkout + webhooks)
+- [x] $29 one-time report purchase
+- [x] Full 6-page report generation
+- [x] $49/mo Individual plan subscription
+- [x] Quota tracking + overage billing
+- [/] Billing & Usage page
 - [ ] Payment method management
 - [ ] Scan History view (see past scans)
 - [ ] Policy/Brand Rules/Guidelines (upload + apply)
@@ -637,6 +637,7 @@ Track major decisions here to maintain context:
 | Feb 2026 | **5-Tier Pricing Model** | FREE/PRO/TEAM/AGENCY/ENTERPRISE with punishing PRO overage to drive upgrades | See `SUBSCRIPTION_STRATEGY.md` |
 | Feb 2026 | **Supabase Realtime over Polling** | Polling caused 139GB egress, image flickering; Realtime is included in plan | SUCCESS |
 | Feb 2026 | **RLS Hardening** | Fixed all WARN-level linter issues, wrapped auth calls in SELECT subqueries | SUCCESS |
+| Feb 2026 | **Stripe Metered Billing** | Selected native Strike Usage Records over manual invoice items for overage | SUCCESS |
 
 *(Update this table as major architectural decisions are made)*
 

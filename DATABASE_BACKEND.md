@@ -12,7 +12,7 @@ The existing Supabase schema provides a **solid, enterprise-grade foundation**. 
 ## 2. Schema Audit
 
 ### Core Architecture (Multi-Tenant)
-*   **`tenants`**: Central entity. Includes `parent_tenant_id` (for Agency/Client hierarchy), `plan`, `stripe_customer_id`, and `monthly_scan_limit`.
+*   **`tenants`**: Central entity. Includes `parent_tenant_id` (for Agency/Client hierarchy), `plan`, `stripe_customer_id`, `stripe_metered_item_id` (for overage), and `monthly_scan_limit`.
 *   **`profiles`**: Links users to tenants. Role-based (`owner`, `admin`, `member`).
 *   **`rls_policies`**: START RLS enabled on all tables. Isolation enforced via `user_tenant_id()` helper function. **Result:** Bulletproof isolation.
 
@@ -207,6 +207,12 @@ During implementation, the schema was refined to match the actual database state
 **Migration**: `20260201_rls_final_cleanup.sql`
 *   Fixed remaining 4 WARN-level linter issues.
 *   Consolidated duplicate policies on `tenants`, `subscriptions`, `referral_events`, `tenant_switch_audit`.
+
+### G. Metered Billing (Usage-Based)
+**Migration**: `20260201_metered_billing.sql`
+*   **New Column**: `tenants.stripe_metered_item_id`.
+*   **Purpose**: Stores the unique Stripe Subscription Item ID for the metered usage price component.
+*   **Workflow**: Populated via webhook on checkout. Used by `reportScanUsage()` helper to report usage to Stripe API.
 
 ---
 

@@ -121,15 +121,22 @@ PRO overage is deliberately **punishing** ($2.50/scan = 5x base cost) to drive u
 | `customer.subscription.deleted` | Downgrade to FREE, reset limits |
 
 ### Overage Billing
-Overages are calculated at the end of each billing cycle and added to the next invoice.
+**Allocated Limits vs. Metered Usage:**
+- **Allocated**: Plan limits (e.g., 50 scans) are enforced by `monthly_scan_limit` in DB.
+- **Metered**: Usage *beyond* the limit is handled by Stripe Metered Billing.
+- **Implementation**:
+    1.  Checkout Session includes `price_metered_xxx` (Usage Type: Metered).
+    2.  Webhook stores `stripe_metered_item_id` in `tenants`.
+    3.  `reportScanUsage()` calls Stripe API `usage_records.create({ action: 'increment' })` on every scan.
+    4.  Stripe automatically calculates overage at end of billing cycle based on tiers.
 
-```sql
--- Overage calculation (pseudo-SQL)
-SELECT
-  (scans_used - plan_limit) * overage_cost_per_scan AS scan_overage,
-  (reports_used - plan_limit) * overage_cost_per_report AS report_overage
-FROM usage_ledger
-WHERE tenant_id = :tenant AND period = :current_period
+```typescript
+// lib/stripe-usage.ts
+await stripe.subscriptionItems.createUsageRecord(meteredItemId, {
+  quantity: 1,
+  action: 'increment',
+  timestamp: 'now'
+})
 ```
 
 ---
@@ -172,6 +179,7 @@ overage_reports INTEGER NOT NULL DEFAULT 0
 - [x] Update `consume_quota()` to allow overages for paid plans
 - [x] Build pricing page UI reflecting these tiers
 - [x] Implement annual billing option in Stripe checkout
+- [x] Implement Stripe Metered Billing (usage reporting)
 
 ---
 
@@ -179,6 +187,7 @@ overage_reports INTEGER NOT NULL DEFAULT 0
 
 | Date | Version | Author | Changes |
 | :--- | :--- | :--- | :--- |
+| 2026-02-01 | 1.1 | AI + Product | Implemented Metered Billing, Annual Discounts, and Pricing Page |
 | 2026-02-01 | 1.0 | AI + Product | Initial spec: 5 tiers, annual discount, overage pricing |
 
 ---
