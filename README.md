@@ -14,6 +14,7 @@ This project is driven by a set of "Hyper-Critical" documents that serve as the 
 | **[FUNCTIONAL_PRD.md](FUNCTIONAL_PRD.md)** | **Execution Blueprint**. The "What". Detailed feature specs, user flows, and technical constraints. |
 | **[GEMINI_C2PA_STANDARDS.md](GEMINI_C2PA_STANDARDS.md)** | **Forensic Logic**. The "How". Detailed AI scoring rules, prompts, and C2PA verification logic. |
 | **[DATABASE_BACKEND.md](DATABASE_BACKEND.md)** | **Infrastructure Truth**. Schema audit, storage policies, and backend architecture. |
+| **[SUBSCRIPTION_STRATEGY.md](SUBSCRIPTION_STRATEGY.md)** | **Pricing Model**. Tier definitions, limits, unit economics, and billing logic. |
 | **[DESIGN_CONTEXT.md](DESIGN_CONTEXT.md)** | **Visual System**. Design tokens, "Forensic Instrument" aesthetic, and component rules. |
 
 ---
@@ -34,6 +35,7 @@ This project is driven by a set of "Hyper-Critical" documents that serve as the 
 *   **Provenance Analysis**: Detection of C2PA manifests, digital signatures, and edit history.
 *   **Design Lab**: A component sandbox demonstrating the "Forensic Instrument" UI system.
 *   **Hierarchical Teams**: Agency admins can manage sub-tenant accounts.
+*   **Deep Mitigation**: AI-generated remediation plans for high-risk assets (Paid Feature).
 
 ## 🚀 Getting Started
 

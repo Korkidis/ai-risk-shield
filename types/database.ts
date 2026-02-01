@@ -132,3 +132,33 @@ export interface ProvenanceDetails {
 
   created_at: string
 }
+
+export interface MitigationReport {
+  id: string
+  scan_id: string
+  tenant_id: string
+  advice_content: string
+  created_at: string
+}
+
+export interface ReferralEvent {
+  id: string
+  user_id?: string | null
+  tenant_id?: string | null
+  scan_id?: string | null
+  event_type: 'insurance_click' | 'expert_consult_click' | string
+  metadata?: any | null
+  created_at: string
+}
+
+export interface TenantInvite {
+  id: string
+  tenant_id: string
+  email: string
+  role: 'owner' | 'admin' | 'member'
+  token: string
+  expires_at: string
+  created_by?: string | null
+  created_at: string
+  accepted_at?: string | null
+}

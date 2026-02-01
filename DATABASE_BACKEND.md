@@ -71,21 +71,17 @@ The system uses a **Self-Referential HTTP Pattern** for background processing:
 ---
 
 ## 4. Identified Gaps (To Build)
+**STATUS UPDATE (Feb 1, 2026): ALL GAPS IMPLEMENTED & DEPLOYED.**
 
-While the Core is solid, Feature 7 (Mitigation) and some "Instrument" features need schema updates.
+### A. Mitigation Reports (Completed)
+*   **Implemented**: `mitigation_reports` table created.
+*   **Limits**: `usage_limit_mitigation` column added to `tenants`.
 
-### A. Mitigation Reports (Missing)
-The "Deep Mitigation" feature requires tracking generated reports and usage limits.
-*   **Action**: Create `mitigation_reports` table.
-*   **Columns**: `scan_id`, `advice_content` (Markdown), `created_at`.
-*   **Limits**: Add `usage_limit_mitigation` to `tenants` table.
+### B. Insurance Referrals (Completed)
+*   **Implemented**: `referral_events` table created with `user_id` tracking.
 
-### B. Insurance Referrals (Missing)
-Need to track upsell clicks for revenue attribution.
-*   **Action**: Create `referral_events` table (or add to `audit_log`).
-
-### C. Team Invites (Logic Gap)
-Table structure exists (`profiles`), but invite flow (token generation, email) needs an API route or table for pending invites.
+### C. Team Invites (Completed)
+*   **Implemented**: `tenant_invites` table created with secure token logic.
 
 ---
 
@@ -149,6 +145,68 @@ During implementation, the schema was refined to match the actual database state
 **Status:** ✅ Implemented
 *   **Structure**: `tenants.parent_tenant_id` allows Agency/Enterprise accounts to own sub-tenants.
 *   **Switching**: Users with `agency` plan + `owner` role can switch context to child tenants via `/api/switch-tenant`.
+
+---
+
+## 7. Phase 2 Implementation Log (Feb 1, 2026)
+
+**Focus**: Feature Completion & Enterprise Hardening.
+
+### A. Backend Gap Closure
+*   **`mitigation_reports`**: Added to support paid "Deep Mitigation" feature. RLS verified for tenant isolation.
+*   **`referral_events`**: Added for tracking insurance upsell interactions. RLS allows authenticated storage.
+*   **`tenant_invites`**: added for team growth. Includes expiration logic and admin-only creation policies.
+
+### B. Database Hardening & Optimization
+**Status**: ✅ 100% Linter Compliance
+*   **RLS Performance**: All `auth.uid()` and `current_setting()` calls in policies are now wrapped in `(SELECT ...)` to prevent per-row re-evaluation (fixing `auth_rls_initplan` warnings).
+*   **Policy Consolidation**: Merged multiple permissive policies into single, optimized predicates for `tenants`, `subscriptions`, and `audit_log`.
+*   **Index Optimization**: Added missing blocking indexes for all foreign keys (`referral_events`, `mitigation_reports`, etc.) to improve join performance.
+*   **Security Polish**:
+    *   Restricted `WITH CHECK (true)` policies explicitly to `service_role`.
+    *   Secured function `search_path` for `remediation` helpers.
+
+---
+
+## 8. Phase 3 Implementation Log (Feb 1, 2026)
+
+**Focus**: Subscription Model & Pricing Infrastructure.
+
+### A. Subscription Strategy Document
+**File**: `SUBSCRIPTION_STRATEGY.md`
+*   **Purpose**: Single source of truth for all pricing, limits, and entitlements.
+*   **Coverage**: 5 tiers (FREE, PRO, TEAM, AGENCY, ENTERPRISE), annual discounts, overage pricing, feature flags.
+*   **Unit Economics**: Documented COGS ($0.015/scan), LTV calculations, and margin analysis.
+
+### B. Central Plans Configuration
+**File**: `lib/plans.ts`
+*   **Purpose**: Code-level config mapping tier → limits, prices, and feature flags.
+*   **Exports**: `getPlan()`, `hasFeature()`, `canUseOverage()`, `formatPrice()`.
+*   **Type Safety**: Full TypeScript types for `PlanId` and `PlanConfig`.
+
+### C. Entitlements Refactor
+**File**: `lib/entitlements.ts`
+*   **Change**: Now imports from `lib/plans.ts` instead of hardcoded values.
+*   **New Methods**: `willChargeOverage()`, `canAddSeat()`, `canAddBrandProfile()`, `getScanLimit()`, `getReportLimit()`.
+
+### D. Stripe Webhook Enhancement
+**File**: `app/api/stripe/webhook/route.ts`
+*   **New Handlers**: `customer.subscription.updated`, `customer.subscription.deleted`.
+*   **Core Logic**: `applyPlanToTenant()` function applies all limits and feature flags from `lib/plans.ts` on plan change.
+*   **Price Mapping**: `STRIPE_PRICE_TO_PLAN` maps Stripe Price IDs to internal plan IDs.
+
+### E. Database Schema Additions
+**Migration**: `20260201_subscription_columns.sql`
+*   **Limit Columns**: `monthly_report_limit`, `seat_limit`, `brand_profile_limit`.
+*   **Overage Columns**: `scan_overage_cost_cents`, `report_overage_cost_cents`.
+*   **Feature Flags**: `feature_bulk_upload`, `feature_co_branding`, `feature_white_label`, `feature_audit_logs`, `feature_priority_queue`, `feature_sso`, `feature_team_dashboard`.
+*   **Usage Tracking**: `reports_used`, `overage_reports` added to `usage_ledger`.
+*   **Plan Enum Fix**: Changed `'individual'` to `'pro'` to match strategy.
+
+### F. RLS Final Cleanup
+**Migration**: `20260201_rls_final_cleanup.sql`
+*   Fixed remaining 4 WARN-level linter issues.
+*   Consolidated duplicate policies on `tenants`, `subscriptions`, `referral_events`, `tenant_switch_audit`.
 
 ---
 

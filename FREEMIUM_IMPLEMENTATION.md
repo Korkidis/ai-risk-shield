@@ -1,6 +1,8 @@
 # Freemium Model Implementation Plan
 
-## Status: IN PROGRESS
+## Status: ✅ COMPLETE (Feb 1, 2026)
+
+> **Pricing Details**: See [SUBSCRIPTION_STRATEGY.md](SUBSCRIPTION_STRATEGY.md) for the comprehensive pricing model, tier limits, and unit economics.
 
 ### Completed ✅
 1. Database migration created (`20260104_freemium_model.sql`)
@@ -77,12 +79,13 @@ File: `lib/session.ts`
 - `uploaded_by` - Now nullable
 - `session_id` - UUID for anonymous
 
-### RLS Policies Added
-- Anonymous can INSERT assets (with session_id)
+### RLS Policies Added (Hardened Feb 1, 2026)
+- Anonymous can INSERT assets (with strict session_id checks)
 - Anonymous can SELECT own assets (by session_id)
-- Anonymous can INSERT scans (with session_id)
+- Anonymous can INSERT scans (with strict session_id checks)
 - Anonymous can SELECT own scans (by session_id)
 - Anonymous can SELECT findings for own scans
+- **Security Update**: All `auth.functions` are wrapped in `SELECT` for performance, and permissive policies are restricted where possible.
 
 ## Conversion Funnel
 
