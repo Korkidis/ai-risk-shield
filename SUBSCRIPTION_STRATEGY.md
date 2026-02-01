@@ -170,8 +170,8 @@ overage_reports INTEGER NOT NULL DEFAULT 0
 - [x] Update `lib/entitlements.ts` to read from `plans.ts`
 - [x] Add feature flag columns to `tenants` table (migration)
 - [x] Update `consume_quota()` to allow overages for paid plans
-- [ ] Build pricing page UI reflecting these tiers
-- [ ] Implement annual billing option in Stripe checkout
+- [x] Build pricing page UI reflecting these tiers
+- [x] Implement annual billing option in Stripe checkout
 
 ---
 

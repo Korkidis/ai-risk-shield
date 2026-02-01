@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getTenantId } from '@/lib/supabase/auth'
+import { reportScanUsage } from '@/lib/stripe-usage'
 
 /**
  * POST /api/scans/upload
@@ -136,6 +137,12 @@ export async function POST(request: Request) {
             // We do NOT fail the request here, as the scan was created successfully.
             // Just log it for audit.
         }
+
+        // 3. Report usage to Stripe for metered billing (fire-and-forget)
+        // This enables automatic overage billing at period end
+        reportScanUsage(tenantId).catch(err =>
+            console.error('Failed to report usage to Stripe:', err)
+        )
 
         // Trigger background processing
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'

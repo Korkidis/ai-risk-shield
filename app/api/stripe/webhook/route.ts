@@ -94,18 +94,40 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
     }
 
     // 2. Subscription fulfillment
-    if (purchaseType === 'subscription' && tenantId) {
+    if (purchaseType === 'subscription' && tenantId && session.subscription) {
         console.log(`[Webhook] Fulfilling subscription for tenant ${tenantId}`)
 
-        // Determine plan from price ID
-        const priceId = session.line_items?.data[0]?.price?.id || ''
-        const planId = STRIPE_PRICE_TO_PLAN[priceId] || 'pro'
+        // Fetch the full subscription to get subscription items
+        const subscription = await stripe.subscriptions.retrieve(
+            session.subscription as string,
+            { expand: ['items'] }
+        )
+
+        // Find the metered subscription item (has usage_type = 'metered')
+        let meteredItemId: string | null = null
+        let flatPriceId: string | null = null
+
+        for (const item of subscription.items.data) {
+            const price = item.price
+            if (price.recurring?.usage_type === 'metered') {
+                meteredItemId = item.id
+            } else {
+                // This is the flat subscription price - use it to determine plan
+                flatPriceId = price.id
+            }
+        }
+
+        // Determine plan from flat price ID
+        const planId = flatPriceId ? (STRIPE_PRICE_TO_PLAN[flatPriceId] || 'pro') : 'pro'
 
         await applyPlanToTenant(supabase, tenantId, planId, {
             stripe_subscription_id: session.subscription as string,
             stripe_customer_id: session.customer as string,
+            stripe_metered_item_id: meteredItemId, // Store for usage reporting
             subscription_status: 'active'
         })
+
+        console.log(`[Webhook] Stored metered item ID ${meteredItemId} for tenant ${tenantId}`)
     }
 }
 
