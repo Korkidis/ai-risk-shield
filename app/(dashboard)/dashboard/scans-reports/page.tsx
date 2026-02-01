@@ -22,6 +22,7 @@ import { RSModal } from '@/components/rs/RSModal'
 import { RSFileUpload } from '@/components/rs/RSFileUpload'
 import { ProvenanceTelemetryStream } from '@/components/rs/ProvenanceTelemetryStream'
 import { RSProcessingPanel } from '@/components/rs/RSProcessingPanel'
+import { useRealtimeScans } from '@/hooks/useRealtimeScans'
 
 // Wrapper to handle Suspense boundary for useSearchParams
 export default function ScansReportsPage() {
@@ -122,6 +123,18 @@ function ScansReportsContent() {
         fetchScans()
     }, [])
 
+    // Realtime subscription for processing scans (replaces polling)
+    const handleScanUpdate = useCallback((updated: Partial<ScanWithRelations> & { id: string }) => {
+        setScans(prev => prev.map(s =>
+            s.id === updated.id ? { ...s, ...updated } : s
+        ))
+    }, [])
+
+    useRealtimeScans({
+        scans,
+        onScanUpdate: handleScanUpdate
+    })
+
     const selectedScan = scans.find(s => s.id === selectedScanId)
 
     const handleScanClick = (id: string) => {
@@ -133,14 +146,7 @@ function ScansReportsContent() {
         }
     }
 
-    // Polling Logic
-    useEffect(() => {
-        const hasActiveScans = scans.some(s => s.status === 'pending' || s.status === 'processing');
-        if (hasActiveScans) {
-            const interval = setInterval(() => fetchScans(true), 3000);
-            return () => clearInterval(interval);
-        }
-    }, [scans]);
+    // Polling removed - now using useRealtimeScans hook above
 
     const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation()
@@ -664,11 +670,12 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
 
     const riskTier = getRiskTier(score);
 
-    // Reset image state when scan changes
+    // Only reset image state when scan ID changes (not on every data update)
     useEffect(() => {
         setImgSrc(thumbnailUrl || scan.asset_url || scan.image_url);
         setImgError(false);
-    }, [scan.id, thumbnailUrl, scan.asset_url, scan.image_url]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scan.id]); // Intentionally only depend on ID to prevent flicker
 
     const handleImgError = () => {
         // If we were trying to load the thumbnail and failed, try the full asset URL
