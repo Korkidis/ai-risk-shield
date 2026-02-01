@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         // 1. Check Usage Quota
         const { data: tenant, error: tenantError } = await supabase
             .from('tenants')
-            .select('monthly_scan_limit, scans_used_this_month')
+            .select('monthly_scan_limit, scans_used_this_month, plan')
             .eq('id', tenantId)
             .single() as unknown as { data: any, error: any }
 
@@ -48,8 +48,11 @@ export async function POST(request: Request) {
 
         const limit = tenant.monthly_scan_limit || 3 // Default low limit if missing
         const used = tenant.scans_used_this_month || 0
+        const plan = tenant.plan || 'free'
+        const isOverage = used >= limit
 
-        if (used >= limit) {
+        // Block FREE users at limit - paid plans can proceed with overage
+        if (isOverage && plan === 'free') {
             return NextResponse.json({
                 error: 'Monthly scan limit reached',
                 details: `You have used ${used} of ${limit} scans. Please upgrade your plan.`
@@ -145,7 +148,9 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            scanId: (scan as any).id
+            scanId: (scan as any).id,
+            isOverage,
+            overageWarning: isOverage ? 'This scan will incur overage charges at your plan rate.' : null
         })
     } catch (error: any) {
         console.error('Upload error:', error)

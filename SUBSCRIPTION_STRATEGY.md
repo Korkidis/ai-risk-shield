@@ -169,7 +169,7 @@ overage_reports INTEGER NOT NULL DEFAULT 0
 - [x] Update `app/api/stripe/webhook/route.ts` to apply limits on upgrade
 - [x] Update `lib/entitlements.ts` to read from `plans.ts`
 - [x] Add feature flag columns to `tenants` table (migration)
-- [ ] Update `consume_quota()` to allow overages for paid plans
+- [x] Update `consume_quota()` to allow overages for paid plans
 - [ ] Build pricing page UI reflecting these tiers
 - [ ] Implement annual billing option in Stripe checkout
 
