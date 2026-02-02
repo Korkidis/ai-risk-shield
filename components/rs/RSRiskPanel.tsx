@@ -101,7 +101,7 @@ export function RSRiskPanel({
 
     return (
         <div className={cn(
-            "relative w-full rounded-[32px] shadow-2xl overflow-hidden flex flex-col transition-colors duration-500",
+            "relative w-full rounded-2xl shadow-xl overflow-hidden flex flex-col transition-colors duration-500",
             RISK_THEME.surface,
             RISK_THEME.border,
             "border",
@@ -110,7 +110,7 @@ export function RSRiskPanel({
             className
         )}>
             {/* 1. Header Area - MINIMALIST RAMS */}
-            <div className={cn("flex justify-between items-start px-8 py-6 md:px-12 md:py-8 shrink-0", RISK_THEME.header)}>
+            <div className={cn("flex justify-between items-start px-8 py-6 shrink-0", RISK_THEME.header)}>
                 {/* Just the ID and Status Dot. No noise. */}
                 <div className="flex items-center gap-4">
                     <div className={cn(
@@ -133,17 +133,17 @@ export function RSRiskPanel({
                 </div>
             </div>
 
-            <div className="p-8 md:p-12 pl-8 md:pl-16 flex-1 flex flex-col overflow-y-auto">
-                {/* Main Content Grid */}
-                <div className="flex flex-col xl:flex-row gap-8 xl:gap-12 shrink-0">
+            <div className="p-8 flex-1 flex flex-col overflow-y-auto">
+                {/* Main Content Grid - TIGHTER GAP */}
+                <div className="flex flex-col xl:flex-row gap-6 shrink-0">
 
                     {/* LEFT COLUMN: Score & Action Statement (Flexible / Shrinkable) */}
-                    <div className="flex-1 min-w-0 flex flex-col pt-2">
+                    <div className="flex-1 min-w-0 flex flex-col pt-1">
                         <div className="relative">
 
                             {/* Score Row: Flex on Mobile to accommodate Likelihood */}
                             <div className="flex items-start justify-between xl:block">
-                                <div className={cn("text-[100px] xl:text-[100px] 2xl:text-[140px] leading-[0.8] font-black tracking-tighter", RISK_THEME.text)}>
+                                <div className={cn("text-[85px] xl:text-[85px] 2xl:text-[120px] leading-[0.85] font-black tracking-tighter", RISK_THEME.text)}>
                                     {isScanning ? (
                                         <motion.span
                                             animate={{ opacity: [0.3, 1, 0.3] }}
@@ -154,7 +154,7 @@ export function RSRiskPanel({
                                     ) : (
                                         <div className="flex items-start">
                                             {score}
-                                            <span className={cn("text-[30px] xl:text-[30px] 2xl:text-[40px] font-bold mt-6 xl:mt-4 2xl:mt-8", RISK_THEME.textMuted)}>%</span>
+                                            <span className={cn("text-[24px] xl:text-[24px] 2xl:text-[32px] font-bold mt-4 xl:mt-3 2xl:mt-6", RISK_THEME.textMuted)}>%</span>
                                         </div>
                                     )}
                                 </div>
@@ -164,16 +164,16 @@ export function RSRiskPanel({
                             </div>
 
                             {/* Action Statement: Smaller, contained, no interference */}
-                            <div className="mt-6 pr-4 max-w-[240px] xl:max-w-[280px]">
+                            <div className="mt-4 pr-4 max-w-[240px] xl:max-w-[280px]">
                                 <h3 className={cn(
-                                    "text-xl md:text-2xl leading-tight tracking-tight",
+                                    "text-lg md:text-xl leading-tight tracking-tight",
                                     RISK_THEME.text,
                                     level === 'critical' ? "font-normal" : "font-light"
                                 )}>
                                     {actionStatement}
                                 </h3>
                                 <div className={cn(
-                                    "h-1 w-12 mt-4",
+                                    "h-1 w-8 mt-3", // Smaller bar
                                     level === 'critical' ? "bg-[var(--rs-signal)]" : RISK_THEME.text.replace('text-', 'bg-')
                                 )} />
                             </div>
@@ -181,13 +181,13 @@ export function RSRiskPanel({
                     </div>
 
                     {/* RIGHT COLUMN: Likelihood + Analog Dials (Prioritized Width) */}
-                    <div className="flex-[1.5] flex flex-col min-w-0 pt-2 gap-8">
+                    <div className="flex-[1.5] flex flex-col min-w-0 pt-1 gap-6">
 
-                        {/* 1. Likelihood Bar (Desktop Only) */}
+                        {/* 1. Likelihood Bar (Desktop Only) - TIGHTER SPACING */}
                         <LikelihoodBar className="hidden xl:block w-full" />
 
-                        {/* 2. AUXILIARY DIALS (Directly on panel, no card) */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 mt-4 md:mt-auto">
+                        {/* 2. AUXILIARY DIALS (Directly on panel, no card) - TIGHTER GRID */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-1 mt-2 md:mt-auto">
                             {[
                                 { label: 'IP_RISK', val: ipScore, lvl: ipScore > 50 ? 'critical' : 'safe' },
                                 { label: 'BRAND_SAFETY', val: safetyScore, lvl: safetyScore > 50 ? 'critical' : 'safe' },

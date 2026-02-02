@@ -381,30 +381,37 @@ export default function DashboardPage() {
 
             {/* RIGHT PANE: ANALYSIS & TELEMETRY (50%) - LIGHT MODE PANEL */}
             <div className="flex flex-col min-h-0 h-full gap-6">
-                <RSRiskPanel
-                    id={isComplete ? "SYS-STD-01" : "--"}
-                    score={results.composite}
-                    level={isComplete ? (getRiskTier(results.composite).level as any) : 'low'}
-                    ipScore={results.ipRisk}
-                    safetyScore={results.brandSafety}
-                    provenanceScore={results.provenance}
-                    status={isScanning ? 'scanning' : isComplete ? 'completed' : 'empty'}
-                    className="flex-shrink-0"
-                />
 
-                {/* Forensic Summary Card - Only visible when results exist */}
-                {(isComplete && analysisResult) && (
-                    <div className="flex-1 min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <RSFindingsDossier
-                            isComplete={isComplete}
-                            results={{
-                                ipRisk: results.ipRisk,
-                                brandSafety: results.brandSafety,
-                                provenance: results.provenance
-                            }}
-                        />
-                    </div>
-                )}
+                {/* 1. RISK ANALYSIS PANEL (Active / Standby) */}
+                <div className="flex-[1.3] w-full min-h-0">
+                    <RSRiskPanel
+                        id={isComplete ? "SYS-STD-01" : "--"}
+                        score={results.composite}
+                        level={isComplete ? (getRiskTier(results.composite).level as any) : 'low'}
+                        ipScore={results.ipRisk}
+                        safetyScore={results.brandSafety}
+                        provenanceScore={results.provenance}
+                        status={isScanning ? 'scanning' : isComplete ? 'completed' : 'empty'}
+                        className="w-full h-full"
+                    />
+                </div>
+
+                {/* 2. FINDINGS DOSSIER (Conditional Reveal) */}
+                <div className="flex-1 w-full min-h-0 relative">
+                    {(isComplete && analysisResult) && (
+                        <div className="absolute inset-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <RSFindingsDossier
+                                isComplete={isComplete}
+                                results={{
+                                    ipRisk: results.ipRisk,
+                                    brandSafety: results.brandSafety,
+                                    provenance: results.provenance
+                                }}
+                                className="w-full h-full"
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             <RSProvenanceDrawer
