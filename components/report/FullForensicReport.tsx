@@ -9,7 +9,7 @@ interface FullForensicReportProps {
 }
 
 // Imports are already at the top, removing duplicates introduced by previous edit.
-import { cn } from '@/lib/utils'
+import { cn, formatBytes } from '@/lib/utils'
 
 export function FullForensicReport({ scan, asset, findings, tenantName, userName }: FullForensicReportProps) {
     const score = scan.composite_score || 0
@@ -27,23 +27,23 @@ export function FullForensicReport({ scan, asset, findings, tenantName, userName
             </div>
 
             {/* Header */}
-            <header className="border-b-[4px] border-black pb-8 mb-12 flex justify-between items-end">
+            <header className="border-b-[4px] border-[var(--rs-text-primary)] pb-8 mb-12 flex justify-between items-end">
                 <div>
-                    <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Forensic Analysis Report</h1>
-                    <div className="text-gray-500 text-sm uppercase tracking-widest font-mono">
+                    <h1 className="text-4xl font-black uppercase tracking-tighter mb-2 text-[var(--rs-text-primary)]">Forensic Analysis Report</h1>
+                    <div className="text-[var(--rs-text-tertiary)] text-sm uppercase tracking-widest font-mono">
                         ID: {scan.id} • {new Date().toLocaleDateString()}
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Prepared For</div>
-                    <div className="text-xl font-black">{tenantName}</div>
-                    <div className="text-sm text-gray-500">{userName}</div>
+                    <div className="text-sm font-bold text-[var(--rs-text-tertiary)] uppercase tracking-wider mb-1">Prepared For</div>
+                    <div className="text-xl font-black text-[var(--rs-text-primary)]">{tenantName}</div>
+                    <div className="text-sm text-[var(--rs-text-tertiary)]">{userName}</div>
                 </div>
             </header>
 
             {/* Executive Summary Grid */}
-            <section className="bg-gray-50 p-8 rounded-xl border-2 border-gray-200 mb-12">
-                <h2 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-6 border-b border-gray-200 pb-2">Executive Summary</h2>
+            <section className="bg-[var(--rs-bg-well)] p-8 rounded-xl border-2 border-[var(--rs-border-primary)] mb-12">
+                <h2 className="text-sm font-black uppercase tracking-widest text-[var(--rs-text-tertiary)] mb-6 border-b border-[var(--rs-border-primary)] pb-2">Executive Summary</h2>
 
                 <div className="flex items-center gap-12">
 
@@ -59,17 +59,17 @@ export function FullForensicReport({ scan, asset, findings, tenantName, userName
 
                     {/* Asset Info */}
                     <div className="flex-1 space-y-4 font-mono text-sm">
-                        <div className="flex justify-between border-b border-gray-200 pb-1">
-                            <span className="text-gray-500">Asset Filename</span>
-                            <span className="font-bold">{asset.filename}</span>
+                        <div className="flex justify-between border-b border-[var(--rs-border-primary)] pb-1">
+                            <span className="text-[var(--rs-text-tertiary)]">Asset Filename</span>
+                            <span className="font-bold text-[var(--rs-text-primary)]">{asset.filename}</span>
                         </div>
-                        <div className="flex justify-between border-b border-gray-200 pb-1">
-                            <span className="text-gray-500">File Type</span>
-                            <span className="font-bold">{asset.file_type.toUpperCase()} / {asset.mime_type}</span>
+                        <div className="flex justify-between border-b border-[var(--rs-border-primary)] pb-1">
+                            <span className="text-[var(--rs-text-tertiary)]">File Type</span>
+                            <span className="font-bold text-[var(--rs-text-primary)]">{asset.file_type.toUpperCase()} / {asset.mime_type}</span>
                         </div>
-                        <div className="flex justify-between border-b border-gray-200 pb-1">
-                            <span className="text-gray-500">Size</span>
-                            <span className="font-bold">{(asset.file_size / 1024 / 1024).toFixed(2)} MB</span>
+                        <div className="flex justify-between border-b border-[var(--rs-border-primary)] pb-1">
+                            <span className="text-[var(--rs-text-tertiary)]">Size</span>
+                            <span className="font-bold text-[var(--rs-text-primary)]">{asset.file_size ? formatBytes(asset.file_size) : '---'}</span>
                         </div>
                         <div className="flex justify-between border-b border-gray-200 pb-1">
                             <span className="text-gray-500">Scan Date</span>
@@ -96,8 +96,8 @@ export function FullForensicReport({ scan, asset, findings, tenantName, userName
 
             {/* Findings Table */}
             <section className="mb-12">
-                <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3">
-                    <span className="w-2 h-8 bg-blue-600 block"></span>
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3 text-[var(--rs-text-primary)]">
+                    <span className="w-2 h-8 bg-[var(--rs-info)] block"></span>
                     Key Findings
                 </h2>
 

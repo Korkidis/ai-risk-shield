@@ -78,7 +78,7 @@ export interface ScanFinding {
 import { RiskProfile } from '@/lib/gemini-types'
 
 export interface ScanWithRelations extends ExtendedScan {
-  assets?: Pick<ExtendedAsset, 'filename' | 'file_type'>
+  assets?: Pick<ExtendedAsset, 'filename' | 'file_type' | 'file_size'>
   scan_findings?: ScanFinding[]
   email?: string | null
 

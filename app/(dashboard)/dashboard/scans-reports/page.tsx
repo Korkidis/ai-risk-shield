@@ -23,6 +23,9 @@ import { RSFileUpload } from '@/components/rs/RSFileUpload'
 import { ProvenanceTelemetryStream } from '@/components/rs/ProvenanceTelemetryStream'
 import { RSProcessingPanel } from '@/components/rs/RSProcessingPanel'
 import { useRealtimeScans } from '@/hooks/useRealtimeScans'
+import { formatBytes } from '@/lib/utils'
+
+import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
 
 // Wrapper to handle Suspense boundary for useSearchParams
 export default function ScansReportsPage() {
@@ -96,6 +99,7 @@ function ScansReportsContent() {
                 status: s.status === 'complete' ? 'completed' : s.status,
                 filename: s.assets?.filename || 'Unnamed Asset',
                 file_type: s.assets?.file_type || 'image',
+                file_size: s.assets?.file_size || 0,
                 scan_findings: s.scan_findings || [],
                 // Provenance Details mapping (handle array from join)
                 provenance_details: Array.isArray(s.provenance_details) ? s.provenance_details[0] : s.provenance_details,
@@ -401,7 +405,7 @@ function ScansReportsContent() {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
-                            className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-[#FDFDFC] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
+                            className="fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[#FDFDFC] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
                         >
                             {/* Drawer Header */}
                             <div className="h-16 border-b border-rs-border-primary flex items-center justify-between px-6 bg-white/50 backdrop-blur-md">
@@ -435,45 +439,20 @@ function ScansReportsContent() {
 
                                 {/* Risk Diagnostic Summary */}
                                 <div className="space-y-6">
-                                    <div className="p-5 bg-white border border-rs-border-primary relative overflow-hidden shadow-sm">
-                                        <div className="flex items-center justify-between mb-4 relative z-10">
-                                            <div>
-                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary block mb-1">Forensic_Verdict</span>
-                                                <div
-                                                    className="text-2xl font-black uppercase tracking-tighter"
-                                                    style={{ color: getRiskTier(selectedScan?.risk_profile?.composite_score || 0).colorVar }}
-                                                >
-                                                    {getRiskTier(selectedScan?.risk_profile?.composite_score || 0).label}
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-4xl font-black tracking-tighter text-rs-text-primary">
-                                                    {selectedScan?.risk_profile?.composite_score}
-                                                </div>
-                                                <span className="text-[9px] font-bold uppercase tracking-widest text-rs-text-tertiary">Global_Score</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Horizontal Meter */}
-                                        <div className="w-full h-1.5 bg-rs-gray-100 rounded-full overflow-hidden relative z-10">
-                                            <div
-                                                className="h-full transition-all duration-1000 ease-out"
-                                                style={{
-                                                    width: `${selectedScan?.risk_profile?.composite_score}%`,
-                                                    backgroundColor: getRiskTier(selectedScan?.risk_profile?.composite_score || 0).colorVar
-                                                }}
-                                            />
-                                        </div>
-
-                                        <p className="text-[10px] text-rs-text-secondary leading-relaxed font-medium mt-4 relative z-10">
-                                            {selectedScan?.risk_profile?.chief_officer_strategy || `Forensic analysis suggests provenance signature with system confidence of ${selectedScan?.risk_profile?.composite_score}%.`}
-                                        </p>
-
-                                        {/* Background Watermark */}
-                                        <div className="absolute -bottom-8 -right-8 text-9xl font-black text-rs-gray-50 z-0 select-none opacity-50">
-                                            {selectedScan?.risk_profile?.composite_score}
-                                        </div>
-                                    </div>
+                                    <RSRiskPanel
+                                        id={selectedScan?.id?.slice(0, 8).toUpperCase() || "UNKNOWN"}
+                                        status={
+                                            selectedScan?.status === 'processing' || selectedScan?.status === 'pending' ? 'scanning' :
+                                                selectedScan?.status === 'failed' ? 'completed' : // fallback
+                                                    'completed'
+                                        }
+                                        score={selectedScan?.risk_profile?.composite_score || 0}
+                                        level={(selectedScan?.risk_level as any) || 'low'}
+                                        ipScore={selectedScan?.risk_profile?.ip_report?.score || 0}
+                                        safetyScore={selectedScan?.risk_profile?.safety_report?.score || 0}
+                                        provenanceScore={selectedScan?.risk_profile?.provenance_report?.score || 0}
+                                        className="shadow-sm"
+                                    />
 
                                     {/* Findings List (Timeline Style) */}
                                     <div className="border border-rs-border-primary bg-white">
@@ -799,7 +778,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                             onChange={(e) => onBulkToggle(e.target.checked)}
                             className={cn(
                                 "w-5 h-5 appearance-none border-2 border-rs-border-primary bg-transparent transition-all cursor-pointer rounded-[2px]",
-                                "checked:bg-[#1E40AF] checked:border-[#1E40AF] relative",
+                                "checked:bg-[var(--rs-info)] checked:border-[var(--rs-info)] relative",
                                 "after:content-[''] after:hidden checked:after:block after:w-2 after:h-2 after:bg-white after:absolute after:top-[3px] after:left-[3px] after:rounded-[1px]"
                             )}
                         />
@@ -813,11 +792,11 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                 <div className="flex items-baseline gap-1" style={{ color: scan.status === 'completed' ? riskTier.colorVar : 'var(--rs-text-tertiary)' }}>
                     {scan.status === 'completed' ? (
                         <>
-                            <span className="text-[32px] font-bold font-mono leading-none tracking-tighter">{score}</span>
-                            <span className="text-[18px] font-mono opacity-60 leading-none">/100</span>
+                            <span className="text-[32px] font-bold font-mono leading-none tracking-[-0.05em]">{score}</span>
+                            <span className="text-[14px] font-mono opacity-60 leading-none">/100</span>
                         </>
                     ) : (
-                        <span className="text-[14px] font-mono font-bold tracking-widest uppercase">
+                        <span className="text-[12px] font-mono font-bold tracking-widest uppercase">
                             {scan.status === 'failed' ? 'ERROR' : 'PENDING...'}
                         </span>
                     )}
@@ -835,10 +814,10 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                 </div>
 
                 {/* 4. Metadata */}
-                <div className="mt-[4px] flex items-center gap-2 text-[10px] text-rs-text-tertiary">
-                    <span>{formatDistanceToNow(new Date(scan.created_at || new Date()))} ago</span>
+                <div className="mt-[4px] flex items-center gap-2 text-[10px] text-rs-text-tertiary font-mono uppercase tracking-wide">
+                    <span>{formatDistanceToNow(new Date(scan.created_at || new Date()))} AGO</span>
                     <span className="w-0.5 h-0.5 rounded-full bg-current" />
-                    <span>2.4 MB</span>
+                    <span>{(scan as any).file_size ? formatBytes((scan as any).file_size) : '---'}</span>
                 </div>
 
                 {/* Spacer to push actions to bottom */}

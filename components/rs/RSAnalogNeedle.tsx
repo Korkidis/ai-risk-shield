@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 import { RiskLevel } from './RSRiskScore';
@@ -9,22 +9,60 @@ interface RSAnalogNeedleProps {
     label?: string;
     level?: RiskLevel;
     powered?: boolean;
+    size?: number;
+    isScanning?: boolean;
+    className?: string;
+    transparentBg?: boolean;
+    fluid?: boolean;
 }
+
+// Theme Enforced by Design Lab
+const NEEDLE_THEME = {
+    surface: "bg-[#EFEEE9]",           // Warm white (Braun)
+    surfaceWell: "bg-[var(--rs-bg-well)]", // Dark well
+    border: "border-[#D1CDC7]",        // Subtle border
+    needle: "bg-[#222222]",            // Needle
+    pivot: "bg-[#1A1A1A]",             // Pivot
+    text: "text-[#1A1A1A]",            // Text
+    shadow: "shadow-[6px_6px_12px_rgba(163,177,198,0.2),-6px_-6px_12px_rgba(255,255,255,0.9),inset_2px_2px_4px_rgba(0,0,0,0.05)]",
+    shadowWell: "shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]"
+};
 
 export function RSAnalogNeedle({
     value = 0,
     label = "Risk Bias",
-
     size = 288,
     isScanning = false,
-    powered = true
-}: RSAnalogNeedleProps & { size?: number, isScanning?: boolean }) {
+    powered = true,
+    transparentBg = false,
+    fluid = false,
+    className
+}: RSAnalogNeedleProps) {
     const [jitter, setJitter] = useState(0);
     const [scanningValue, setScanningValue] = useState(0);
+    const [containerWidth, setContainerWidth] = useState(size);
+    const containerRef = useRef<HTMLDivElement>(null);
+
     const BASE_SIZE = 300;
-    const scale = size / BASE_SIZE;
 
+    // Auto-scale logic if fluid
+    useEffect(() => {
+        if (!fluid || !containerRef.current) return;
 
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                if (entry.contentBoxSize) {
+                    setContainerWidth(entry.contentRect.width);
+                }
+            }
+        });
+
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, [fluid]);
+
+    const currentSize = fluid ? containerWidth : size;
+    const scale = currentSize / BASE_SIZE;
 
     // Scanning Jitter Effect
     useEffect(() => {
@@ -48,13 +86,24 @@ export function RSAnalogNeedle({
     const effectiveValue = powered ? (isScanning ? (50 + jitter) : value) : 0;
     const rotation = (effectiveValue / 100) * 180 - 90;
 
+    const formattedValue = !powered ? "--" : (isScanning ? Math.floor(scanningValue) : value);
+
     return (
-        <div className="flex flex-col items-center gap-3">
+        <div ref={containerRef} className={cn("flex flex-col items-center gap-3", fluid ? "w-full" : "", className)}>
             {/* Dial Container */}
             <div
                 className="relative flex-shrink-0"
-                style={{ width: size, height: size }}
+                style={{
+                    width: fluid ? '100%' : size,
+                    height: fluid ? containerWidth : size
+                }}
             >
+                {/* 
+                   We use a wrapper to center the scaled content perfectly.
+                   The content thinks it is BASE_SIZE px wide.
+                   We assume transform-origin top-left and calculate shifts if needed, 
+                   but usually just placing it at 0,0 and scaling is enough if container matches size.
+                */}
                 <div
                     style={{
                         width: BASE_SIZE,
@@ -62,9 +111,20 @@ export function RSAnalogNeedle({
                         transform: `scale(${scale})`,
                         transformOrigin: 'top left'
                     }}
-                    className="rounded-full bg-[var(--rs-bg-surface)] p-6 flex items-center justify-center relative border-t border-l border-white/10 border-b-2 border-r-2 border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l2)]"
+                    className={cn(
+                        "rounded-full p-2 flex items-center justify-center relative",
+                        // transparentBg moves the visual weight to the inner element
+                        transparentBg ? "bg-transparent" : "bg-[var(--rs-bg-surface)] border-t border-l border-white/10 border-b-2 border-r-2 border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l2)]"
+                    )}
                 >
-                    <div className="w-full h-full rounded-full bg-[var(--rs-bg-well)] shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)] relative overflow-hidden flex flex-col items-center justify-center border-2 border-[var(--rs-border-primary)]/50">
+                    <div className={cn(
+                        "w-full h-full rounded-full relative overflow-hidden flex flex-col items-center justify-center border-4",
+                        // If transparent, we keep the border/bezel to give it that "inserted instrument" feel (physic vibe)
+                        // Enhanced contrast to prevent blending: darker border, stronger bevel light/dark
+                        transparentBg
+                            ? cn(NEEDLE_THEME.surface, "border-[3px]", NEEDLE_THEME.border, NEEDLE_THEME.shadow)
+                            : cn(NEEDLE_THEME.surfaceWell, NEEDLE_THEME.shadowWell, "border-[var(--rs-border-primary)]/50")
+                    )}>
 
                         {/* Uniform Tick Marks */}
                         <div className="absolute inset-5 rounded-full pointer-events-none">
@@ -79,57 +139,50 @@ export function RSAnalogNeedle({
                             ))}
                         </div>
 
-                        {/* Hazard Zone - Safety Orange */}
-                        <div className="absolute inset-4 rounded-full border-[6px] border-transparent border-t-[var(--rs-signal)]/20 border-r-[var(--rs-signal)]/20 rotate-[45deg] pointer-events-none" />
+                        {/* Hazard Zone - Safety Orange (Arc of 90deg aka 25%) - 12 to 3 o'clock */}
+                        <div className="absolute inset-4 rounded-full border-[6px] border-transparent border-r-[var(--rs-signal)] -rotate-45 opacity-80 pointer-events-none" />
 
-                        {/* Physical Needle Shadow */}
+                        {/* Physical Needle Shadow - Sharper, closer */}
                         <div
-                            className="absolute bottom-1/2 left-1/2 w-[2px] h-[95px] bg-black/5 origin-bottom blur-[2px] transition-transform duration-100"
-                            style={{ transform: `translateX(3px) rotate(${rotation + 1}deg)` }}
+                            className="absolute bottom-1/2 left-1/2 w-[2px] h-[95px] bg-black/10 origin-bottom blur-[1px] transition-transform duration-100"
+                            style={{ transform: `translateX(2px) rotate(${rotation + 2}deg)` }}
                         />
 
-                        {/* Instrument Needle */}
+                        {/* Instrument Needle - Darker, thinner */}
                         <div
-                            className="absolute bottom-1/2 left-1/2 origin-bottom transition-transform duration-100 z-20"
+                            className={cn("absolute bottom-1/2 left-1/2 origin-bottom transition-transform duration-100 z-20", NEEDLE_THEME.needle)}
                             style={{
-                                width: powered ? '2px' : '3px',
+                                width: '2px',
                                 height: '100px',
                                 transform: `translateX(-50%) rotate(${rotation}deg)`,
-                                backgroundColor: powered ? 'var(--rs-black)' : 'var(--rs-gray-500)',
-                                opacity: powered ? 1 : 0.4
+                                opacity: 1
                             }}
                         />
 
-                        {/* Machined Pivot Hub */}
-                        <div className="absolute bottom-1/2 left-1/2 w-10 h-10 -translate-x-1/2 translate-y-1/2 rounded-full bg-[var(--rs-gray-800)] shadow-[2px_2px_5px_rgba(0,0,0,0.4)] z-30 border-t border-white/10 flex items-center justify-center">
-                            <div
-                                className="w-1.5 h-1.5 rounded-full"
-                                style={{ backgroundColor: powered ? 'var(--rs-black)' : 'var(--rs-gray-600)' }}
-                            />
+                        {/* Machined Pivot Hub - Larger, matte */}
+                        <div className={cn("absolute bottom-1/2 left-1/2 w-8 h-8 -translate-x-1/2 translate-y-1/2 rounded-full shadow-[1px_1px_3px_rgba(0,0,0,0.3)] z-30 flex items-center justify-center", NEEDLE_THEME.pivot)}>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#111]" />
                         </div>
 
-                        {/* Internal Digital Readout (Numbers ONLY) */}
-                        <div className="absolute bottom-8 text-center w-full z-10">
-                            <div className={cn(
-                                "text-5xl font-medium tracking-tighter transition-opacity duration-300",
-                                powered ? "text-[var(--rs-text-primary)] opacity-90" : "text-[var(--rs-text-primary)] opacity-10"
-                            )}>
-                                {isScanning ? scanningValue : (powered ? Math.floor(value) : '')}
-                            </div>
+                        {/* Digital Readout */}
+                        <div className={cn("absolute top-[70%] left-1/2 -translate-x-1/2 font-mono text-3xl font-bold tracking-tighter z-10 w-full text-center opacity-90", NEEDLE_THEME.text)}>
+                            {formattedValue}
                         </div>
 
                         {/* Convex Lens Reflection */}
-                        <div className="absolute inset-0 rounded-full z-40 pointer-events-none bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.15)_0%,transparent_60%)] opacity-60" />
+                        <div className="absolute inset-0 rounded-full z-40 pointer-events-none bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.05)_0%,transparent_50%)]" />
                     </div>
                 </div>
             </div>
 
             {/* External Label (Underneath) */}
-            {label && (
-                <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">
-                    {label}
-                </span>
-            )}
-        </div>
+            {
+                label && (
+                    <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest text-center">
+                        {label}
+                    </span>
+                )
+            }
+        </div >
     );
 }

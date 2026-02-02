@@ -61,10 +61,10 @@ export default async function ReportPage(props: { params: Promise<{ id: string }
     const findings = (scan as any).scan_findings || []
 
     return (
-        <div className="bg-slate-100 min-h-screen py-12 print:bg-white print:py-0">
+        <div className="bg-[var(--rs-bg-base)] min-h-screen py-12 print:bg-white print:py-0">
             <div className="print:hidden mb-8 text-center">
-                <div className="inline-block bg-white px-4 py-2 rounded-lg shadow text-sm text-slate-500">
-                    Press <strong>Cmd+P</strong> to save as PDF
+                <div className="inline-block bg-[var(--rs-bg-surface)] px-4 py-2 rounded-[var(--rs-radius-element)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l1)] text-xs font-mono uppercase tracking-widest text-[var(--rs-text-secondary)]">
+                    Press <strong className="text-[var(--rs-text-primary)]">Cmd+P</strong> to save as PDF
                 </div>
             </div>
             <FullForensicReport

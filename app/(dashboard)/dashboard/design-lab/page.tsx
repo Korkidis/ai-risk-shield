@@ -11,7 +11,8 @@ import {
     Megaphone,
     Aperture,
     Grid as GridIcon,
-    AlertTriangle
+    AlertTriangle,
+    FlaskConical
 } from 'lucide-react';
 
 import { RSChassisCard } from '@/components/rs/RSChassisCard';
@@ -71,7 +72,7 @@ import { UpgradeModal } from '@/components/landing/UpgradeModal';
 
 
 export default function DesignLabPage() {
-    const [activeTab, setActiveTab] = useState<'palette' | 'components' | 'physics' | 'marketing' | 'substrates'>('components');
+    const [activeTab, setActiveTab] = useState<'palette' | 'components' | 'physics' | 'marketing' | 'substrates' | 'testing'>('components');
 
     // Braun Mechanical Deck States
     const [masterLever, setMasterLever] = useState(true);
@@ -142,6 +143,13 @@ export default function DesignLabPage() {
                                 <TabButton id="physics" label="Physics" icon={Move} />
                                 <TabButton id="marketing" label="Marketing" icon={Megaphone} />
                                 <TabButton id="substrates" label="Substrates" icon={GridIcon} />
+                                <a
+                                    href="/dashboard/design-lab/component-testing"
+                                    className="flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-[var(--rs-radius-element)] text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] hover:bg-[var(--rs-bg-element)]/50 ml-2 border border-[var(--rs-border-primary)] border-dashed"
+                                >
+                                    <FlaskConical size={14} />
+                                    LAB_TESTING
+                                </a>
                             </div>
                         </div>
                     </div>

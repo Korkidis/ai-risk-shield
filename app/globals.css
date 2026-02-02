@@ -212,11 +212,7 @@ html {
 
 /* Custom Utilities from Reference */
 @layer utilities {
-  .glass {
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(51, 65, 85, 0.5);
-  }
+
 
   /* Forensic Optics: Analyzed Glass */
   .rs-glass-analyzed {
@@ -236,11 +232,7 @@ html {
     mix-blend-mode: overlay;
   }
 
-  .gauge-ring {
-    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: rotate(-90deg);
-    transform-origin: 50% 50%;
-  }
+
 
   /* Typography Utilities */
   .rs-header-bold-italic {
@@ -386,22 +378,4 @@ body {
     top: 100%;
     opacity: 0;
   }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-scan {
-  animation: scan-line 2.5s linear infinite;
-}
-
-.animate-spin-slow {
-  animation: spin 4s linear infinite;
 }

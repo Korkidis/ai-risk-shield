@@ -4,13 +4,11 @@ import React, { useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { RSScanner } from '@/components/rs/RSScanner';
 import { RSTelemetryPanel, TelemetryRow } from '@/components/rs/RSTelemetryPanel';
-import { RSPanel } from '@/components/rs/RSPanel';
-import { RSRiskBadge } from '@/components/rs/RSRiskBadge';
-import { RSMeter } from '@/components/rs/RSMeter';
-import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
-import { RSFindingsDossier } from '@/components/rs/RSFindingsDossier';
+import { RSRiskPanel } from '@/components/rs/RSRiskPanel';
 import { RSProvenanceDrawer } from '@/components/rs/RSProvenanceDrawer';
+import { RSFindingsDossier } from '@/components/rs/RSFindingsDossier';
 import { cn } from '@/lib/utils';
+import { getRiskTier } from '@/lib/risk-utils';
 
 // Interface matching the backend response
 interface RiskProfile {
@@ -57,18 +55,15 @@ export default function DashboardPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileProcess = async (file: File) => {
-        console.log('[SCANNER] handleFileProcess called with:', file.name, file.size, file.type);
 
         // 1. Setup Preview
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
-        console.log('[SCANNER] Preview URL set');
 
         // 2. Start Scan State
         setScanStatus('scanning');
         setErrorMessage(null);
         setAnalysisResult(null);
-        console.log('[SCANNER] Scan status set to scanning');
 
         // Technical Onboarding
         addLog(`Acquired asset: ${file.name.substring(0, 15)}...`, 'done');
@@ -293,16 +288,16 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-full p-4 w-full min-h-[900px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-120px)] p-4 w-full min-h-[600px]">
 
-            {/* LEFT PANE: PRIMARY SCANNER (50%) */}
-            <div className="flex-1 bg-rs-black rounded-[32px] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[10px] border-[var(--rs-bg-surface)] overflow-hidden">
+            {/* LEFT PANE: PRIMARY SCANNER (50%) - DARK MODE CHASSIS */}
+            <div className="bg-rs-black rounded-[32px] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[10px] border-[var(--rs-bg-surface)] overflow-hidden h-full">
 
                 {/* Dark Mode Chassis Overlay */}
                 <div className="absolute inset-0 rounded-[22px] pointer-events-none border border-white/5 z-20" />
 
                 {/* Header */}
-                <div className="flex justify-between items-start mb-6 relative z-10">
+                <div className="flex justify-between items-start mb-6 relative z-10 shrink-0">
                     <div>
                         <div className="text-rs-signal font-mono text-xs font-bold tracking-widest uppercase mb-1">Scanner_v2.0</div>
                         <div className="text-rs-signal/40 font-mono text-[10px] tracking-widest uppercase flex items-center gap-2">
@@ -315,7 +310,7 @@ export default function DashboardPage() {
 
                 {/* Main Viewport */}
                 <div
-                    className="flex-1 relative z-10 w-full mb-8"
+                    className="flex-1 relative z-10 w-full mb-6 min-h-0"
                     onDragOver={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -370,11 +365,10 @@ export default function DashboardPage() {
                     </RSScanner>
                 </div>
 
-                {/* Dynamic Telemetry Viewport */}
                 {/* Dynamic Telemetry Viewport (Unified) */}
-                <div className="mt-8 relative z-10 transition-all duration-500">
+                <div className="relative z-10 transition-all duration-500 shrink-0">
                     <RSTelemetryPanel
-                        className="w-full flex-shrink-0"
+                        className="w-full"
                         state={isError ? 'error' : isComplete ? 'complete' : isScanning ? 'scanning' : 'idle'}
                         logEntries={logs as any}
                         rows={getPreviewTelemetryRows()}
@@ -385,45 +379,32 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* RIGHT PANE: ANALYSIS & TELEMETRY (35%) */}
-            <div className="flex-1 flex flex-col gap-6 min-h-0 pt-2">
+            {/* RIGHT PANE: ANALYSIS & TELEMETRY (50%) - LIGHT MODE PANEL */}
+            <div className="flex flex-col min-h-0 h-full gap-6">
+                <RSRiskPanel
+                    id={isComplete ? "SYS-STD-01" : "--"}
+                    score={results.composite}
+                    level={isComplete ? (getRiskTier(results.composite).level as any) : 'low'}
+                    ipScore={results.ipRisk}
+                    safetyScore={results.brandSafety}
+                    provenanceScore={results.provenance}
+                    status={isScanning ? 'scanning' : isComplete ? 'completed' : 'empty'}
+                    className="flex-shrink-0"
+                />
 
-                {/* UNIFIED RISK INSTRUMENT PANEL */}
-                <RSPanel
-                    title="Risk Analysis Panel"
-                    metadata={[{ label: 'ID', value: isComplete ? '44-X' : '--' }]}
-                    action={isComplete && <RSRiskBadge level={results.composite > 80 ? 'critical' : results.composite > 40 ? 'warning' : 'safe'} />}
-                >
-                    {/* TOP SECTION: COMPOSITE SCORE */}
-                    <div className="flex items-center gap-10 mb-6">
-                        <div className="text-5xl font-black tracking-tighter rs-etched leading-none">
-                            {isComplete ? `${results.composite}%` : '00%'}
-                        </div>
-                        <div className="flex-1 space-y-3">
-                            <div className="flex justify-between text-[10px] font-black uppercase text-[#9A9691] tracking-widest">
-                                <span>Likelihood</span>
-                                <span className={cn(
-                                    results.composite > 80 ? "text-rs-signal" : results.composite > 40 ? "text-rs-risk-high" : "text-rs-safe",
-                                    !isComplete && "opacity-0"
-                                )}>
-                                    {results.composite > 80 ? 'Critical' : results.composite > 40 ? 'Warning' : 'Safe'}
-                                </span>
-                            </div>
-                            <RSMeter value={isComplete ? results.composite : 0} level={results.composite > 80 ? 'critical' : results.composite > 40 ? 'warning' : 'safe'} />
-                        </div>
+                {/* Forensic Summary Card - Only visible when results exist */}
+                {(isComplete && analysisResult) && (
+                    <div className="flex-1 min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <RSFindingsDossier
+                            isComplete={isComplete}
+                            results={{
+                                ipRisk: results.ipRisk,
+                                brandSafety: results.brandSafety,
+                                provenance: results.provenance
+                            }}
+                        />
                     </div>
-
-                    {/* BOTTOM SECTION: ANALOG TELEMETRY */}
-                    <div className="pt-4 border-t border-rs-black/5">
-                        <div className="flex justify-center items-start gap-8">
-                            <RSAnalogNeedle value={results.ipRisk} label="IP Risk" isScanning={isScanning} powered={isScanning || isComplete} size={150} />
-                            <RSAnalogNeedle value={results.brandSafety} label="Brand Safety" isScanning={isScanning} powered={isScanning || isComplete} size={150} />
-                            <RSAnalogNeedle value={results.provenance} label="Provenance" isScanning={isScanning} powered={isScanning || isComplete} size={150} />
-                        </div>
-                    </div>
-                </RSPanel>
-
-                <RSFindingsDossier isComplete={isComplete} results={results} />
+                )}
             </div>
 
             <RSProvenanceDrawer
