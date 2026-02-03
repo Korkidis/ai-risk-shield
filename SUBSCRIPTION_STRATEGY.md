@@ -1,3 +1,10 @@
+---
+Status: Active
+Last Updated: Feb 1, 2026
+Owner: Product Lead
+Context: The canonical reference for all pricing, limits, and entitlements. Drives `lib/plans.ts` and Stripe logic.
+---
+
 # Subscription Strategy & Pricing Model
 **Version:** 1.0 | **Status:** Source of Truth | **Last Updated:** February 1, 2026
 

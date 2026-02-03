@@ -1,4 +1,9 @@
-# Freemium Model Implementation Plan
+---
+Status: Completed - Reference Only
+Last Updated: Feb 1, 2026
+Owner: Implementation Team
+Context: Original implementation plan for the freemium tier. See SUBSCRIPTION_STRATEGY.md for current pricing rules.
+---
 
 ## Status: ✅ COMPLETE (Feb 1, 2026)
 

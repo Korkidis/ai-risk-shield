@@ -1,5 +1,6 @@
 ---
 description: How to sync current changes to Git
+trigger: Run when the user says "/sync" or periodically after completing a major task block.
 ---
 // turbo-all
 1. Check the current branch name: `git branch --show-current`

@@ -1,5 +1,6 @@
 ---
 description: Re-align with the project's soul, design philosophy, and our co-building partnership.
+trigger: Run when the user says "/align" or when we feel drifting from the "Forensic Instrument" vision.
 ---
 
 1. **Read the Testament**:
