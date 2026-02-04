@@ -148,9 +148,45 @@ async function cleanupOldData(daysOld: number = 7): Promise<CleanupStats> {
         console.log(`  Storage files deleted: ${stats.storageFilesDeleted}`)
         console.log('─'.repeat(40))
 
+        // Log audit trail for compliance
+        try {
+            await supabase.from('audit_log').insert({
+                action: 'cleanup_old_data',
+                resource_type: 'maintenance',
+                metadata: {
+                    days_old: daysOld,
+                    cutoff_date: cutoffDate.toISOString(),
+                    stats: {
+                        scans_deleted: stats.scansDeleted,
+                        findings_deleted: stats.findingsDeleted,
+                        assets_deleted: stats.assetsDeleted,
+                        storage_files_deleted: stats.storageFilesDeleted,
+                    },
+                },
+            })
+        } catch (auditError) {
+            console.warn('⚠️  Failed to log audit trail:', auditError)
+            // Don't fail the cleanup if audit logging fails
+        }
+
         return stats
     } catch (error) {
         console.error('\n❌ Cleanup failed:', error)
+
+        // Log failure to audit trail
+        try {
+            await supabase.from('audit_log').insert({
+                action: 'cleanup_old_data_failed',
+                resource_type: 'maintenance',
+                metadata: {
+                    days_old: daysOld,
+                    error: error instanceof Error ? error.message : String(error),
+                },
+            })
+        } catch (auditError) {
+            console.warn('⚠️  Failed to log error to audit trail:', auditError)
+        }
+
         throw error
     }
 }

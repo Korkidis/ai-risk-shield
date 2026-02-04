@@ -36,6 +36,11 @@
 *   [ ] **Brand Guidelines**
     *   [x] Schema & Storage
     *   [ ] Upload/Management UI
+*   [ ] **Storage & Egress Optimization**
+    *   [x] Signed URLs (24hr expiry)
+    *   [x] Cleanup Scripts & Utilities  
+    *   [ ] Scheduled Orphan Audits (weekly)
+    *   [ ] Automated pg_cron cleanup jobs
 
 ## ⚠ Architectural Tripwires (Async Pipeline Trigger)
 **Condition: Immediate Refactor Required if ANY are met:**
