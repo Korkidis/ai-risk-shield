@@ -59,9 +59,9 @@ export default function LandingPage() {
                                         onUploadStart={() => {
                                             // Optional: Scroll to top or prepare UI
                                         }}
-                                        onUploadComplete={(profile) => {
+                                        onUploadComplete={(profile, scanId) => {
                                             setRiskProfile(profile)
-                                            setScanId('sc-' + Date.now())
+                                            setScanId(scanId) // Use real UUID from API
                                             // Clean transition to results
                                             setTimeout(() => setView('results'), 300)
                                         }}

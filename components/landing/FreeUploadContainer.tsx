@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 
 type Props = {
   onUploadStart: () => void
-  onUploadComplete: (profile: RiskProfile) => void
+  onUploadComplete: (profile: RiskProfile, scanId: string) => void
 }
 
 export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) {
@@ -125,7 +125,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
           }
 
           setTimeout(() => {
-            onUploadComplete(riskProfile)
+            onUploadComplete(riskProfile, scanId)
           }, 1500)
 
           return
@@ -172,7 +172,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
               chief_officer_strategy: 'Dev Mode Simulation Complete.'
             };
 
-            setTimeout(() => onUploadComplete(mockProfile), 1000);
+            setTimeout(() => onUploadComplete(mockProfile, 'dev-mock-' + Date.now()), 1000);
           }
         }, 50);
         return;

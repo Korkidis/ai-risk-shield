@@ -13,16 +13,20 @@ export async function POST(request: Request) {
   try {
     const sessionId = await getOrCreateSessionId()
 
-    // 1. Check anonymous quota
-    const { checkAnonymousQuota, recordAnonymousScan } = await import('@/lib/ratelimit')
-    const quota = await checkAnonymousQuota(sessionId)
+    // 1. Check anonymous quota (skip in dev mode)
+    const isDev = process.env.NODE_ENV === 'development'
 
-    if (!quota.allowed) {
-      return NextResponse.json({
-        error: 'Scan limit reached',
-        details: 'You have reached the limit of 3 free scans per month.',
-        code: 'LIMIT_REACHED'
-      }, { status: 429 })
+    if (!isDev) {
+      const { checkAnonymousQuota, recordAnonymousScan } = await import('@/lib/ratelimit')
+      const quota = await checkAnonymousQuota(sessionId)
+
+      if (!quota.allowed) {
+        return NextResponse.json({
+          error: 'Scan limit reached',
+          details: 'You have reached the limit of 3 free scans per month.',
+          code: 'LIMIT_REACHED'
+        }, { status: 429 })
+      }
     }
 
     const formData = await request.formData()
@@ -94,6 +98,7 @@ export async function POST(request: Request) {
       }, { status: 500 })
     }
 
+
     // Create scan record
     const scanData: Partial<ExtendedScan> = {
       session_id: sessionId,
@@ -104,35 +109,41 @@ export async function POST(request: Request) {
       status: 'processing',
     }
 
-    const { data: scan, error: scanError } = await supabase
+    const { data: newScan, error: scanError } = await supabase
       .from('scans')
       .insert(scanData as any) // Supabase insert requires exact type
       .select()
       .single()
 
-    if (scanError) {
+    if (scanError || !newScan) {
       return NextResponse.json({ error: 'Failed to create scan' }, { status: 500 })
     }
 
-    // Record anonymous scan usage (throttling)
-    await recordAnonymousScan()
+    const createdScan = newScan as ExtendedScan
 
-    // Trigger background processing
-    const createdScan = scan as ExtendedScan
+    // 4. Queue async analysis
     fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/scans/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scanId: createdScan.id }),
-    }).catch(() => {
-      // Background processing will retry
-    })
+      body: JSON.stringify({ scanId: createdScan.id })
+    }).catch(err => console.error('Failed to trigger analysis:', err))
+
+    // 5. Record scan for quota tracking (only in production)
+    if (!isDev) {
+      const { recordAnonymousScan } = await import('@/lib/ratelimit')
+      await recordAnonymousScan(sessionId).catch(err =>
+        console.error('Failed to record anonymous scan:', err)
+      )
+    }
 
     return NextResponse.json({
-      success: true,
       scanId: createdScan.id,
-      remaining: quota.remaining - 1
+      assetId: (asset as ExtendedAsset).id,
+      remaining: isDev ? 999 : 2 // Dev mode shows unlimited, prod shows remaining
     })
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Anonymous upload error:', error)
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }
+

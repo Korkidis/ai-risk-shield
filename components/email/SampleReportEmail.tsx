@@ -5,6 +5,7 @@ interface SampleReportEmailProps {
     score: number
     riskLevel: string
     findingsCount: number
+    magicLink: string
 }
 
 export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
@@ -12,9 +13,9 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
     score,
     riskLevel,
     findingsCount,
+    magicLink,
 }) => {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ai-risk-shield.com'
-    const reportUrl = `${appUrl}/scans/${scanId}`
 
     const statusColor = score > 65 ? '#ef4444' : score > 35 ? '#f59e0b' : '#10b981'
 
@@ -59,7 +60,7 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
                 {/* CTA */}
                 <div style={{ textAlign: 'center' }}>
                     <a
-                        href={reportUrl}
+                        href={magicLink}
                         style={{
                             display: 'inline-block',
                             backgroundColor: '#4f46e5',
@@ -74,7 +75,7 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
                         View Full Report
                     </a>
                     <p style={{ marginTop: '24px', fontSize: '12px', color: '#94a3b8' }}>
-                        Clicking will take you to your secure report dashboard.
+                        This link expires in 15 minutes for your security.
                     </p>
                 </div>
             </div>

@@ -134,18 +134,31 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                     <RSButton
                                         className="w-full justify-center tracking-widest text-xs font-bold"
                                         variant="primary"
-                                        onClick={() => {
-                                            // Logic to trigger PDF or upgrade
+                                        onClick={async () => {
                                             const email = (document.getElementById('email-input-forensic') as HTMLInputElement)?.value;
                                             if (!email || !email.includes('@')) {
                                                 alert('Please enter a valid email');
                                                 return;
                                             }
-                                            alert("Requesting Encrypted Dossier...");
-                                            // Simulate delay
-                                            setTimeout(() => {
-                                                setShowUpgrade(true);
-                                            }, 1000);
+
+                                            try {
+                                                const res = await fetch('/api/scans/capture-email', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ scanId, email })
+                                                });
+
+                                                if (!res.ok) {
+                                                    const errorData = await res.json();
+                                                    const errorMsg = errorData.details || errorData.error || 'Failed to send email';
+                                                    throw new Error(errorMsg);
+                                                }
+
+                                                alert('✅ Magic link sent! Check your email to view the full report.');
+                                            } catch (error) {
+                                                console.error(error);
+                                                alert(`❌ ${error instanceof Error ? error.message : 'Failed to send email. Please try again.'}`);
+                                            }
                                         }}
                                     >
                                         DECRYPT FULL REPORT

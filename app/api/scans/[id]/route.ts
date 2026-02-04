@@ -1,7 +1,45 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getTenantId } from '@/lib/supabase/auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
+
+/**
+ * GET /api/scans/[id]
+ * Fetch scan results (public access for magic link verified users)
+ */
+export async function GET(
+    _req: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    try {
+        const params = await context.params
+        const supabase = await createServiceRoleClient()
+
+        // Fetch scan with risk profile
+        const { data: scan, error } = await supabase
+            .from('scans')
+            .select(`
+        id,
+        created_at,
+        composite_score,
+        verdict,
+        risk_profile,
+        scan_findings(*)
+      `)
+            .eq('id', params.id)
+            .single()
+
+        if (error || !scan) {
+            return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
+        }
+
+        return NextResponse.json(scan)
+    } catch (error) {
+        console.error('Failed to fetch scan:', error)
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+}
+
 
 export async function PATCH(
     req: NextRequest,

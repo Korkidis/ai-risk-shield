@@ -23,6 +23,29 @@ export async function POST(request: Request) {
 
     const supabase = await createServiceRoleClient()
 
+    // Generate magic link token
+    const token = crypto.randomUUID()
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+
+    // Store magic link
+    const { error: linkError } = await (supabase
+      .from('magic_links') as any)
+      .insert({
+        email,
+        token,
+        scan_id: scanId,
+        expires_at: expiresAt.toISOString(),
+      })
+
+    if (linkError) {
+      console.error('Failed to create magic link:', linkError)
+      console.error('Error details:', JSON.stringify(linkError, null, 2))
+      return NextResponse.json({
+        error: 'Failed to create magic link',
+        details: linkError.message || 'Database error'
+      }, { status: 500 })
+    }
+
     // Update scan with email (using type assertion for extended schema fields)
     const { error } = await (supabase.from('scans') as any).update({
       email,
@@ -49,10 +72,20 @@ export async function POST(request: Request) {
     const score = scanData?.composite_score || 0
     const findingsCount = scanData?.scan_findings?.[0]?.count || 0
 
-    // Send sample report email via Resend
+    // Send magic link email
+    const magicLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`
     const { sendSampleReportEmail } = await import('@/lib/email')
-    await sendSampleReportEmail(email, scanId, score, findingsCount)
+    const emailResult = await sendSampleReportEmail(email, scanId, score, findingsCount, magicLink)
 
+    if (!emailResult.success) {
+      console.error('Email send failed:', emailResult.error)
+      return NextResponse.json({
+        error: 'Failed to send email',
+        details: emailResult.error instanceof Error ? emailResult.error.message : 'Unknown error'
+      }, { status: 500 })
+    }
+
+    console.log('✅ Magic link email sent to:', email)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Email capture error:', error)
