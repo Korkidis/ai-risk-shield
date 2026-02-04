@@ -9,7 +9,8 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "migrate": "tsx scripts/apply-migration.ts",
-    "test:db": "tsx scripts/test-db-connection.ts"
+    "test:db": "tsx scripts/test-db-connection.ts",
+    "cleanup": "tsx scripts/cleanup-old-data.ts"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
