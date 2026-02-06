@@ -62,6 +62,10 @@ graph TD
 4.  **Return**: API responds with JSON risk profile.
 > **Note**: Future roadmap includes refactoring to Async Edge Functions for scalability.
 
+### 4. Authentication (Custom Flow)
+*   **Dynamic Magic Links**: We use a custom `magic_links` table and Resend for emails to inject dynamic **Risk Scores** into the template.
+*   **SOC 2 Compliance**: Implementation requires strict token expiry (15m) and RLS to match native security standards.
+
 ## Data Model (Simplified)
 *   `access_control`: `tenants` <-> `users` (Many-to-Many via `tenant_users`).
 *   `core`: `assets` -> `scans` -> `scan_findings`.

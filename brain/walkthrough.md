@@ -9,6 +9,10 @@ Focus is on removing friction from the "Time to Value" flow, specifically the "G
 - [x] **Multi-Tenancy**: Hierarchical structure (Agency -> Client) working.
 - [x] **Billing**: Stripe integration for plans and metered usage.
 - [x] **Upload**: Drag-and-drop file upload with session tracking.
+- [x] **Magic Link Auth**: Custom flow verified.
+    - Route: `/auth/verify` (Implemented & Tested)
+    - Script: `scripts/verify-magic-link.ts` (Success)
+    - Evidence: Browser test confirmed redirect and "Verified" state.
 
 ## Recent Context
 - **Last Session**: Focused on "Magic Link Email Fix". Troubleshooting Resend delivery and `FROM` address configuration to ensure users can actually log in via the "Gate".
