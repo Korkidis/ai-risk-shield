@@ -58,35 +58,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to capture email' }, { status: 500 })
     }
 
-    // Fetch scan details for the email
+    // Fetch scan score
     const { data: scan } = await supabase
       .from('scans')
-      .select(`
-        composite_score,
-        scan_findings (count)
-      `)
+      .select('composite_score')
       .eq('id', scanId)
       .single()
 
-    const scanData = scan as any
-    const score = scanData?.composite_score || 0
-    const findingsCount = scanData?.scan_findings?.[0]?.count || 0
+    // Fetch findings count explicitly to avoid nested count issues
+    const { count: findingsCount } = await supabase
+      .from('scan_findings')
+      .select('*', { count: 'exact', head: true })
+      .eq('scan_id', scanId)
 
-    // Send magic link email
+    const score = scan?.composite_score || 0
+    const count = findingsCount || 0
+
+    // Set immediate session cookie for instant unlock
+    const { cookies } = await import('next/headers')
+    const cookieStore = await cookies()
+    cookieStore.set('magic_auth_email', email, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    })
+
+    // Send magic link email (as backup)
     const magicLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`
     const { sendSampleReportEmail } = await import('@/lib/email')
-    const emailResult = await sendSampleReportEmail(email, scanId, score, findingsCount, magicLink)
 
-    if (!emailResult.success) {
-      console.error('Email send failed:', emailResult.error)
-      return NextResponse.json({
-        error: 'Failed to send email',
-        details: emailResult.error instanceof Error ? emailResult.error.message : 'Unknown error'
-      }, { status: 500 })
-    }
+    // We don't await the email to keep UI snappy, but we catch errors
+    sendSampleReportEmail(email, scanId, score, count, magicLink).catch(err =>
+      console.error('Background email send failed:', err)
+    )
 
-    console.log('✅ Magic link email sent to:', email)
-    return NextResponse.json({ success: true })
+    console.log('✅ Instant auth granted & email queued for:', email)
+    return NextResponse.json({ success: true, verified: true })
   } catch (error) {
     console.error('Email capture error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

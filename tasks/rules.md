@@ -4,11 +4,14 @@
 *   **Environment:** Mac, Next.js, Supabase, Tailwind CSS
 *   [Add specific project context or environment details here]
 
-## 1. Plan Mode Default
-*   Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
-*   If something goes sideways, STOP and re-plan immediately – don't keep pushing
-*   Use plan mode for verification steps, not just building
-*   Write detailed specs upfront to reduce ambiguity
+## 1. Spec Before Build (The Mini Spec)
+*   **Before writing code**, you MUST create a mini-spec containing:
+    *   **User Story**: Who is it for? What do they want? Why?
+    *   **Acceptance Criteria**: Boolean pass/fail conditions.
+    *   **Edge Cases**: What happens if offline? Null data? Weird inputs?
+    *   **UI Rules**: Spacing, typography tokens, mobile behavior (responsive).
+    *   **Tracking**: Any analytics events needing capture?
+*   Do not proceed to coding until this spec is clear.
 
 ## 2. Subagent Strategy
 *   Use subagents liberally to keep main context window clean
@@ -22,11 +25,13 @@
 *   Ruthlessly iterate on these lessons until mistake rate drops
 *   Review lessons at session start for relevant project
 
-## 4. Verification Before Done
-*   Never mark a task complete without proving it works
-*   Diff behavior between main and your changes when relevant
-*   Ask yourself: "Would a staff engineer approve this?"
-*   Run tests, check logs, demonstrate correctness
+## 4. Proof of Work (The Definition of Done)
+*   When a task is done, you MUST return:
+    *   **6-Bullet Change Summary**: Specifics of what changed.
+    *   **Commands Run**: Exact tests, lints, or build commands executed.
+    *   **Git Diff Highlights**: Key architectural changes (not every line).
+    *   **Visual Proof**: Screenshots or browser recording for key flows.
+*   "It works on my machine" is not a valid output. Show the proof.
 
 ## 5. Demand Elegance (Balanced)
 *   For non-trivial changes: pause and ask "is there a more elegant way?"

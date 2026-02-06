@@ -8,6 +8,9 @@ import { RSRadialMeter } from '@/components/rs/RSRadialMeter'
 import { Header } from '@/components/layout/Header'
 import { RiskProfile } from '@/lib/gemini-types'
 import Link from 'next/link'
+import { generateForensicReport } from '@/lib/pdf-generator'
+import { UpgradeButton } from '@/components/billing/UpgradeButton'
+import { FileText } from 'lucide-react'
 
 export default function ScanResultPage() {
     const params = useParams()
@@ -112,13 +115,41 @@ export default function ScanResultPage() {
                             </div>
                         </div>
 
-                        <div className="mt-12">
-                            <Link
-                                href="/signup"
-                                className="inline-block bg-[var(--rs-border-focus)] text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity"
-                            >
-                                Upgrade for Full Detailed Report
-                            </Link>
+                        <div className="mt-12 flex flex-col gap-4 items-center max-w-md mx-auto">
+                            {scan.purchased ? (
+                                // PURCHASED: Download Full Report
+                                <button
+                                    onClick={() => {
+                                        if (!riskProfile) return
+                                        const filename = (scan.assets as any)?.filename || 'scan-result'
+                                        const is_video = (scan.assets as any)?.file_type === 'video'
+                                        generateForensicReport({ ...scan, filename, is_video } as any, riskProfile, false)
+                                    }}
+                                    className="w-full inline-flex justify-center items-center gap-2 bg-[var(--rs-text-primary)] text-[var(--rs-bg-root)] px-8 py-4 rounded-lg font-bold hover:bg-[var(--rs-text-secondary)] transition-colors uppercase tracking-wider"
+                                >
+                                    <FileText className="w-5 h-5" />
+                                    DOWNLOAD FULL FORENSIC REPORT
+                                </button>
+                            ) : (
+                                // NOT PURCHASED: Upgrade (Primary) + Sample (Secondary)
+                                <>
+                                    <div className="w-full">
+                                        <UpgradeButton scanId={scan.id} />
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            if (!riskProfile) return
+                                            const filename = (scan.assets as any)?.filename || 'scan-result'
+                                            const is_video = (scan.assets as any)?.file_type === 'video'
+                                            generateForensicReport({ ...scan, filename, is_video } as any, riskProfile, true)
+                                        }}
+                                        className="text-sm text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] underline underline-offset-4 decoration-[var(--rs-border-strong)] transition-colors uppercase tracking-wide font-medium"
+                                    >
+                                        Download Redacted Sample Report
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </RSPanel>

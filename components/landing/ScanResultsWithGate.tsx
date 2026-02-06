@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { UpgradeModal } from './UpgradeModal'
 import { RiskProfile } from '@/lib/gemini-types'
 import { RSRadialMeter } from '../rs/RSRadialMeter'
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils'
 export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, riskProfile: RiskProfile }) {
 
     const [showUpgrade, setShowUpgrade] = useState(false)
+    const router = useRouter()
     // const [mounted, setMounted] = useState(false)
     const [logs, setLogs] = useState<{ id: string, message: string, status: 'pending' | 'active' | 'done' | 'error', timestamp: string }[]>([])
 
@@ -154,14 +156,15 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                                     throw new Error(errorMsg);
                                                 }
 
-                                                alert('✅ Magic link sent! Check your email to view the full report.');
+                                                alert('✅ Authentication successful! Unlocking full report...');
+                                                router.push(`/scan/${scanId}?verified=true&email_captured=true`)
                                             } catch (error) {
                                                 console.error(error);
                                                 alert(`❌ ${error instanceof Error ? error.message : 'Failed to send email. Please try again.'}`);
                                             }
                                         }}
                                     >
-                                        DECRYPT FULL REPORT
+                                        UNLOCK FULL REPORT
                                     </RSButton>
                                 </div>
                             </div>

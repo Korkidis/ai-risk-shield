@@ -15,25 +15,79 @@ export async function GET(
         const params = await context.params
         const supabase = await createServiceRoleClient()
 
-        // Fetch scan with risk profile
-        const { data: scan, error } = await supabase
+        // Fetch scan with risk scores and findings
+        const { data, error } = await supabase
             .from('scans')
             .select(`
-        id,
-        created_at,
-        composite_score,
-        verdict,
-        risk_profile,
-        scan_findings(*)
-      `)
+                id,
+                created_at,
+                composite_score,
+                ip_risk_score,
+                safety_risk_score,
+                provenance_risk_score,
+                risk_level,
+                provenance_data,
+                scan_findings(*),
+                assets (
+                    filename,
+                    file_type,
+                    mime_type,
+                    file_size
+                )
+            `)
             .eq('id', params.id)
             .single()
 
-        if (error || !scan) {
+        if (error || !data) {
+            console.error('Database error fetching scan:', error)
             return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
         }
 
-        return NextResponse.json(scan)
+        const scan = data as any;
+
+        // Reconstruct RiskProfile for frontend compatibility
+        // The DB stores individual scores, but frontend/PDF expects a nested 'risk_profile' object
+
+        const getTeaser = (type: string) => {
+            // Find critical findings first
+            const critical = scan.scan_findings?.find((f: any) => f.finding_type?.startsWith(type) && f.severity === 'critical')
+            if (critical) return critical.title
+
+            const high = scan.scan_findings?.find((f: any) => f.finding_type?.startsWith(type) && f.severity === 'high')
+            if (high) return high.title
+
+            return 'No significant risks detected.'
+        }
+
+        const riskProfile = {
+            composite_score: scan.composite_score || 0,
+            verdict: (scan.risk_level === 'critical' ? 'Critical Risk' :
+                scan.risk_level === 'high' ? 'High Risk' :
+                    scan.risk_level === 'review' ? 'Medium Risk' :
+                        scan.risk_level === 'caution' ? 'Low Risk' : 'Low Risk') as any,
+            ip_report: {
+                score: scan.ip_risk_score || 0,
+                teaser: getTeaser('ip'),
+                reasoning: "Analysis based on visual matching and database cross-referencing."
+            },
+            safety_report: {
+                score: scan.safety_risk_score || 0,
+                teaser: getTeaser('safety'),
+                reasoning: "Checked against major ad platform content safety guidelines."
+            },
+            provenance_report: {
+                score: scan.provenance_risk_score || 0,
+                teaser: "Provenance analysis",
+                reasoning: "Digital signature verification."
+            },
+            c2pa_report: scan.provenance_data || { status: 'missing' },
+            chief_officer_strategy: "Automated analysis indicates legal review may be required for identified high-risk elements."
+        }
+
+        return NextResponse.json({
+            ...scan,
+            risk_profile: riskProfile
+        })
     } catch (error) {
         console.error('Failed to fetch scan:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

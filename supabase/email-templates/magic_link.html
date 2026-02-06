@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Your Scan Results are Ready</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #EBE7E0;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: #F4F4F4;
+      border: 1px solid #CCCCCC;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -1px;
+      color: #1A1A1A;
+      display: inline-block;
+      border: 2px solid #1A1A1A;
+      padding: 5px 10px;
+    }
+
+    .title {
+      color: #1A1A1A;
+      font-size: 20px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666666;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      display: block;
+      background-color: #1A1A1A;
+      color: #EBE7E0;
+      padding: 16px 24px;
+      text-align: center;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+      background-color: #333333;
+    }
+
+    .meta {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      color: #999999;
+      text-align: center;
+      margin-top: 30px;
+      border-top: 1px solid #DDDDDD;
+      padding-top: 20px;
+    }
+
+    .highlight {
+      color: #FF4F00;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">AI RISK SHIELD</div>
+    </div>
+
+    <!-- Dynamic Score Section -->
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="font-size: 48px; font-weight: 800; color: #FF4F00; line-height: 1;">{{ .Data.risk_score }}</div>
+      <div
+        style="font-size: 12px; font-weight: bold; color: #666666; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px;">
+        {{ .Data.risk_verdict }}</div>
+    </div>
+
+    <div class="subtitle">
+      Analysis complete. We identified <strong>{{ .Data.findings_count }} risk indicators</strong> in your uploaded
+      content.<br><br>
+      <ul style="text-align: left; display: inline-block; color: #333333; font-size: 14px;">
+        <li>Potential IP Exposure</li>
+        <li>Brand Safety Check</li>
+        <li>Provenance Verification</li>
+      </ul>
+    </div>
+
+    <a href="{{ .ConfirmationURL }}" class="btn">UNLOCK FULL REPORT</a>
+
+    <div class="subtitle" style="font-size: 12px;">
+      Or paste this link into your browser:<br>
+      <a href="{{ .ConfirmationURL }}" style="color: #666666;">{{ .ConfirmationURL }}</a>
+    </div>
+
+    <div class="meta">
+      SECURE VERIFICATION LINK • EXPIRES IN 15 MINUTES<br>
+      REF: {{ .Token }}
+    </div>
+  </div>
+</body>
+
+</html>

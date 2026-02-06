@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
-import { MagicLinkEmail } from '@/components/email/MagicLinkEmail'
+
+import { SampleReportEmail } from '@/components/email/SampleReportEmail'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -36,7 +37,7 @@ export async function sendSampleReportEmail(
             from: `AI Risk Shield <${fromAddress}>`,
             to: email,
             subject: `🔒 Forensic Analysis Complete • Risk Score: ${score}`,
-            react: MagicLinkEmail({ scanId, score, riskLevel, findingsCount, magicLink }) as any,
+            react: SampleReportEmail({ scanId, score, riskLevel, findingsCount, magicLink }) as any,
         })
 
         return { success: true, data }

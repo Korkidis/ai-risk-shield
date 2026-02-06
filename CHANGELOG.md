@@ -2,8 +2,16 @@
 
 ## [Unreleased]
 ### Added
+
 - **Workflow Orchestration**: New rules engine (`tasks/rules.md`) and startup protocols.
 - **Structural Documentation**: Roadmap, Architecture, and Decision logs.
+
+## [2026-02-05] - Production Core & Experience
+### Added
+- **Stripe Billing**: Full integration of 5-tier pricing model (Free/Pro/Team/Agency/Enterprise) with metered overage billing.
+- **Frictionless Scans**: Drag-and-drop upload with anonymous session tracking (cookie-based).
+- **Realtime Engine**: Switched from polling to Supabase Realtime for instant analysis feedback.
+- **Scanner UI Overhaul**: Unified "Machined Aluminum" interface with "true-to-life" physics and merged telemetry panels.
 
 ## [2026-02-01] - Remediation & Optimization
 ### Fixed
