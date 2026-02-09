@@ -11,6 +11,8 @@ import Link from 'next/link'
 import { generateForensicReport } from '@/lib/pdf-generator'
 import { UpgradeButton } from '@/components/billing/UpgradeButton'
 import { FileText } from 'lucide-react'
+import { OneTimePurchaseButton } from '@/components/billing/OneTimePurchaseButton'
+import { AuditModal } from '@/components/marketing/AuditModal'
 
 export default function ScanResultPage() {
     const params = useParams()
@@ -21,16 +23,41 @@ export default function ScanResultPage() {
     const [loading, setLoading] = useState(true)
     const [scan, setScan] = useState<any>(null)
     const [riskProfile, setRiskProfile] = useState<RiskProfile | null>(null)
+    const [showAuditModal, setShowAuditModal] = useState(false)
 
     useEffect(() => {
         async function loadScan() {
             try {
+                // If verified just now, try to assign scan to user
+                if (verified) {
+                    try {
+                        await fetch('/api/scans/assign-to-user', { method: 'POST' })
+
+                        // Show modal after a brief delay
+                        setTimeout(() => setShowAuditModal(true), 1500)
+                    } catch (err) {
+                        console.error('Failed to assign scan:', err)
+                    }
+                }
+
                 const res = await fetch(`/api/scans/${scanId}`)
                 if (!res.ok) throw new Error('Failed to load scan')
 
                 const data = await res.json()
                 setScan(data)
                 setRiskProfile(data.risk_profile)
+
+                // Trigger Auto-Download if verified and data is loaded
+                if (verified && data && data.risk_profile) {
+                    // Slight delay to ensure UI renders first
+                    setTimeout(() => {
+                        const filename = (data.assets as any)?.filename || 'scan-result'
+                        const is_video = (data.assets as any)?.file_type === 'video'
+                        // Generate sample report automatically
+                        generateForensicReport({ ...data, filename, is_video } as any, data.risk_profile, true)
+                    }, 1000)
+                }
+
             } catch (error) {
                 console.error('Failed to load scan:', error)
             } finally {
@@ -39,7 +66,7 @@ export default function ScanResultPage() {
         }
 
         loadScan()
-    }, [scanId])
+    }, [scanId, verified])
 
     if (loading) {
         return (
@@ -74,6 +101,12 @@ export default function ScanResultPage() {
     return (
         <RSBackground variant="standard">
             <Header />
+
+            <AuditModal
+                isOpen={showAuditModal}
+                onClose={() => setShowAuditModal(false)}
+                scanId={scan.id}
+            />
 
             <main className="max-w-6xl mx-auto px-6 py-12">
                 {verified && (
@@ -131,11 +164,29 @@ export default function ScanResultPage() {
                                     DOWNLOAD FULL FORENSIC REPORT
                                 </button>
                             ) : (
-                                // NOT PURCHASED: Upgrade (Primary) + Sample (Secondary)
-                                <>
-                                    <div className="w-full">
-                                        <UpgradeButton scanId={scan.id} />
+                                // NOT PURCHASED: Gate View or Standard View
+                                <div className="w-full flex flex-col gap-4">
+                                    <div className="text-center mb-6">
+                                        <h3 className="text-xl font-black uppercase text-[var(--rs-text-primary)] mb-2">
+                                            Unlock Full Forensic Report
+                                        </h3>
+                                        <p className="text-sm text-[var(--rs-text-secondary)]">
+                                            Get the complete audit trail, deep IP analysis, and mitigation steps.
+                                        </p>
                                     </div>
+
+                                    <UpgradeButton scanId={scan.id} />
+
+                                    <div className="relative my-2 text-center">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <div className="w-full border-t border-[var(--rs-border-primary)]"></div>
+                                        </div>
+                                        <div className="relative flex justify-center text-xs uppercase">
+                                            <span className="bg-[var(--rs-bg-surface)] px-2 text-[var(--rs-text-tertiary)]">Or</span>
+                                        </div>
+                                    </div>
+
+                                    <OneTimePurchaseButton scanId={scan.id} />
 
                                     <button
                                         onClick={() => {
@@ -144,11 +195,11 @@ export default function ScanResultPage() {
                                             const is_video = (scan.assets as any)?.file_type === 'video'
                                             generateForensicReport({ ...scan, filename, is_video } as any, riskProfile, true)
                                         }}
-                                        className="text-sm text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] underline underline-offset-4 decoration-[var(--rs-border-strong)] transition-colors uppercase tracking-wide font-medium"
+                                        className="mt-4 text-xs text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-secondary)] underline transition-colors uppercase tracking-wide text-center block w-full"
                                     >
-                                        Download Redacted Sample Report
+                                        Download Redacted Sample Only
                                     </button>
-                                </>
+                                </div>
                             )}
                         </div>
                     </div>

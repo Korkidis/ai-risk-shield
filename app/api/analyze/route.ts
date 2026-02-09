@@ -168,6 +168,20 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        // Add Safety finding if high
+        if (riskProfile.safety_report.score > 50) {
+            findings.push({
+                tenant_id: tenantId,
+                scan_id: (scan as any).id,
+                finding_type: 'safety_violation',
+                severity: riskProfile.safety_report.score > 85 ? 'critical' : 'high',
+                title: 'Brand Safety Violation',
+                description: riskProfile.safety_report.teaser,
+                recommendation: 'Content violates safety guidelines. Do not publish.',
+                evidence: { score: riskProfile.safety_report.score, reasoning: riskProfile.safety_report.reasoning }
+            });
+        }
+
         await adminSupabase.from('scan_findings').insert(findings);
 
         // 9. If VALID (or CAUTION), preserve complete provenance details

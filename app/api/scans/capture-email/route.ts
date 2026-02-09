@@ -23,33 +23,46 @@ export async function POST(request: Request) {
 
     const supabase = await createServiceRoleClient()
 
-    // Generate magic link token
-    const token = crypto.randomUUID()
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+    // 1. Check if user exists
+    const { data: { users }, error: listError } = await supabase.auth.admin.listUsers()
+    const existingUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
-    // Store magic link
-    const { error: linkError } = await (supabase
-      .from('magic_links') as any)
-      .insert({
+    let userId = existingUser?.id
+
+    // 2. If new, create "Shadow User" (Unconfirmed)
+    if (!existingUser) {
+      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email,
-        token,
-        scan_id: scanId,
-        expires_at: expiresAt.toISOString(),
+        email_confirm: false, // User must verify via link
+        user_metadata: { source: 'scan_unlock' }
       })
 
-    if (linkError) {
-      console.error('Failed to create magic link:', linkError)
-      console.error('Error details:', JSON.stringify(linkError, null, 2))
-      return NextResponse.json({
-        error: 'Failed to create magic link',
-        details: linkError.message || 'Database error'
-      }, { status: 500 })
+      if (createError) {
+        console.error('Failed to create shadow user:', createError)
+        return NextResponse.json({ error: 'Account creation failed' }, { status: 500 })
+      }
+      userId = newUser.user.id
+    }
+
+    // 3. Generate Magic Link (Auth Token)
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/scan/${scanId}&verified=true`
+      }
+    })
+
+    if (linkError || !linkData.properties?.action_link) {
+      console.error('Failed to generate magic link:', linkError)
+      return NextResponse.json({ error: 'Auth generation failed' }, { status: 500 })
     }
 
     // Update scan with email (using type assertion for extended schema fields)
     const { error } = await (supabase.from('scans') as any).update({
       email,
       email_captured_at: new Date().toISOString(),
+      // We do NOT assign user_id yet. That happens on verify -> assign-to-user
     })
       .eq('id', scanId)
       .eq('session_id', sessionId)
@@ -74,7 +87,9 @@ export async function POST(request: Request) {
     const score = scan?.composite_score || 0
     const count = findingsCount || 0
 
-    // Set immediate session cookie for instant unlock
+    console.log(`[Email Capture Debug] ScanId: ${scanId}, Score: ${score}, Count: ${count}`)
+
+    // Set immediate session cookie for instant unlock (UX only, real auth comes from link)
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
     cookieStore.set('magic_auth_email', email, {
@@ -84,8 +99,9 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     })
 
-    // Send magic link email (as backup)
-    const magicLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`
+    // Send magic link email
+    // linkData.properties.action_link contains the valid auth token
+    const magicLink = linkData.properties.action_link
     const { sendSampleReportEmail } = await import('@/lib/email')
 
     // We don't await the email to keep UI snappy, but we catch errors
@@ -93,7 +109,11 @@ export async function POST(request: Request) {
       console.error('Background email send failed:', err)
     )
 
-    console.log('✅ Instant auth granted & email queued for:', email)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔗 [DEV] Magic Link:', magicLink)
+    }
+
+    console.log('✅ Shadow User Created & Auth Link Sent to:', email)
     return NextResponse.json({ success: true, verified: true })
   } catch (error) {
     console.error('Email capture error:', error)

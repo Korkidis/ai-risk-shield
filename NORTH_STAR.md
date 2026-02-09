@@ -440,8 +440,8 @@ This is the single source of truth for product vision, user needs, and implement
 
 | Job | Plan | Why |
 |-----|------|-----|
-| "Validate one-off project" | Free (3 scans) → $29 report | Testing, low volume |
-| "Regular validation for my freelance work" | Individual ($49/mo) | Predictable monthly need |
+| "Validate one-off project" | Free (3 scans) → $29 report | Freemium Testing, low volume |
+| "Regular validation for my freelance work" | Pro ($49/mo) | Predictable monthly need |
 | "Team needs to self-serve without bottleneck" | Team ($199/mo) | Multiple users, brand guidelines |
 | "Agency validates all client deliverables" | Agency ($599/mo) | High volume, white-label future |
 | "Enterprise governance + audit trail" | Enterprise (custom) | API, compliance, custom SLAs |
@@ -478,7 +478,7 @@ This is the single source of truth for product vision, user needs, and implement
 - [x] Stripe integration (checkout + webhooks)
 - [x] $29 one-time report purchase
 - [x] Full 6-page report generation
-- [x] $49/mo Individual plan subscription
+- [x] $49/mo Pro plan subscription
 - [x] Quota tracking + overage billing
 - [/] Billing & Usage page
 - [ ] Payment method management
@@ -714,7 +714,7 @@ Track major decisions here to maintain context:
 ## TECHNICAL ENABLERS & BUSINESS LOGIC
 
 ### Technical Enablers
-*   **Forensic Analysis**: Powered by **Google Gemini 1.5 Pro** (Multimodal) for reasoning capabilities that surpass simple pattern matching.
+*   **Forensic Analysis**: Powered by **Google Gemini 1.5 Flash** (Multimodal) for reasoning capabilities that surpass simple pattern matching.
 *   **Provenance Verification**: Built on **C2PA (Coalition for Content Provenance and Authenticity)** standards (`c2pa-node`) to cryptographically verify asset origins.
 *   **Frictionless Access**: Enabled by **Supabase Anonymous Sessions** (custom RLS policies) allowing instant usage without signup.
 *   **Global Payments**: Integrated with **Stripe** for immediate one-time reports or enterprise subscriptions.

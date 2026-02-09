@@ -24,10 +24,10 @@
 *   [ ] **Anonymous Scan Flow**
     *   [x] Drag-and-drop Upload
     *   [x] Session-based (cookie) tracking
-    *   [ ] Real-time Gemini Analysis Display
+    *   [x] Real-time Gemini Analysis Display
 *   [ ] **The "Gate" & Report**
     *   [x] Teaser Results (Blurred)
-    *   [ ] Email Capture (Magic Link)
+    *   [x] Email Capture (Magic Link)
     *   [ ] PDF Report Generation
 *   [ ] **Monetization (Stripe)**
     *   [x] Subscription Models (Free/Pro/Team)

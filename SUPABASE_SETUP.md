@@ -4,30 +4,27 @@
 
 Since you've already added your Supabase API keys to `.env.local`, now you need to create the database tables.
 
-### Manual Migration (Recommended for now)
+### Automated Migration (Recommended)
 
-1. **Go to Supabase SQL Editor:**
-   ```
-   https://supabase.com/dashboard/project/_/sql/new
-   ```
-   Or navigate to: Your Project → SQL Editor → New query
+We have built a robust TypeScript script to handle migrations safely.
 
-2. **Copy the migration file:**
-   - Open: `supabase/migrations/20260103_initial_schema.sql`
-   - Select all (Cmd+A / Ctrl+A)
-   - Copy (Cmd+C / Ctrl+C)
+**Run the migration script:**
+```bash
+npx tsx scripts/apply-migration.ts
+```
 
-3. **Paste and run:**
-   - Paste into the SQL Editor
-   - Click **"Run"** button (bottom right)
-   - Wait for "Success" message (~5-10 seconds)
+This script will:
+- Verify your connection
+- Apply the initial schema
+- Apply security policies
+- Verify the database state
 
-4. **Verify:**
-   - Run this test command:
-     ```bash
-     npm run test:db
-     ```
-   - You should see: ✅ Successfully connected to Supabase!
+**Verify:**
+- Run the test command:
+  ```bash
+  npm run test:db
+  ```
+- You should see: ✅ Successfully connected to Supabase!
 
 ## Step 2: Create Storage Buckets
 

@@ -5,27 +5,20 @@
 2.  Load the **Primary Skill** immediately.
 3.  Consult **Secondary Skills** if the task expands in scope.
 
-## 1. Backend & Data
-| Task Type | Primary Skill | Secondary Skills |
+| Role | Primary Skill | Secondary Skills |
 | :--- | :--- | :--- |
-| **New Feature / Table** | `tenant-aware-data-layer` | `supabase-postgres-best-practices` |
-| **Migration / Schema Change** | `tenant-aware-data-layer` | `deployment-cicd` |
-| **Slow Query / Indexing** | `supabase-postgres-best-practices` | `tenant-aware-data-layer` |
-| **Auth / User Session** | `supabase-auth` | `tenant-aware-data-layer` |
+| **Backend & Data** | `tenant-aware-data-layer` | `supabase-auth-session-management` |
+| **Frontend & UI** | `forensic-ui-construction` | `deployment-cicd-guardrails` |
+| **Core Engine (AI & Provenance)** | `gemini-c2pa-pipeline` | `deployment-cicd-guardrails` |
+| **DevOps & Release** | `deployment-cicd-guardrails` | `supabase-auth-session-management` |
 
-## 2. Frontend & UI
-| Task Type | Primary Skill | Secondary Skills |
-| :--- | :--- | :--- |
-| **New Page / Component** | `forensic-ui` | `deployment-cicd` (Env vars) |
-| **Modify Existing UI** | `forensic-ui` | - |
-| **Upload / File Handling** | `forensic-ui` | `gemini-c2pa-pipeline` |
+## Detailed Skill Map
 
-## 3. Core Engine (AI & Provenance)
-| Task Type | Primary Skill | Secondary Skills |
-| :--- | :--- | :--- |
-| **Modify Analysis Logic** | `gemini-c2pa-pipeline` | `ROADMAP.md` (Check Tripwires) |
-| **Prompt Engineering** | `gemini-c2pa-pipeline` | - |
-| **C2PA Verification** | `gemini-c2pa-pipeline` | `forensic-ui` (Displaying trust) |
+1.  **`tenant-aware-data-layer`**: RLS policies, tenant switching, audit logging.
+2.  **`forensic-ui-construction`**: Building UI components in the 'Forensic Instrument' style.
+3.  **`gemini-c2pa-pipeline`**: Analysis Pipeline logic (Gemini 1.5 + C2PA).
+4.  **`supabase-auth-session-management`**: Auth, Sessions, and detailed RLS context.
+5.  **`deployment-cicd-guardrails`**: Safe deployment protocols and CI/CD checks.
 
 ## 4. DevOps & Release
 | Task Type | Primary Skill | Secondary Skills |

@@ -6,9 +6,9 @@ AI Risk Shield is a high-security, forensic analysis platform built on a serverl
 ## Core Stack
 *   **Frontend Check**: `Next.js 14` (App Router), `Tailwind CSS`, `Framer Motion` (Physics).
 *   **Backend**: `Supabase` (Postgres, GoTrue Auth, Realtime, Storage).
-*   **AI Engine**: `Google Gemini 1.5 Pro` (Multimodal Analysis).
+*   **AI Engine**: `Google Gemini 1.5 Flash` (Multimodal Analysis).
 *   **Provenance**: `C2PA` (Content Credentials) via `c2pa-node` / WASM.
-*   **Infrastructure**: `Vercel` (Hosting, Edge Functions).
+*   **Infrastructure**: `Vercel` (Hosting, API Routes).
 
 ## Architecture Diagram
 
@@ -60,7 +60,7 @@ graph TD
     *   **C2PA**: extracts manifest and signature data.
 3.  **Result**: Data written to `scans` and `scan_findings` tables.
 4.  **Return**: API responds with JSON risk profile.
-> **Note**: Future roadmap includes refactoring to Async Edge Functions for scalability.
+> **Note**: Current implementation uses standard Next.js API Routes (`app/api/*`).
 
 ### 4. Authentication (Custom Flow)
 *   **Dynamic Magic Links**: We use a custom `magic_links` table and Resend for emails to inject dynamic **Risk Scores** into the template.

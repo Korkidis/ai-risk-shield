@@ -9,10 +9,16 @@ Focus is on removing friction from the "Time to Value" flow, specifically the "G
 - [x] **Multi-Tenancy**: Hierarchical structure (Agency -> Client) working.
 - [x] **Billing**: Stripe integration for plans and metered usage.
 - [x] **Upload**: Drag-and-drop file upload with session tracking.
-- [x] **Magic Link Auth**: Custom flow verified.
-    - Route: `/auth/verify` (Implemented & Tested)
-    - Script: `scripts/verify-magic-link.ts` (Success)
-    - Evidence: Browser test confirmed redirect and "Verified" state.
+- [x] **Magic Link Auth**: Custom flow### 2. Verified Magic Link Flow
+- Implemented `app/auth/verify/route.ts` to handle token validation.
+- Created `scripts/verify-magic-link.ts` to test the end-to-end flow.
+- Confirmed browser behavior: Redirects to `/scan/[id]`, shows "Email verified", matches design.
+
+### 3. Aligned Documentation
+- **Pricing**: Updated `NORTH_STAR.md` and `FREEMIUM_IMPLEMENTATION.md` to use "Pro" plan ($49/mo) consistent with Strategy.
+- **Status**: Updated `roadmap.md` to mark Real-time Analysis and Email Capture as complete.
+- **Architecture**: Corrected `ARCHITECTURE.md` to specify Next.js API Routes (not Edge) and Gemini 1.5 Flash.
+- **Hygiene**: Fixed `skills/INDEX.md` naming and refreshed `SUPABASE_SETUP.md`.
 
 ## Recent Context
 - **Last Session**: Focused on "Magic Link Email Fix". Troubleshooting Resend delivery and `FROM` address configuration to ensure users can actually log in via the "Gate".

@@ -104,11 +104,11 @@ File: `lib/session.ts`
 
 Total revenue per 100 visitors:
 - One-time: 3 × $29 = $87
-- Subscription: 1 × $49/mo = $49/mo
+- Subscription: 1 × $49/mo (Pro) = $49/mo
 
 Est. monthly with 10K visitors:
 - 100 × $87 = $8,700 one-time
-- 100 × $49 = $4,900/mo recurring
+- 100 × $49 = $4,900/mo recurring (Pro)
 ```
 
 ## Implementation Time Estimate

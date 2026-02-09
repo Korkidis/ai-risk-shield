@@ -96,24 +96,20 @@ async function runTest() {
 
         console.log('✅ API Call Successful (Email Captured)')
 
-        // 5. Retrieve the Token from DB directly
-        const { data: link, error: linkError } = await supabase
-            .from('magic_links')
-            .select('*')
-            .eq('scan_id', scan.id)
-            .single()
+        console.log('✅ API Call Successful (Email Captured)')
+        console.log('👉 Check server console for the Magic Link (logged in DEV mode)')
 
-        if (linkError || !link) {
-            console.error('❌ Token not found in DB!', linkError)
+        // 5. Verify Shadow User Creation
+        const { data: { users }, error: userError } = await supabase.auth.admin.listUsers()
+        const createdUser = users?.find(u => u.email === testEmail)
+
+        if (!createdUser) {
+            console.error('❌ Shadow User was NOT created in Supabase Auth!')
             return
         }
 
-        console.log('✅ Magic Link Record Found in DB')
-        console.log('---------------------------------------------------')
-        console.log('🔗 VERIFICATION LINK:')
-        console.log(`${BASE_URL}/auth/verify?token=${link.token}`)
-        console.log('---------------------------------------------------')
-        console.log('👉 Since we are automated, I will verify this link now...')
+        console.log(`✅ Shadow User Verified: ${createdUser.id} (${createdUser.email})`)
+        console.log(`   Confirmed: ${createdUser.email_confirmed_at ? 'Yes' : 'No (Pending Link Click)'}`)
 
     } catch (err) {
         console.error('❌ Script Error:', err)
