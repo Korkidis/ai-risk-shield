@@ -18,7 +18,7 @@ interface RiskProfile {
     safety_report: { score: number; teaser: string; };
     provenance_report: { score: number; teaser: string; };
     c2pa_report: {
-        status: 'valid' | 'invalid' | 'caution' | 'missing';
+        status: 'valid' | 'invalid' | 'caution' | 'missing' | 'error';
         creator?: string;
         tool?: string;
         timestamp?: string;

@@ -9,6 +9,7 @@ import { Header } from '@/components/layout/Header'
 import { RiskProfile } from '@/lib/gemini-types'
 import Link from 'next/link'
 import { generateForensicReport } from '@/lib/pdf-generator'
+import { getRiskTier, toUIRiskLevel } from '@/lib/risk/tiers'
 import { UpgradeButton } from '@/components/billing/UpgradeButton'
 import { FileText } from 'lucide-react'
 import { OneTimePurchaseButton } from '@/components/billing/OneTimePurchaseButton'
@@ -93,10 +94,7 @@ export default function ScanResultPage() {
         )
     }
 
-    const riskLevel = riskProfile.composite_score >= 85 ? 'critical' :
-        riskProfile.composite_score >= 60 ? 'high' :
-            riskProfile.composite_score >= 40 ? 'medium' :
-                riskProfile.composite_score > 0 ? 'low' : 'safe'
+    const riskLevel = toUIRiskLevel(getRiskTier(riskProfile.composite_score).level)
 
     return (
         <RSBackground variant="standard">
@@ -197,7 +195,7 @@ export default function ScanResultPage() {
                                         }}
                                         className="mt-4 text-xs text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-secondary)] underline transition-colors uppercase tracking-wide text-center block w-full"
                                     >
-                                        Download Redacted Sample Only
+                                        Download Sample Report
                                     </button>
                                 </div>
                             )}

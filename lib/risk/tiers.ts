@@ -50,5 +50,16 @@ export function mapLegacyLevel(level: string): RiskLevel {
     return 'safe'
 }
 
+/**
+ * Map canonical RiskLevel to UI component RiskLevel.
+ * UI components (RSRadialMeter, RSRiskScore) use 'medium'/'low'
+ * while canonical tiers use 'review'/'caution'.
+ */
+export function toUIRiskLevel(level: RiskLevel): 'critical' | 'high' | 'medium' | 'low' | 'safe' {
+    if (level === 'review') return 'medium'
+    if (level === 'caution') return 'low'
+    return level
+}
+
 // Re-export BoxTier alias for backwards compatibility with risk-utils.ts consumers
 export type BoxTier = RiskTier

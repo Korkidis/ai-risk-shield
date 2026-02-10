@@ -2,43 +2,60 @@ import jsPDF from 'jspdf'
 import { RiskProfile } from './gemini-types'
 import { ExtendedScan } from '@/types/database'
 import { format } from 'date-fns'
+import { getRiskTier } from './risk/tiers'
 
-// Dieter Rams / Braun Color Palette
-const COLORS = {
-    bg: '#F4F4F4',        // Off-white/Beige paper
-    text: '#111111',      // Near-black ink
-    subtext: '#666666',   // Grey
-    accent: '#EA580C',    // Signal Orange (Tailwind orange-600)
-    line: '#DDDDDD'       // Light dividers
+// Dieter Rams / Braun Design Tokens
+const FONT = {
+    header: "helvetica",
+    body: "helvetica",
+    mono: "courier"
 }
 
-export const generateForensicReport = (scan: ExtendedScan & { filename: string }, profile: RiskProfile, isSample: boolean = false) => {
+const COLORS = {
+    bg: '#EBE7E0',        // Clay White
+    ink: '#1A1A1A',       // Carbon
+    sub: '#666666',       // Grey 600
+    line: '#CCCCCC',      // Grey 300
+    accent: '#FF4F00',    // Signal Orange
+    safe: '#006742',      // Safe Green
+    caution: '#EAB308',   // Warning Yellow
+}
+
+/**
+ * Map canonical risk level to PDF ink color.
+ */
+function riskLevelColor(level: string): string {
+    if (level === 'critical' || level === 'high') return COLORS.accent
+    if (level === 'review' || level === 'caution') return COLORS.caution
+    return COLORS.safe
+}
+
+/**
+ * Map finding severity to PDF dot color.
+ */
+function severityDotColor(severity: string): string {
+    if (severity === 'critical') return COLORS.accent
+    if (severity === 'high') return COLORS.caution
+    return COLORS.line
+}
+
+export const generateForensicReport = (
+    scan: ExtendedScan & { filename: string },
+    profile: RiskProfile,
+    isSample: boolean = false
+) => {
     const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
     })
 
-    // --- DESIGN TOKENS ---
-    const FONT = {
-        header: "helvetica",
-        body: "helvetica",
-        mono: "courier"
-    }
-
-    const COLORS = {
-        bg: '#EBE7E0',        // Clay White (not used in PDF background usually due to ink cost, but logic applies)
-        ink: '#1A1A1A',       // Carbon
-        sub: '#666666',       // Grey 600
-        line: '#CCCCCC',      // Grey 300
-        accent: '#FF4F00',    // Signal Orange
-        safe: '#006742',      // Safe Green
-    }
+    const tier = getRiskTier(profile.composite_score)
 
     // --- HELPERS ---
     const drawLine = (y: number) => {
         doc.setDrawColor(COLORS.line)
-        doc.setLineWidth(0.1) // Fine technical line
+        doc.setLineWidth(0.1)
         doc.line(20, y, 190, y)
     }
 
@@ -56,7 +73,18 @@ export const generateForensicReport = (scan: ExtendedScan & { filename: string }
         doc.text(text, x, y)
     }
 
-    // --- HEADER ---
+    const checkPageBreak = (y: number, needed: number): number => {
+        if (y + needed > 270) {
+            doc.addPage()
+            return 20
+        }
+        return y
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HEADER
+    // ═══════════════════════════════════════════════════════════════════════════
+
     doc.setFont(FONT.header, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLORS.ink)
@@ -64,9 +92,9 @@ export const generateForensicReport = (scan: ExtendedScan & { filename: string }
 
     doc.setFont(FONT.body, "normal")
     doc.setFontSize(8)
-    doc.text("FORENSIC ANALYSIS REPORT", 20, 19)
+    doc.text(isSample ? "SAMPLE FORENSIC ANALYSIS" : "FORENSIC ANALYSIS REPORT", 20, 19)
 
-    // Metadata Block (Top Right)
+    // Metadata (Top Right)
     doc.setFont(FONT.mono, "normal")
     doc.setFontSize(7)
     doc.setTextColor(COLORS.sub)
@@ -75,9 +103,11 @@ export const generateForensicReport = (scan: ExtendedScan & { filename: string }
 
     drawLine(25)
 
-    // --- ASSET CONTEXT ---
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ASSET CONTEXT
+    // ═══════════════════════════════════════════════════════════════════════════
+
     drawLabel("FILENAME", 20, 35)
-    // Use body font for filename to avoid monospace spacing issues
     doc.setFont(FONT.body, "normal")
     doc.setFontSize(10)
     doc.setTextColor(COLORS.ink)
@@ -86,13 +116,12 @@ export const generateForensicReport = (scan: ExtendedScan & { filename: string }
     drawLabel("TYPE", 120, 35)
     drawValue((scan.is_video ? 'VIDEO' : 'IMAGE').toUpperCase(), 120, 40)
 
-    // --- PROMINENT SCORE GAUGE ---
-    const scoreY = 60
-    const scoreSize = 40
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PROMINENT SCORE GAUGE
+    // ═══════════════════════════════════════════════════════════════════════════
 
-    // Decide color
-    const riskColor = profile.composite_score > 75 ? COLORS.accent :
-        profile.composite_score > 40 ? '#EAB308' : COLORS.safe
+    const scoreY = 60
+    const riskColor = riskLevelColor(tier.level)
 
     doc.setFillColor(riskColor)
     doc.circle(170, scoreY, 12, "F")
@@ -104,62 +133,161 @@ export const generateForensicReport = (scan: ExtendedScan & { filename: string }
 
     doc.setTextColor(COLORS.ink)
     doc.setFontSize(24)
-    doc.text(profile.verdict.toUpperCase(), 20, scoreY + 2)
+    doc.text(tier.verdict.toUpperCase(), 20, scoreY + 2)
     drawLabel("RISK ASSESSMENT", 20, scoreY - 10)
 
     drawLine(80)
 
-    // --- FINDINGS (The "Meat") ---
-    let y = 95
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SUB-SCORES
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    let y = 90
+    drawLabel("RISK BREAKDOWN", 20, y)
+    y += 8
+
+    const subScores = [
+        { label: "IP EXPOSURE", score: profile.ip_report.score },
+        { label: "BRAND SAFETY", score: profile.safety_report.score },
+        { label: "PROVENANCE", score: profile.provenance_report.score },
+    ]
+
+    subScores.forEach(({ label, score }) => {
+        const subTier = getRiskTier(score)
+        doc.setFont(FONT.body, "bold")
+        doc.setFontSize(9)
+        doc.setTextColor(COLORS.ink)
+        doc.text(label, 28, y)
+
+        doc.setFont(FONT.mono, "bold")
+        doc.setFontSize(11)
+        doc.setTextColor(riskLevelColor(subTier.level))
+        doc.text(`${score}`, 80, y)
+
+        doc.setFont(FONT.body, "normal")
+        doc.setFontSize(8)
+        doc.setTextColor(COLORS.sub)
+        doc.text(subTier.label, 95, y)
+
+        y += 7
+    })
+
+    // C2PA Status Summary
+    y += 2
+    const c2pa = profile.c2pa_report
+    drawLabel("C2PA PROVENANCE", 28, y)
+    y += 5
+    doc.setFont(FONT.mono, "normal")
+    doc.setFontSize(9)
+    const c2paStatus = c2pa.status || 'unknown'
+    const c2paColor = c2paStatus === 'valid' ? COLORS.safe :
+        c2paStatus === 'caution' ? COLORS.caution :
+            c2paStatus === 'missing' ? COLORS.sub : COLORS.accent
+    const c2paLabel = c2paStatus === 'caution' ? 'WARN' : c2paStatus.toUpperCase()
+    doc.setTextColor(c2paColor)
+    doc.text(`STATUS: ${c2paLabel}`, 28, y)
+
+    if (c2pa.issuer) {
+        doc.setTextColor(COLORS.ink)
+        doc.text(`ISSUER: ${c2pa.issuer}`, 90, y)
+    }
+    if (c2pa.tool) {
+        y += 5
+        doc.setTextColor(COLORS.sub)
+        doc.text(`TOOL: ${c2pa.tool}${c2pa.tool_version ? ` v${c2pa.tool_version}` : ''}`, 28, y)
+    }
+
+    y += 8
+    drawLine(y)
+    y += 10
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // KEY FINDINGS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    y = checkPageBreak(y, 40)
     drawLabel("KEY FINDINGS", 20, y)
     y += 8
 
-    // Extract real findings from the scan object if available
-    // The 'raw_findings' might be in scan.scan_findings if we fetched explicitly
-    let findings = (scan as any).scan_findings || []
+    // Build findings list: DB findings first, then synthesized from profile
+    let findings = [...((scan as any).scan_findings || [])]
 
-    // FALLBACK: If we have a high score but no findings (Data mismatch), synthesize them from the profile
-    if (findings.length === 0 && profile.composite_score > 40) {
-        if (profile.ip_report.score > 40) {
+    if (findings.length === 0 && profile.composite_score > 25) {
+        if (profile.ip_report.score > 25) {
+            const ipTier = getRiskTier(profile.ip_report.score)
             findings.push({
-                title: "Potential Intellectual Property Risk",
-                severity: profile.ip_report.score > 80 ? 'critical' : 'high',
-                finding_type: 'ip_match',
-                description: profile.ip_report.teaser === "No significant risks detected."
-                    ? "High probability of IP matching detected based on visual analysis."
-                    : profile.ip_report.teaser
+                title: "Intellectual Property Risk Detected",
+                severity: ipTier.level === 'critical' ? 'critical' : ipTier.level === 'high' ? 'high' : 'medium',
+                finding_type: 'ip_violation',
+                description: profile.ip_report.teaser,
+                _teaser: profile.ip_report.teaser,
             })
         }
-        if (profile.safety_report.score > 40) {
+        if (profile.safety_report.score > 25) {
+            const safeTier = getRiskTier(profile.safety_report.score)
             findings.push({
                 title: "Content Safety Flag",
-                severity: profile.safety_report.score > 80 ? 'critical' : 'high',
-                finding_type: 'safety_check',
-                description: "Content may violate safety guidelines for commercial usage."
+                severity: safeTier.level === 'critical' ? 'critical' : safeTier.level === 'high' ? 'high' : 'medium',
+                finding_type: 'safety_violation',
+                description: profile.safety_report.teaser,
+                _teaser: profile.safety_report.teaser,
             })
         }
-        if (profile.provenance_report.score > 40) {
+        if (profile.provenance_report.score > 25) {
+            const provTier = getRiskTier(profile.provenance_report.score)
             findings.push({
-                title: "Provenance Verification Failed",
-                severity: profile.provenance_report.score > 80 ? 'critical' : 'high',
-                finding_type: 'provenance_check',
-                description: "Digital signature or C2PA manifest is missing or invalid."
+                title: "Provenance Verification Issue",
+                severity: provTier.level === 'critical' ? 'critical' : provTier.level === 'high' ? 'high' : 'medium',
+                finding_type: 'provenance_issue',
+                description: profile.provenance_report.teaser,
+                _teaser: profile.provenance_report.teaser,
             })
         }
     }
 
+    // Sort by severity (critical first)
+    const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+    findings.sort((a: any, b: any) => (severityOrder[a.severity] ?? 4) - (severityOrder[b.severity] ?? 4))
+
     if (findings.length > 0) {
-        findings.slice(0, 5).forEach((f: any) => {
-            // Severity Indicator
-            doc.setFillColor(f.severity === 'critical' ? COLORS.accent : f.severity === 'high' ? '#EAB308' : COLORS.line)
+        // Determine which findings to show in sample mode
+        const maxSampleFindings = 2
+        let shownFindings: any[]
+        let hiddenCount: number
+
+        if (isSample) {
+            // Show highest-severity, then one from a different category if possible
+            shownFindings = [findings[0]]
+            const firstType = findings[0].finding_type
+            const differentCategory = findings.find((f: any) => f.finding_type !== firstType)
+            if (differentCategory) {
+                shownFindings.push(differentCategory)
+            } else if (findings.length > 1) {
+                shownFindings.push(findings[1])
+            }
+            shownFindings = shownFindings.slice(0, maxSampleFindings)
+            hiddenCount = findings.length - shownFindings.length
+        } else {
+            shownFindings = findings.slice(0, 5)
+            hiddenCount = 0
+        }
+
+        // Render shown findings
+        shownFindings.forEach((f: any) => {
+            y = checkPageBreak(y, 25)
+
+            // Severity dot
+            doc.setFillColor(severityDotColor(f.severity))
             doc.circle(22, y - 1, 1.5, "F")
 
+            // Title
             doc.setFont(FONT.body, "bold")
             doc.setFontSize(10)
             doc.setTextColor(COLORS.ink)
             doc.text(f.title, 28, y)
 
-            const typeLabel = f.finding_type.replace('_', ' ').toUpperCase()
+            // Type label
+            const typeLabel = f.finding_type.replace(/_/g, ' ').toUpperCase()
             doc.setFont(FONT.mono, "normal")
             doc.setFontSize(7)
             doc.setTextColor(COLORS.sub)
@@ -167,82 +295,181 @@ export const generateForensicReport = (scan: ExtendedScan & { filename: string }
 
             y += 5
 
+            // Description
             doc.setFont(FONT.body, "normal")
             doc.setFontSize(9)
             doc.setTextColor(COLORS.sub)
+            const descLines = doc.splitTextToSize(f.description || '', 160)
+            doc.text(descLines, 28, y)
+            y += (descLines.length * 4) + 3
 
-            let description = f.description
-            if (isSample) {
-                // Redaction Logic
-                description = "Content redacted. " + "█".repeat(Math.min(description.length, 40))
+            // Mitigation hint (teaser-aligned, one line)
+            const teaser = f._teaser || f.description || ''
+            if (teaser && teaser !== "No significant risks detected.") {
+                y = checkPageBreak(y, 8)
+                doc.setFont(FONT.mono, "normal")
+                doc.setFontSize(7)
+                doc.setTextColor(COLORS.ink)
+
+                // Truncate teaser to one clean line
+                const hintText = teaser.length > 80 ? teaser.substring(0, 77) + '...' : teaser
+                doc.text(`MITIGATION: ${hintText}`, 28, y)
+                y += 6
             }
 
-            // Word wrap description
-            const descLines = doc.splitTextToSize(description, 160)
-            doc.text(descLines, 28, y)
-
-            y += (descLines.length * 4) + 6
+            y += 3
         })
 
-        if (isSample) {
-            // Overlay for Upgrade
-            doc.setFillColor(255, 255, 255, 0.9) // Semi-transparent white
-            doc.rect(20, 105, 170, 60, "F")
+        // ───────────────────────────────────────────────────────────────────
+        // SAMPLE: Locked content indicator + upgrade CTA
+        // ───────────────────────────────────────────────────────────────────
+        if (isSample && hiddenCount > 0) {
+            y = checkPageBreak(y, 40)
+            drawLine(y)
+            y += 8
+
+            // Locked section
+            doc.setFont(FONT.body, "bold")
+            doc.setFontSize(9)
+            doc.setTextColor(COLORS.sub)
+            doc.text("FULL REPORT INCLUDES:", 28, y)
+            y += 6
+
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(8)
+            const lockedItems = [
+                `${hiddenCount} additional finding${hiddenCount > 1 ? 's' : ''} with evidence`,
+                "Detailed IP entity mapping & match analysis",
+                "Complete C2PA manifest & chain of custody",
+                "Full mitigation strategy with citations",
+                "Chief Officer risk briefing",
+            ]
+            lockedItems.forEach(item => {
+                doc.text(`\u2022  ${item}`, 32, y)
+                y += 5
+            })
+
+            y += 4
+
+            // Upgrade CTA
+            drawLine(y)
+            y += 8
 
             doc.setFont(FONT.header, "bold")
-            doc.setFontSize(14)
+            doc.setFontSize(12)
             doc.setTextColor(COLORS.accent)
-            doc.text("UPGRADE TO UNLOCK FULL FINDINGS", 105, 135, { align: "center" })
-            doc.setFont(FONT.body, "normal")
-            doc.setFontSize(10)
+            doc.text("UNLOCK COMPLETE FORENSIC ANALYSIS", 105, y, { align: "center" })
+            y += 6
+
+            doc.setFont(FONT.mono, "normal")
+            doc.setFontSize(8)
             doc.setTextColor(COLORS.ink)
-            doc.text("Detailed remediation steps hidden in sample view.", 105, 140, { align: "center" })
+            doc.text(`airiskshield.com/scan/${scan.id}`, 105, y, { align: "center" })
+            y += 4
         }
+
+        // ───────────────────────────────────────────────────────────────────
+        // FULL REPORT: Additional content
+        // ───────────────────────────────────────────────────────────────────
+        if (!isSample && profile.chief_officer_strategy) {
+            y = checkPageBreak(y, 30)
+            drawLine(y)
+            y += 10
+
+            drawLabel("CHIEF OFFICER RISK BRIEFING", 20, y)
+            y += 6
+
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(9)
+            doc.setTextColor(COLORS.ink)
+            const strategyLines = doc.splitTextToSize(profile.chief_officer_strategy, 160)
+            doc.text(strategyLines, 20, y)
+            y += (strategyLines.length * 4) + 6
+        }
+
     } else {
-        // If no findings, list the clean checks
+        // No findings — clean checks
         const checks = [
             { label: "IP CHECK", status: "PASS", detail: "No known copyright matches found." },
             { label: "SAFETY CHECK", status: "PASS", detail: "Content is safe for commercial use." },
-            { label: "C2PA CHECK", status: "INFO", detail: profile.c2pa_report?.status === 'missing' ? "No provenance data." : "Provenance verified." },
+            {
+                label: "C2PA CHECK",
+                status: c2pa.status === 'valid' ? "PASS" : c2pa.status === 'caution' ? "WARN" : (c2pa.status === 'invalid' || c2pa.status === 'error') ? "FAIL" : "INFO",
+                detail: c2pa.status === 'missing' ? "No provenance data." : c2pa.status === 'valid' ? "Provenance verified." : c2pa.status === 'caution' ? "Partial/Self-signed credentials." : "Verification failed."
+            },
         ]
 
         checks.forEach(check => {
             doc.setFont(FONT.body, "bold")
-            doc.text(check.label, 20, y)
+            doc.setFontSize(9)
+            doc.setTextColor(COLORS.ink)
+            doc.text(check.label, 28, y)
 
             doc.setFont(FONT.mono, "normal")
-            doc.text(check.status, 60, y)
+            doc.setFontSize(9)
+            doc.setTextColor(
+                check.status === 'PASS' ? COLORS.safe :
+                    check.status === 'WARN' ? COLORS.caution :
+                        check.status === 'FAIL' ? COLORS.accent :
+                            COLORS.sub
+            )
+            doc.text(check.status, 70, y)
 
             doc.setFont(FONT.body, "normal")
+            doc.setFontSize(8)
             doc.setTextColor(COLORS.sub)
             doc.text(check.detail, 90, y)
 
-            doc.setTextColor(COLORS.ink) // Reset
             y += 8
         })
     }
 
-    drawLine(y + 10)
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PROVENANCE FOOTER (Full reports only)
+    // ═══════════════════════════════════════════════════════════════════════════
 
-    // --- PROVENANCE FOOTER ---
-    y += 20
-    drawLabel("PROVENANCE DATA", 20, y)
-    y += 5
+    if (!isSample) {
+        y = checkPageBreak(y, 30)
+        drawLine(y + 10)
+        y += 20
 
-    doc.setFont(FONT.mono, "normal")
-    doc.setFontSize(8)
-    doc.setTextColor(COLORS.ink)
+        drawLabel("PROVENANCE DATA", 20, y)
+        y += 5
 
-    const c2pa = profile.c2pa_report
-    const provText = [
-        `STATUS:    ${c2pa.status?.toUpperCase() || 'UNKNOWN'}`,
-        `ISSUER:    ${c2pa.issuer || 'N/A'}`,
-        `TOOL:      ${c2pa.tool || 'N/A'}`,
-        `SIGNATURE: Verified (Self-Signed)` // Placeholder logic, ideally from true status
-    ]
+        doc.setFont(FONT.mono, "normal")
+        doc.setFontSize(8)
+        doc.setTextColor(COLORS.ink)
 
-    doc.text(provText, 20, y + 4)
+        const signatureLabel = c2paStatus === 'valid' ? 'Verified' :
+            c2paStatus === 'caution' ? 'Verified (Non-Standard)' :
+                c2paStatus === 'missing' ? 'Not Present' : 'Failed'
+        const provText = [
+            `STATUS:    ${c2paLabel}`,
+            `ISSUER:    ${c2pa.issuer || 'N/A'}`,
+            `TOOL:      ${c2pa.tool || 'N/A'}`,
+            `SIGNATURE: ${signatureLabel}`,
+        ]
+
+        doc.text(provText, 20, y + 4)
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FOOTER
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const pageCount = doc.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        doc.setFont(FONT.mono, "normal")
+        doc.setFontSize(6)
+        doc.setTextColor(COLORS.sub)
+        doc.text(
+            `AI RISK SHIELD  |  ${isSample ? 'SAMPLE' : 'FULL'} REPORT  |  ${format(new Date(), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
+            105, 290, { align: "center" }
+        )
+    }
 
     // Save
-    doc.save(`AIRS_Report_${scan.filename.substring(0, 10)}_${format(new Date(), 'yyyyMMdd')}.pdf`)
+    const prefix = isSample ? 'AIRS_Sample_' : 'AIRS_Report_'
+    doc.save(`${prefix}${scan.filename.substring(0, 10)}_${format(new Date(), 'yyyyMMdd')}.pdf`)
 }

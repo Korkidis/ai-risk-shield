@@ -9,6 +9,7 @@ import { RSPanel } from '../rs/RSPanel'
 import { RSSystemLog } from '../rs/RSSystemLog'
 import { RSButton } from '../rs/RSButton'
 import { cn } from '@/lib/utils'
+import { getRiskTier, toUIRiskLevel } from '@/lib/risk/tiers'
 
 export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, riskProfile: RiskProfile }) {
 
@@ -31,10 +32,7 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
     }, [riskProfile])
 
     // Map risk profile to simple level for meter
-    const riskLevel = riskProfile.composite_score >= 85 ? 'critical' :
-        riskProfile.composite_score >= 60 ? 'high' :
-            riskProfile.composite_score >= 40 ? 'medium' :
-                riskProfile.composite_score > 0 ? 'low' : 'safe';
+    const riskLevel = toUIRiskLevel(getRiskTier(riskProfile.composite_score).level)
 
     return (
         <div className="space-y-12 max-w-6xl mx-auto px-4">
@@ -177,16 +175,17 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
 }
 
 function RiskMetric({ label, value }: { label: string, value: number }) {
-    const getColorStyle = (v: number) => {
-        if (v >= 70) return 'text-[var(--rs-signal)]'
-        if (v >= 40) return 'text-[var(--rs-risk-caution)]'
+    const tier = getRiskTier(value)
+    const getColorStyle = () => {
+        if (tier.level === 'critical' || tier.level === 'high') return 'text-[var(--rs-signal)]'
+        if (tier.level === 'review' || tier.level === 'caution') return 'text-[var(--rs-risk-caution)]'
         return 'text-[var(--rs-safe)]'
     }
 
     return (
         <div className="bg-[var(--rs-bg-surface)] p-4 flex flex-col items-center justify-center text-center gap-1">
             <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">{label}</span>
-            <span className={cn("text-xl font-bold font-mono", getColorStyle(value))}>{value}%</span>
+            <span className={cn("text-xl font-bold font-mono", getColorStyle())}>{value}%</span>
         </div>
     )
 }

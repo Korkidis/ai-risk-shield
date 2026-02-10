@@ -26,6 +26,7 @@ export async function GET(
                 safety_risk_score,
                 provenance_risk_score,
                 risk_level,
+                provenance_status,
                 provenance_data,
                 scan_findings(*),
                 assets (
@@ -80,7 +81,10 @@ export async function GET(
                 teaser: "Provenance analysis",
                 reasoning: "Digital signature verification."
             },
-            c2pa_report: scan.provenance_data || { status: 'missing' },
+            c2pa_report: {
+                ...(scan.provenance_data || {}),
+                status: scan.provenance_data?.status || scan.provenance_status || 'missing'
+            },
             chief_officer_strategy: "Automated analysis indicates legal review may be required for identified high-risk elements."
         }
 

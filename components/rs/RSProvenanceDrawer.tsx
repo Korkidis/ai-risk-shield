@@ -15,7 +15,7 @@ import {
 interface RSProvenanceDrawerProps {
     isOpen: boolean;
     onClose: () => void;
-    status: 'valid' | 'missing' | 'invalid' | 'error';
+    status: 'valid' | 'missing' | 'invalid' | 'error' | 'caution';
     details?: {
         creator?: string;
         tool?: string;
@@ -47,8 +47,9 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
                             <div className={cn(
                                 "w-2 h-2 rounded-full",
                                 status === 'valid' ? "bg-rs-safe" :
-                                    status === 'invalid' ? "bg-rs-signal" :
-                                        status === 'missing' ? "bg-rs-risk-review" : "bg-rs-gray-400"
+                                    status === 'caution' ? "bg-rs-risk-caution" :
+                                        status === 'invalid' ? "bg-rs-signal" :
+                                            status === 'missing' ? "bg-rs-risk-review" : "bg-rs-gray-400"
                             )} />
                             <span className="font-mono text-[10px] uppercase font-bold text-rs-text-tertiary">
                                 Status: {status.toUpperCase()}
@@ -75,9 +76,11 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
                                 <p className="text-xs text-rs-text-secondary leading-relaxed italic">
                                     {status === 'valid'
                                         ? "This asset is armored with C2PA Content Credentials. In the event of an IP dispute, this manifest serves as cryptographically verifiable evidence of your acquisition and generation chain."
-                                        : status === 'missing'
-                                            ? "No Content Credentials detected. While common in emerging standards, the lack of provenance increases your 'Evidentiary Gap' in legal disputes. Consider using tools like Firefly or DALL-E 3 that support C2PA signing."
-                                            : "This asset contains BROKEN or TAMPERED credentials. The risk of legal challenge is significantly higher as original origin can no longer be verified."}
+                                        : status === 'caution'
+                                            ? "Partial or self-signed credentials detected. While better than nothing, the chain of custody is incomplete or cannot be fully verified against a trusted root. Exercise due diligence."
+                                            : status === 'missing'
+                                                ? "No Content Credentials detected. While common in emerging standards, the lack of provenance increases your 'Evidentiary Gap' in legal disputes. Consider using tools like Firefly or DALL-E 3 that support C2PA signing."
+                                                : "This asset contains BROKEN or TAMPERED credentials. The risk of legal challenge is significantly higher as original origin can no longer be verified."}
                                 </p>
                             </div>
                         </div>
