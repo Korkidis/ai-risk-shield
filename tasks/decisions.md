@@ -9,6 +9,7 @@
 | **Jan 2026** | **Tailwind "Forensic" System** | Decided against component libraries (MUI/Chakra) to achieve the custom "Braun/Dieter Rams" physical aesthetic. | ✅ Core Brand |
 | **Jan 2026** | **Hierarchical Tenancy** | Implemented `parent_tenant_id` to support Agency use cases (Managing multiple client workspaces). Essential for B2B. | ✅ Live |
 | **Feb 2026** | **Metered Billing** | Chose Stripe Usage Records over simple subscriptions to capture upside from heavy users (Agencies). | ✅ Live |
+| **Feb 2026** | **Provenance Status Constraint Expanded** | Updated `scans.provenance_status` CHECK constraint to include `caution` to preserve full C2PA fidelity (valid/missing/invalid/error/caution). Prevents DB write failures after risk-model unification. | ✅ Active |
 
 ## Product & Business
 

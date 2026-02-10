@@ -9,6 +9,7 @@ import { BrandGuideline } from '@/types/database';
 // Import and re-export types from separate types file
 import type { SpecialistReport, RiskProfile } from './gemini-types';
 import type { C2PAReport } from './c2pa-types';
+import { computeCompositeScore, computeProvenanceScore, computeVerdict } from './risk/scoring';
 export type { SpecialistReport, RiskProfile };
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -391,37 +392,25 @@ export async function analyzeImageMultiPersona(
             }
         }
 
-        // 4. Calculate Provenance Score based on C2PA Outcome (Legal Defensibility Weighting)
-        const c2paScores = { valid: 0, caution: 20, missing: 80, invalid: 100, error: 50 };
-        const c2paDerivedScore = c2paScores[c2paReport.status] || 80;
+        // 4. Calculate Provenance Score based on C2PA Outcome (canonical scoring module)
+        const c2paDerivedScore = computeProvenanceScore(c2paReport.status as any);
 
-        // 5. C2PA TRUST OVERRIDE (The "Firefly Rule")
-        // If content has VALID C2PA credentials (e.g. Adobe Firefly), we trust the license/origin.
-        // Therefore, AI-hallucinated "IP Risk" should be suppressed.
+        // 5-8. Composite Score (Firefly Rule + weights + multiplier + critical override)
+        // All logic is now in the canonical scoring module
+        let composite = computeCompositeScore({
+            ipScore: ip.score,
+            safetyScore: safety.score,
+            c2paStatus: c2paReport.status as any,
+        });
+
+        // Apply C2PA Trust Override side-effects on IP reasoning
         if (c2paReport.status === 'valid') {
-            ip.score = Math.min(ip.score, 10); // Cap IP risk at 10 if we have signed credentials
+            ip.score = Math.min(ip.score, 10);
             ip.reasoning = `[C2PA TRUSTED] Content has valid cryptographic credentials. IP Risk suppressed. Original reasoning: ${ip.reasoning}`;
         }
 
-        // 6. Calculate Composite (IP 40%, Safety 40%, Provenance 20%)
-        let composite = Math.round((ip.score * 0.4) + (safety.score * 0.4) + (c2paDerivedScore * 0.2));
-
-        // 7. COMPOUND RISK MULTIPLIER (Only if C2PA is missing/invalid)
-        if (ip.score >= 80 && c2paDerivedScore >= 60) {
-            const boost = Math.round((ip.score + c2paDerivedScore) / 10);
-            composite = Math.min(100, composite + boost);
-        }
-
-        // 8. CRITICAL OVERRIDE
-        if (ip.score >= 90) {
-            composite = Math.max(composite, 95);
-        }
-
-        // 9. Verdict Logic
-        let verdict: RiskProfile['verdict'] = "Low Risk";
-        if (composite >= 80) verdict = "Critical Risk";
-        else if (composite >= 60) verdict = "High Risk";
-        else if (composite >= 35) verdict = "Medium Risk";
+        // 9. Verdict Logic (canonical thresholds)
+        const verdict = computeVerdict(composite);
 
         // 10. Generate Chief Strategy
         const strategy = await generateChiefStrategy([ip, safety, { score: c2paDerivedScore, teaser: '', reasoning: '' }]);

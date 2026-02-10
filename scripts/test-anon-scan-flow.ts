@@ -87,7 +87,7 @@ async function runTest() {
         const statusData = await statusRes.json();
         console.log(`Attempt ${attempts}: Status = ${statusData.status}, Risk = ${statusData.risk_level ?? 'N/A'}`);
 
-        if (statusData.status === 'completed') {
+        if (statusData.status === 'complete') {
             console.log('\n✨ Scan completed successfully!');
             console.log('Final Result:', JSON.stringify(statusData, null, 2));
             process.exit(0);

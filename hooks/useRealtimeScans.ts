@@ -93,7 +93,7 @@ export function useRealtimeScans({
                     // The existing risk_profile will be preserved from initial load
                     onUpdateRef.current({
                         id: newRecord.id,
-                        status: newStatus === 'complete' ? 'completed' : newStatus,
+                        status: newStatus,
                         composite_score: newRecord.composite_score,
                         ip_risk_score: newRecord.ip_risk_score,
                         safety_risk_score: newRecord.safety_risk_score,

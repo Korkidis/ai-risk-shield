@@ -4,6 +4,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { getTenantId } from '@/lib/supabase/auth'
 import { BrandGuideline } from '@/types/database'
 import { RiskProfile } from '@/lib/gemini'
+import { computeRiskLevel } from '@/lib/risk/scoring'
 
 export async function POST(req: NextRequest) {
     try {
@@ -118,9 +119,7 @@ export async function POST(req: NextRequest) {
             .from('scans')
             .update({
                 status: 'complete',
-                risk_level: riskProfile.verdict === 'Critical Risk' ? 'critical' :
-                    riskProfile.verdict === 'High Risk' ? 'high' :
-                        riskProfile.verdict === 'Medium Risk' ? 'review' : 'safe',
+                risk_level: computeRiskLevel(riskProfile.composite_score),
                 composite_score: riskProfile.composite_score,
                 ip_risk_score: riskProfile.ip_report.score,
                 safety_risk_score: riskProfile.safety_report.score,

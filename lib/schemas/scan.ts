@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ScanStatus = z.enum(['pending', 'processing', 'completed', 'failed']);
+export const ScanStatus = z.enum(['pending', 'processing', 'complete', 'failed']);
 
 export const ScanSchema = z.object({
     id: z.string().uuid(),

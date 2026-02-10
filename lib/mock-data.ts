@@ -9,7 +9,7 @@ export const MOCK_SCANS: ScanWithRelations[] = [
         asset_id: 'asset-001',
         filename: 'campaign_v1_hero.jpg',
         file_type: 'image',
-        status: 'completed',
+        status: 'complete',
         risk_profile: {
             verdict: 'Low Risk',
             summary: 'Content appears safe for general distribution. No significant copyright matches found.',
@@ -30,7 +30,7 @@ export const MOCK_SCANS: ScanWithRelations[] = [
         asset_id: 'asset-002',
         filename: 'competitor_analysis_chart.png',
         file_type: 'image',
-        status: 'completed',
+        status: 'complete',
         risk_profile: {
             verdict: 'High Risk',
             summary: 'High potential for trademark infringement detected. Competitor logos identified.',
@@ -51,7 +51,7 @@ export const MOCK_SCANS: ScanWithRelations[] = [
         asset_id: 'asset-003',
         filename: 'intern_meme_draft.jpg',
         file_type: 'image',
-        status: 'completed',
+        status: 'complete',
         risk_profile: {
             verdict: 'Critical Risk',
             summary: 'Critical safety violation: NSFW content detected in background.',

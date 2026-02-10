@@ -13,6 +13,7 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { computeCompositeScore, computeRiskLevel, computeProvenanceScore, computeProvenanceStatus, type C2PAStatus } from '@/lib/risk/scoring'
 import { analyzeIP } from './ip-detection'
 import { analyzeBrandSafety } from './brand-safety'
 import { extractFrames, cleanupFrames } from '@/lib/video/processor'
@@ -89,6 +90,10 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     let ipResult, brandSafetyResult, videoFramesData: any[] = []
     let compositeRisk: { score: number; level: 'safe' | 'caution' | 'review' | 'high' | 'critical' }
     let provenanceScore = 0
+    // Canonical C2PA status (default to missing until verified)
+    let c2paStatus: C2PAStatus = 'missing'
+    // Provenance status type matches canonical C2PAStatus from scoring module
+    let provenanceStatus: C2PAStatus = 'missing'
 
     if (isVideo) {
       // VIDEO PIPELINE
@@ -104,14 +109,18 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         const c2paReport = await verifyContentCredentials(tempPath);
         await fs.unlink(tempPath).catch(() => { }); // ignore cleanup error
 
+        c2paStatus = c2paReport.status as C2PAStatus;
         c2paResult.hasManifest = c2paReport.status !== 'missing';
         c2paResult.valid = c2paReport.status === 'valid';
 
-        if (c2paReport.status === 'valid') provenanceScore = 0;
-        else if (c2paReport.status === 'invalid') provenanceScore = 100;
-        else provenanceScore = 50; // Missing or Untrusted
+        // Use canonical scoring for consistency with composite calculation
+        provenanceScore = computeProvenanceScore(c2paStatus);
+        provenanceStatus = computeProvenanceStatus(c2paStatus);
       } catch (e) {
         console.error("Video C2PA Check failed:", e);
+        c2paStatus = 'error';
+        provenanceScore = computeProvenanceScore(c2paStatus);
+        provenanceStatus = computeProvenanceStatus(c2paStatus);
       }
 
       let maxIpScore = 0
@@ -129,8 +138,12 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         maxIpScore = Math.max(maxIpScore, fIp.riskScore)
         maxSafetyScore = Math.max(maxSafetyScore, fSafe.riskScore)
 
-        // Calculate frame composite
-        const fComposite = calculateCompositeRisk(fIp.riskScore, fSafe.riskScore)
+        // Calculate frame composite using canonical scoring
+        const fComposite = computeCompositeScore({
+          ipScore: fIp.riskScore,
+          safetyScore: fSafe.riskScore,
+          c2paStatus,
+        })
 
         videoFramesData.push({
           tenant_id: (scan as any).tenant_id,
@@ -140,7 +153,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
           storage_path: 'temp_processed_inline', // placeholders as we aren't saving frames to storage yet
           ip_risk_score: fIp.riskScore,
           safety_risk_score: fSafe.riskScore,
-          composite_score: fComposite.score
+          composite_score: fComposite
         })
       }
 
@@ -151,13 +164,15 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       ipResult = { riskScore: maxIpScore, detections: [] } // Simplify detections for video summary
       brandSafetyResult = { riskScore: maxSafetyScore, violations: [] }
 
-      // Calculate composite for video
-      compositeRisk = calculateCompositeRisk(ipResult.riskScore, brandSafetyResult.riskScore)
-
-      // Adjust composite with provenance for video
-      // If invalid provenance, force critical
-      if (provenanceScore >= 90) {
-        compositeRisk = { score: 100, level: 'critical' };
+      // Calculate composite for video using canonical scoring
+      const videoCompositeScore = computeCompositeScore({
+        ipScore: ipResult.riskScore,
+        safetyScore: brandSafetyResult.riskScore,
+        c2paStatus,
+      })
+      compositeRisk = {
+        score: videoCompositeScore,
+        level: computeRiskLevel(videoCompositeScore),
       }
 
 
@@ -182,40 +197,15 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       c2paResult.hasManifest = riskProfile.c2pa_report.status !== 'missing';
       c2paResult.valid = riskProfile.c2pa_report.status === 'valid';
 
-      // Hybrid "Red Flag" Composite Calculation
-      // If ANY score is critically high (>=85), it's a dealbreaker - show the max
-      // Otherwise, use weighted average with IP emphasis
-      const hasRedFlag =
-        riskProfile.ip_report.score >= 85 ||
-        riskProfile.provenance_report.score >= 85 ||
-        riskProfile.safety_report.score >= 85
+      // Provenance status from C2PA cryptographic fact (canonical, preserves caution/error)
+      c2paStatus = riskProfile.c2pa_report.status as C2PAStatus;
+      provenanceStatus = computeProvenanceStatus(c2paStatus);
 
-      if (hasRedFlag) {
-        // Critical issue detected - show the worst score
-        compositeRisk = {
-          score: Math.max(
-            riskProfile.ip_report.score,
-            riskProfile.provenance_report.score,
-            riskProfile.safety_report.score
-          ),
-          level: riskProfile.verdict === 'Critical Risk' ? 'critical' :
-            riskProfile.verdict === 'High Risk' ? 'high' :
-              riskProfile.verdict === 'Medium Risk' ? 'review' :
-                riskProfile.verdict === 'Low Risk' ? 'caution' : 'safe'
-        }
-      } else {
-        // No critical issues - use weighted average (IP emphasized: 70/20/10)
-        compositeRisk = {
-          score: Math.round(
-            riskProfile.ip_report.score * 0.7 +
-            riskProfile.provenance_report.score * 0.2 +
-            riskProfile.safety_report.score * 0.1
-          ),
-          level: riskProfile.verdict === 'Critical Risk' ? 'critical' :
-            riskProfile.verdict === 'High Risk' ? 'high' :
-              riskProfile.verdict === 'Medium Risk' ? 'review' :
-                riskProfile.verdict === 'Low Risk' ? 'caution' : 'safe'
-        }
+      // Use the composite score already computed by gemini.ts via canonical scoring module
+      // and derive the risk level from canonical tiers
+      compositeRisk = {
+        score: riskProfile.composite_score,
+        level: computeRiskLevel(riskProfile.composite_score),
       }
 
       // Save the risk profile to the scan for later retrieval
@@ -301,12 +291,12 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         ip_risk_score: ipResult.riskScore,
         safety_risk_score: brandSafetyResult.riskScore,
         provenance_risk_score: provenanceScore,
-        provenance_status: provenanceScore < 30 ? 'valid' : provenanceScore < 70 ? 'invalid' : 'missing',
+        provenance_status: provenanceStatus,
         is_video: isVideo,
         frames_analyzed: isVideo ? videoFramesData.length : null,
         completed_at: new Date().toISOString(),
         analysis_duration_ms: analysisTime,
-        gemini_model_version: 'gemini-1.5-flash',
+        gemini_model_version: 'gemini-2.5-flash',
       })
       .eq('id', scanId)
 
@@ -347,36 +337,8 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
   }
 }
 
-/**
- * Calculate composite risk from IP and brand safety scores
- */
-function calculateCompositeRisk(
-  ipScore: number,
-  brandSafetyScore: number
-): {
-  score: number
-  level: 'safe' | 'caution' | 'review' | 'high' | 'critical'
-} {
-  // Weighted average: IP risk is slightly more important (60/40)
-  const compositeScore = Math.round(ipScore * 0.6 + brandSafetyScore * 0.4)
-
-  // Determine level
-  let level: 'safe' | 'caution' | 'review' | 'high' | 'critical'
-
-  if (compositeScore >= 90) {
-    level = 'critical'
-  } else if (compositeScore >= 70) {
-    level = 'high'
-  } else if (compositeScore >= 50) {
-    level = 'review'
-  } else if (compositeScore >= 25) {
-    level = 'caution'
-  } else {
-    level = 'safe'
-  }
-
-  return { score: compositeScore, level }
-}
+// calculateCompositeRisk has been removed — all scoring now goes through
+// computeCompositeScore() and computeRiskLevel() from '@/lib/risk/scoring'
 
 /**
  * Process all pending scans

@@ -1,19 +1,18 @@
+/**
+ * Risk Utilities
+ * ==============
+ * DEPRECATED: This file now proxies to the canonical lib/risk/tiers.ts.
+ * For new code, import directly from '@/lib/risk/tiers' or '@/lib/risk/scoring'.
+ *
+ * Kept for backwards compatibility — existing UI imports will continue to work.
+ */
 
-export type RiskLevel = 'safe' | 'caution' | 'review' | 'high' | 'critical';
+// Re-export canonical types and functions
+export { getRiskTier, type RiskLevel, type BoxTier } from './risk/tiers'
 
-export interface BoxTier {
-    level: RiskLevel;
-    colorVar: string;
-    label: string;
-}
+// ─── UI Utility Helpers (thin wrappers over canonical tiers) ────────────────
 
-export function getRiskTier(score: number): BoxTier {
-    if (score >= 91) return { level: 'critical', colorVar: 'var(--rs-risk-critical)', label: 'CRITICAL RISK' };
-    if (score >= 76) return { level: 'high', colorVar: 'var(--rs-risk-high)', label: 'HIGH RISK' };
-    if (score >= 51) return { level: 'review', colorVar: 'var(--rs-risk-review)', label: 'REVIEW REQ' };
-    if (score >= 26) return { level: 'caution', colorVar: 'var(--rs-risk-caution)', label: 'CAUTION' };
-    return { level: 'safe', colorVar: 'var(--rs-risk-safe)', label: 'SAFE' };
-}
+import { getRiskTier } from './risk/tiers'
 
 export function getRiskColorClass(score: number): string {
     const tier = getRiskTier(score);

@@ -990,7 +990,7 @@ export default function DesignLabPage() {
                                         <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">State: Verified (Full C2PA)</span>
                                         <div className="shadow-inner bg-black/5 p-4 rounded-3xl flex items-center justify-center">
                                             <ProvenanceTelemetryStream
-                                                scanStatus="completed"
+                                                scanStatus="complete"
                                                 customRows={[
                                                     { id: '0xMNFST', label: 'MANIFEST_STORE', value: 'DETECTED', barWidth: 92, status: 'success' },
                                                     { id: '0xSIG_V', label: 'CLAIM_SIGNATURE', value: 'VALID', barWidth: 98, status: 'success' },
@@ -1014,7 +1014,7 @@ export default function DesignLabPage() {
                                         <span className="text-[10px] font-bold uppercase tracking-widest rs-etched block opacity-50">State: No Provenance</span>
                                         <div className="shadow-inner bg-black/5 p-4 rounded-3xl flex items-center justify-center">
                                             <ProvenanceTelemetryStream
-                                                scanStatus="completed"
+                                                scanStatus="complete"
                                                 details={{
                                                     id: 'mock-2',
                                                     scan_id: 'scan-y',

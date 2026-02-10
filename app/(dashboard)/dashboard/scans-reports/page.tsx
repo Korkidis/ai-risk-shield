@@ -95,8 +95,7 @@ function ScansReportsContent() {
 
             const mappedScans: ScanWithRelations[] = data.scans.map((s: any) => ({
                 ...s,
-                // Normalize status: DB stores 'complete', frontend expects 'completed'
-                status: s.status === 'complete' ? 'completed' : s.status,
+                status: s.status,
                 filename: s.assets?.filename || 'Unnamed Asset',
                 file_type: s.assets?.file_type || 'image',
                 file_size: s.assets?.file_size || 0,
@@ -522,7 +521,7 @@ function ScansReportsContent() {
                                     <div className="pt-2">
                                         <ProvenanceTelemetryStream
                                             details={selectedScan?.provenance_details}
-                                            scanStatus={selectedScan?.status || 'completed'}
+                                            scanStatus={selectedScan?.status || 'complete'}
                                         />
                                     </div>
                                 </div>
@@ -789,8 +788,8 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
             {/* 2-5. Metadata & Actions Area */}
             <div className="flex-1 w-full px-3 pb-3 pt-3 flex flex-col relative z-10">
                 {/* 2. Score Number */}
-                <div className="flex items-baseline gap-1" style={{ color: scan.status === 'completed' ? riskTier.colorVar : 'var(--rs-text-tertiary)' }}>
-                    {scan.status === 'completed' ? (
+                <div className="flex items-baseline gap-1" style={{ color: scan.status === 'complete' ? riskTier.colorVar : 'var(--rs-text-tertiary)' }}>
+                    {scan.status === 'complete' ? (
                         <>
                             <span className="text-[32px] font-bold font-mono leading-none tracking-[-0.05em]">{score}</span>
                             <span className="text-[14px] font-mono opacity-60 leading-none">/100</span>

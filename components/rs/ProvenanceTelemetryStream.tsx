@@ -15,7 +15,7 @@ export interface TelemetryRow {
 interface ProvenanceTelemetryStreamProps {
     details?: ProvenanceDetails | null;
     customRows?: TelemetryRow[];
-    scanStatus: 'pending' | 'processing' | 'completed' | 'failed';
+    scanStatus: 'pending' | 'processing' | 'complete' | 'failed';
     onDetailsClick?: () => void;
 }
 

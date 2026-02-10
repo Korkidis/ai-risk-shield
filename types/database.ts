@@ -46,7 +46,7 @@ export interface ExtendedScan {
   analyzed_by?: string | null // User ID who analyzed
   asset_id: string
   guideline_id?: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
+  status: 'pending' | 'processing' | 'complete' | 'failed'
   is_video?: boolean
   ip_risk_score?: number
   safety_risk_score?: number
