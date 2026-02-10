@@ -14,8 +14,7 @@
 -- See: tasks/risk-model-unification.md, "Model Version Metadata Mismatch"
 
 UPDATE scans
-SET gemini_model_version = 'gemini-2.5-flash',
-    updated_at = NOW()
+SET gemini_model_version = 'gemini-2.5-flash'
 WHERE gemini_model_version = 'gemini-1.5-flash'
   AND created_at >= '2026-01-04T00:00:00Z'
   AND created_at < '2026-02-10T00:00:00Z';
