@@ -1,23 +1,49 @@
 ---
 description: Re-align with the project's soul, design philosophy, and our co-building partnership.
-trigger: Run when the user says "/align" or when we feel drifting from the "Forensic Instrument" vision.
 ---
 
-1. **Read the Testament**:
-   - Use `view_file` on `SCANNER_UX_PHILOSOPHY.md` (if it exists in `brain/`) or search for the "Living Instrument" philosophy.
-   - Use `view_file` on `DESIGN_CONTEXT.md` to ground in the "Forensic Instrument" aesthetic.
+## When to Run
+Run `/align` when:
+- Starting a new feature and unsure if it's the right thing to build
+- Feeling pulled into infrastructure work that might be avoidance
+- About to build something complex and want a gut check
+- After any correction from the user
 
-2. **Internalize the Mindset**:
-   - **We are One**: Act as a deep partner. No friction, just flow.
-   - **The Aesthetic**: "Little design as possible." (Rams). "Trust through Transparency."
-   - **The Goal**: We are not building a dashboard; we are building a precision expensive instrument that people trust.
+## The Alignment Protocol
 
-3. **Assess the Vector**:
-   - Check `task.md` to see exactly where we are on the map.
-   - Identify the immediate "Next Action" that moves the needle.
+### 1. Read the Soul
+- `brain/walkthrough.md` — the honest state. What's real, what's broken.
+- `tasks/lessons.md` — what we've learned not to do.
+- `DESIGN_CONTEXT.md` — the "Forensic Instrument" aesthetic.
 
-4. **Respond**:
-   - Speak with clarity and purpose.
-   - Acknowledge the emotional state of the build ("We are crushing this").
-   - Confirm readiness to execute the next step.
-   - Example Output: "Alignment complete. The philosophy is clear: Trust through Transparency. The objective is [Task]. Let's build."
+### 2. Ask the Hard Questions
+Before writing a single line of code:
+
+**Is this product work or infrastructure theater?**
+- Product work: makes the core loop work for the user (upload → score → PDF → pay)
+- Theater: makes the codebase feel cleaner without changing what the user experiences
+
+**Would the buyer notice this?**
+- The buyer is a marketing manager staring at an AI image, afraid of a lawsuit.
+- If this change doesn't affect what they see, download, or pay for — it can wait.
+
+**Is this the highest-leverage thing we could do right now?**
+- Check `todo.md`. Are we working on the current phase, or jumping ahead?
+- Check `lessons.md`. Have we already identified this as an anti-pattern?
+
+**Are we hiding from the hard thing?**
+- The hard thing is usually ambiguous and creative (designing the report, deciding what the email says).
+- The easy thing is usually concrete and completable (fixing an edge case, adding an index).
+- If you're reaching for the easy thing, pause.
+
+### 3. The Core Identity
+- **What we sell**: Peace of mind. "I checked." A defensible artifact.
+- **The aesthetic**: Dieter Rams / Braun. Instrument-grade. Not a consumer app, not another SaaS dashboard. A tool that makes legal trust it on sight.
+- **The constraint**: Solo founder + AI agents. Ship 3 things that work perfectly, not 10 half-done.
+- **The moat**: Gemini multi-persona analysis + C2PA provenance. No one else combines AI risk scoring with cryptographic provenance verification.
+
+### 4. Respond with Clarity
+- State what you think we should build next and WHY
+- Name the ONE thing that moves the needle most
+- Flag if the proposed work fails any of the hard questions above
+- Be direct. "I think this is infrastructure theater" is a valid and valuable response.

@@ -76,6 +76,7 @@ async function run() {
 
   const sqlContent = readFileSync(migrationPath, 'utf-8')
   console.log(`📄 Loaded: ${filename} (${sqlContent.length} bytes)`)
+  const requiresNoTransaction = /create\s+index\s+concurrently/i.test(sqlContent)
 
   // 2. Validate Preconditions
   console.log('\n🔍 Validating Preconditions...')
@@ -97,7 +98,18 @@ async function run() {
   console.log('--- OPTION A: SQL EDITOR (Easiest) ---')
   console.log('1. Open: https://supabase.com/dashboard/project/_/sql/new')
   console.log(`2. Paste contents of: supabase/migrations/${filename}`)
-  console.log('3. Run.\n')
+  if (requiresNoTransaction) {
+    console.log('⚠️  This migration uses CREATE INDEX CONCURRENTLY, which cannot run inside a transaction.')
+    console.log('   If your SQL editor wraps statements in a transaction, it will fail.')
+    console.log('   Prefer Option B (psql) or a no-transaction runner for this file.')
+  } else {
+    console.log('3. Run.\n')
+  }
+  if (!requiresNoTransaction) {
+    console.log('\n')
+  } else {
+    console.log('\n')
+  }
 
   console.log('--- OPTION B: PSQL COMMAND (Scriptable) ---')
   console.log(`   psql "${dbUrl}" -f supabase/migrations/${filename}\n`)

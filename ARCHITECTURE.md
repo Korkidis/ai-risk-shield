@@ -6,7 +6,7 @@ AI Risk Shield is a high-security, forensic analysis platform built on a serverl
 ## Core Stack
 *   **Frontend Check**: `Next.js 14` (App Router), `Tailwind CSS`, `Framer Motion` (Physics).
 *   **Backend**: `Supabase` (Postgres, GoTrue Auth, Realtime, Storage).
-*   **AI Engine**: `Google Gemini 1.5 Flash` (Multimodal Analysis).
+*   **AI Engine**: `Google Gemini 2.5 Flash` (Multimodal Analysis).
 *   **Provenance**: `C2PA` (Content Credentials) via `c2pa-node` / WASM.
 *   **Infrastructure**: `Vercel` (Hosting, API Routes).
 
@@ -62,9 +62,10 @@ graph TD
 4.  **Return**: API responds with JSON risk profile.
 > **Note**: Current implementation uses standard Next.js API Routes (`app/api/*`).
 
-### 4. Authentication (Custom Flow)
-*   **Dynamic Magic Links**: We use a custom `magic_links` table and Resend for emails to inject dynamic **Risk Scores** into the template.
-*   **SOC 2 Compliance**: Implementation requires strict token expiry (15m) and RLS to match native security standards.
+### 4. Authentication (Freemium Magic Link)
+*   **Supabase Auth Magic Links**: We use `generateLink` (service role) and Resend to deliver dynamic emails (risk score + report CTA).
+*   **Legacy Custom Table**: A custom `magic_links` table existed previously; it is deprecated (see `20260208_cleanup_magic_links.sql`) and should not be relied on for client access.
+*   **SOC 2 Compliance**: Implementation requires strict token expiry and least‑privilege RLS in any legacy paths.
 
 ## Data Model (Simplified)
 *   `access_control`: `tenants` <-> `users` (Many-to-Many via `tenant_users`).

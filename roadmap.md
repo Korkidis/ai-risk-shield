@@ -21,18 +21,24 @@
 
 ## Phase 2: Production Core (CURRENT)
 *   **Goal:** 0-1000 Users, Frictionless "Time to Value"
+*   **Blocker:** Two inconsistent analysis pipelines (auth vs. anon) — see `todo.md` Phase A
 *   [ ] **Anonymous Scan Flow**
     *   [x] Drag-and-drop Upload
     *   [x] Session-based (cookie) tracking
-    *   [x] Real-time Gemini Analysis Display
+    *   [x] Real-time Gemini Analysis Display *(telemetry log is scripted, not real progress)*
+    *   [ ] ⚠ C2PA skipped for anonymous images (`scan-processor.ts:87`)
+    *   [ ] ⚠ Rich analysis data lost in anon→auth handoff (reconstructed, not read from stored blob)
 *   [ ] **The "Gate" & Report**
     *   [x] Teaser Results (Blurred)
     *   [x] Email Capture (Magic Link)
-    *   [ ] PDF Report Generation
+    *   [x] PDF Generation exists (`lib/pdf-generator.ts`) — but fed thin data in anonymous flow
+    *   [ ] ⚠ Email links back to same page user already sees (adds no value)
+    *   [ ] One-time $29 Report Purchase Flow (end-to-end unverified)
 *   [ ] **Monetization (Stripe)**
     *   [x] Subscription Models (Free/Pro/Team)
     *   [x] Metered Billing (Overages)
     *   [ ] One-time Report Purchase Flow
+    *   [ ] ⚠ "3/3 REMAINING" counter is hardcoded
 *   [ ] **Brand Guidelines**
     *   [x] Schema & Storage
     *   [ ] Upload/Management UI
