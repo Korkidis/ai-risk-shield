@@ -62,8 +62,6 @@ The gap isn't features. The gap is **completeness**. The distance between "impre
 
 **Insurance referral:** For scans scoring > 70 (composite), surface subtle CTA for AI indemnity insurance partners. Framed as helpful advice, not upsell.
 
-See full strategy memo: `.claude/plans/proud-zooming-tulip.md`
-
 ## What Needs to Happen (In Order)
 1. **Unify the analysis pipeline** — one path, full data, both flows
 2. **Fix the anonymous → authenticated data handoff** — stop reconstructing, read the stored blob
