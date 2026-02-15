@@ -1,8 +1,8 @@
 # Session Walkthrough
-*Last updated: 2026-02-14*
+*Last updated: 2026-02-15*
 
 ## What We're Selling
-Peace of mind for people afraid of getting sued for using AI-generated images. The ability to say "I checked" before someone asks "did you check?" One sentence. Everything else is implementation detail.
+Peace of mind you can hand to a lawyer. A PDF that says "I checked this AI image before publishing it" with enough technical authority that a legal team accepts it as due diligence. One sentence. Everything else is implementation detail.
 
 ## The Buyer
 A marketing manager or agency creative director who just used Midjourney and is thinking: "Is this going to get us sued?" They saw a headline. Legal is nervous. They need a number — any defensible number — to put in front of legal. The emotional trigger is career anxiety dressed as diligence.
@@ -11,64 +11,73 @@ Secondary: a freelance designer whose client asked "is this safe?" and they have
 
 ---
 
-## Current Phase
-**Phase 2: Production Core** — "0 to 1,000 users."
-The infrastructure is built. The gap is **completeness**, not features. The first scan impresses for 60 seconds; the second, third, and tenth interactions fall apart.
+## Current State
+**Demo → Product transition.** The infrastructure is built. The gap is completing the transaction, not adding features. The $29 one-time purchase — the hottest moment in the funnel — is broken for anonymous users.
+
+## Execution Plan
+**The single source of truth is [`tasks/todo.md`](../tasks/todo.md).** That file contains sprint-level tasks with dependencies, file references, and "why" for every item. Do not plan work from this walkthrough — plan from `todo.md`.
+
+This file exists to orient new sessions on *what's real, what's broken, and what the product feels like*. `todo.md` says what to do about it.
+
+---
 
 ## What's Real and Working
 
 | Component | Status | Where |
 |:---|:---|:---|
-| Anonymous upload (no signup) | ✅ Working | `FreeUploadContainer.tsx` → `/api/scans/anonymous-upload` |
-| Gemini multi-persona analysis (3-prompt, aggressive scoring) | ✅ Working — **this is the moat** | `lib/gemini.ts` |
-| C2PA provenance verification (real cryptographic) | ✅ Working (authenticated path) | `c2pa-node`, `RSProvenanceDrawer` |
-| PDF report generation (branded, Rams tokens) | ✅ Working | `lib/pdf-generator.ts` |
-| Stripe billing (subscriptions + one-time + metered overage) | ✅ Working | `lib/plans.ts`, webhook route |
-| Design system (62 RS* components, "forensic instrument") | ✅ Distinctive | `components/rs/*` |
-| Email gate + magic link | ✅ Working | `signInWithOtp` + Resend |
-| Scoring module (5-value C2PA fidelity) | ✅ Working | `lib/risk/scoring.ts` |
-| RLS + multi-tenancy + hierarchical agencies | ✅ Working | Supabase, 42 migrations |
+| Anonymous upload (no signup) | Working | `FreeUploadContainer.tsx` → `/api/scans/anonymous-upload` |
+| Gemini multi-persona analysis (3-prompt, aggressive scoring) | Working — **this is the moat** | `lib/gemini.ts` |
+| C2PA provenance verification (real cryptographic) | Working (both paths) | `c2pa-node`, `lib/c2pa/verify.ts` |
+| PDF report generation (branded, Rams tokens) | Working | `lib/pdf-generator.ts` |
+| Stripe billing (subscriptions + one-time + metered overage) | Working (backend) | `lib/plans.ts`, webhook route |
+| Design system (62 RS* components, "forensic instrument") | Distinctive | `components/rs/*` |
+| Email gate + magic link | Working | `signInWithOtp` + Resend |
+| Canonical scoring module (5-value C2PA fidelity) | Working, tested (40 unit tests) | `lib/risk/scoring.ts`, `lib/risk/tiers.ts` |
+| RLS + multi-tenancy + hierarchical agencies | Working | Supabase, 85+ migrations |
+| `risk_profile` JSONB blob storage | Working | `scans.risk_profile` column |
+| Supabase Realtime (scan status updates) | Working | `hooks/useRealtimeScans.ts` |
+| Scans & Reports dashboard page | Working (the canonical product page) | `app/(dashboard)/dashboard/scans-reports/` |
 
-## What's Theater or Broken
+## What's Broken or Theater
 
-| Issue | Impact | Where |
+| Issue | Impact | Sprint |
 |:---|:---|:---|
-| **Telemetry stream is scripted** — timed log messages unrelated to actual analysis | Undermines "precision instrument" credibility | `dashboard/page.tsx:79-114`, `FreeUploadContainer.tsx:46-59` |
-| **Anonymous flow data loss** — rich Gemini analysis → thin reconstructed profile | Sample PDF gets watered-down data. The best content never reaches the user | `GET /api/scans/[id]` reconstructs instead of reading stored `risk_profile` blob |
-| **Two inconsistent analysis pipelines** — authenticated (`/api/analyze`) vs anonymous (`scan-processor.ts`) | Different behavior, different data richness, bug source | Auth path stores differently, includes brand context, richer returns |
-| **C2PA skipped for anonymous images** — `scan-processor.ts:87` has TODO, defaults to `{ hasManifest: false }` | Headline feature not working in primary flow | `lib/ai/scan-processor.ts` |
-| **Email is a dead end** — magic link goes to same page user was already redirected to | Email adds zero value if they already got the auto-download | `SampleReportEmail.tsx` |
-| **Empty dashboard stubs** — History: "Offline", Reports: "Offline" (but `/dashboard/scans-reports` IS fully built and functional) | Stubs damage confidence; the real page exists but the flow never routes there | `dashboard/history/`, `dashboard/reports/` → should redirect to `scans-reports` |
-| **Brand Guidelines UI exists but not wired to analysis** — CRUD works, analysis ignores guidelines | Broken promise — feature shows in UI but doesn't affect results | `dashboard/brand-guidelines/`, `guidelineId: 'default'` hardcoded |
-| **"3/3 REMAINING" is hardcoded** | Doesn't reflect actual quota | `FreeUploadContainer.tsx:208` |
-| **`RSC2PAWidget.tsx` missing `caution` state** | Scoring fixed (commit d1c373e), but UI widget still lacks `caution` case in switch | Line 11, no `case 'caution'` in switch |
-| **Magic links route still live** | `app/api/auth/verify/route.ts` (67 lines) queries `magic_links` table. Migration to drop table exists but applying it would break this route. Delete route first. | `app/api/auth/verify/route.ts` |
+| **$29 purchase blocked for anonymous users** | Revenue literally blocked. Auth required for checkout but button shown to anon users. | Build 1 |
+| **AuditModal promises features that don't exist** | "Unlimited Scans", "API Access", "Priority Queue" — none are real. Churn risk. | Build 1 |
+| **Sample PDF uses thin data** | Rich Gemini reasoning stripped out. Teaser doesn't justify $29. | Build 2 |
+| **Magic link → dead end** | Email links to `/scan/[id]` instead of dashboard. No path to retention. | Build 3 |
+| **History/Reports pages are stubs** | "Status: Offline" damages confidence. Real page exists at `/scans-reports`. | Build 3 |
+| **All quota displays hardcoded** | "3/3", "15/50", "4/10 seats" — all fake strings. | Build 4 |
+| **Telemetry stream is scripted** | 14 fake messages ("Detecting latent diffusion artifacts...") undermine precision brand. | Build 5 |
+| **Download/Share/Export buttons are console.log** | Most natural post-scan actions don't work. | Build 5 |
 
-## Schema Drift
-Two migrations created, need to be applied:
-- `20260211_add_tenant_switch_audit_created_at_index.sql` (CONCURRENTLY)
-- `20260211_add_tenant_invites_metadata.sql`
+## Security Issues (Fix Alongside Sprints)
 
-## The Core Problem
-This is a **demo, not a product**. The core value loop works for one scan. The moment someone tries to do a second scan, come back a week later, or show their boss — it falls apart. Empty pages, lost data, hardcoded counters, scripted animations.
+| Issue | Severity | Fix |
+|:---|:---|:---|
+| `/api/scans/process` has no auth | CRITICAL | S1 in todo.md — do alongside builds |
+| `listUsers()` fetches ALL users on email capture | HIGH | S2 in todo.md — do alongside builds |
+| `/api/debug-provenance` completely open | HIGH | S3 in todo.md — do alongside builds |
+| `brand_guidelines` RLS references nonexistent table | MEDIUM | S4 in todo.md — do alongside builds |
 
-The gap isn't features. The gap is **completeness**. The distance between "impresses for 60 seconds" and "worth $49/month" is whether the 2nd through 10th interaction is as good as the 1st.
+## Cleanup (Do When Touching Related Files)
 
-## Strategy Decision (Feb 14, 2026)
+- Delete `/api/auth/verify/route.ts` (queries dropped `magic_links` table)
+- RSC2PAWidget missing `caution` case
+- Regenerate `types.ts` (massively outdated)
+- Fix video frame count (5 in code, 10 in docs)
+- Fix hardcoded C2PA serial `"C2PA-CERT-884-29-X"`
 
-**One Product Reality:** The dashboard Scans & Reports page (`/dashboard/scans-reports`) is the canonical product. The freemium landing page is a thin bridge into it — shows value, creates account, gets out of the way. `/scan/[id]` is transitional (still used for auto-download + verification) — deprecate only after dashboard path fully covers it.
+---
 
-**Conversion flow target:** Upload → results → "Create account" gate (email + consent) → instant PDF download → magic link → `/dashboard/scans-reports` (scan auto-selected) → purchase CTAs in drawer.
+## Document Map
 
-**Insurance referral:** For scans scoring > 70 (composite), surface subtle CTA for AI indemnity insurance partners. Framed as helpful advice, not upsell.
-
-## What Needs to Happen (In Order)
-1. **Unify the analysis pipeline** — one path, full data, both flows
-2. **Fix the anonymous → authenticated data handoff** — stop reconstructing, read the stored blob
-3. **Enable C2PA in the anonymous image path** — it's the headline feature
-4. **Make the sample PDF rich** — it should contain the real Gemini analysis, not thin reconstructions
-5. **Replace scripted telemetry with real progress** — even if simpler, it must be honest
-6. **Wire the scan counter to real quota** — not hardcoded
-7. **Conversion flow consolidation** — gate reframing, instant PDF, magic link → scans-reports, drawer CTAs
-8. **Make the email useful** — link to dashboard, not dead-end `/scan/[id]`
-9. **Account & billing self-service** — paying customers need to see their plan, invoices, usage
+| Doc | Purpose | Authority |
+|:---|:---|:---|
+| **`tasks/todo.md`** | What to build, in what order, with dependencies | **Execution source of truth** |
+| **`brain/walkthrough.md`** (this file) | What's real, what's broken, how the product feels | Session orientation |
+| **`NORTH_STAR.md`** | Vision, personas, jobs-to-be-done, design philosophy | Product strategy |
+| **`tasks/lessons.md`** | Anti-patterns and mistakes to avoid | Self-correction log |
+| **`tasks/rules.md`** | Workflow rules (spec before build, proof of work) | Operating contract |
+| **`tasks/decisions.md`** | Architecture decisions with reasoning | Decision log |
+| **`roadmap.md`** | **DEPRECATED** — redirects to `todo.md` | — |

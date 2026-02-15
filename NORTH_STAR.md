@@ -464,42 +464,40 @@ This is the single source of truth for product vision, user needs, and implement
 
 ## PHASED ROLLOUT PLAN
 
-### Phase 1: MVP Core (Weeks 1-4) - "It Works"
+### Phase 1: MVP Core - "It Works"
 **Goal:** Free users can upload → see results → enter email → get sample report
 
-**Must Have:**
-- [ ] Landing page with upload zone
-- [ ] Image upload + analysis (Gemini IP + Safety)
--[ ] C2PA verification (especialy important for EU cotnet EUGDPR/CCPA)
--[ ] Detailed provenance display
-- [ ] Results display (score + top 3 findings)
-- [ ] Email gate modal
-- [ ] Sample report generation (2 pages)
-- [ ] Basic auth (signup/login)
-- [ ] Free tier quota enforcement (3 scans/month)
-- [ ]Video support (with thumbnails)
-- [ ]Brand guidelines
+> **Note:** This is a reference checklist reflecting MVP scope. For the actual sprint-level execution plan with dependencies, see **[`tasks/todo.md`](tasks/todo.md)**.
+
+**Shipped:**
+- [x] Landing page with upload zone
+- [x] Image upload + analysis (Gemini IP + Safety)
+- [x] C2PA verification
+- [x] Detailed provenance display
+- [x] Results display (score + top 3 findings)
+- [x] Email gate modal
+- [x] Sample report generation (2 pages)
+- [x] Basic auth (signup/login)
 - [x] Stripe integration (checkout + webhooks)
-- [x] $29 one-time report purchase
+- [x] $29 one-time report purchase (backend — frontend broken for anon users, see todo.md Sprint 1)
 - [x] Full 6-page report generation
 - [x] $49/mo Pro plan subscription
 - [x] Quota tracking + overage billing
-- [/] Billing & Usage page
+- [x] Free tier quota enforcement (3 scans/month) (backend — frontend counter hardcoded, see todo.md Sprint 2)
+- [x] Video support (paid tiers only)
+- [x] Brand guidelines UI (CRUD works — not wired to analysis, see todo.md backlog)
+
+**Not Yet Shipped (see todo.md for prioritization):**
+- [ ] Billing & Usage self-service page
 - [ ] Payment method management
-- [ ] Scan History view (see past scans)
-- [ ] Policy/Brand Rules/Guidelines (upload + apply)
-- [ ] Video support (paid tiers only)
 - [ ] Email sequences (welcome, nurture, upgrade)
 - [ ] Help & Docs section
-- [ ] Team plan ($199/mo, 5 seats)
 - [ ] Performance optimization (caching, CDN)
 - [ ] Error monitoring (Sentry)
 - [ ] Analytics (Posthog or similar)
 - [ ] Customer support system (Intercom)
 - [ ] Compliance documentation (SOC 2 prep)
-- [ ] Backup/disaster recovery
 - [ ] API rate limiting
-- [ ] Referral tracking (who invited whom)
 
 ---
 

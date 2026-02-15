@@ -8,11 +8,13 @@ Every new session begins here. Do not skip steps. Do not start coding until this
 ### Tier 1: Ground Truth (READ EVERY SESSION)
 These files are the operating system of the project. Read them in order.
 
-1. `tasks/rules.md`: The team's operating contract.
-2. `NORTH_STAR.md`: The vision and "Why." Skip to the Jobs section and Decision Framework — don't re-read the full 700 lines every time.
-3. `brain/walkthrough.md`: **The honest state of the product.** What's real, what's theater, what's broken. This is the most important file. If it's stale, stop and update it before proceeding.
-4. `tasks/todo.md`: The sequenced plan (Pre‑Step 0 → Phases A → B → C → D).
-5. `tasks/lessons.md`: The self-correction log. Check what NOT to do before proposing work.
+1. `tasks/todo.md`: **The execution plan.** Sprint-level tasks, dependencies, file references. This is what we're building and why.
+2. `brain/walkthrough.md`: **The honest state of the product.** What's real, what's theater, what's broken.
+3. `tasks/lessons.md`: The self-correction log. Check what NOT to do before proposing work.
+4. `tasks/rules.md`: The team's operating contract.
+
+**Do NOT read `roadmap.md`** — it's deprecated and redirects to `todo.md`.
+**Do NOT plan from `NORTH_STAR.md`** — that's vision/strategy, not execution. Read it only for context on personas and jobs-to-be-done.
 
 ### Tier 2: Context-Specific (Read Based on Task)
 Stop and think: What does the current task touch?
@@ -31,14 +33,12 @@ Only if you hit a specific blocker:
 
 1. **Read Tier 1 Docs.**
 2. **Sanity Check** (This is the critical step — don't skip it):
-   - What are we selling? (If you can't answer in one sentence, re-read `walkthrough.md`)
-   - What's the current phase in `todo.md`? Is **Pre‑Step 0** (schema drift) done? What's the NEXT incomplete item?
+   - What sprint are we in? What's the next unchecked item in `todo.md`?
    - Check `lessons.md` — is the proposed work an anti-pattern we've already identified?
-   - Does the proposed work make the **core loop** work better, or is it infrastructure theater?
+   - Does the proposed work complete the transaction, or is it infrastructure theater?
 3. **Identify Tier 2 Docs** based on what the next task touches. Read them.
 4. **Produce the Brief** — present to the user:
-   - **One sentence**: What are we selling?
-   - **Current phase**: Where we are in todo.md (confirm Pre‑Step 0 status)
+   - **Current sprint**: Which sprint in todo.md, which task is next
    - **Honest state**: What's real vs. what's broken (from walkthrough.md)
    - **Proposed next step**: The single most important thing
    - **Risk check**: What could go wrong (from lessons.md)
@@ -46,10 +46,15 @@ Only if you hit a specific blocker:
 
 ## The Sanity Check Test
 Before ANY proposed work, ask:
-> "If I showed a marketing manager this product right now, would they pay $49/month?"
+> "Does this help someone go from scared → paid → PDF in hand?"
 >
 > If yes → you're building the right thing.
-> If no → what's the ONE thing preventing it? Build that instead.
+> If no → what's the ONE thing preventing that? Build that instead.
 
-## One Product Reality (Always Reconfirm)
-The dashboard **Scans & Reports** page is the canonical product. The landing page is the on‑ramp. `/scan/[id]` is transitional and must not be broken until the dashboard path fully covers it.
+## Document Authority
+| Doc | Role |
+|-----|------|
+| `tasks/todo.md` | **Execution source of truth** — what to build, in what order |
+| `brain/walkthrough.md` | Session orientation — what's real, what's broken |
+| `NORTH_STAR.md` | Vision & strategy (read for context, don't plan from it) |
+| `roadmap.md` | **DEPRECATED** — do not read |
