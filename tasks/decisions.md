@@ -10,6 +10,7 @@
 | **Jan 2026** | **Hierarchical Tenancy** | Implemented `parent_tenant_id` to support Agency use cases (Managing multiple client workspaces). Essential for B2B. | ✅ Live |
 | **Feb 2026** | **Metered Billing** | Chose Stripe Usage Records over simple subscriptions to capture upside from heavy users (Agencies). | ✅ Live |
 | **Feb 2026** | **Provenance Status Constraint Expanded** | Updated `scans.provenance_status` CHECK constraint to include `caution` to preserve full C2PA fidelity (valid/missing/invalid/error/caution). Prevents DB write failures after risk-model unification. | ✅ Active |
+| **Feb 2026** | **One Product Reality** | Dashboard **Scans & Reports** is the canonical home. Landing is the thin bridge for onboarding and immediate sample PDF. | ✅ Active |
 | **Feb 2026** | **DB Drift Alignment (Tenant Invites Metadata)** | Live DB includes `tenant_invites.metadata` (jsonb). Added a repo migration to align schema and keep docs consistent. | ✅ Pending Apply |
 | **Feb 2026** | **Audit Index Restoration** | Live DB missing `idx_tenant_switch_audit_created_at`. Added a non-transactional migration using `CREATE INDEX CONCURRENTLY` to restore expected time-range performance. | ✅ Pending Apply |
 

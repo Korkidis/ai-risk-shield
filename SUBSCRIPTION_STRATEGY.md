@@ -36,8 +36,10 @@ Context: The canonical reference for all pricing, limits, and entitlements. Driv
 | **Mitigation Reports** | 0 | 5 | 20 | 100 | Unlimited |
 | **Report Overage Cost** | $29 | $20 | $15 | $10 | Custom |
 | **Brand Profiles** | 0 | 1 | 5 | 20 | Unlimited |
-| **Data Retention** | 7 days | 30 days | 90 days | 1 year | Custom |
+| **Data Retention** | 7 days | 30 days | 90 days | 1 year | 2 years (default; custom by contract) |
 
+> [!NOTE]
+> Enterprise limits are **contract‑specific**. The codebase uses high defaults as a safety ceiling; contracts override them.
 ### Overage Psychology
 PRO overage is deliberately **punishing** ($2.50/scan = 5x base cost) to drive upgrades to TEAM.
 
@@ -71,7 +73,12 @@ PRO overage is deliberately **punishing** ($2.50/scan = 5x base cost) to drive u
 | **Co-Branding** | *"Add your studio's logo to PDF reports. Look professional to clients while we do the forensic work."* |
 | **White-Label** | *"Your brand, your product. AI Risk Shield disappears entirely—resell as your own service."* |
 | **Audit Logs** | Full compliance trail: who scanned what, when, and what actions were taken. Required for SOC 2 / Legal. |
-| **Priority Queue** | Agency scans skip ahead of Free/Pro users during high traffic. SLA: <5s image, <15s video. |
+| **Priority Queue** | **Planned**: Agency scans skip ahead of Free/Pro users during high traffic. Target SLA: <5s image, <15s video. |
+
+### Implementation Status (As of Feb 2026)
+The feature table above defines **entitlements**, not necessarily shipped UI or workflows. Use these labels when communicating externally:
+- **Shipped**: Full Report Access (core flow), Stripe billing, plan enforcement, metered usage reporting.
+- **Planned**: Bulk Upload, Co-Branding, White-Label, Team Activity Dashboard, Audit Logs, Priority Queue SLA enforcement, SSO, Dedicated CSM.
 
 ---
 
@@ -80,6 +87,9 @@ PRO overage is deliberately **punishing** ($2.50/scan = 5x base cost) to drive u
 | Tier | **FREE** | **PRO** | **TEAM** | **AGENCY** | **ENTERPRISE** |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Channel** | Community (Discord) | Email (48h SLA) | Email (24h SLA) | Slack (4h SLA) | Dedicated Slack + CSM |
+
+> [!NOTE]
+> Support SLAs are **target commitments**; automation and staffing to enforce them is planned.
 
 ---
 

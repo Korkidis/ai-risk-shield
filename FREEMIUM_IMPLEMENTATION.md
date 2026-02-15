@@ -1,11 +1,15 @@
 ---
-Status: Completed - Reference Only
-Last Updated: Feb 1, 2026
+Status: Superseded — See `brain/implementation_plan.md`
+Last Updated: 2026-02-11
 Owner: Implementation Team
-Context: Original implementation plan for the freemium tier. See SUBSCRIPTION_STRATEGY.md for current pricing rules.
+Context: Original freemium implementation plan. Current strategy: **dashboard Scans & Reports is canonical**, landing is a thin bridge.
 ---
 
-## Status: ✅ COMPLETE (Feb 1, 2026)
+## Reality Update (Feb 11, 2026)
+- Freemium landing is **bridge-only**: show score + sample PDF, then route to dashboard.
+- Account creation is **pending verification** (shadow user + magic link).
+- Email should route to `/dashboard/scans-reports?scan=...&welcome=true`.
+- PDF generation exists but is still fed thin data until Phase A (pipeline unification + risk_profile handoff) lands.
 
 > **Pricing Details**: See [SUBSCRIPTION_STRATEGY.md](SUBSCRIPTION_STRATEGY.md) for the comprehensive pricing model, tier limits, and unit economics.
 

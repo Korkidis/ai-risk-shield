@@ -8,7 +8,7 @@ This document defines the exact logic, prompts, scoring algorithms, and technica
 ## 1. Analysis Architecture
 
 ### Pipeline Orchestration (`scan-processor.ts`)
-The system employs a "Hybrid Forensic" pipeline that validates content layers via the Gemini 1.5 Pro Vision API and C2PA Node SDK:
+The system employs a "Hybrid Forensic" pipeline that validates content layers via the Gemini **2.5 Flash** Vision API and C2PA Node SDK:
 
 1.  **Risk Analysis**: AI assessment of liability (IP) and policy violations (Safety).
 2.  **Provenance Layer**: Cryptographic verification of asset history (C2PA).
@@ -16,23 +16,29 @@ The system employs a "Hybrid Forensic" pipeline that validates content layers vi
 
 ---
 
-## 2. Risk Scoring Models (First Order)
+## 2. Risk Scoring Models (Canonical)
 
-### The "Red Flag" Rule (Critical Override)
-If **ANY** single component (IP, Safety, or Provenance) scores **≥ 85**, the Composite Score becomes that maximum value.
-*   *Example*: A safe image with an Invalid C2PA signature (tampered) is **Critical Risk (100)**.
+### Composite Algorithm (Single Source of Truth)
+Defined in `lib/risk/scoring.ts`.
 
-### The Weighted Formula
-If no Red Flags exist, the score is calculated with this specific weighting:
+**Inputs**
+- IP score (0–100)
+- Safety score (0–100)
+- C2PA status → provenance score (mapping below)
 
-| Component | Weight | Rationale |
-| :--- | :--- | :--- |
-| **IP Risk** | **70%** | Primary liability source. Hardest to defend. |
-| **Provenance**| **20%** | Metric of authenticity/transparency. |
-| **Brand Safety**| **10%** | Often subjective or contextual. |
+**Rules**
+1. **C2PA Trust Override ("Firefly Rule")**  
+   If C2PA is **valid**, cap IP score at **10**.
+2. **Weighted average**  
+   `Composite = round(IP * 0.4 + Safety * 0.4 + Provenance * 0.2)`
+3. **Compound multiplier**  
+   If `IP ≥ 80` and `Provenance ≥ 60`, boost:  
+   `Composite += round((IP + Provenance) / 10)` (capped at 100)
+4. **Critical override**  
+   If `IP ≥ 90`, floor composite to **95**.
 
-**Formula:**
-`Score = Round( (IP * 0.7) + (Provenance * 0.2) + (Safety * 0.1) )`
+### Tier Thresholds (Canonical)
+`critical ≥ 91` · `high ≥ 76` · `review ≥ 51` · `caution ≥ 26` · `safe ≤ 25`
 
 ### IP Detection Standards (`ip-detection.ts`)
 **Prompt Structure**: "Analyze this image for intellectual property (IP) that could pose copyright or trademark risks. Identify: 1. Copyrighted Characters... 2. Trademarked Logos... 3. Celebrity Likenesses... 4. Protected Designs..."
@@ -67,13 +73,14 @@ Checks compliance with major ad platform policies (Meta, YouTube, TikTok).
 ### Standard (`lib/c2pa.ts`)
 We use the **C2PA (Coalition for Content Provenance and Authenticity)** standard via `c2pa-node` to verify the digital chain of custody.
 
-### Verification Logic & Trust Signals
-| Status | Condition | Score Impact |
+### Verification Logic & Trust Signals (5‑Value Fidelity)
+| Status | Condition | Provenance Score |
 | :--- | :--- | :--- |
-| **Verified** | Valid signature + trusted issuer + no tamper errors. | **0 Risk** (Gold Standard) |
-| **Untrusted**| Self-signed or unknown issuer, but valid integrity. | **30 Risk** (Caution) |
-| **Invalid** | Cryptographic signature mismatch (tampering detected). | **100 Risk** (Critical) |
-| **Missing** | No C2PA metadata found (common for legacy/stock). | **50 Risk** (Standard) |
+| **valid** | Valid signature + trusted issuer + no tamper errors. | **0** |
+| **caution** | Self‑signed/partial credentials, integrity valid but non‑standard. | **20** |
+| **error** | Verification failed (parse/crypto error). | **50** |
+| **missing** | No C2PA metadata found. | **80** |
+| **invalid** | Signature mismatch (tampering detected). | **100** |
 
 ### Audit Trail Metadata
 For every scan, we extract and store:
@@ -87,7 +94,7 @@ For every scan, we extract and store:
 ## 5. Technical Configuration
 
 ### Gemini API
-*   **Model**: `gemini-1.5-flash`
+*   **Model**: `gemini-2.5-flash`
 *   **Safety Settings**: `BLOCK_NONE` (Monitor risk, do not suppress).
 
 ### C2PA SDK

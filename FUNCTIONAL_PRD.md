@@ -1,5 +1,12 @@
 # Functional Product Requirements Document (PRD)
-**Version:** 2.0 | **Status:** Master Plan | **Theme:** "The Forensic Instrument"
+**Version:** 2.1 | **Status:** Master Plan | **Theme:** "The Forensic Instrument"
+
+> **Reality Update (2026-02-11)**  
+> - **One product reality:** Dashboard **Scans & Reports** is the canonical home. Landing is a thin bridge.  
+> - **Gate framing:** Account creation is **pending verification** (shadow user + magic link).  
+> - **PDF:** Sample PDF should download immediately on landing; full report must be downloadable from dashboard.  
+> - **Telemetry:** Must be real (no scripted logs).  
+> - **Data handoff:** `/api/scans/[id]` must read stored `risk_profile` (not reconstruct).
 
 ## 1. Introduction & Philosophy
 This document is the execution blueprint for the full AI Risk Shield platform.

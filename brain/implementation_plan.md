@@ -1,70 +1,142 @@
-# Implementation Plan - Magic Link Reliability
+# Implementation Plan — Conversion Gate & Canonical Dashboard
+*Last updated: 2026-02-11*
 
-## SPECIFICATION (The Mini Spec)
+## Intent
+Unify post‑scan experience around **one product reality**:
+- **Dashboard → Scans & Reports** is the product.
+- **Freemium landing** is a **thin bridge** that shows value, creates a pending‑verification account, and hands off to the dashboard.
 
-### User Story
-As an unauthenticated user, I want to receive a secure login link via email immediately after requesting it, so that I can access my dashboard without remembering a password.
-
-### Acceptance Criteria
-1.  **Form Submission**: User enters email -> UI shows "Sending..." spinner -> Replaces form with "Check your email" success message.
-2.  **Email Delivery**: Email arrives in inbox within 60 seconds.
-3.  **Email Content**:
-    *   **Subject**: "Log in to AI Risk Shield" (or similar clear subject).
-    *   **Sender**: "AI Risk Shield <[configured-email]>" (Must not be a generic "Acme" or default address).
-    *   **Body**: Contains a clear, clickable Magic Link.
-4.  **Authentication**: Clicking the link redirects to `/dashboard` and establishes a valid Supabase session.
-5.  **Error Handling**: Rate limits or API failures display user-friendly error messages (not default alerts).
-
-### Edge Cases
-*   **Spam Filtering**: Email lands in Spam (Requires configuring DKIM/SPF - verified via Resend dashboard).
-*   **Invalid Email**: Client-side validation blocks submission.
-*   **Expired Link**: User clicks old link -> Redirects to login with "Link expired" message.
-*   **Cross-Device**: User requests on Desktop, opens link on Mobile -> Should still work (Magic Link standard behavior).
-
-### UI Rules
-*   **Typography**: Use `.rs-type-label` for inputs, `.rs-header-bold-italic` for the success message.
-*   **Spacing**: Maintain "Forensic" grid alignment (24px/120px).
-*   **Feedback**: Use `--rs-safe` (Green) for success state, `--rs-signal` (Orange/Red) for errors.
-*   **Input Style**: "Recessed Bay" (Inset shadow) per `DESIGN_CONTEXT.md`.
-
-### Tracking
-*   Log `SIGN_IN_ATTEMPT` event (if analytics exist).
-*   Supabase automatically logs auth events.
+This plan improves conversion without breaking the current flow and keeps the PDF as the core paid artifact.
 
 ---
 
-## User Review Required
-> [!IMPORTANT]
-> This plan focuses on **Configuration and Verification** rather than heavy code changes, unless the `login-form` is finding to be broken. The primary work is ensuring the `Resend` + `Supabase` integration is correct.
+## Principles (Non‑Negotiable)
+1. **Account creation is pending verification.** We create a shadow user and only authenticate after the magic link.
+2. **Dashboard is canonical.** Purchases, history, and full reports live in Scans & Reports.
+3. **No broken paths.** Do not deprecate `/scan/[id]` until the dashboard route is fully wired and tested.
+4. **Canonical scoring rules.** Thresholds align with tiers (91/76/51/26); no ad‑hoc thresholds.
 
-## Proposed Changes
+---
 
-### Configuration
-*   **Verify Environment Variables**: Check `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and Resend API keys in Vercel/Supabase dashboard (via User or `test-login.ts`).
+## Step 1 — Redesign the Gate (Freemium as Bridge)
+**File:** `components/landing/ScanResultsWithGate.tsx`
 
-### Codebase
-#### [MODIFY] [login-page](file:///Users/lastknowngood/Documents/Projects/ai-risk-sheild/app/(auth)/login/page.tsx)
-*   Review form submission logic.
-*   Ensure error handling is visible and styled correctly (`.rs-signal` for errors).
-*   Verify `redirectTo` parameter points to `/auth/callback`.
+Replace the “Authorized Recipient” flow with a **mini sign‑up**:
+- Email input (same styling)
+- Opt‑in checkbox (marketing consent)
+- Sub‑text: “Creates your free AI Risk Shield account (pending verification)”
+- Button: “CREATE ACCOUNT & DOWNLOAD REPORT”
 
-#### [NEW] [test-email-delivery](file:///Users/lastknowngood/Documents/Projects/ai-risk-sheild/check-email-config.ts)
-*   Create a script to explicitly test the Resend integration in isolation if `test-login.ts` is insufficient.
+On submit:
+1. POST `/api/scans/capture-email` with `{ scanId, email, marketingConsent }`
+2. Immediately download **sample PDF** client‑side (insurance against email failure)
+3. Replace form with success state:
+   - “Account created (pending verification). Sample report downloading.”
+   - “Check email for full dashboard access.”
+4. Show **inline CTAs** ($29 one‑time, $49/mo Pro) **in‑context**
 
-## Verification Plan
+**Also:** pass `filename` and `isVideo` through from landing upload so PDF generation has correct metadata.
 
-### Automated Tests
-*   **Run `test-login.ts`**: `npx ts-node test-login.ts` (if applicable) to verify Supabase connection and basic auth flow.
+---
 
-### Manual Verification
-1.  **Browser Flow**:
-    *   Navigate to `/login`.
-    *   Enter `test-[timestamp]@example.com` (or a real email accessable to user).
-    *   Click "Send Magic Link".
-    *   **Expect**: UI shows success message.
-2.  **Email Receipt**:
-    *   Check inbox for the email.
-    *   **Expect**: Correct "From" name and Subject.
-3.  **Login**:
-    *   Click the link.
-    *   **Expect**: Redirect to `/dashboard`.
+## Step 2 — Immediate Sample PDF Download
+**File:** `components/landing/ScanResultsWithGate.tsx`
+
+Reuse `generateForensicReport()` from `lib/pdf-generator.ts`:
+- `generateForensicReport(scan, riskProfile, true)`
+- No blob URL needed; use existing `jsPDF` save.
+
+---
+
+## Step 3 — Update Capture Email API
+**File:** `app/api/scans/capture-email/route.ts`
+
+- Accept `marketingConsent` boolean
+- Store in `user_metadata` on shadow user
+- Update redirect URL to:
+  `/auth/callback?next=/dashboard/scans-reports?scan=${scanId}&welcome=true`
+
+---
+
+## Step 4 — Honor `next` param in Auth Callback
+**File:** `app/auth/callback/route.ts`
+
+Support safe redirects:
+```
+const next = requestUrl.searchParams.get('next')
+const redirectPath = next?.startsWith('/') && !next.includes('://') ? next : '/dashboard'
+return NextResponse.redirect(requestUrl.origin + redirectPath)
+```
+
+---
+
+## Step 5 — Email Templates Route to Dashboard
+**Files:**
+- `components/email/SampleReportEmail.tsx`
+- `components/email/MagicLinkEmail.tsx`
+
+Change CTA text to **“Go to Your Scans & Reports”**.
+
+---
+
+## Step 6 — Dashboard Scans & Reports Param Handling
+**File:** `app/(dashboard)/dashboard/scans-reports/page.tsx`
+
+- Read `scan` and `welcome` from search params
+- If `scan`: auto‑select and open drawer
+- If `welcome=true`: show dismissible banner and call `/api/scans/assign-to-user`
+
+---
+
+## Step 7 — Purchase CTAs in Drawer
+**File:** `app/(dashboard)/dashboard/scans-reports/page.tsx`
+
+For **unpurchased** scans:
+- Locked section
+- `OneTimePurchaseButton` ($29)
+- `UpgradeButton` ($49/mo)
+
+For **purchased** scans:
+- “Download Full Report” button
+
+---
+
+## Step 8 — Insurance Referral CTA (High‑Risk Only)
+**New:** `components/dashboard/InsuranceReferralCTA.tsx`
+
+Render only when score maps to **High/Critical** tier (align with tiers).
+Show subtle “Enterprise Protection Available” CTA.
+
+---
+
+## Step 9 — Deprecate `/scan/[id]` (Only After Dashboard Works)
+**File:** `app/scan/[id]/page.tsx`
+
+Until fully wired:
+- Keep current flow (auto‑download + audit modal)
+
+After:
+- Authenticated → redirect to `/dashboard/scans-reports?scan={id}`
+- Unauthenticated → minimal teaser + “Create Account”
+
+---
+
+## Step 10 — Cleanup Stubs
+- `app/(dashboard)/dashboard/history/page.tsx` → redirect to scans‑reports
+- `app/(dashboard)/dashboard/reports/page.tsx` → redirect to scans‑reports
+
+---
+
+## Verification (Happy Path)
+1. Upload on landing
+2. Enter email → **PDF downloads immediately**
+3. Email arrives → click magic link
+4. Land on `/dashboard/scans-reports?scan=...&welcome=true`
+5. Drawer open, CTAs visible, purchase works
+
+---
+
+## Guardrails
+- Keep `/scan/[id]` until dashboard path is tested end‑to‑end
+- Ensure C2PA **caution** renders in UI widgets and PDF
+- Canonical scoring thresholds only (91/76/51/26)

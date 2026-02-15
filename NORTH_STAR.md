@@ -1,5 +1,5 @@
 # AI Risk Shield - North Star Document
-**Version:** 1.0 | **Last Updated:** January 19 2026 | **Status:** Active Development
+**Version:** 1.1 | **Last Updated:** 2026-02-11 | **Status:** Active Development
 
 ## HOW TO USE THIS DOCUMENT
 
@@ -34,6 +34,10 @@ This is the single source of truth for product vision, user needs, and implement
 - **Trust through precision:** Every number, label, color must convey authority and accuracy
 
 ### Technical Constraints:
+- **One Product Reality:** The dashboard **Scans & Reports** page is the canonical home. The landing flow is a thin bridge.
+- **No Fake Telemetry:** Progress indicators must reflect real analysis steps, not scripted timers.
+- **Canonical Scoring:** All UI and reports must use the shared scoring module (`lib/risk/scoring.ts`) and tiers (`lib/risk/tiers.ts`).
+- **Pending Verification:** Account creation via magic link is **pending** until verification is complete.
 
 # Jobs to Be Done - AI Risk Shield (Updated with Current Solutions)
 

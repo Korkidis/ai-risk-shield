@@ -1,11 +1,21 @@
 # Database & Backend Audit Report
-**Date:** Jan 20, 2026 | **Status:** PASSED (with minor gaps)
+**Date:** 2026-02-11 | **Status:** PASS (with known product wiring gaps)
 
 ## 1. Executive Summary
 The existing Supabase schema provides a **solid, enterprise-grade foundation**. It correctly implements multi-tenancy, RLS isolation, and SOC 2-ready audit logging. The recent "Freemium" migration successfully adapts this strict schema for anonymous access without breaking security.
 
-**Verdict:** ✅ **Ready for Phase 1 Implementation**
-(No major refactoring required. Only additives needed.)
+**Verdict:** ✅ **Schema is solid; product wiring is incomplete.**
+(No major refactoring required. Focus on data handoff + canonical dashboard flow.)
+
+---
+
+## Reality Update (Feb 11, 2026)
+**What’s true now (live DB + repo):**
+- **Schema drift detected and addressed:** `tenant_invites.metadata` exists in live DB; repo migration added.  
+- **Missing index:** `idx_tenant_switch_audit_created_at` absent in live DB; repo migration added (CONCURRENTLY).
+- **Canonical product home:** Dashboard **Scans & Reports** is the product; landing is the bridge.
+- **C2PA fidelity:** 5‑value status in scoring module is canonical; UI widgets still catching up.
+- **Magic links cleanup is incomplete:** legacy `/api/auth/verify` still queries `magic_links`.
 
 ---
 
@@ -60,7 +70,7 @@ The system uses a **Self-Referential HTTP Pattern** for background processing:
 ### External Services
 *   **Email**: Resend (`RESEND_API_KEY`).
 *   **Payments**: Stripe (`STRIPE_SECRET_KEY`).
-*   **AI**: Gemini 1.5 Pro/Flash (`GEMINI_API_KEY`).
+*   **AI**: Gemini 2.5 Flash (`GEMINI_API_KEY`).
 *   **Security**: Rate limiting verified in `lib/ratelimit.ts` (uses `IP_HASH_SECRET`).
 
 ### Compute Architecture
@@ -71,17 +81,19 @@ The system uses a **Self-Referential HTTP Pattern** for background processing:
 ---
 
 ## 4. Identified Gaps (To Build)
-**STATUS UPDATE (Feb 1, 2026): ALL GAPS IMPLEMENTED & DEPLOYED.**
+**STATUS UPDATE (Feb 11, 2026): schema exists; product wiring incomplete.**
 
-### A. Mitigation Reports (Completed)
-*   **Implemented**: `mitigation_reports` table created.
-*   **Limits**: `usage_limit_mitigation` column added to `tenants`.
+### A. Mitigation Reports (Schema Only)
+*   **Schema**: `mitigation_reports` table exists.
+*   **Status**: UI/flow not delivered; treat as planned.
 
-### B. Insurance Referrals (Completed)
-*   **Implemented**: `referral_events` table created with `user_id` tracking.
+### B. Insurance Referrals (Schema Only)
+*   **Schema**: `referral_events` table exists.
+*   **Status**: CTA + workflow not delivered.
 
-### C. Team Invites (Completed)
-*   **Implemented**: `tenant_invites` table created with secure token logic.
+### C. Team Invites (Schema + RLS)
+*   **Schema**: `tenant_invites` exists with token + role constraints.
+*   **Status**: Member acceptance flow still pending.
 
 ---
 

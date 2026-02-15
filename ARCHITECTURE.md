@@ -45,6 +45,7 @@ graph TD
 *   **Design System**: Custom "Dieter Rams" aesthetic using Tailwind utility classes (`design/tokens`).
 *   **State Management**: React Server Components (RSC) for data fetching, Client Components for interactivity.
 *   **Realtime**: Using `supabase-js` channel subscriptions to stream analysis logs to the UI `RSScanner`.
+*   **Product Reality**: Dashboard **Scans & Reports** is the canonical home; landing is the onboarding bridge.
 
 ### 2. Security & Multi-Tenancy (Backend)
 *   **Row Level Security (RLS)**: **ALL** data access is governed by Postgres RLS policies.

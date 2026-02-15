@@ -1,5 +1,5 @@
 # Session Walkthrough
-*Last updated: 2026-02-11*
+*Last updated: 2026-02-14*
 
 ## What We're Selling
 Peace of mind for people afraid of getting sued for using AI-generated images. The ability to say "I checked" before someone asks "did you check?" One sentence. Everything else is implementation detail.
@@ -38,9 +38,10 @@ The infrastructure is built. The gap is **completeness**, not features. The firs
 | **Two inconsistent analysis pipelines** — authenticated (`/api/analyze`) vs anonymous (`scan-processor.ts`) | Different behavior, different data richness, bug source | Auth path stores differently, includes brand context, richer returns |
 | **C2PA skipped for anonymous images** — `scan-processor.ts:87` has TODO, defaults to `{ hasManifest: false }` | Headline feature not working in primary flow | `lib/ai/scan-processor.ts` |
 | **Email is a dead end** — magic link goes to same page user was already redirected to | Email adds zero value if they already got the auto-download | `SampleReportEmail.tsx` |
-| **Empty dashboard stubs** — History: "Offline", Brand Guidelines: no UI, Reports: no real data | Second visit has nothing | `dashboard/history/`, `dashboard/brand-guidelines/` |
+| **Empty dashboard stubs** — History: "Offline", Reports: "Offline" (but `/dashboard/scans-reports` IS fully built and functional) | Stubs damage confidence; the real page exists but the flow never routes there | `dashboard/history/`, `dashboard/reports/` → should redirect to `scans-reports` |
+| **Brand Guidelines UI exists but not wired to analysis** — CRUD works, analysis ignores guidelines | Broken promise — feature shows in UI but doesn't affect results | `dashboard/brand-guidelines/`, `guidelineId: 'default'` hardcoded |
 | **"3/3 REMAINING" is hardcoded** | Doesn't reflect actual quota | `FreeUploadContainer.tsx:208` |
-| **`RSC2PAWidget.tsx` missing `caution` state** | Falls through to generic default | Line 11, no `case 'caution'` in switch |
+| **`RSC2PAWidget.tsx` missing `caution` state** | Scoring fixed (commit d1c373e), but UI widget still lacks `caution` case in switch | Line 11, no `case 'caution'` in switch |
 | **Magic links route still live** | `app/api/auth/verify/route.ts` (67 lines) queries `magic_links` table. Migration to drop table exists but applying it would break this route. Delete route first. | `app/api/auth/verify/route.ts` |
 
 ## Schema Drift
@@ -53,6 +54,16 @@ This is a **demo, not a product**. The core value loop works for one scan. The m
 
 The gap isn't features. The gap is **completeness**. The distance between "impresses for 60 seconds" and "worth $49/month" is whether the 2nd through 10th interaction is as good as the 1st.
 
+## Strategy Decision (Feb 14, 2026)
+
+**One Product Reality:** The dashboard Scans & Reports page (`/dashboard/scans-reports`) is the canonical product. The freemium landing page is a thin bridge into it — shows value, creates account, gets out of the way. `/scan/[id]` is transitional (still used for auto-download + verification) — deprecate only after dashboard path fully covers it.
+
+**Conversion flow target:** Upload → results → "Create account" gate (email + consent) → instant PDF download → magic link → `/dashboard/scans-reports` (scan auto-selected) → purchase CTAs in drawer.
+
+**Insurance referral:** For scans scoring > 70 (composite), surface subtle CTA for AI indemnity insurance partners. Framed as helpful advice, not upsell.
+
+See full strategy memo: `.claude/plans/proud-zooming-tulip.md`
+
 ## What Needs to Happen (In Order)
 1. **Unify the analysis pipeline** — one path, full data, both flows
 2. **Fix the anonymous → authenticated data handoff** — stop reconstructing, read the stored blob
@@ -60,5 +71,6 @@ The gap isn't features. The gap is **completeness**. The distance between "impre
 4. **Make the sample PDF rich** — it should contain the real Gemini analysis, not thin reconstructions
 5. **Replace scripted telemetry with real progress** — even if simpler, it must be honest
 6. **Wire the scan counter to real quota** — not hardcoded
-7. **Make the email useful** — attach the sample PDF or inline the key findings
-8. **Build scan history** — the second visit needs content
+7. **Conversion flow consolidation** — gate reframing, instant PDF, magic link → scans-reports, drawer CTAs
+8. **Make the email useful** — link to dashboard, not dead-end `/scan/[id]`
+9. **Account & billing self-service** — paying customers need to see their plan, invoices, usage

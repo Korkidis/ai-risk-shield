@@ -15,9 +15,10 @@ npx tsx scripts/apply-migration.ts
 
 This script will:
 - Verify your connection
-- Apply the initial schema
-- Apply security policies
-- Verify the database state
+- Print a safe execution plan
+- Provide SQL editor / `psql` commands
+
+> **Note:** Migrations that use `CREATE INDEX CONCURRENTLY` must be run **outside a transaction** (prefer `psql -f`).
 
 **Verify:**
 - Run the test command:

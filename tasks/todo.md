@@ -7,6 +7,14 @@ The measure of "done" is: can someone scan 3 images over 2 weeks and pay $49/mon
 
 ---
 
+## Pre‑Step 0: Schema Drift (Do First)
+*Keep repo and live DB in lockstep before more feature work.*
+
+- [ ] Apply `20260211_add_tenant_invites_metadata.sql`
+- [ ] Apply `20260211_add_tenant_switch_audit_created_at_index.sql` (**CONCURRENTLY — run outside a transaction**)
+
+---
+
 ## Phase A: One Honest Pipeline (Prerequisite for Everything)
 *The two-pipeline split is the root cause of most issues. Fix this first.*
 
@@ -35,16 +43,12 @@ The measure of "done" is: can someone scan 3 images over 2 weeks and pay $49/mon
 ## Phase D: The Second Visit
 *The first scan impresses. The second visit must not be empty.*
 
-- [ ] **Scan History page** — show real past scans from DB (not "Offline / Under Construction")
-- [ ] **Brand Guidelines UI** — upload/management interface (schema exists, UI doesn't)
-
-## Prerequisites (Apply Before Further DB Work)
-- [x] Apply schema drift migrations — `tenant_invites_metadata` + `tenant_switch_audit_created_at_index` (CONCURRENTLY, requires no-transaction execution)
+- [ ] **Scans & Reports is canonical** — redirect history/reports stubs to `/dashboard/scans-reports`
+- [ ] **Brand Guidelines wiring** — UI exists, but analysis ignores guidelines; enforce AES‑256 + gating
 
 ## Cleanup (Non-blocking, do when touching related files)
 - [ ] **Magic links cleanup** — delete `app/api/auth/verify/route.ts` (67 lines), then confirm `magic_links` table is dropped via migration `20260208_cleanup_magic_links.sql`
 - [ ] **RSC2PAWidget `caution` handling** — type union missing `caution`, switch has no case for it. Falls through to generic default.
-- [ ] **NORTH_STAR.md Technical Constraints** — section header exists (line 36) but body is empty.
 - [ ] Resolve retention vs. hard-delete policy conflict (PRD vs. Subscription Strategy)
 
 ---
@@ -57,5 +61,6 @@ The measure of "done" is: can someone scan 3 images over 2 weeks and pay $49/mon
 - [x] Stripe billing (5-tier + metered overage)
 - [x] Multi-tenancy + hierarchical agencies
 - [x] Real-time Gemini analysis display (Supabase Realtime)
-- [x] Documentation alignment — **partial**: pricing/architecture/model updated, but NORTH_STAR constraints empty and walkthrough was stale (fixed Feb 11)
+- [x] Documentation alignment — strategy, pricing, architecture, model, and walkthrough updated
 - [x] Magic links migration file created (`20260208_cleanup_magic_links.sql`) — **but route.ts still live, cleanup not applied**
+- [x] NORTH_STAR Technical Constraints filled

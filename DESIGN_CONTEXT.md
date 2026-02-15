@@ -94,6 +94,16 @@ Text is treated as functional marking on the chassis. We use a "Cinematic Typogr
 | `--rs-safe` | `#006742` | **Safe Green**. Verified / Secure / Go. |
 | `--rs-info` | `#005F87` | **System Blue**. Information / Data Stream / Neutral. |
 
+### **A.1 Risk Tier Tokens (Semantic)**
+Risk colors are **semantic** and must align with `lib/risk/tiers.ts`. Do not hardcode hex values in components.
+| Token | Usage |
+| :--- | :--- |
+| `--rs-safe` | Safe / Low risk |
+| `--rs-caution` | Caution / Low risk |
+| `--rs-warning` | Review / Medium risk |
+| `--rs-danger` | High risk |
+| `--rs-critical` | Critical risk |
+
 ### **B. Shadow Physics (Z-Axis)**
 *   `--rs-shadow-l1`: **Inset Recess**. For screens (`.rs-well`) and inputs.
 *   `--rs-shadow-l2`: **Surface Lift**. Standard component shadow (buttons, cards). Sharp interaction.

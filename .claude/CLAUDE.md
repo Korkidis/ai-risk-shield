@@ -3,16 +3,37 @@
 ## Project Overview
 SaaS platform for AI content risk validation. Stack: Next.js 14 (App Router) + Supabase + Google Gemini 2.5 Flash + Stripe.
 
-**Business Model:** Freemium SaaS (3 free scans/month → $49-599/mo subscriptions)
+**Business Model:** Freemium SaaS (3 free scans/month → $29 one-time reports or $49-599/mo subscriptions)
 
 **Core Value Prop:** Validate AI-generated images/videos for copyright risk, brand safety, and C2PA provenance in 15 seconds.
+
+**Hybrid Billing:** Seat-based + consumption-based. Users get a set number of scans and full reports per month. Can subscribe to higher tiers or buy individual reports ($29 one-time).
+
+## Product Strategy (Feb 2026)
+
+### One Product Reality
+- **The dashboard (`/dashboard/scans-reports`) is the product.** All roads lead here.
+- **The freemium landing page is the on-ramp.** Shows immediate value (score + sample PDF), creates account, gets out of the way.
+- **`/scan/[id]` is transitional.** Do NOT break it — it's still used for auto-download + verification. Deprecate only after dashboard path fully covers its functions.
+
+### Conversion Flow (Current → Target)
+**Current:** Upload → results → email gate → magic link → `/scan/[id]` (dead end) → AuditModal popup
+**Target:** Upload → results → "Create account" gate (email + consent) → instant PDF download → magic link → `/dashboard/scans-reports` (scan auto-selected) → purchase CTAs in drawer
+
+### Known Theater (Must Fix)
+- Telemetry stream is scripted, not real analysis progress (`dashboard/page.tsx:79-114`, `FreeUploadContainer.tsx:46-59`)
+- "3/3 REMAINING" counter is hardcoded (`FreeUploadContainer.tsx:208`)
+- Sidebar "PRO PLAN 4/10 seats" is hardcoded
+- Quota display "15/50_SCANS" in scans-reports is hardcoded
+- AuditModal lists features that don't exist ("Unlimited Scans", "API Access")
+- Price inconsistency: `UpgradeModal.tsx` says $49.99/mo, `plans.ts` says $49.00 — pick one
 
 ## Critical Security Rules
 
 ### Data Protection
 - **ALWAYS use Row Level Security (RLS)** on every database query
 - **NEVER expose PII** in logs, URLs, or error messages
-- **ALWAYS encrypt brand guidelines** before storing (AES-256, see lib/brand-profiles/encrypt.ts when created)
+- **ALWAYS encrypt brand guidelines** before storing (AES-256) — NOT YET IMPLEMENTED, schema ready
 - **NEVER use localStorage for auth** - httpOnly cookies only (Supabase handles this)
 - **ALWAYS verify tenant_id** server-side (don't trust client)
 
@@ -21,6 +42,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 14 (App Router) + S
 - **Service role key:** Server-side only, NEVER expose to client
 - **Anon key:** Client-side only, limited permissions
 - **Input validation:** Sanitize all user inputs (file names, emails, etc.)
+- **`/api/scans/process` has no authentication** — anyone who guesses a scan ID can trigger reprocessing. Must fix.
 
 ### Multi-Tenant Isolation
 - **Every table must have tenant_id** column with RLS policy
@@ -41,12 +63,34 @@ SaaS platform for AI content risk validation. Stack: Next.js 14 (App Router) + S
   - Middleware client - Session refresh
 - **RLS is defense-in-depth** - Always filter by tenant_id in code too
 - **Storage paths:** Always use tenant_id in folder structure (`uploads/{tenant_id}/{file}`)
+- **Realtime** - Switched from polling to Supabase Realtime (Feb 2026) for scan status updates. Polling caused 139GB egress.
 
 ### Gemini API Usage
+- **Model:** `gemini-2.5-flash` — verify metadata stores this, not `gemini-1.5-flash`
 - **Safety blocks = feature, not bug** - Convert to critical finding (score: 100)
 - **Three separate calls:** Legal Analyst (IP) + Compliance Auditor (Safety) + Report Generator
 - **Temperature:** 0.2 for analysis (consistent), 0.4 for reports (creative)
 - **Never send PII** - Only image data, no user emails/names
+
+### Risk Scoring (Canonical)
+- **Single source of truth:** `lib/risk/tiers.ts` and `lib/risk/scoring.ts` (40 unit tests, commit 7ff1e83)
+- **5 tiers:** critical / high / review / caution / safe
+- **C2PA fidelity:** 5-value system (verified / caution / untrusted / invalid / missing)
+- **Composite formula:** Weighted (IP 70%, Provenance 20%, Safety 10%) with Red Flag override at ≥85
+- **Do NOT add local thresholds anywhere** — always use `getRiskTier()` from `lib/risk/tiers.ts`
+
+### Authentication
+- **Password-based:** signup + login via Server Actions
+- **Magic link (freemium):** Shadow user creation via `supabase.auth.admin.createUser()` + `generateLink()`, delivered via Resend
+- **Legacy:** Custom `magic_links` table is deprecated. Migration to drop exists (`20260208_cleanup_magic_links.sql`) but `/api/auth/verify/route.ts` still queries it. Delete route first, then apply migration.
+
+### Stripe Integration
+- **5-tier pricing:** FREE / PRO ($49) / TEAM ($199) / AGENCY ($499) / ENTERPRISE (custom) — see `lib/plans.ts`
+- **Two purchase paths:** One-time $29 report per scan OR monthly/annual subscription
+- **Metered overage billing:** Stripe Usage Records for paid plans exceeding monthly limits
+- **Webhook handler:** `app/api/stripe/webhook/route.ts` processes `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
+- **Plan sync:** `applyPlanToTenant()` syncs all limits and feature flags from `lib/plans.ts` to tenant record
+- **Entitlements:** `lib/entitlements.ts` centralizes access control (`canViewFullReport`, `canViewTeaser`, `isQuotaExceeded`)
 
 ## Common Mistakes to Avoid
 
@@ -56,31 +100,55 @@ SaaS platform for AI content risk validation. Stack: Next.js 14 (App Router) + S
 ❌ **Don't use sequential IDs** - Use UUIDs (prevent enumeration attacks)
 ❌ **Don't store Stripe card data** - Stripe handles it, we only store customer IDs
 ❌ **Don't block paid users at quota** - Allow overages, bill automatically
+❌ **Don't add hardcoded risk thresholds** - Use `lib/risk/tiers.ts` exclusively
+❌ **Don't create duplicate analysis pipelines** - Route all flows through the same processor (known issue: auth vs anon paths diverge)
+❌ **Don't reconstruct data you already stored** - Read the `risk_profile` blob from scans table
 
 ## File Structure Patterns
 
 ```
 app/
 ├── (auth)/              # Auth routes (login, signup)
-├── (dashboard)/         # Protected routes (dashboard, settings)
-├── api/                 # API routes (analyze, webhooks)
+├── (dashboard)/         # Protected routes
+│   └── dashboard/
+│       ├── page.tsx             # Scanner (main upload + analysis)
+│       ├── scans-reports/       # THE CANONICAL PRODUCT PAGE
+│       ├── brand-guidelines/    # Guidelines CRUD (UI works, not wired to analysis)
+│       ├── help/                # FAQ + docs (scaffolding)
+│       ├── history/             # STUB → should redirect to scans-reports
+│       ├── reports/             # STUB → should redirect to scans-reports
+│       └── design-lab/          # Internal component showcase (hide from customers)
+├── (marketing)/         # Pricing page
+├── api/                 # API routes
+│   ├── analyze/         # Authenticated analysis endpoint
+│   ├── scans/           # Anonymous upload, process, capture-email, assign-to-user
+│   ├── stripe/          # Checkout + webhook
+│   └── guidelines/      # Brand guidelines CRUD
+├── scan/[id]/           # Anonymous scan result (transitional — deprecate after dashboard covers it)
+├── auth/callback/       # Supabase auth callback
 ├── layout.tsx           # Root layout
-└── page.tsx             # Landing page
+└── page.tsx             # Landing page (freemium on-ramp)
 
 lib/
 ├── supabase/           # Supabase clients (client.ts, server.ts, middleware.ts)
-├── gemini/             # Gemini integration (client.ts, prompts.ts, schemas.ts)
-├── stripe/             # Stripe integration (client.ts, webhooks.ts)
-├── email/              # Resend email (client.ts, templates/, sequences/)
+├── gemini.ts           # Gemini multi-persona analysis (IP, Safety, Provenance)
+├── ai/                 # scan-processor.ts (async processing orchestrator)
+├── risk/               # CANONICAL: tiers.ts + scoring.ts (single source of truth)
+├── plans.ts            # 5-tier plan configuration (pricing source of truth)
+├── entitlements.ts     # Access control (report gating, quota checks)
+├── pdf-generator.ts    # Sample/full PDF report generation
+├── email.ts            # Resend email sending
 ├── c2pa/               # C2PA verification (verify.ts)
 ├── video/              # FFmpeg processing (extract-frames.ts)
-└── utils/              # Shared utilities
+└── stripe/             # Stripe integration
 
 components/
-├── ui/                 # Reusable UI components
-├── dashboard/          # Dashboard-specific components
-├── results/            # Results display components
-└── modals/             # Modal dialogs
+├── rs/                 # Design system (62+ "forensic instrument" components)
+├── landing/            # Landing page components (FreeUploadContainer, ScanResultsWithGate, etc.)
+├── marketing/          # AuditModal, pricing components
+├── billing/            # UpgradeButton, OneTimePurchaseButton
+├── email/              # React Email templates (SampleReportEmail, MagicLinkEmail)
+└── dashboard/          # Dashboard-specific components
 ```
 
 ## Environment Variables
@@ -98,12 +166,13 @@ GOOGLE_GEMINI_API_KEY=             # Gemini API key (SERVER-SIDE ONLY)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY= # Publishable key (safe to expose)
 STRIPE_SECRET_KEY=                 # Secret key (SERVER-SIDE ONLY)
 STRIPE_WEBHOOK_SECRET=             # Webhook signing secret
+STRIPE_PRICE_ONE_TIME=             # $29 one-time report Stripe price ID
 
 # Resend
 RESEND_API_KEY=                    # Email API key (SERVER-SIDE ONLY)
 
 # Encryption
-ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY)
+ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) — not yet used
 ```
 
 ## Testing Checklist (Run After Each Feature)
@@ -115,21 +184,32 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY)
 - [ ] Hit quota limit (paid) → verify overage allowed
 - [ ] Cross-tenant test → verify can't access other tenant's data
 - [ ] Invalid file upload → verify helpful error message
-- [ ] Network error simulation → verify graceful handling
+- [ ] Anonymous upload → verify session tracking and scan assignment
+- [ ] Email gate → verify shadow user creation and magic link delivery
+- [ ] $29 one-time purchase → verify Stripe checkout → webhook → scan.purchased = true
+- [ ] Subscription purchase → verify plan applied to tenant
 
 ## Database Schema Overview
 
 ### Core Tables
-- `tenants` - Organizations (one per signup, stores plan/quota/Stripe IDs)
+- `tenants` - Organizations (stores plan/quota/Stripe IDs, `stripe_metered_item_id` for overage)
 - `profiles` - Links auth.users to tenants (role: owner/admin/member)
-- `assets` - Uploaded file metadata (path, checksum, size)
-- `scans` - Analysis records (scores, risk level, status)
-- `scan_findings` - Detailed findings (type, severity, description)
+- `assets` - Uploaded file metadata (path, checksum, size, `session_id` for anonymous)
+- `scans` - Analysis records (scores, risk level, status, `risk_profile` JSON blob, `session_id`, `purchased`, `purchase_type`)
+- `scan_findings` - Detailed findings (type, severity, description, confidence_score)
 - `video_frames` - Frame-by-frame analysis for videos
-- `brand_profiles` - Encrypted custom brand guidelines
+- `brand_profiles` - Custom brand guidelines (encryption NOT yet implemented)
 - `usage_ledger` - Quota tracking (atomic increment)
 - `subscriptions` - Stripe subscription cache
 - `audit_log` - Security audit trail (append-only)
+- `mitigation_reports` - AI-generated remediation guidance (schema exists)
+- `referral_events` - Insurance referral tracking (schema exists)
+- `tenant_invites` - Team invite tokens (schema exists, `metadata` column confirmed in live DB)
+
+### Pending Schema Drift
+Two migrations created but NOT applied to live DB:
+- `20260211_add_tenant_invites_metadata.sql`
+- `20260211_add_tenant_switch_audit_created_at_index.sql` (CONCURRENTLY — must run outside transaction)
 
 ### Every Table Must Have
 - `id` (UUID primary key)
@@ -164,6 +244,24 @@ if (!allowed && plan === 'free') {
 - **Region:** US East (iad1) - or closest to target users
 - **Environment:** Separate env vars for preview vs production
 
+## Known Issues (Current as of Feb 14, 2026)
+
+### Pipeline Divergence (Phase A Blocker)
+Two separate analysis pipelines produce different quality output:
+- **Authenticated:** `/api/analyze` → `lib/gemini.ts` (synchronous, stores inline)
+- **Anonymous:** `/api/scans/anonymous-upload` → `/api/scans/process` → `lib/ai/scan-processor.ts` (async, different data shape)
+- **Impact:** Anonymous flow produces thinner data. C2PA skipped for anonymous images (`scan-processor.ts:87`).
+- **Fix:** Unify into single processor. See `tasks/todo.md` Phase A.
+
+### Data Handoff Loss
+`GET /api/scans/[id]` reconstructs a thin `RiskProfile` from individual columns instead of reading the stored `risk_profile` JSON blob. Rich Gemini analysis teasers/reasoning are lost.
+
+### RSC2PAWidget Missing `caution` State
+`components/rs/RSC2PAWidget.tsx` — type union and switch statement missing `caution` case. Scoring module (`lib/risk/scoring.ts`) handles all 5 values correctly; UI widget does not.
+
+### Brand Guidelines Not Wired
+UI (`/dashboard/brand-guidelines`) works for CRUD. Dashboard upload sends `guidelineId: 'default'` (hardcoded). Gemini prompts don't reference custom guidelines. Feature exists in UI but doesn't affect analysis.
+
 ## Lessons Learned (Updated as we build)
 
 ### Step 1: Next.js Initialization (2026-01-03)
@@ -178,19 +276,37 @@ if (!allowed && plan === 'free') {
 - **Storage policies require tenant_id from profiles** - Use `auth.uid()` to get user, then lookup `tenant_id`
 - **Three separate Supabase clients needed:** browser (anon), server (anon or service role), middleware (session refresh)
 - **Service role key bypasses RLS** - Only use for admin operations (Stripe webhooks, background jobs)
-- **Environment variables in scripts** - Need `dotenv` to load `.env.local` in standalone TypeScript scripts
 - **RLS helper function** - Created `public.user_tenant_id()` (not `auth.` - permission issue) for easy tenant filtering in policies
 - **Atomic quota function** - Uses `FOR UPDATE` row locking to prevent race conditions
 
 ### Step 3: Authentication Flow (2026-01-03)
 - **Server Actions for auth** - signup, login, logout all server-side (secure, no API routes needed)
-- **Atomic tenant creation** - Signup creates user + tenant + profile in transaction (rollback on any failure)
+- **Atomic tenant creation** - Signup creates user + tenant + profile in transaction
 - **First user = owner** - Role automatically set to 'owner' for first user in tenant
-- **Password validation** - Zod schema: min 12 chars, uppercase, lowercase, number
 - **Middleware protects routes** - Auto-redirect to login if accessing /dashboard without auth
-- **Service role for signup** - Needed to create tenant/profile before user fully authenticated
-- **Form validation both sides** - Client-side UX + server-side security (never trust client)
+
+### Step 4: Stripe Billing (2026-01-22 - 2026-02-01)
+- **5-tier plan config is source of truth** (`lib/plans.ts`) — webhooks sync to tenant record
+- **Metered billing uses Stripe Usage Records** — not manual invoice items
+- **One-time purchases mark `scan.purchased = true`** — entitlements check this field
+- **Overage pricing is deliberately punishing on PRO** ($2.50/scan) to drive TEAM upgrades
+
+### Step 5: Freemium + Magic Links (2026-02-01)
+- **Shadow user creation** via `supabase.auth.admin.createUser()` with `email_confirm: false`
+- **Magic link** via `supabase.auth.admin.generateLink()` — not the legacy custom `magic_links` table
+- **Cookie-based instant access** — `magic_auth_email` httpOnly cookie for UX before email click
+- **Scalability issue** in `capture-email/route.ts` — `listUsers()` fetches ALL users to check if email exists
+
+### Step 6: Risk Model Unification (2026-02-11)
+- **Canonical tiers and scoring** in `lib/risk/tiers.ts` and `lib/risk/scoring.ts`
+- **40 unit tests** confirm zero level shifts after unification
+- **C2PA 5-value fidelity** — verified / caution / untrusted / invalid / missing
+- **Do NOT use local threshold constants** — always import from `lib/risk/tiers.ts`
+
+### Step 7: Realtime (2026-02-05)
+- **Switched from polling to Supabase Realtime** — polling caused 139GB egress and image flickering
+- **Channel subscriptions** in `hooks/useRealtimeScans.ts` for live scan status updates
 
 ---
 
-**Last Updated:** 2026-01-03 (Step 3 Complete - Auth fully functional)
+**Last Updated:** 2026-02-14 (Strategy alignment — conversion flow + documentation audit)

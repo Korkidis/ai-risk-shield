@@ -1,4 +1,5 @@
 # SOC 2 Compliance Guide
+*Status: Guidance. Implementation status is tracked in `tasks/todo.md` and security migrations.*
 
 ## Core Principles (Trust Services Criteria)
 
@@ -30,7 +31,7 @@
 ## Implementation Checklist
 
 ### Database
-- [ ] RLS enabled on all tables
+- [ ] RLS enabled on all tenant data tables (public/static lookup tables must be explicitly documented if exempt)
 - [ ] `tenant_id` present on all multi-tenant tables
 - [ ] Audit logs table tracking mutations
 - [ ] Encryption keys managed securely
@@ -49,3 +50,9 @@
 1.  **Stop and Think**: Before merging, ask "Does this violate SOC 2?"
 2.  **Audit First**: If an action changes state, log it.
 3.  **No Hardcoded Secrets**: Use environment variables for all keys.
+
+## Project-Specific Controls (Current Reality)
+- **Security-Definer Functions**: Sensitive mutations (e.g., tenant switching, audit insertion) must run in `public` functions with tightly scoped grants.
+- **Service Role Writes**: Audit logs and security-sensitive tables should be written by backend/service role only.
+- **Token Handling**: Invite and magic-link tokens are secrets; do not expose raw tokens via client SELECT policies.
+- **Retention Policy**: Data retention must align with `SUBSCRIPTION_STRATEGY.md`. If PRD conflicts, resolve before making compliance claims.

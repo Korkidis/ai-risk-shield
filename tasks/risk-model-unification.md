@@ -12,6 +12,18 @@ Senior engineer or agent implementing a multi-phase refactor with production cor
 4. De-monolith hotspots after contracts are stable.
 5. Avoid regressions in high-stakes flows.
 
+## Status Update (2026-02-11)
+**Shipped**
+- Hotfixes: model version metadata, provenance status derivation, status vocabulary normalization
+- Phase 0: Vitest + unit tests, audit script
+- Phase 1: Canonical `lib/risk/tiers.ts` + `lib/risk/scoring.ts`, replaced all local thresholds
+- Phase 2: Sample PDF rehab (structured findings, mitigation hints, C2PA visible)
+
+**Remaining**
+- Phase 3: Token unification
+- Phase 4: De‑monolith UI hotspots
+- Phase 5: Cleanup + dead code removal
+
 ## Business Constraints (Non-Negotiable)
 1. Risk output must be consistent across all entry points (trust, legal defensibility).
 2. Provenance status must reflect cryptographic truth, not derived heuristics.
@@ -205,4 +217,3 @@ Create `scripts/audit-score-discrepancies.ts`:
 1. RLS policies or Supabase schema changes beyond status normalization.
 2. Any changes to anonymous session handling or magic link auth flow.
 3. Pricing logic or entitlement rules.
-

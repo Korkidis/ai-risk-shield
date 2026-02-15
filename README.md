@@ -23,19 +23,20 @@ This project is driven by a set of "Hyper-Critical" documents that serve as the 
 
 *   **Frontend**: Next.js 14 (App Router), Tailwind CSS
 *   **Database**: Supabase (PostgreSQL, RLS, Storage, **Hierarchical Tenancy**)
-*   **AI Engine**: Google Gemini 1.5 Flash (via Google AI Studio)
+*   **AI Engine**: Google Gemini 2.5 Flash (via Google AI Studio)
 *   **Provenance**: C2PA Node (Content Credentials)
 *   **Payments**: Stripe
 *   **Email**: Resend
 
 
-## ✅ Current Tenant Capabilities (Phase 1)
+## ✅ Current Tenant Capabilities (Phase 1–2)
 *   **Secure Uploads**: Drag-and-drop analysis with deep file inspection.
 *   **Quota Enforcement**: Strict monthly scan limits per tenant plan (e.g., Free = 3 scans/mo).
 *   **Provenance Analysis**: Detection of C2PA manifests, digital signatures, and edit history.
-*   **Design Lab**: A component sandbox demonstrating the "Forensic Instrument" UI system.
+*   **Scans & Reports (Canonical Home)**: Dashboard is the primary product surface.
+*   **Design Lab**: Internal component sandbox for the "Forensic Instrument" UI system.
 *   **Hierarchical Teams**: Agency admins can manage sub-tenant accounts.
-*   **Deep Mitigation**: AI-generated remediation plans for high-risk assets (Paid Feature).
+*   **Deep Mitigation**: Planned — not yet delivered as a user‑facing feature.
 
 ## 🚀 Getting Started
 

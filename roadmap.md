@@ -21,6 +21,7 @@
 
 ## Phase 2: Production Core (CURRENT)
 *   **Goal:** 0-1000 Users, Frictionless "Time to Value"
+*   **Product Reality:** Dashboard **Scans & Reports** is canonical. Landing is a thin bridge.
 *   **Blocker:** Two inconsistent analysis pipelines (auth vs. anon) — see `todo.md` Phase A
 *   [ ] **Anonymous Scan Flow**
     *   [x] Drag-and-drop Upload
@@ -29,11 +30,12 @@
     *   [ ] ⚠ C2PA skipped for anonymous images (`scan-processor.ts:87`)
     *   [ ] ⚠ Rich analysis data lost in anon→auth handoff (reconstructed, not read from stored blob)
 *   [ ] **The "Gate" & Report**
-    *   [x] Teaser Results (Blurred)
-    *   [x] Email Capture (Magic Link)
+    *   [x] Teaser Results (Immediate score + breakdown)
+    *   [x] Email Capture (Magic Link, pending verification)
     *   [x] PDF Generation exists (`lib/pdf-generator.ts`) — but fed thin data in anonymous flow
-    *   [ ] ⚠ Email links back to same page user already sees (adds no value)
-    *   [ ] One-time $29 Report Purchase Flow (end-to-end unverified)
+    *   [ ] Sample PDF download on landing (bridge)
+    *   [ ] Email should route to `/dashboard/scans-reports?scan=...`
+    *   [ ] Drawer CTAs for $29 / $49 inside Scans & Reports
 *   [ ] **Monetization (Stripe)**
     *   [x] Subscription Models (Free/Pro/Team)
     *   [x] Metered Billing (Overages)

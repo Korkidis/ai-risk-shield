@@ -1,18 +1,18 @@
 ---
 name: gemini-c2pa-pipeline
-description: Protocols for the Analysis Pipeline (Gemini 1.5 Pro + C2PA). Use when modifying scan logic, prompt engineering, or provenance verification.
+description: Protocols for the Analysis Pipeline (Gemini 2.5 Flash + C2PA). Use when modifying scan logic, prompt engineering, or provenance verification.
 ---
 
 # Gemini & C2PA Skills
 
-## 1. Context & Architecture (Synchronous API)
-The "Analysis Engine" currently runs as a **Next.js Serverless Function** (`/api/analyze`).
-*   **Trigger**: Client POSTs file directly to API.
-*   **Flow**: Upload -> Gemini Analysis -> C2PA Verify -> DB Write.
-*   **Warning**: This is a long-running synchronous process. Vercel timeout limits apply (max 60s).
-*   **Output**: Returns JSON `RiskProfile` directly to client.
+## 1. Context & Architecture (Two Pipelines)
+The system currently has **two pipelines** that must remain consistent:
+*   **Synchronous**: `POST /api/analyze` (client upload → Gemini → C2PA → DB write → returns `RiskProfile`).
+*   **Asynchronous**: background processor (`scan-processor.ts`) for anonymous uploads.
+*   **Warning**: The sync path is long‑running; Vercel timeouts apply (max 60s).
+*   **Source of Truth**: Canonical scoring + tiers live in `lib/risk/scoring.ts` and `lib/risk/tiers.ts`. Do not re‑implement thresholds.
 
-## 2. Gemini 1.5 Pro Guidelines
+## 2. Gemini 2.5 Flash Guidelines
 
 > **Source of Truth**: See [`GEMINI_C2PA_STANDARDS.md`](../../GEMINI_C2PA_STANDARDS.md) for the exact Prompt Structure, Scoring Matrix, and Weighting Logic.
 
@@ -23,14 +23,15 @@ The "Analysis Engine" currently runs as a **Next.js Serverless Function** (`/api
 
 ### B. Handling Tokens
 *   Video analysis requires upload to File API.
-*   Always delete temporary files key after processing (`fs.unlink`).
+*   Always delete temporary files after processing (`fs.unlink`).
 
 ## 3. C2PA Verification (The Hard Part)
 *   **Library**: `c2pa-node` (requires binary bindings) or `c2pa` (WASM).
 *   **Failure Mode**: If C2PA fails, **do not fail the scan**.
     *   Log the error.
-    *   Set `provenance: { type: 'missing' }`.
-    *   User UI: "No Credentials Found" (Yellow Warning), not "Error" (Red).
+    *   Set provenance status to `error` or `missing` per canonical mapping.
+    *   User UI: "No Credentials Found" (Yellow Warning) vs "Error" (Red) is a **5‑value** system.
+*   **Status Mapping**: Use `computeProvenanceStatus()` / `computeProvenanceScore()` from `lib/risk/scoring.ts`. Do not derive status from score in‑line.
 
 ## 4. Realtime Feedback Protocol
 The frontend `RSScanner` expects specific log events via Supabase Realtime channel `scan:{id}`.
@@ -47,4 +48,5 @@ The frontend `RSScanner` expects specific log events via Supabase Realtime chann
 - [ ] Does Gemini output valid JSON?
 - [ ] Is the C2PA step wrapped in a `try/catch` block?
 - [ ] Are we emitting Realtime logs for every step?
-- [ ] are temp files cleaned up?
+- [ ] Are temp files cleaned up?
+- [ ] Are both pipelines using canonical scoring/tiers?

@@ -1,8 +1,8 @@
 # Workflow Orchestration
 
 ## Project Context
-*   **Environment:** Mac, Next.js, Supabase, Tailwind CSS
-*   [Add specific project context or environment details here]
+*   **Environment:** Mac, Next.js (App Router), Supabase, Tailwind CSS, Stripe, Gemini, Vercel
+*   **Product Reality:** Dashboard Scans & Reports is the canonical home; landing page is the on‑ramp.
 
 ## 1. Spec Before Build (The Mini Spec)
 *   **Before writing code**, you MUST create a mini-spec containing:
@@ -14,9 +14,8 @@
 *   Do not proceed to coding until this spec is clear.
 
 ## 2. Subagent Strategy
-*   Use subagents liberally to keep main context window clean
-*   Offload research, exploration, and parallel analysis to subagents
-*   For complex problems, throw more compute at it via subagents
+*   Use subagents when parallel research or exploration would reduce context churn
+*   Offload deep dives that don't require main‑thread coordination
 *   One task per subagent for focused execution
 
 ## 3. Self-Improvement Loop
@@ -26,7 +25,7 @@
 *   Review lessons at session start for relevant project
 
 ## 4. Proof of Work (The Definition of Done)
-*   When a task is done, you MUST return:
+*   For non‑trivial tasks, return:
     *   **6-Bullet Change Summary**: Specifics of what changed.
     *   **Commands Run**: Exact tests, lints, or build commands executed.
     *   **Git Diff Highlights**: Key architectural changes (not every line).
@@ -40,14 +39,14 @@
 *   Challenge your own work before presenting it
 
 ## 6. Autonomous Bug Fixing
-*   When given a bug report: just fix it. Don't ask for hand-holding
+*   When given a bug report: fix it if scope is clear and self‑contained
 *   Point at logs, errors, failing tests – then resolve them
 *   Zero context switching required from the user
 *   Go fix failing CI tests without being told how
 
 # Task Management
-*   **Plan First:** Write plan to `tasks/todo.md` with checkable items
-*   **Verify Plan:** Check in before starting implementation
+*   **Plan First (multi‑step work):** Write plan to `tasks/todo.md` with checkable items
+*   **Verify Plan:** Check in before starting implementation on multi‑step work
 *   **Track Progress:** Mark items complete as you go
 *   **Explain Changes:** High-level summary at each step
 *   **Document Results:** Add review section to `tasks/todo.md`
