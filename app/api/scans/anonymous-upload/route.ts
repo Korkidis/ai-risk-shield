@@ -15,9 +15,10 @@ export async function POST(request: Request) {
 
     // 1. Check anonymous quota (skip in dev mode)
     const isDev = process.env.NODE_ENV === 'development'
+    let quotaRemaining = 3 // Default for dev mode
 
     if (!isDev) {
-      const { checkAnonymousQuota, recordAnonymousScan } = await import('@/lib/ratelimit')
+      const { checkAnonymousQuota } = await import('@/lib/ratelimit')
       const quota = await checkAnonymousQuota(sessionId)
 
       if (!quota.allowed) {
@@ -27,6 +28,9 @@ export async function POST(request: Request) {
           code: 'LIMIT_REACHED'
         }, { status: 429 })
       }
+
+      // remaining BEFORE this scan is consumed (will be decremented after processing)
+      quotaRemaining = quota.remaining
     }
 
     const formData = await request.formData()
@@ -131,15 +135,17 @@ export async function POST(request: Request) {
     // 5. Record scan for quota tracking (only in production)
     if (!isDev) {
       const { recordAnonymousScan } = await import('@/lib/ratelimit')
-      await recordAnonymousScan(sessionId).catch(err =>
+      await recordAnonymousScan().catch(err =>
         console.error('Failed to record anonymous scan:', err)
       )
+      // Decrement remaining since we just consumed a scan
+      quotaRemaining = Math.max(0, quotaRemaining - 1)
     }
 
     return NextResponse.json({
       scanId: createdScan.id,
       assetId: (asset as ExtendedAsset).id,
-      remaining: isDev ? 999 : 2 // Dev mode shows unlimited, prod shows remaining
+      remaining: quotaRemaining
     })
   } catch (error) {
     console.error('Anonymous upload error:', error)

@@ -1,6 +1,6 @@
-'use client'
 
 import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { RiskProfile } from '@/lib/gemini-types'
 import { RSFileUpload } from '../rs/RSFileUpload'
 import { RSProcessingPanel } from '../rs/RSProcessingPanel'
@@ -21,6 +21,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [statusMessage, setStatusMessage] = useState("Initializing forensic engine...")
+  const [scansRemaining, setScansRemaining] = useState(3)
 
   /* Cleanup preview URL on unmount */
   useEffect(() => {
@@ -41,25 +42,8 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       const formData = new FormData()
       formData.append('file', file)
 
-      // Simulation Steps
-      let p = 0
-      const steps = [
-        "Verifying digital signature...",
-        "Analyzing visual spectrum...",
-        "Cross-referencing IP databases...",
-        "Checking C2PA provenance...",
-        "Calculating risk probability...",
-        "Generating forensic report..."
-      ]
-
-      const interval = setInterval(() => {
-        p += 0.5
-        if (p > 90) p = 90
-        setProgress(p)
-        setStatusMessage(steps[Math.floor((p / 100) * steps.length)] || "Finalizing analysis...")
-      }, 100)
-
-      const cleanupSimulation = () => clearInterval(interval)
+      // 0. Init Realtime Client
+      const supabase = createClient()
 
       // 1. Upload
       const uploadRes = await fetch('/api/scans/anonymous-upload', {
@@ -68,7 +52,6 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       })
 
       if (!uploadRes.ok) {
-        cleanupSimulation()
         const errorData = await uploadRes.json()
         const errorMessage = errorData.details
           ? `${errorData.error}: ${errorData.details}`
@@ -76,25 +59,43 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
         throw new Error(errorMessage)
       }
 
-      const { scanId } = await uploadRes.json()
+      const { scanId, remaining } = await uploadRes.json()
+      if (remaining !== undefined) setScansRemaining(remaining)
 
-      // 2. Poll
+      // 1.5. Subscribe to Realtime Progress
+      const channel = supabase.channel(`scan-${scanId}`)
+      channel
+        .on('broadcast', { event: 'progress' }, (payload) => {
+          if (payload.payload && payload.payload.progress) {
+            setProgress(payload.payload.progress)
+          }
+          if (payload.payload && payload.payload.message) {
+            setStatusMessage(payload.payload.message)
+          }
+        })
+        .subscribe()
+
+      // 2. Poll (Reduced frequency, checks for completion)
       let attempts = 0
       const maxAttempts = 60
 
+      const cleanupRealtime = () => {
+        supabase.removeChannel(channel)
+      }
+
       while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 2000)) // Poll slower, rely on realtime for visuals
 
         const statusRes = await fetch(`/api/scans/${scanId}/status`)
         if (!statusRes.ok) {
-          cleanupSimulation()
+          cleanupRealtime()
           throw new Error('Failed to check scan status')
         }
 
         const scanStatus = await statusRes.json()
 
         if (scanStatus.status === 'complete') {
-          cleanupSimulation()
+          cleanupRealtime()
           setProgress(100)
           setStatusMessage("Analysis complete. Compiling dossier.")
 
@@ -130,14 +131,14 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
 
           return
         } else if (scanStatus.status === 'failed') {
-          cleanupSimulation()
-          throw new Error('Analysis failed')
+          cleanupRealtime()
+          throw new Error(scanStatus.error_message || 'Analysis failed')
         }
 
         attempts++
       }
 
-      cleanupSimulation()
+      cleanupRealtime()
       throw new Error('Analysis timed out. Please try again.')
 
     } catch (err: any) {
@@ -205,7 +206,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
             <span className="rs-type-micro text-[var(--rs-text-primary)] tracking-widest uppercase font-bold">SYSTEM STATUS: LIVE</span>
           </div>
           <div className="bg-[var(--rs-bg-secondary)] px-3 py-1.5 rounded-full shadow-inner border border-[var(--rs-border-primary)]">
-            <span className="rs-type-micro font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">3/3 REMAINING</span>
+            <span className="rs-type-micro font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">{scansRemaining}/3 REMAINING</span>
           </div>
         </div>
 

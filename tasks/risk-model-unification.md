@@ -67,7 +67,7 @@ Defined in `types/database.ts`:
    - risk scores + `risk_level`
 
 ### Report Surfaces
-1. PDF generator: `lib/pdf-generator.ts` (current template; redacted sample logic)
+1. PDF generator: `lib/pdf-generator.ts` (structured sample logic; no redacted blocks)
 2. Full web report: `components/report/FullForensicReport.tsx`
 3. Teaser web report: `components/landing/FreeForensicReport.tsx`
 4. Gated results: `components/landing/ScanResultsWithGate.tsx`
@@ -77,49 +77,34 @@ Defined in `types/database.ts`:
 1. `components/email/SampleReportEmail.tsx` (used by `lib/email.ts`)
 2. `components/email/MagicLinkEmail.tsx` (exists but unused)
 
-## Critical Contradictions and Redundancies
+## Critical Contradictions and Redundancies (Historical — Fixed as of 2026-02-11)
+These items were the root cause of score drift and broken provenance fidelity. They are **resolved** and kept here for context.
 
-### Risk Tier Drift
-Multiple threshold sets exist:
-1. `lib/risk-utils.ts`: 91/76/51/26
-2. `lib/gemini.ts`: 80/60/35
-3. `lib/ai/scan-processor.ts`: 90/70/50/25
-4. UI components and emails use 85/60/40 or 75/50/25
+### Risk Tier Drift (Resolved)
+Multiple threshold sets existed across the codebase. All thresholds now route through `lib/risk/tiers.ts` and `lib/risk/scoring.ts`.
 
-### C2PA / Provenance Logic Conflict
-1. `lib/gemini.ts` maps C2PA status → provenance score directly.
-2. `lib/ai/scan-processor.ts` derives `provenance_status` from score (wrong).
-3. `caution` exists in types but is never emitted in `lib/c2pa.ts`.
+### C2PA / Provenance Logic Conflict (Resolved)
+`provenance_status` is now derived from cryptographic truth via `computeProvenanceStatus()`, and C2PA scores are mapped via canonical helpers.
 
-### Status Vocabulary Mismatch
-1. DB uses `complete`
-2. UI types expect `completed`
-3. `hooks/useRealtimeScans.ts` patches at runtime
+### Status Vocabulary Mismatch (Resolved)
+Normalized to `complete` across DB, types, and UI.
 
-### Model Version Metadata Mismatch
-1. `lib/ai/scan-processor.ts` stores `gemini-1.5-flash`
-2. Actual model used is `gemini-2.5-flash`
+### Model Version Metadata Mismatch (Resolved)
+Stored metadata now reflects `gemini-2.5-flash`.
 
-### Duplicate PDF Templates
-1. Current PDF generator: `lib/pdf-generator.ts`
-2. Older structured PDF template exists in branch `main` and `frontend-redesign`:
-   - `main:components/landing/ScanResultsWithGate.tsx`
-   - `frontend-redesign:components/landing/ScanResultsWithGate.tsx`
+### Duplicate PDF Templates (Resolved)
+`lib/pdf-generator.ts` now contains the structured sample report logic. Older branch templates are no longer needed.
 
-### Unused or Redundant Modules
+### Unused or Redundant Modules (Still Pending Cleanup)
 1. `components/upload/UploadContainer.tsx` and `components/upload/UploadZone.tsx` unused
 2. `lib/c2pa/index.ts` unused
 3. `lib/mock-data.ts` unused
 4. `lib/schemas/scan.ts` unused
 
-## Immediate Hotfixes (Before Refactor)
-1. Fix model metadata in `lib/ai/scan-processor.ts`
-   - Set `gemini_model_version` to `gemini-2.5-flash`
-2. Fix provenance status derivation:
-   - `provenance_status` must reflect C2PA cryptographic state, not score
-3. Normalize status vocabulary:
-   - Choose canonical string (`complete` or `completed`)
-   - Update DB constraint, Zod schema, and UI types
+## Immediate Hotfixes (Completed)
+1. Model metadata fixed (`gemini_model_version = gemini-2.5-flash`)
+2. Provenance status now derived from cryptographic truth
+3. Status vocabulary normalized to `complete`
 
 ## Canonical Risk Contract (Must Be Implemented)
 Create `lib/risk/tiers.ts`:
@@ -134,20 +119,19 @@ Create `lib/risk/scoring.ts`:
 4. `computeProvenanceScoreFromC2PA(status)`
 5. `computeProvenanceStatus(c2paReport)`
 
-Decision Required:
-1. Pick the canonical thresholds (e.g., 91/76/51/26 or 80/60/35).
-2. Apply once and delete all local thresholds.
+Decision (Completed):
+Canonical thresholds set to **91/76/51/26** and applied across all pipelines.
 
 ## Phase Plan (Correctness-First)
 
-### Phase 0: Guardrails and Baselines
+### Phase 0: Guardrails and Baselines (✅ Completed)
 1. Add regression checklist in `tasks/todo.md`.
 2. Add score stability test:
    - Upload same asset via sync and async pipelines.
    - Confirm identical composite score and verdict.
 3. Capture baseline screenshots for risk badge colors and gated view.
 
-### Phase 1: Risk Unification (P0 Correctness)
+### Phase 1: Risk Unification (P0 Correctness) (✅ Completed)
 1. Implement `lib/risk/tiers.ts` and `lib/risk/scoring.ts`.
 2. Replace all local scoring logic in:
    - `lib/gemini.ts`
@@ -156,7 +140,7 @@ Decision Required:
    - `app/api/scans/[id]/route.ts`
 3. Normalize status vocabulary (DB + UI).
 
-### Phase 2: Sample Report Rehabilitation (Business Critical)
+### Phase 2: Sample Report Rehabilitation (Business Critical) (✅ Completed)
 1. Restore structured PDF template from `main` branch.
    - Pull from `main:components/landing/ScanResultsWithGate.tsx`.
 2. Replace redacted overlay logic in `lib/pdf-generator.ts`.

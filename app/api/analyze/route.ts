@@ -125,7 +125,8 @@ export async function POST(req: NextRequest) {
                 safety_risk_score: riskProfile.safety_report.score,
                 provenance_risk_score: riskProfile.provenance_report.score,
                 provenance_status: riskProfile.c2pa_report.status,
-                provenance_data: riskProfile.c2pa_report
+                provenance_data: riskProfile.c2pa_report,
+                risk_profile: riskProfile
             } as any)
             .eq('id', (scan as any).id)
 

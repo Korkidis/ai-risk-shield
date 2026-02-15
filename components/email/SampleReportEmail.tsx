@@ -9,7 +9,6 @@ interface SampleReportEmailProps {
 }
 
 export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
-    scanId,
     score,
     riskLevel,
     findingsCount,
@@ -89,6 +88,9 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
                         </a>
                         <p style={{ marginTop: '20px', fontSize: '11px', color: colors.grey, fontFamily: 'monospace' }}>
                             SECURE ACCESS LINK • EXPIRES IN 15 MINUTES
+                        </p>
+                        <p style={{ marginTop: '10px', fontSize: '10px', color: '#999999', lineHeight: '1.4' }}>
+                            By accessing this report, a secure guest account will be created so you can retrieve your scan results later.
                         </p>
                     </div>
 

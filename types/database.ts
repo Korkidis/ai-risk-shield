@@ -7,6 +7,8 @@
  * - Additional relationships and computed fields
  */
 
+import { RiskProfile } from '@/lib/gemini-types'
+
 export interface ExtendedAsset {
   id: string
   session_id?: string | null
@@ -62,6 +64,7 @@ export interface ExtendedScan {
   tags?: string[]
   share_token?: string | null
   share_expires_at?: string | null
+  risk_profile?: RiskProfile | null
 }
 
 export interface ScanFinding {
@@ -74,8 +77,6 @@ export interface ScanFinding {
   confidence_score: number
   created_at: string
 }
-
-import { RiskProfile } from '@/lib/gemini-types'
 
 export interface ScanWithRelations extends ExtendedScan {
   assets?: Pick<ExtendedAsset, 'filename' | 'file_type' | 'file_size'>

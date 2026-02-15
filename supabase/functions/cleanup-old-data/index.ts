@@ -26,6 +26,7 @@ async function cleanup(): Promise<any> {
         findings_deleted: 0,
         assets_deleted: 0,
         storage_files_deleted: 0,
+        shadow_users_deleted: 0,
         errors: []
     };
 
@@ -133,6 +134,15 @@ async function cleanup(): Promise<any> {
                 }
                 console.log(`✅ Deleted ${results.assets_deleted} assets`);
             }
+        }
+
+        // 5. Cleanup Shadow Users (via RPC)
+        const { data: shadowDeleted, error: shadowErr } = await sb.rpc('cleanup_stale_shadow_users', { days_old: CUTOFF_DAYS });
+        if (shadowErr) {
+            results.errors.push(`shadow_users: ${shadowErr.message}`);
+        } else {
+            results.shadow_users_deleted = shadowDeleted || 0;
+            console.log(`✅ Deleted ${results.shadow_users_deleted} shadow users`);
         }
 
         console.log('📊 Cleanup Summary:', results);

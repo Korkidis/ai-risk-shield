@@ -21,6 +21,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import os from 'os'
 import { verifyContentCredentials } from '@/lib/c2pa'
+import { broadcastScanProgress } from '@/lib/realtime'
 
 export type ProcessScanResult = {
   success: boolean
@@ -48,6 +49,8 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     if (scanError || !scan) {
       throw new Error('Scan not found: ' + scanId)
     }
+
+    await broadcastScanProgress(scanId, 10, "Initializing forensic engine...")
 
     // Update status to 'processing'
     // @ts-ignore
@@ -80,30 +83,37 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     const mimeType = asset.mime_type || (asset.file_type === 'image' ? 'image/jpeg' : 'video/mp4')
     const isVideo = mimeType.startsWith('video/')
 
+    await broadcastScanProgress(scanId, 20, "Analyzing content structure...")
+
     // 3. C2PA Verification (Both Images and Videos)
-    // Note: C2PA verification requires a file path, not a buffer
-    // For now, we'll skip C2PA verification in the processor
-    // TODO: Save buffer to temp file for C2PA verification
     const c2paResult = { hasManifest: false, valid: false }
 
     // 4. Content Analysis
     let ipResult, brandSafetyResult, videoFramesData: any[] = []
     let compositeRisk: { score: number; level: 'safe' | 'caution' | 'review' | 'high' | 'critical' }
     let provenanceScore = 0
+    let riskProfile: any = null // Hoisted so findings section can access it
     // Canonical C2PA status (default to missing until verified)
     let c2paStatus: C2PAStatus = 'missing'
     // Provenance status type matches canonical C2PAStatus from scoring module
     let provenanceStatus: C2PAStatus = 'missing'
 
+    // Run C2PA verification for all file types (images + videos)
+    // Requires writing buffer to temp file since c2pa-node needs a file path
+    // IMAGE C2PA: Handled by analyzeImageMultiPersona to avoid double-processing.
+    // VIDEO C2PA: Handled here because we process frames individually.
+
     if (isVideo) {
       // VIDEO PIPELINE
       console.log(`Processing video scan ${scanId}...`)
+      await broadcastScanProgress(scanId, 30, "Extracting keyframes for analysis...")
 
       // Extract frames
       const frames = await extractFrames(fileBuffer, 5) // Analyze 5 frames max for MVP
 
       // VIDEO C2PA CHECK
       try {
+        await broadcastScanProgress(scanId, 40, "Verifying C2PA digital signature...")
         const tempPath = path.join(os.tmpdir(), `scan-${scanId}-${Date.now()}.mp4`);
         await fs.writeFile(tempPath, fileBuffer);
         const c2paReport = await verifyContentCredentials(tempPath);
@@ -127,7 +137,8 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       let maxSafetyScore = 0
 
       // Analyze each frame
-      for (const frame of frames) {
+      for (const [index, frame] of frames.entries()) {
+        await broadcastScanProgress(scanId, 50 + Math.floor((index / frames.length) * 30), `Analyzing frame ${index + 1}/${frames.length}...`)
         const frameBuffer = await fs.readFile(frame.filePath)
         const [fIp, fSafe] = await Promise.all([
           analyzeIP(frameBuffer, 'image/jpeg'),
@@ -178,8 +189,9 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     } else {
       // IMAGE PIPELINE - Use full enterprise analysis
+      await broadcastScanProgress(scanId, 30, "Analyzing visual spectrum and IP databases...")
       const { analyzeImageMultiPersona } = await import('@/lib/gemini')
-      const riskProfile = await analyzeImageMultiPersona(fileBuffer, mimeType, asset.filename)
+      riskProfile = await analyzeImageMultiPersona(fileBuffer, mimeType, asset.filename)
 
       // Extract scores from risk profile
       ipResult = {
@@ -218,52 +230,90 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     // 5. Calculate composite risk (Final) is already done above
 
-    // 6. Save findings (Aggregated for Video, Detail for Image)
+    // 6. Save findings — use rich data from riskProfile for images (matches authenticated path)
     const findings: any[] = []
 
-    // Add C2PA Finding if missing
-    if (!c2paResult.hasManifest) {
+    if (!isVideo && riskProfile) {
+      // IMAGE: Rich findings from Gemini risk profile
+      // C2PA / Provenance finding (always)
       findings.push({
         tenant_id: (scan as any).tenant_id,
         scan_id: scanId,
         finding_type: 'provenance_issue',
-        severity: 'low', // Low severity for just missing, high if invalid
-        title: 'Missing Content Credentials',
-        description: 'No C2PA manifest found in this asset. Provenance cannot be verified.',
-        recommendation: 'Use tools that attach Content Credentials to ensure trust.',
-        confidence_score: 100
+        severity: (c2paStatus === 'valid' || c2paStatus === 'caution') ? 'low' :
+          c2paStatus === 'invalid' ? 'critical' : 'high',
+        title: 'C2PA Provenance Verification',
+        description: riskProfile.provenance_report.teaser,
+        recommendation: (c2paStatus === 'valid' || c2paStatus === 'caution')
+          ? 'Asset is armored with verified Content Credentials. Maintain this chain for legal defensibility.'
+          : 'Absence of cryptographic provenance. In IP disputes, your legal defensibility may be hindered without a verified chain of custody.',
+        evidence: {
+          status: c2paStatus,
+          issuer: riskProfile.c2pa_report?.issuer,
+          tool: riskProfile.c2pa_report?.tool,
+          note: c2paStatus === 'caution' ? 'Verified via fallback manifest (Non-Standard Structure)' : undefined
+        }
       })
-    }
 
-    // Add content findings (only for images, or aggregate for video if we implement aggregation)
-    if (!isVideo) {
-      ipResult.detections.forEach((detection: any) => {
+      // IP finding if score warrants it
+      if (riskProfile.ip_report.score > 50) {
         findings.push({
           tenant_id: (scan as any).tenant_id,
           scan_id: scanId,
           finding_type: 'ip_violation',
-          severity: detection.confidence > 80 ? 'critical' : detection.confidence > 60 ? 'high' : 'medium',
-          title: `${detection.type}: ${detection.name}`,
-          description: `Detected ${detection.type.toLowerCase()}: ${detection.name}`,
-          recommendation: 'Review for potential intellectual property concerns',
-          evidence: { type: detection.type, name: detection.name },
-          confidence_score: detection.confidence,
+          severity: riskProfile.ip_report.score > 85 ? 'critical' : 'high',
+          title: 'Potential IP Infringement Detected',
+          description: riskProfile.ip_report.teaser,
+          recommendation: 'Remove or license the detected protected elements immediately.',
+          evidence: { score: riskProfile.ip_report.score, reasoning: riskProfile.ip_report.reasoning }
         })
-      })
+      }
 
-      brandSafetyResult.violations.forEach((violation: any) => {
+      // Safety finding if score warrants it
+      if (riskProfile.safety_report.score > 50) {
         findings.push({
           tenant_id: (scan as any).tenant_id,
           scan_id: scanId,
           finding_type: 'safety_violation',
-          severity: violation.severity,
-          title: `${violation.category} content detected`,
-          description: violation.description,
-          recommendation: 'Review for brand safety compliance',
-          evidence: { category: violation.category },
-          confidence_score: violation.confidence,
+          severity: riskProfile.safety_report.score > 85 ? 'critical' : 'high',
+          title: 'Brand Safety Violation',
+          description: riskProfile.safety_report.teaser,
+          recommendation: 'Content violates safety guidelines. Do not publish.',
+          evidence: { score: riskProfile.safety_report.score, reasoning: riskProfile.safety_report.reasoning }
         })
-      })
+      }
+
+      // Save provenance_details for valid/caution C2PA (matches authenticated path)
+      if (['valid', 'caution'].includes(c2paStatus) && riskProfile.c2pa_report) {
+        // @ts-ignore - Supabase types not generated from live schema
+        await supabase.from('provenance_details').insert({
+          scan_id: scanId,
+          tenant_id: (scan as any).tenant_id,
+          creator_name: riskProfile.c2pa_report.creator,
+          creation_tool: riskProfile.c2pa_report.tool,
+          creation_tool_version: riskProfile.c2pa_report.tool_version,
+          creation_timestamp: riskProfile.c2pa_report.timestamp,
+          signature_status: riskProfile.c2pa_report.status,
+          certificate_issuer: riskProfile.c2pa_report.issuer,
+          certificate_serial: riskProfile.c2pa_report.serial,
+          edit_history: riskProfile.c2pa_report.history,
+          raw_manifest: riskProfile.c2pa_report.raw_manifest
+        })
+      }
+    } else {
+      // VIDEO or no riskProfile: basic findings
+      if (!c2paResult.hasManifest) {
+        findings.push({
+          tenant_id: (scan as any).tenant_id,
+          scan_id: scanId,
+          finding_type: 'provenance_issue',
+          severity: 'low',
+          title: 'Missing Content Credentials',
+          description: 'No C2PA manifest found in this asset. Provenance cannot be verified.',
+          recommendation: 'Use tools that attach Content Credentials to ensure trust.',
+          confidence_score: 100
+        })
+      }
     }
 
     // Insert findings
@@ -280,6 +330,8 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     // 7. Update scan record with results
     const analysisTime = Date.now() - startTime
+
+    await broadcastScanProgress(scanId, 90, "Finalizing forensic dossier...")
 
     const { error: updateError } = await supabase
       .from('scans')
@@ -305,6 +357,8 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     }
 
     console.log(`✅ Scan ${scanId} completed in ${analysisTime}ms`)
+
+    await broadcastScanProgress(scanId, 100, "Analysis complete.")
 
     return {
       success: true,

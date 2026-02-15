@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { RSBackground } from '@/components/rs/RSBackground'
 import { RSPanel } from '@/components/rs/RSPanel'
@@ -25,6 +25,7 @@ export default function ScanResultPage() {
     const [scan, setScan] = useState<any>(null)
     const [riskProfile, setRiskProfile] = useState<RiskProfile | null>(null)
     const [showAuditModal, setShowAuditModal] = useState(false)
+    const downloadRef = useRef(false)
 
     useEffect(() => {
         async function loadScan() {
@@ -49,7 +50,8 @@ export default function ScanResultPage() {
                 setRiskProfile(data.risk_profile)
 
                 // Trigger Auto-Download if verified and data is loaded
-                if (verified && data && data.risk_profile) {
+                if (verified && data && data.risk_profile && !downloadRef.current) {
+                    downloadRef.current = true
                     // Slight delay to ensure UI renders first
                     setTimeout(() => {
                         const filename = (data.assets as any)?.filename || 'scan-result'

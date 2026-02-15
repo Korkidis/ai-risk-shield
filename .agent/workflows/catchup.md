@@ -11,7 +11,7 @@ These files are the operating system of the project. Read them in order.
 1. `tasks/rules.md`: The team's operating contract.
 2. `NORTH_STAR.md`: The vision and "Why." Skip to the Jobs section and Decision Framework — don't re-read the full 700 lines every time.
 3. `brain/walkthrough.md`: **The honest state of the product.** What's real, what's theater, what's broken. This is the most important file. If it's stale, stop and update it before proceeding.
-4. `tasks/todo.md`: The sequenced plan (Phases A → B → C → D).
+4. `tasks/todo.md`: The sequenced plan (Pre‑Step 0 → Phases A → B → C → D).
 5. `tasks/lessons.md`: The self-correction log. Check what NOT to do before proposing work.
 
 ### Tier 2: Context-Specific (Read Based on Task)
@@ -32,13 +32,13 @@ Only if you hit a specific blocker:
 1. **Read Tier 1 Docs.**
 2. **Sanity Check** (This is the critical step — don't skip it):
    - What are we selling? (If you can't answer in one sentence, re-read `walkthrough.md`)
-   - What's the current phase in `todo.md`? What's the NEXT incomplete item?
+   - What's the current phase in `todo.md`? Is **Pre‑Step 0** (schema drift) done? What's the NEXT incomplete item?
    - Check `lessons.md` — is the proposed work an anti-pattern we've already identified?
    - Does the proposed work make the **core loop** work better, or is it infrastructure theater?
 3. **Identify Tier 2 Docs** based on what the next task touches. Read them.
 4. **Produce the Brief** — present to the user:
    - **One sentence**: What are we selling?
-   - **Current phase**: Where we are in todo.md
+   - **Current phase**: Where we are in todo.md (confirm Pre‑Step 0 status)
    - **Honest state**: What's real vs. what's broken (from walkthrough.md)
    - **Proposed next step**: The single most important thing
    - **Risk check**: What could go wrong (from lessons.md)
@@ -50,3 +50,6 @@ Before ANY proposed work, ask:
 >
 > If yes → you're building the right thing.
 > If no → what's the ONE thing preventing it? Build that instead.
+
+## One Product Reality (Always Reconfirm)
+The dashboard **Scans & Reports** page is the canonical product. The landing page is the on‑ramp. `/scan/[id]` is transitional and must not be broken until the dashboard path fully covers it.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { RSRiskPanel } from '@/components/rs/RSRiskPanel';
 import { RSScanner } from '@/components/rs/RSScanner';
 import { RSFindingsDossier } from '@/components/rs/RSFindingsDossier';

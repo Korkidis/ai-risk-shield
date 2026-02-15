@@ -10,20 +10,20 @@ The measure of "done" is: can someone scan 3 images over 2 weeks and pay $49/mon
 ## Pre‑Step 0: Schema Drift (Do First)
 *Keep repo and live DB in lockstep before more feature work.*
 
-- [ ] Apply `20260211_add_tenant_invites_metadata.sql`
-- [ ] Apply `20260211_add_tenant_switch_audit_created_at_index.sql` (**CONCURRENTLY — run outside a transaction**)
+- [x] Apply `20260211_add_tenant_invites_metadata.sql`
+- [x] Apply `20260211_add_tenant_switch_audit_created_at_index.sql` (**CONCURRENTLY — run outside a transaction**)
 
 ---
 
-## Phase A: One Honest Pipeline (Prerequisite for Everything)
+## Phase A: One Honest Pipeline (Prerequisite for Everything) ✅
 *The two-pipeline split is the root cause of most issues. Fix this first.*
 
-- [ ] **Unify analysis pipelines** — eliminate the authenticated vs. anonymous divergence
-    - [ ] Route both flows through the same processor with full Gemini multi-persona analysis
-    - [ ] Ensure C2PA verification runs for anonymous image scans (currently skipped — `scan-processor.ts:87`)
-    - [ ] Store full `risk_profile` blob consistently in both paths
-- [ ] **Fix data handoff** — `GET /api/scans/[id]` should read stored `risk_profile` blob, not reconstruct a thin version
-- [ ] **Wire real scan quota** — replace hardcoded "3/3 REMAINING" (`FreeUploadContainer.tsx:208`) with actual remaining count
+- [x] **Unify analysis pipelines** — eliminate the authenticated vs. anonymous divergence
+    - [x] Route both flows through the same processor with full Gemini multi-persona analysis
+    - [x] Ensure C2PA verification runs for anonymous image scans (currently skipped — `scan-processor.ts:87`)
+    - [x] Store full `risk_profile` blob consistently in both paths
+- [x] **Fix data handoff** — `GET /api/scans/[id]` should read stored `risk_profile` blob, not reconstruct a thin version
+- [x] **Wire real scan quota** — replace hardcoded "3/3 REMAINING" (`FreeUploadContainer.tsx:208`) with actual remaining count
 
 ## Phase B: The PDF Is the Product
 *This is what the user hands to legal. This is what they pay for.*

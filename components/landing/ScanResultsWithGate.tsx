@@ -164,13 +164,16 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                     >
                                         UNLOCK FULL REPORT
                                     </RSButton>
+                                    <div className="mt-2 text-[9px] text-[var(--rs-text-tertiary)] text-center leading-tight">
+                                        By unlocking, a secure guest account will be created to manage your report.
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </RSPanel>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }
 

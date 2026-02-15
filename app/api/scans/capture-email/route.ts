@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const supabase = await createServiceRoleClient()
 
     // 1. Check if user exists
-    const { data: { users }, error: listError } = await supabase.auth.admin.listUsers()
+    const { data: { users }, error: _listError } = await supabase.auth.admin.listUsers()
     const existingUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
     let userId = existingUser?.id
@@ -34,7 +34,11 @@ export async function POST(request: Request) {
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email,
         email_confirm: false, // User must verify via link
-        user_metadata: { source: 'scan_unlock' }
+        user_metadata: {
+          source: 'scan_unlock',
+          privacy_policy_accepted: true,
+          privacy_policy_accepted_at: new Date().toISOString()
+        }
       })
 
       if (createError) {

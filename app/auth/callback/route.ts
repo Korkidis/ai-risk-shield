@@ -15,14 +15,16 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const next = requestUrl.searchParams.get('next')
 
   if (code) {
     const supabase = await createClient()
-
-    // Exchange code for session
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Redirect to dashboard on success, or home on error
+  if (next) {
+    return NextResponse.redirect(requestUrl.origin + next)
+  }
+
   return NextResponse.redirect(requestUrl.origin + '/dashboard')
 }

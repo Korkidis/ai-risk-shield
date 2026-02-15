@@ -8,7 +8,7 @@ import { getSessionId } from '@/lib/session'
  * Migrates sessions scans to the authenticated user
  * Called by client after successful login from Magic Link
  */
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
     try {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
         }
 
         // Call the Security Definer function
-        const { data, error } = await supabase.rpc('assign_scans_to_user', {
+        const { data, error } = await (supabase as any).rpc('assign_scans_to_user', {
             p_session_id: sessionId,
             p_user_id: user.id
         })
