@@ -41,7 +41,7 @@ The infrastructure is built. The gap is **completeness**, not features. The firs
 | **Empty dashboard stubs** — History: "Offline", Brand Guidelines: no UI, Reports: no real data | Second visit has nothing | `dashboard/history/`, `dashboard/brand-guidelines/` |
 | **"3/3 REMAINING" is hardcoded** | Doesn't reflect actual quota | `FreeUploadContainer.tsx:208` |
 | **`RSC2PAWidget.tsx` missing `caution` state** | Falls through to generic default | Line 11, no `case 'caution'` in switch |
-| **Magic links cleanup incomplete** | Migration exists, code references linger | `20260208_cleanup_magic_links.sql`, old route paths |
+| **Magic links route still live** | `app/api/auth/verify/route.ts` (67 lines) queries `magic_links` table. Migration to drop table exists but applying it would break this route. Delete route first. | `app/api/auth/verify/route.ts` |
 
 ## Schema Drift
 Two migrations created, need to be applied:
