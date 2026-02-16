@@ -35,16 +35,15 @@ This file exists to orient new sessions on *what's real, what's broken, and what
 | Canonical scoring module (5-value C2PA fidelity) | Working, tested (40 unit tests) | `lib/risk/scoring.ts`, `lib/risk/tiers.ts` |
 | RLS + multi-tenancy + hierarchical agencies | Working | Supabase, 85+ migrations |
 | `risk_profile` JSONB blob storage | Working | `scans.risk_profile` column |
-| Supabase Realtime (scan status updates) | Working | `hooks/useRealtimeScans.ts` |
+| Supabase Realtime (scan status updates) | Working (broadcast events + db updates) | `hooks/useRealtimeScans.ts` |
 | Scans & Reports dashboard page | Working (the canonical product page) | `app/(dashboard)/dashboard/scans-reports/` |
+| PDF Download / Export | Working (client-side generation) | `scans-reports/page.tsx` → `lib/pdf-generator.ts` |
+| Quota Displays (Anonymous & Tenant) | Working (real limits from DB/API) | `FreeUploadContainer.tsx`, `RSSidebar.tsx` |
 
 ## What's Broken or Theater
 
 | Issue | Impact | Sprint |
 |:---|:---|:---|
-| **All quota displays hardcoded** | "3/3", "15/50", "4/10 seats" — all fake strings. | Build 4 |
-| **Telemetry stream is scripted** | 14 fake messages ("Detecting latent diffusion artifacts...") undermine precision brand. | Build 5 |
-| **Download/Share/Export buttons are console.log** | Most natural post-scan actions don't work. | Build 5 |
 | **Sample PDF not attached to email** | CTA is good, but attachment would increase conversion. | Build 3 |
 
 ## Security Issues (Fix Alongside Sprints)

@@ -62,7 +62,7 @@ export function RSNavbar({
                 </button>
 
                 <div className="pl-2">
-                    <RSAvatar initials="JD" status="online" className="cursor-pointer hover:ring-2 hover:ring-rs-black/10 transition-all" />
+                    <RSAvatar className="cursor-pointer hover:ring-2 hover:ring-rs-black/10 transition-all" />
                 </div>
             </div>
         </header>

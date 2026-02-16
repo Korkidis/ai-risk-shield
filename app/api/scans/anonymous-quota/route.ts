@@ -13,7 +13,8 @@ export async function GET() {
 
         return NextResponse.json({
             remaining: quota.remaining,
-            allowed: quota.allowed
+            allowed: quota.allowed,
+            limit: quota.limit
         })
     } catch (error) {
         console.error('Quota check error:', error)

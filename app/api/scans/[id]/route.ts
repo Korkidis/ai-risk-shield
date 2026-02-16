@@ -14,10 +14,13 @@ export async function GET(
     try {
         const params = await context.params
         const supabase = await createServiceRoleClient()
-
         const baseSelect = `
             id,
             created_at,
+            tenant_id,
+            analyzed_by,
+            session_id,
+            email,
             composite_score,
             ip_risk_score,
             safety_risk_score,
@@ -79,24 +82,23 @@ export async function GET(
 
         // 2. Tenant Match (Authenticated User)
         if (user && scan.tenant_id) {
-            // Get user's tenant_id (from metadata or DB query?)
-            // Usually auth.users metadata has tenant_id or we query 'tenants_users'
-            // For now, let's assume metadata or query
-            // The `getTenantId` helper does verify via cookies/claims?
-            // Re-use `getTenantId` helper?
             const userTenantId = await getTenantId().catch(() => null)
             if (userTenantId === scan.tenant_id) {
                 isAuthorized = true
+            } else {
+                console.log(`[AuthDebug] Tenant mismatch: User ${userTenantId} vs Scan ${scan.tenant_id} `)
             }
         }
 
         // 3. User Match (Direct user assignment)
         if (user && scan.analyzed_by === user.id) {
             isAuthorized = true
+        } else if (user) {
+            console.log(`[AuthDebug] User mismatch: User ${user.id} vs Scan AnalyzedBy ${scan.analyzed_by} `)
         }
 
         if (!isAuthorized) {
-            // Check for share token? (Not implemented here, usually separate endpoint or query param)
+            console.warn(`[AuthDebug] 403 Access Denied.ScanId: ${params.id}, User: ${user?.id}, Session: ${sessionId} `)
             return NextResponse.json({ error: 'Unauthorized access to scan' }, { status: 403 })
         }
 

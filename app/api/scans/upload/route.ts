@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server'
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
-import { getTenantId } from '@/lib/supabase/auth'
+import { getTenantId, requireAuth } from '@/lib/supabase/auth'
 import { reportScanUsage } from '@/lib/stripe-usage'
 
 /**
@@ -12,9 +12,11 @@ import { reportScanUsage } from '@/lib/stripe-usage'
  */
 export async function POST(request: Request) {
     try {
+        const user = await requireAuth()
         const tenantId = await getTenantId()
+
         if (!tenantId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            return NextResponse.json({ error: 'Unauthorized: No Linked Tenant' }, { status: 401 })
         }
 
         const formData = await request.formData()
@@ -39,17 +41,19 @@ export async function POST(request: Request) {
         // 1. Check Usage Quota
         const { data: tenant, error: tenantError } = await supabase
             .from('tenants')
-            .select('monthly_scan_limit, scans_used_this_month, plan')
+            .select('monthly_scan_limit, scans_used_this_month, plan, retention_days')
             .eq('id', tenantId)
             .single() as unknown as { data: any, error: any }
 
         if (tenantError) {
+            console.error('Tenant fetch error:', tenantError)
             return NextResponse.json({ error: 'Failed to fetch tenant usage' }, { status: 500 })
         }
 
         const limit = tenant.monthly_scan_limit || 3 // Default low limit if missing
         const used = tenant.scans_used_this_month || 0
         const plan = tenant.plan || 'free'
+        const retentionDays = tenant.retention_days || 7 // Default 7 days
         const isOverage = used >= limit
 
         // Block FREE users at limit - paid plans can proceed with overage
@@ -59,6 +63,10 @@ export async function POST(request: Request) {
                 details: `You have used ${used} of ${limit} scans. Please upgrade your plan.`
             }, { status: 403 })
         }
+
+        // Calculate deletion date
+        const deleteAfter = new Date()
+        deleteAfter.setDate(deleteAfter.getDate() + retentionDays)
 
         // Use service role client for storage (bypasses RLS folder restrictions)
         const adminClient = await createServiceRoleClient()
@@ -91,6 +99,8 @@ export async function POST(request: Request) {
             storage_path: uploadData.path,
             storage_bucket: 'uploads',
             sha256_checksum: 'pending',
+            uploaded_by: user.id,
+            delete_after: deleteAfter.toISOString()
         }
 
         const { data: asset, error: assetError } = await supabase
@@ -101,9 +111,14 @@ export async function POST(request: Request) {
             .single()
 
         if (assetError) {
+            console.error('Asset creation error:', assetError)
+            // Rollback storage upload? (Optional but recommended)
+            await adminClient.storage.from('uploads').remove([uploadData.path])
+
             return NextResponse.json({
                 error: 'Failed to create asset',
                 details: assetError.message,
+                code: assetError.code
             }, { status: 500 })
         }
 
@@ -112,7 +127,8 @@ export async function POST(request: Request) {
             tenant_id: tenantId,
             asset_id: (asset as any).id,
             is_video: fileType === 'video',
-            status: 'pending', // Mark as pending so processPendingScans can pick it up or direct trigger
+            status: 'processing', // Must match check constraint: processing, complete, failed
+            analyzed_by: user.id
         }
 
         const { data: scan, error: scanError } = await supabase
@@ -123,7 +139,11 @@ export async function POST(request: Request) {
             .single()
 
         if (scanError) {
-            return NextResponse.json({ error: 'Failed to create scan' }, { status: 500 })
+            console.error('Scan creation error:', scanError)
+            return NextResponse.json({
+                error: 'Failed to create scan',
+                details: scanError.message
+            }, { status: 500 })
         }
 
         // 2. Increment Usage (Fire and Forget or Await?)

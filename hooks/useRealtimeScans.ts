@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ScanWithRelations } from '@/types/database'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -21,7 +21,7 @@ interface UseRealtimeScansOptions {
  * 
  * Usage:
  * ```tsx
- * useRealtimeScans({
+ * const { isSubscribed, ephemeralState } = useRealtimeScans({
  *   scans,
  *   onScanUpdate: (updated) => {
  *     setScans(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s))
@@ -35,6 +35,11 @@ export function useRealtimeScans({
     enabled = true
 }: UseRealtimeScansOptions) {
     const channelRef = useRef<RealtimeChannel | null>(null)
+    // Keep track of individual scan channels
+    const scanChannelsRef = useRef<Record<string, RealtimeChannel>>({})
+
+    // Store ephemeral state (progress/message) for processing scans
+    const [ephemeralState, setEphemeralState] = useState<Record<string, { progress: number, message: string }>>({})
 
     // Check if any scans are currently processing
     const processingIds = scans
@@ -47,8 +52,8 @@ export function useRealtimeScans({
     const onUpdateRef = useRef(onScanUpdate)
     onUpdateRef.current = onScanUpdate
 
+    // 1. Global Table Subscription (Status & Scores)
     useEffect(() => {
-        // Cleanup helper
         const cleanup = () => {
             if (channelRef.current) {
                 supabase.removeChannel(channelRef.current)
@@ -56,17 +61,13 @@ export function useRealtimeScans({
             }
         }
 
-        // Don't subscribe if disabled or no processing scans
         if (!enabled || !hasProcessingScans) {
             cleanup()
             return
         }
 
-        // Create channel for scan updates
-        // We listen to ALL updates on scans table and filter client-side
-        // because the processing IDs change frequently
         const channel = supabase
-            .channel('scans-realtime')
+            .channel('scans-realtime-global')
             .on(
                 'postgres_changes',
                 {
@@ -76,21 +77,21 @@ export function useRealtimeScans({
                 },
                 (payload) => {
                     const newRecord = payload.new as any
-                    const oldRecord = payload.old as any
 
-                    // Only process if this was a scan we were watching
-                    if (!processingIds.includes(newRecord?.id)) {
-                        return
-                    }
+                    // Only process currently tracked scans
+                    if (!processingIds.includes(newRecord?.id)) return
 
-                    // Check for status transition
-                    const oldStatus = oldRecord?.status
                     const newStatus = newRecord?.status
 
-                    console.log(`[Realtime] Scan ${newRecord.id} status: ${oldStatus} -> ${newStatus}`)
+                    // If complete, clear ephemeral state for this ID
+                    if (newStatus === 'complete' || newStatus === 'failed') {
+                        setEphemeralState(prev => {
+                            const next = { ...prev }
+                            delete next[newRecord.id]
+                            return next
+                        })
+                    }
 
-                    // Update the scan in state with flat fields only
-                    // The existing risk_profile will be preserved from initial load
                     onUpdateRef.current({
                         id: newRecord.id,
                         status: newStatus,
@@ -103,21 +104,60 @@ export function useRealtimeScans({
                     })
                 }
             )
-            .subscribe((status) => {
-                console.log('[Realtime] Channel status:', status)
-            })
+            .subscribe()
 
         channelRef.current = channel
-
-        // Cleanup on unmount or when processing scans change
         return cleanup
+    }, [enabled, hasProcessingScans, processingIds.join(',')])
 
-        // We intentionally only re-subscribe when hasProcessingScans changes
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [enabled, hasProcessingScans])
+    // 2. Individual Broadcast Subscriptions (Ephemeral Progress)
+    useEffect(() => {
+        // Subscribe to new IDs
+        processingIds.forEach(id => {
+            if (!scanChannelsRef.current[id]) {
+                const channel = supabase.channel(`scan-${id}`)
+                    .on('broadcast', { event: 'progress' }, (payload) => {
+                        if (payload.payload) {
+                            setEphemeralState(prev => ({
+                                ...prev,
+                                [id]: {
+                                    progress: payload.payload.progress || 0,
+                                    message: payload.payload.message || 'Processing...'
+                                }
+                            }))
+                        }
+                    })
+                    .subscribe()
+
+                scanChannelsRef.current[id] = channel
+            }
+        })
+
+        // Cleanup stale IDs
+        Object.keys(scanChannelsRef.current).forEach(id => {
+            if (!processingIds.includes(id)) {
+                supabase.removeChannel(scanChannelsRef.current[id])
+                delete scanChannelsRef.current[id]
+
+                // Also clear state
+                setEphemeralState(prev => {
+                    const next = { ...prev }
+                    delete next[id]
+                    return next
+                })
+            }
+        })
+
+        return () => {
+            // Cleanup all on unmount
+            Object.values(scanChannelsRef.current).forEach(ch => supabase.removeChannel(ch))
+            scanChannelsRef.current = {}
+        }
+    }, [processingIds.join(',')])
 
     return {
         isSubscribed: !!channelRef.current,
-        processingCount: processingIds.length
+        processingCount: processingIds.length,
+        ephemeralState,
     }
 }

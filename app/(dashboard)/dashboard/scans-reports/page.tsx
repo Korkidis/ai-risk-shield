@@ -27,6 +27,7 @@ import { formatBytes } from '@/lib/utils'
 
 import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
 import { getTenantBillingStatus, BillingStatus } from '@/app/actions/billing'
+import { generateForensicReport } from '@/lib/pdf-generator'
 
 // Wrapper to handle Suspense boundary for useSearchParams
 export default function ScansReportsPage() {
@@ -134,7 +135,7 @@ function ScansReportsContent() {
         ))
     }, [])
 
-    useRealtimeScans({
+    const { ephemeralState } = useRealtimeScans({
         scans,
         onScanUpdate: handleScanUpdate
     })
@@ -305,6 +306,24 @@ function ScansReportsContent() {
         fetchBilling()
     }, [scans]) // Refresh quota when scans list updates
 
+    const handleDownload = (scan: ScanWithRelations) => {
+        if (!scan) return
+        try {
+            // Ensure risk_profile is present (it should be for completed scans)
+            // If incomplete, maybe we shouldn't allow download, or download partial.
+            // The requirement is "Wire the Download button... deliver the PDF"
+            if (scan.status !== 'complete' || !scan.risk_profile) {
+                console.warn("Cannot download incomplete report")
+                return
+            }
+
+            generateForensicReport(scan, scan.risk_profile, false)
+        } catch (e) {
+            console.error("PDF Generation failed", e)
+            alert("Failed to generate PDF report. Please contact support.")
+        }
+    }
+
     return (
         <RSBackground
             variant="technical"
@@ -439,6 +458,8 @@ function ScansReportsContent() {
                                                 scan={scan}
                                                 isSelected={selectedScanId === scan.id}
                                                 isBulkSelected={selectedIds.includes(scan.id)}
+                                                liveProgress={ephemeralState[scan.id]?.progress}
+                                                liveMessage={ephemeralState[scan.id]?.message}
                                                 onBulkToggle={(checked) => {
                                                     setSelectedIds(prev => checked
                                                         ? [...prev, scan.id]
@@ -446,6 +467,7 @@ function ScansReportsContent() {
                                                     )
                                                 }}
                                                 onClick={() => handleScanClick(scan.id)}
+                                                onDownload={() => handleDownload(scan)}
                                             />
                                         ))}
                                     </AnimatePresence>
@@ -615,7 +637,13 @@ function ScansReportsContent() {
 
                                 {/* Management Actions */}
                                 <div className="pt-8 flex flex-col gap-2">
-                                    <RSButton variant="ghost" className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-rs-gray-50 hover:border-rs-text-primary transition-all">Export_Dossier</RSButton>
+                                    <RSButton
+                                        variant="ghost"
+                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-rs-gray-50 hover:border-rs-text-primary transition-all"
+                                        onClick={() => selectedScan && handleDownload(selectedScan)}
+                                    >
+                                        Export_Dossier
+                                    </RSButton>
                                     <RSButton
                                         variant="ghost"
                                         className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary text-rs-destruct hover:bg-rs-destruct/5 hover:border-rs-destruct transition-all"
@@ -681,41 +709,21 @@ function ScansReportsContent() {
     )
 }
 
-const ANALYSIS_STEPS = [
-    "Initializing Vision Model...",
-    "Extracting Features...",
-    "Querying IP Database...",
-    "Matching Assets...",
-    "Analyzing Safety...",
-    "Verifying C2PA...",
-    "Validating Signatures...",
-    "Finalizing Score..."
-];
-
-function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
+function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage, onBulkToggle, onClick, onDownload }: {
     scan: ScanWithRelations;
     isSelected: boolean;
     isBulkSelected: boolean;
+    liveProgress?: number;
+    liveMessage?: string;
     onBulkToggle: (checked: boolean) => void;
-    onClick: () => void
+    onClick: () => void;
+    onDownload: () => void;
 }) {
     const score = scan.risk_profile?.composite_score || 0;
     const thumbnailPath = scan.tenant_id && scan.asset_id ? `${scan.tenant_id}/${scan.asset_id}_thumb.jpg` : null;
     const thumbnailUrl = thumbnailPath ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${thumbnailPath}` : null;
     const [imgSrc, setImgSrc] = useState(thumbnailUrl || scan.asset_url || scan.image_url);
     const [imgError, setImgError] = useState(false);
-
-    // Telemetry Animation State
-    const [stepIndex, setStepIndex] = useState(0);
-
-    useEffect(() => {
-        if (scan.status === 'processing' || scan.status === 'pending') {
-            const interval = setInterval(() => {
-                setStepIndex(prev => (prev + 1) % ANALYSIS_STEPS.length);
-            }, 800); // Change step every 800ms
-            return () => clearInterval(interval);
-        }
-    }, [scan.status]);
 
     const riskTier = getRiskTier(score);
 
@@ -806,8 +814,8 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                         <div className="absolute inset-0 z-20">
                             <RSProcessingPanel
                                 filename={scan.filename}
-                                progress={((stepIndex + 1) / ANALYSIS_STEPS.length) * 100}
-                                statusMessage={ANALYSIS_STEPS[stepIndex]}
+                                progress={liveProgress || 0}
+                                statusMessage={liveMessage || "INITIALIZING..."}
                                 imageSrc={imgSrc}
                                 isVideo={scan.file_type === 'video'}
                             />
@@ -895,7 +903,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
                 {/* 5. Action Buttons (Standard Row) */}
                 <div className="mt-[8px] flex items-center gap-2">
                     <button
-                        onClick={(e) => { e.stopPropagation(); console.log('Download', scan.id); }}
+                        onClick={(e) => { e.stopPropagation(); onDownload(); }}
                         className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-rs-gray-50 transition-all group/btn"
                         title="Download report"
                     >

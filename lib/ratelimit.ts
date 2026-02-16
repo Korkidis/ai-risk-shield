@@ -2,7 +2,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 import crypto from 'crypto'
 
-const MAX_SCANS = 3
+export const MAX_SCANS = 3
 const WINDOW_DAYS = 30
 
 export async function hashIp(ip: string): Promise<string> {
@@ -28,6 +28,7 @@ type QuotaResult = {
     allowed: boolean
     reason?: 'ip_limit' | 'session_limit'
     remaining: number
+    limit: number
 }
 
 export async function checkAnonymousQuota(sessionId: string): Promise<QuotaResult> {
@@ -48,12 +49,12 @@ export async function checkAnonymousQuota(sessionId: string): Promise<QuotaResul
     if (sessionError) {
         console.error('Quota check error (session):', sessionError)
         // Fail open if DB error, or closed? Closed is safer for abuse.
-        return { allowed: false, remaining: 0, reason: 'session_limit' }
+        return { allowed: false, remaining: 0, reason: 'session_limit', limit: MAX_SCANS }
     }
 
     const currentSessionCount = sessionCount || 0
     if (currentSessionCount >= MAX_SCANS) {
-        return { allowed: false, remaining: 0, reason: 'session_limit' }
+        return { allowed: false, remaining: 0, reason: 'session_limit', limit: MAX_SCANS }
     }
 
     // 2. Check IP Limits (Hash based)
@@ -75,7 +76,7 @@ export async function checkAnonymousQuota(sessionId: string): Promise<QuotaResul
     }
 
     if (currentIpCount >= MAX_SCANS) {
-        return { allowed: false, remaining: 0, reason: 'ip_limit' }
+        return { allowed: false, remaining: 0, reason: 'ip_limit', limit: MAX_SCANS }
     }
 
     // Calculate remaining based on the tighter constraint
@@ -84,7 +85,8 @@ export async function checkAnonymousQuota(sessionId: string): Promise<QuotaResul
 
     return {
         allowed: true,
-        remaining: Math.min(sessionRemaining, ipRemaining)
+        remaining: Math.min(sessionRemaining, ipRemaining),
+        limit: MAX_SCANS
     }
 }
 

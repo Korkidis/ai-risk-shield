@@ -5,6 +5,9 @@ description: Catch up on project status and outline the critical path
 ## Session Startup (Run This First)
 Every new session begins here. Do not skip steps. Do not start coding until this is done.
 
+### Tier 0: The Lens (READ FIRST)
+Read `brain/AGENT_BRIEFING.md`. This sets the mental model for everything that follows — who you're building with, why the architecture is complex, and what "done" means.
+
 ### Tier 1: Ground Truth (READ EVERY SESSION)
 These files are the operating system of the project. Read them in order.
 

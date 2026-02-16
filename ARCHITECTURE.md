@@ -58,6 +58,7 @@ graph TD
 2.  **Process**:
     *   **Upload**: API saves file to Supabase Storage (Admin Client).
     *   **Gemini**: Analyzes buffer in-memory for IP/Safety.
+    *   **Realtime**: Progress events streamed to client via `scans` table updates.
     *   **C2PA**: extracts manifest and signature data.
 3.  **Result**: Data written to `scans` and `scan_findings` tables.
 4.  **Return**: API responds with JSON risk profile.

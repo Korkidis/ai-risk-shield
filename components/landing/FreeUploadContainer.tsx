@@ -23,12 +23,15 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   const [statusMessage, setStatusMessage] = useState("Initializing forensic engine...")
   const [scansRemaining, setScansRemaining] = useState(3)
 
+  const [limit, setLimit] = useState(3)
+
   useEffect(() => {
     // Fetch real quota
     fetch('/api/scans/anonymous-quota')
       .then(res => res.json())
       .then(data => {
         if (data.remaining !== undefined) setScansRemaining(data.remaining)
+        if (data.limit !== undefined) setLimit(data.limit)
       })
       .catch(err => console.error('Failed to fetch quota', err))
   }, [])
@@ -184,7 +187,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
             <span className="rs-type-micro text-[var(--rs-text-primary)] tracking-widest uppercase font-bold">SYSTEM STATUS: LIVE</span>
           </div>
           <div className="bg-[var(--rs-bg-secondary)] px-3 py-1.5 rounded-full shadow-inner border border-[var(--rs-border-primary)]">
-            <span className="rs-type-micro font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">{scansRemaining}/3 REMAINING</span>
+            <span className="rs-type-micro font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">{scansRemaining}/{limit} REMAINING</span>
           </div>
         </div>
 

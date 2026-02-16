@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -21,9 +21,7 @@ export function RSAuxiliaryDial({
 }: RSAuxiliaryDialProps) {
 
     // Config
-    const cx = size / 2;
-    const cy = size / 2;
-    const radius = size * 0.4; // 40% of size
+    // Config
 
     // Angle mapping: -140 to +140 degrees
     const startAngle = -140;

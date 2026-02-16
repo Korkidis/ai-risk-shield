@@ -105,12 +105,13 @@ export default function DashboardPage() {
             // We poll the status endpoint which returns the full scan object when done
             const pollInterval = setInterval(async () => {
                 try {
-                    const statusRes = await fetch(`/api/scans/${scanId}/status`);
+                    // Poll authenticated endpoint (supports tenants/users)
+                    const statusRes = await fetch(`/api/scans/${scanId}`, { cache: 'no-store' });
                     if (!statusRes.ok) return;
 
                     const scan = await statusRes.json();
 
-                    if (scan.status === 'processing') {
+                    if (scan.status === 'processing' || scan.status === 'pending') {
                         // Still running
                     } else if (scan.status === 'complete') {
                         clearInterval(pollInterval);
@@ -118,26 +119,35 @@ export default function DashboardPage() {
 
                         addLog("Analysis finalized. Telemetry stream active.", 'done');
 
-                        // Map DB Result to RiskProfile Interface
-                        const profile: RiskProfile = {
-                            composite_score: scan.composite_score,
-                            verdict: scan.risk_level === 'critical' ? 'Critical Risk' :
-                                scan.risk_level === 'high' ? 'High Risk' :
-                                    scan.risk_level === 'review' ? 'Medium Risk' : 'Low Risk',
-                            ip_report: {
-                                score: scan.ip_risk_score,
-                                teaser: 'IP Analysis Complete'
-                            },
-                            safety_report: {
-                                score: scan.safety_risk_score,
-                                teaser: 'Safety Analysis Complete'
-                            },
-                            provenance_report: {
-                                score: scan.provenance_risk_score,
-                                teaser: 'Provenance Analysis Complete'
-                            },
-                            c2pa_report: scan.provenance_data || { status: 'missing' }
-                        };
+                        // Use pre-computed risk profile if available, otherwise map manually
+                        let profile: RiskProfile;
+
+                        if (scan.risk_profile) {
+                            profile = scan.risk_profile;
+                        } else {
+                            profile = {
+                                composite_score: scan.composite_score,
+                                verdict: scan.risk_level === 'critical' ? 'Critical Risk' :
+                                    scan.risk_level === 'high' ? 'High Risk' :
+                                        scan.risk_level === 'review' ? 'Medium Risk' : 'Low Risk',
+                                ip_report: {
+                                    score: scan.ip_risk_score,
+                                    teaser: 'IP Analysis Complete'
+                                },
+                                safety_report: {
+                                    score: scan.safety_risk_score,
+                                    teaser: 'Safety Analysis Complete'
+                                },
+                                provenance_report: {
+                                    score: scan.provenance_risk_score,
+                                    teaser: 'Provenance Analysis Complete'
+                                },
+                                c2pa_report: scan.provenance_data || { status: 'missing' }
+                            };
+                        }
+
+                        setAnalysisResult(profile);
+                        setScanStatus('complete');
 
                         setAnalysisResult(profile);
                         setScanStatus('complete');
