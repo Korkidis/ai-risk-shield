@@ -5,6 +5,15 @@
 
 - **Workflow Orchestration**: New rules engine (`tasks/rules.md`) and startup protocols.
 - **Structural Documentation**: Roadmap, Architecture, and Decision logs.
+- **Anonymous Purchase Flow**: Checkout supports anon users with session ownership validation.
+- **Dashboard Routing**: Magic links route to `/dashboard/scans-reports` with highlight + auto-assign.
+- **Email Upgrade**: Sample report emails now include a top detected risk.
+- **Sample PDF Enrichment**: Hero finding from DB + profile teasers for sample mode.
+
+### Fixed
+- **Upgrade UX Truth**: Audit and Upgrade modals now match plan limits and pricing ($49).
+- **Dead-end Navigation**: History/Reports pages redirect to Scans & Reports.
+- **Performance Hotspots**: Landing page split into server/client; scan card layout thrash removed.
 
 ## [2026-02-11] - Risk Model Unification & Report Rehab
 ### Added

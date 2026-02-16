@@ -12,7 +12,7 @@ Secondary: a freelance designer whose client asked "is this safe?" and they have
 ---
 
 ## Current State
-**Demo → Product transition.** The infrastructure is built. The gap is completing the transaction, not adding features. The $29 one-time purchase — the hottest moment in the funnel — is broken for anonymous users.
+**Revenue loop unblocked.** Anonymous purchase, magic links, and dashboard routing now work end‑to‑end. Performance work has started (landing is server‑rendered; scan card layout thrash removed). Remaining gaps are trust/quality improvements (quota truth, honest telemetry, and real post‑scan actions), plus the security fixes listed below.
 
 ## Execution Plan
 **The single source of truth is [`tasks/todo.md`](../tasks/todo.md).** That file contains sprint-level tasks with dependencies, file references, and "why" for every item. Do not plan work from this walkthrough — plan from `todo.md`.
@@ -31,7 +31,7 @@ This file exists to orient new sessions on *what's real, what's broken, and what
 | PDF report generation (branded, Rams tokens) | Working | `lib/pdf-generator.ts` |
 | Stripe billing (subscriptions + one-time + metered overage) | Working (backend) | `lib/plans.ts`, webhook route |
 | Design system (62 RS* components, "forensic instrument") | Distinctive | `components/rs/*` |
-| Email gate + magic link | Working | `signInWithOtp` + Resend |
+| Email gate + magic link | Working | `auth.admin.generateLink` → `/auth/callback` + Resend |
 | Canonical scoring module (5-value C2PA fidelity) | Working, tested (40 unit tests) | `lib/risk/scoring.ts`, `lib/risk/tiers.ts` |
 | RLS + multi-tenancy + hierarchical agencies | Working | Supabase, 85+ migrations |
 | `risk_profile` JSONB blob storage | Working | `scans.risk_profile` column |
@@ -42,14 +42,10 @@ This file exists to orient new sessions on *what's real, what's broken, and what
 
 | Issue | Impact | Sprint |
 |:---|:---|:---|
-| **$29 purchase blocked for anonymous users** | Revenue literally blocked. Auth required for checkout but button shown to anon users. | Build 1 |
-| **AuditModal promises features that don't exist** | "Unlimited Scans", "API Access", "Priority Queue" — none are real. Churn risk. | Build 1 |
-| **Sample PDF uses thin data** | Rich Gemini reasoning stripped out. Teaser doesn't justify $29. | Build 2 |
-| **Magic link → dead end** | Email links to `/scan/[id]` instead of dashboard. No path to retention. | Build 3 |
-| **History/Reports pages are stubs** | "Status: Offline" damages confidence. Real page exists at `/scans-reports`. | Build 3 |
 | **All quota displays hardcoded** | "3/3", "15/50", "4/10 seats" — all fake strings. | Build 4 |
 | **Telemetry stream is scripted** | 14 fake messages ("Detecting latent diffusion artifacts...") undermine precision brand. | Build 5 |
 | **Download/Share/Export buttons are console.log** | Most natural post-scan actions don't work. | Build 5 |
+| **Sample PDF not attached to email** | CTA is good, but attachment would increase conversion. | Build 3 |
 
 ## Security Issues (Fix Alongside Sprints)
 

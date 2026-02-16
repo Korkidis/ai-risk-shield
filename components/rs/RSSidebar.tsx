@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { TenantSwitcher } from '@/components/dashboard/TenantSwitcher';
+import { TenantPlanBadge } from '@/components/dashboard/TenantPlanBadge';
 
 interface NavItem {
     label: string;
@@ -99,11 +100,7 @@ export function RSSidebar({
                     <TenantSwitcher />
                 </div>
 
-                <div className="bg-rs-gray-200/50 rounded p-3 text-xs text-rs-gray-500">
-                    <p className="font-bold text-rs-black mb-1">PRO PLAN</p>
-                    <p>User License: 291-A</p>
-                    <p>Seats Used: 4/10</p>
-                </div>
+                <TenantPlanBadge />
             </div>
         </aside>
     );

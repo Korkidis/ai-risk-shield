@@ -24,6 +24,8 @@ export interface Database {
           name: string
           plan: string
           monthly_scan_limit: number
+          seat_limit: number
+          subscription_status: string | null
           parent_tenant_id: string | null
           scans_used_this_month: number
           created_at: string
@@ -34,6 +36,8 @@ export interface Database {
           name: string
           plan?: string
           monthly_scan_limit?: number
+          seat_limit?: number
+          subscription_status?: string | null
           scans_used_this_month?: number
           created_at?: string
           updated_at?: string
@@ -43,6 +47,8 @@ export interface Database {
           name?: string
           plan?: string
           monthly_scan_limit?: number
+          seat_limit?: number
+          subscription_status?: string | null
           scans_used_this_month?: number
           created_at?: string
           updated_at?: string
@@ -94,6 +100,7 @@ export interface Database {
           ip_risk_score: number | null
           brand_safety_risk_level: string | null
           brand_safety_risk_score: number | null
+          composite_score: number | null
           c2pa_verified: boolean | null
           completed_at: string | null
           created_at: string
@@ -120,6 +127,7 @@ export interface Database {
           ip_risk_score?: number | null
           brand_safety_risk_level?: string | null
           brand_safety_risk_score?: number | null
+          composite_score?: number | null
           c2pa_verified?: boolean | null
           completed_at?: string | null
           created_at?: string
@@ -146,6 +154,7 @@ export interface Database {
           ip_risk_score?: number | null
           brand_safety_risk_level?: string | null
           brand_safety_risk_score?: number | null
+          composite_score?: number | null
           c2pa_verified?: boolean | null
           completed_at?: string | null
           created_at?: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+
 import { Check, X } from 'lucide-react'
 import { OneTimePurchaseButton } from '@/components/billing/OneTimePurchaseButton'
 import { UpgradeButton } from '@/components/billing/UpgradeButton'
@@ -69,7 +69,7 @@ export function AuditModal({ isOpen, onClose, scanId }: AuditModalProps) {
                                     <ul className="space-y-3 mb-8">
                                         {[
                                             "Full IP & Safety Risk Analysis",
-                                            "C2PA Provenance Certificate",
+                                            "C2PA Provenance Verification",
                                             "Downloadable PDF Audit Trail",
                                             "Legal Remediation Steps"
                                         ].map((item, i) => (
@@ -105,10 +105,10 @@ export function AuditModal({ isOpen, onClose, scanId }: AuditModalProps) {
                                     <ul className="space-y-3 mb-8">
                                         {[
                                             "Everything in Single Report",
-                                            "Unlimited Forensic Scans",
-                                            "Priority Analysis Queue",
-                                            "Team Workspace Access",
-                                            "API Access for Automations"
+                                            "50 Scans / Month",
+                                            "5 Full Reports / Month",
+                                            "30-Day History Retention",
+                                            "Video Analysis Support"
                                         ].map((item, i) => (
                                             <li key={i} className="flex items-start gap-3 text-sm text-[var(--rs-text-secondary)]">
                                                 <div className="rounded-full bg-[var(--rs-text-primary)] p-0.5 mt-0.5">
@@ -123,7 +123,7 @@ export function AuditModal({ isOpen, onClose, scanId }: AuditModalProps) {
                                 <div className="space-y-3">
                                     <UpgradeButton scanId={scanId} />
                                     <p className="text-center text-[10px] text-[var(--rs-text-tertiary)] uppercase tracking-wide">
-                                        Cancel anytime • 14-day money back guarantee
+                                        Cancel anytime
                                     </p>
                                 </div>
                             </div>

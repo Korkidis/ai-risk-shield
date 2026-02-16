@@ -23,70 +23,67 @@ export async function POST(request: Request) {
 
     const supabase = await createServiceRoleClient()
 
-    // 1. Check if user exists
-    const { data: { users }, error: _listError } = await supabase.auth.admin.listUsers()
-    const existingUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
+    // 1. Optimistic User Creation (Scalability Fix: Don't list all users)
+    // We try to create. If it fails because "already registered", we proceed.
+    // This avoids fetching 10k+ users just to check one.
 
-    let userId = existingUser?.id
+    const { error: createError } = await supabase.auth.admin.createUser({
+      email,
+      email_confirm: false, // User must verify via link
+      user_metadata: {
+        source: 'scan_unlock',
+        privacy_policy_accepted: true,
+        privacy_policy_accepted_at: new Date().toISOString()
+      }
+    })
 
-    // 2. If new, create "Shadow User" (Unconfirmed)
-    if (!existingUser) {
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email,
-        email_confirm: false, // User must verify via link
-        user_metadata: {
-          source: 'scan_unlock',
-          privacy_policy_accepted: true,
-          privacy_policy_accepted_at: new Date().toISOString()
-        }
-      })
+    if (createError) {
+      // Check if error is "User already registered"
+      // Supabase/GoTrue typically returns status 422 or specific message
+      // formatting varies, but usually contains "already registered" or "unique constraint"
+      const isDuplicate = createError.message?.toLowerCase().includes('already registered') ||
+        createError.status === 422;
 
-      if (createError) {
+      if (!isDuplicate) {
         console.error('Failed to create shadow user:', createError)
         return NextResponse.json({ error: 'Account creation failed' }, { status: 500 })
       }
-      userId = newUser.user.id
-    }
-
-    // 3. Generate Magic Link (Auth Token)
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/scan/${scanId}&verified=true`
-      }
-    })
-
-    if (linkError || !linkData.properties?.action_link) {
-      console.error('Failed to generate magic link:', linkError)
-      return NextResponse.json({ error: 'Auth generation failed' }, { status: 500 })
-    }
-
-    // Update scan with email (using type assertion for extended schema fields)
-    const { error } = await (supabase.from('scans') as any).update({
-      email,
-      email_captured_at: new Date().toISOString(),
-      // We do NOT assign user_id yet. That happens on verify -> assign-to-user
-    })
-      .eq('id', scanId)
-      .eq('session_id', sessionId)
-
-    if (error) {
-      return NextResponse.json({ error: 'Failed to capture email' }, { status: 500 })
+      // If duplicate, we just proceed to generate link for the existing email
     }
 
     // Fetch scan score
-    const { data: scan } = await supabase
+    const { data: scanData } = await supabase
       .from('scans')
       .select('composite_score')
       .eq('id', scanId)
       .single()
+
+    const scan = scanData as any
 
     // Fetch findings count explicitly to avoid nested count issues
     const { count: findingsCount } = await supabase
       .from('scan_findings')
       .select('*', { count: 'exact', head: true })
       .eq('scan_id', scanId)
+
+    // Fetch Top Finding (Hero) for Email
+    const { data: topFindings } = await supabase
+      .from('scan_findings')
+      .select('title, severity')
+      .eq('scan_id', scanId)
+      // specific sorting might be needed if severity is string, but let's try to get a critical one
+      // If severity is text (critical, high, medium, low), alphabetical sort is bad.
+      // We'll fetch a few and pick the worst in code to be safe, or just take the first one if we assume default sort (which might be insertion order).
+      // Let's fetch 5 and sort in JS to be safe.
+      .limit(5)
+
+    let topFinding = undefined
+    if (topFindings && topFindings.length > 0) {
+      // Simple severity rank
+      const severityRank: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1, info: 0 }
+      // Type assertion to avoid 'never' error
+      topFinding = (topFindings as any[]).sort((a, b) => (severityRank[b.severity] || 0) - (severityRank[a.severity] || 0))[0]
+    }
 
     const score = scan?.composite_score || 0
     const count = findingsCount || 0
@@ -103,13 +100,28 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     })
 
+    // 3. Generate Magic Link (Auth Token) - Reformatted to point to Dashboard
+    const nextUrl = `/dashboard/scans-reports?highlight=${scanId}&verified=true`
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(nextUrl)}`
+      }
+    })
+
+    if (linkError || !linkData.properties?.action_link) {
+      console.error('Failed to generate magic link:', linkError)
+      return NextResponse.json({ error: 'Auth generation failed' }, { status: 500 })
+    }
+
     // Send magic link email
     // linkData.properties.action_link contains the valid auth token
     const magicLink = linkData.properties.action_link
     const { sendSampleReportEmail } = await import('@/lib/email')
 
     // We don't await the email to keep UI snappy, but we catch errors
-    sendSampleReportEmail(email, scanId, score, count, magicLink).catch(err =>
+    sendSampleReportEmail(email, scanId, score, count, magicLink, topFinding).catch(err =>
       console.error('Background email send failed:', err)
     )
 

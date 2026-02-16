@@ -2,7 +2,7 @@
 -- Description: Updates assign_scans_to_user to propagate tenant_id to all related tables.
 --              This ensures claimed scans appear in the dashboard (which filters by tenant_id).
 
-CREATE OR REPLACE FUNCTION assign_scans_to_user(p_session_id UUID, p_user_id UUID)
+CREATE OR REPLACE FUNCTION assign_scans_to_user(p_session_id TEXT, p_user_id UUID)
 RETURNS INTEGER
 LANGUAGE plpgsql
 SECURITY DEFINER

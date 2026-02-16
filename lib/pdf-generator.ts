@@ -251,25 +251,86 @@ export const generateForensicReport = (
 
     if (findings.length > 0) {
         // Determine which findings to show in sample mode
-        const maxSampleFindings = 2
-        let shownFindings: any[]
-        let hiddenCount: number
+        let shownFindings: any[] = []
+        let hiddenFindings: any[] = []
+        let lockedList: string[] = []
 
         if (isSample) {
-            // Show highest-severity, then one from a different category if possible
-            shownFindings = [findings[0]]
-            const firstType = findings[0].finding_type
-            const differentCategory = findings.find((f: any) => f.finding_type !== firstType)
-            if (differentCategory) {
-                shownFindings.push(differentCategory)
-            } else if (findings.length > 1) {
-                shownFindings.push(findings[1])
+            // 1. Pick Hero Finding (Highest Severity)
+            // Already sorted by severity above
+            const hero = findings[0]
+            shownFindings = [hero]
+            hiddenFindings = findings.slice(1)
+
+            // 2. content for "Locked" section (Dynamic Counts)
+            // Count hidden findings by unique type to avoid clutter
+            const hiddenCounts: Record<string, number> = {}
+            hiddenFindings.forEach((f: any) => {
+                const type = f.finding_type || 'unknown'
+                hiddenCounts[type] = (hiddenCounts[type] || 0) + 1
+            })
+
+            // Generate specific strings for locked content
+            Object.entries(hiddenCounts).forEach(([type, count]) => {
+                const label = type.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+                lockedList.push(`${count} Additional ${label} ${count > 1 ? 'Risks' : 'Risk'}`)
+            })
+
+            // Add Chief Officer Strategy if missing (it usually is for sample)
+            if (profile.chief_officer_strategy) {
+                lockedList.push("Chief Safety Officer Strategy")
             }
-            shownFindings = shownFindings.slice(0, maxSampleFindings)
-            hiddenCount = findings.length - shownFindings.length
+            if (profile.c2pa_report?.history && profile.c2pa_report.history.length > 0) {
+                lockedList.push("Full C2PA Custody History")
+            }
+
+            // 3. Inject Teasers for MISSING categories (if not covered by Hero/Shown Findings)
+            // We want to ensure that if a category has risk in the profile, it is represented either by a real finding or a teaser.
+            const coveredCategories = new Set<string>()
+            shownFindings.forEach(f => {
+                const type = (f.finding_type || '').toLowerCase()
+                if (type.includes('ip') || type.includes('copyright') || type.includes('trademark')) coveredCategories.add('ip')
+                if (type.includes('safety') || type.includes('nsfw') || type.includes('violent')) coveredCategories.add('safety')
+                if (type.includes('provenance') || type.includes('c2pa') || type.includes('fake')) coveredCategories.add('provenance')
+            })
+
+            const teasersToAdd = []
+
+            if (!coveredCategories.has('ip') && profile.ip_report.score > 25) {
+                teasersToAdd.push({
+                    title: "Intellectual Property Risk Detected",
+                    severity: 'medium', // Visual placeholder
+                    finding_type: 'ip_violation',
+                    description: profile.ip_report.teaser,
+                    _isTeaser: true
+                })
+            }
+            if (!coveredCategories.has('safety') && profile.safety_report.score > 25) {
+                teasersToAdd.push({
+                    title: "Content Safety Flag",
+                    severity: 'medium',
+                    finding_type: 'safety_violation',
+                    description: profile.safety_report.teaser,
+                    _isTeaser: true
+                })
+            }
+            if (!coveredCategories.has('provenance') && profile.provenance_report.score > 25) {
+                teasersToAdd.push({
+                    title: "Provenance Verification Issue",
+                    severity: 'medium',
+                    finding_type: 'provenance_issue',
+                    description: profile.provenance_report.teaser,
+                    _isTeaser: true
+                })
+            }
+
+            // Append teasers to shown list
+            shownFindings = [...shownFindings, ...teasersToAdd]
+
         } else {
-            shownFindings = findings.slice(0, 5)
-            hiddenCount = 0
+            // Full Report: Show detailed list
+            shownFindings = findings.slice(0, 10) // Limit fairly high
+            hiddenFindings = findings.slice(10)
         }
 
         // Render shown findings
@@ -291,21 +352,32 @@ export const generateForensicReport = (
             doc.setFont(FONT.mono, "normal")
             doc.setFontSize(7)
             doc.setTextColor(COLORS.sub)
-            doc.text(typeLabel, 150, y, { align: "right" })
+            const labelText = f._isTeaser ? "DETECTED - PARTIAL" : typeLabel
+            doc.text(labelText, 150, y, { align: "right" })
 
             y += 5
 
-            // Description
+            // Description / Teaser Body
             doc.setFont(FONT.body, "normal")
+            // If it's a teaser, blur it or make it distinct?
+            // For now, just show the text but maybe italicized or lighter if it's a teaser
+            if (f._isTeaser) {
+                doc.setTextColor(COLORS.sub)
+                doc.setFont(FONT.body, "italic")
+            } else {
+                doc.setTextColor(COLORS.sub)
+                doc.setFont(FONT.body, "normal")
+            }
+
             doc.setFontSize(9)
-            doc.setTextColor(COLORS.sub)
             const descLines = doc.splitTextToSize(f.description || '', 160)
             doc.text(descLines, 28, y)
             y += (descLines.length * 4) + 3
 
             // Mitigation hint (teaser-aligned, one line)
+            // For teasers, we hide the mitigation to encourage unlock
             const teaser = f._teaser || f.description || ''
-            if (teaser && teaser !== "No significant risks detected.") {
+            if (!f._isTeaser && teaser && teaser !== "No significant risks detected.") {
                 y = checkPageBreak(y, 8)
                 doc.setFont(FONT.mono, "normal")
                 doc.setFontSize(7)
@@ -315,6 +387,14 @@ export const generateForensicReport = (
                 const hintText = teaser.length > 80 ? teaser.substring(0, 77) + '...' : teaser
                 doc.text(`MITIGATION: ${hintText}`, 28, y)
                 y += 6
+            } else if (f._isTeaser) {
+                // For teasers, explicitly say "Unlock for details"
+                y = checkPageBreak(y, 8)
+                doc.setFont(FONT.mono, "bold")
+                doc.setFontSize(7)
+                doc.setTextColor(COLORS.accent)
+                doc.text("MITIGATION: [LOCKED] Unlock full report to view strategy", 28, y)
+                y += 6
             }
 
             y += 3
@@ -323,7 +403,7 @@ export const generateForensicReport = (
         // ───────────────────────────────────────────────────────────────────
         // SAMPLE: Locked content indicator + upgrade CTA
         // ───────────────────────────────────────────────────────────────────
-        if (isSample && hiddenCount > 0) {
+        if (isSample && (hiddenFindings.length > 0 || profile.chief_officer_strategy)) {
             y = checkPageBreak(y, 40)
             drawLine(y)
             y += 8
@@ -337,14 +417,15 @@ export const generateForensicReport = (
 
             doc.setFont(FONT.body, "normal")
             doc.setFontSize(8)
-            const lockedItems = [
-                `${hiddenCount} additional finding${hiddenCount > 1 ? 's' : ''} with evidence`,
-                "Detailed IP entity mapping & match analysis",
-                "Complete C2PA manifest & chain of custody",
-                "Full mitigation strategy with citations",
-                "Chief Officer risk briefing",
-            ]
-            lockedItems.forEach(item => {
+
+            // Use our dynamic list
+            if (lockedList.length === 0) {
+                // Fallback if nothing specific is hidden but it is a sample
+                lockedList.push("Complete Evidence & Citations")
+                lockedList.push("Legal Grade Mitigation Strategy")
+            }
+
+            lockedList.forEach(item => {
                 doc.text(`\u2022  ${item}`, 32, y)
                 y += 5
             })
@@ -364,7 +445,7 @@ export const generateForensicReport = (
             doc.setFont(FONT.mono, "normal")
             doc.setFontSize(8)
             doc.setTextColor(COLORS.ink)
-            doc.text(`airiskshield.com/scan/${scan.id}`, 105, y, { align: "center" })
+            doc.text(`airiskshield.com/dashboard/scans-reports?highlight=${scan.id}`, 105, y, { align: "center" })
             y += 4
         }
 

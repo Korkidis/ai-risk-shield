@@ -4,7 +4,7 @@
 AI Risk Shield is a high-security, forensic analysis platform built on a serverless architecture. It leverages Next.js for the frontend, Supabase for the backend, and Google Gemini for multimodal AI analysis.
 
 ## Core Stack
-*   **Frontend Check**: `Next.js 14` (App Router), `Tailwind CSS`, `Framer Motion` (Physics).
+*   **Frontend Check**: `Next.js 16` (App Router), `Tailwind CSS`, `Framer Motion` (Physics).
 *   **Backend**: `Supabase` (Postgres, GoTrue Auth, Realtime, Storage).
 *   **AI Engine**: `Google Gemini 2.5 Flash` (Multimodal Analysis).
 *   **Provenance**: `C2PA` (Content Credentials) via `c2pa-node` / WASM.
@@ -29,7 +29,7 @@ graph TD
     end
 
     subgraph "Analysis Layer"
-        Edge -->|Analysis| Gemini[Google Gemini 1.5]
+        Edge -->|Analysis| Gemini[Google Gemini 2.5 Flash]
         Edge -->|Verify| C2PA[C2PA Validator]
     end
 

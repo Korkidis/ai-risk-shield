@@ -125,12 +125,11 @@ export async function POST(request: Request) {
 
     const createdScan = newScan as ExtendedScan
 
-    // 4. Queue async analysis
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/scans/process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scanId: createdScan.id })
-    }).catch(err => console.error('Failed to trigger analysis:', err))
+    // 4. Queue async analysis (Direct call, bypass Auth-gated API)
+    // Fire-and-forget
+    import('@/lib/ai/scan-processor').then(({ processScan }) => {
+      processScan(createdScan.id).catch(err => console.error('Background analysis failed:', err))
+    })
 
     // 5. Record scan for quota tracking (only in production)
     if (!isDev) {

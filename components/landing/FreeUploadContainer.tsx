@@ -23,6 +23,16 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   const [statusMessage, setStatusMessage] = useState("Initializing forensic engine...")
   const [scansRemaining, setScansRemaining] = useState(3)
 
+  useEffect(() => {
+    // Fetch real quota
+    fetch('/api/scans/anonymous-quota')
+      .then(res => res.json())
+      .then(data => {
+        if (data.remaining !== undefined) setScansRemaining(data.remaining)
+      })
+      .catch(err => console.error('Failed to fetch quota', err))
+  }, [])
+
   /* Cleanup preview URL on unmount */
   useEffect(() => {
     return () => {
@@ -144,40 +154,8 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
     } catch (err: any) {
       console.error('Upload error details:', err)
 
-      // DEV MODE FALLBACK: If server fails, we still want to show the visual experience for testing.
-      if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
-        console.warn("Dev Mode: Server failed, running simulation fallback.");
-
-        // Clear any previous text
-        setStatusMessage("Dev Mode: Server offline. Simulating forensic scan...");
-        setProgress(0);
-
-        let simProgress = 0;
-        const fallbackInterval = setInterval(() => {
-          simProgress += 2;
-          if (simProgress > 100) simProgress = 100;
-
-          setProgress(simProgress);
-
-          if (simProgress >= 100) {
-            clearInterval(fallbackInterval);
-            setStatusMessage("Analysis complete. Compiling dossier.");
-
-            const mockProfile: RiskProfile = {
-              composite_score: 85,
-              verdict: 'High Risk',
-              ip_report: { score: 90, teaser: 'Detected potential copyright match', reasoning: 'Visual match to known assets.' },
-              safety_report: { score: 10, teaser: 'No safety issues', reasoning: 'Content appears safe.' },
-              provenance_report: { score: 80, teaser: 'Missing C2PA credentials', reasoning: 'Metadata stripped.' },
-              c2pa_report: { status: 'missing' },
-              chief_officer_strategy: 'Dev Mode Simulation Complete.'
-            };
-
-            setTimeout(() => onUploadComplete(mockProfile, 'dev-mock-' + Date.now()), 1000);
-          }
-        }, 50);
-        return;
-      }
+      // DEV MODE FALLBACK: REMOVED to force real telemetry testing.
+      // if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') { ... }
 
       let errorMessage = 'Analysis failed. Please try again.'
       if (err.message.includes('Scan limit reached')) errorMessage = 'Limit reached: 3 free scans per month.'
@@ -200,8 +178,8 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
           <div className="flex items-center gap-3 opacity-90">
             {/* System Status Indicator - Green Diode */}
             <div className="relative flex items-center justify-center mr-2">
-              <div className="w-3 h-3 rounded-full bg-[var(--rs-safe)] shadow-[0_0_8px_var(--rs-safe)] animate-pulse" />
-              <div className="absolute w-full h-full rounded-full bg-[var(--rs-safe)] opacity-40 blur-md animate-ping" />
+              <div className="w-3 h-3 rounded-full bg-[var(--rs-safe)] shadow-[0_0_8px_var(--rs-safe)] animate-pulse motion-reduce:animate-none" />
+              <div className="absolute w-full h-full rounded-full bg-[var(--rs-safe)] opacity-40 blur-md animate-ping motion-reduce:animate-none" />
             </div>
             <span className="rs-type-micro text-[var(--rs-text-primary)] tracking-widest uppercase font-bold">SYSTEM STATUS: LIVE</span>
           </div>
@@ -223,28 +201,28 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
               {!isDragActive && (
                 <div className="relative mb-10 transition-opacity duration-300">
                   {/* Ambient Glow */}
-                  <div className="absolute inset-0 bg-white/5 rounded-full blur-2xl animate-pulse" />
+                  <div className="absolute inset-0 bg-white/5 rounded-full blur-2xl animate-pulse motion-reduce:animate-none" />
 
                   {/* Rotating Outer Ring */}
-                  <div className="absolute inset-[-12px] border border-white/10 rounded-full border-dashed animate-spin-slow opacity-40" />
+                  <div className="absolute inset-[-12px] border border-white/10 rounded-full border-dashed animate-spin-slow opacity-40 motion-reduce:animate-none" />
 
                   {/* Main Circle */}
                   <div className="w-24 h-24 rounded-full rs-bevel flex items-center justify-center relative z-10 shadow-[0_0_30px_rgba(255,255,255,0.05)] bg-white/5 backdrop-blur-sm group-hover/screen:border-[var(--rs-signal)] group-hover/screen:shadow-[0_0_20px_var(--rs-signal)] transition-all duration-500">
                     {/* Upload Icon - Arrow Up */}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/60 animate-pulse group-hover/screen:text-[var(--rs-signal)]"><path d="M12 17V3" /><path d="m6 9 6-6 6 6" /><path d="M5 21h14" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/60 animate-pulse group-hover/screen:text-[var(--rs-signal)] motion-reduce:animate-none"><path d="M12 17V3" /><path d="m6 9 6-6 6 6" /><path d="M5 21h14" /></svg>
                   </div>
 
                   {/* Orbiting blip */}
-                  <div className="absolute inset-0 animate-spin-slow">
+                  <div className="absolute inset-0 animate-spin-slow motion-reduce:animate-none">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 w-1.5 h-1.5 bg-[var(--rs-signal)] rounded-full shadow-[0_0_10px_var(--rs-signal)] opacity-80" />
                   </div>
                 </div>
               )}
 
               <div className={cn("flex flex-col items-center gap-3 opacity-80 transition-opacity duration-300", isDragActive ? "opacity-0" : "opacity-100")}>
-                <span className="rs-type-mono text-xs text-[var(--rs-signal)] tracking-[0.2em] uppercase font-bold animate-pulse shadow-black drop-shadow-md">UPLOAD ASSET</span>
+                <span className="rs-type-mono text-xs text-[var(--rs-signal)] tracking-[0.2em] uppercase font-bold animate-pulse shadow-black drop-shadow-md motion-reduce:animate-none">UPLOAD ASSET</span>
                 <div className="w-12 h-0.5 bg-white/20 rounded-full overflow-hidden">
-                  <div className="w-full h-full bg-[var(--rs-signal)] -translate-x-full animate-[shimmer_2s_infinite]" />
+                  <div className="w-full h-full bg-[var(--rs-signal)] -translate-x-full animate-[shimmer_2s_infinite] motion-reduce:animate-none" />
                 </div>
               </div>
 

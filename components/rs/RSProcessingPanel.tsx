@@ -76,7 +76,10 @@ export function RSProcessingPanel({
 
                 {/* Scan FX Layers */}
                 <div className="absolute inset-0 bg-rs-signal/10 mix-blend-overlay" />
-                <div className="absolute inset-x-0 h-[2px] bg-rs-signal shadow-[0_0_20px_2px_var(--rs-signal)] z-20 animate-[scanSmooth_2s_ease-in-out_infinite]" />
+                <div className={cn(
+                    "absolute inset-x-0 h-[2px] bg-rs-signal shadow-[0_0_20px_2px_var(--rs-signal)] z-20",
+                    progress < 100 ? "animate-[scanSmooth_2s_ease-in-out_infinite] motion-reduce:animate-none" : "hidden"
+                )} />
 
                 {/* Grid Overlay */}
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
@@ -84,7 +87,10 @@ export function RSProcessingPanel({
                 {/* Header Overlay */}
                 <div className="absolute top-0 left-0 right-0 p-3 flex justify-between items-start z-30 bg-gradient-to-b from-black/80 to-transparent">
                     <div className="flex flex-col">
-                        <span className="rs-type-mono text-[9px] text-rs-signal font-bold uppercase tracking-widest animate-pulse">ANALYZING TARGET</span>
+                        <span className={cn(
+                            "rs-type-mono text-[9px] text-rs-signal font-bold uppercase tracking-widest",
+                            progress < 100 ? "animate-pulse motion-reduce:animate-none" : ""
+                        )}>{progress < 100 ? "ANALYZING TARGET" : "ANALYSIS COMPLETE"}</span>
                         <span className="rs-type-mono text-[9px] text-rs-gray-400 uppercase">{filename}</span>
                     </div>
 
@@ -93,7 +99,7 @@ export function RSProcessingPanel({
                         <div className="relative w-8 h-8 flex items-center justify-center">
                             <svg className="w-full h-full -rotate-90" viewBox="0 0 32 32">
                                 <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" fill="none" className="text-rs-gray-800" />
-                                <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" fill="none" className="text-rs-signal transition-all duration-300 ease-out" strokeDasharray="88" strokeDashoffset={88 - (88 * progress) / 100} />
+                                <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" fill="none" className="text-rs-signal transition-all duration-300 ease-out motion-reduce:transition-none" strokeDasharray="88" strokeDashoffset={88 - (88 * progress) / 100} />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-[8px] font-mono font-bold text-rs-white">{progress.toFixed(0)}</span>
@@ -109,7 +115,7 @@ export function RSProcessingPanel({
                 <div className="flex justify-between items-center mb-2 border-b border-rs-gray-800/50 pb-1">
                     <span className="text-rs-gray-500 uppercase tracking-wider font-bold">SYSTEM LOG</span>
                     <div className="flex gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-rs-signal animate-pulse" />
+                        <div className={cn("w-1.5 h-1.5 rounded-full bg-rs-signal", progress < 100 ? "animate-pulse motion-reduce:animate-none" : "")} />
                         <span className="text-[9px] text-rs-signal/80">PROCESSING</span>
                     </div>
                 </div>

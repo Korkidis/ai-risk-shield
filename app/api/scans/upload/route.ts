@@ -145,13 +145,10 @@ export async function POST(request: Request) {
         )
 
         // Trigger background processing
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-        // @ts-ignore
-        fetch(`${appUrl}/api/scans/process`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ scanId: (scan as any).id }),
-        }).catch(err => console.error('Background process trigger failed', err))
+        // Trigger background processing (Direct call, bypass Auth-gated API)
+        import('@/lib/ai/scan-processor').then(({ processScan }) => {
+            processScan((scan as any).id).catch(err => console.error('Background analysis failed:', err))
+        })
 
         return NextResponse.json({
             success: true,

@@ -21,7 +21,7 @@ This project is driven by a set of "Hyper-Critical" documents that serve as the 
 
 ## 🛠 Tech Stack
 
-*   **Frontend**: Next.js 14 (App Router), Tailwind CSS
+*   **Frontend**: Next.js 16 (App Router), Tailwind CSS
 *   **Database**: Supabase (PostgreSQL, RLS, Storage, **Hierarchical Tenancy**)
 *   **AI Engine**: Google Gemini 2.5 Flash (via Google AI Studio)
 *   **Provenance**: C2PA Node (Content Credentials)

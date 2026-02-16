@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, Suspense } from 'react'
+import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
@@ -26,6 +26,7 @@ import { useRealtimeScans } from '@/hooks/useRealtimeScans'
 import { formatBytes } from '@/lib/utils'
 
 import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
+import { getTenantBillingStatus, BillingStatus } from '@/app/actions/billing'
 
 // Wrapper to handle Suspense boundary for useSearchParams
 export default function ScansReportsPage() {
@@ -138,6 +139,63 @@ function ScansReportsContent() {
         onScanUpdate: handleScanUpdate
     })
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Smart Dashboard Logic: Highlight & Assignment
+    // ─────────────────────────────────────────────────────────────────────────────
+    const processedParams = React.useRef<Set<string>>(new Set())
+
+    useEffect(() => {
+        const highlightId = searchParams.get('highlight')
+        const isVerified = searchParams.get('verified') === 'true'
+        const isPurchased = searchParams.get('purchased') === 'true'
+
+        // 1. Handle Highlight (Auto-Select)
+        if (highlightId && !selectedScanId && scans.length > 0) {
+            // Check if scan exists in current list
+            const targetScan = scans.find(s => s.id === highlightId)
+            if (targetScan) {
+                setSelectedScanId(highlightId)
+                setShowDetails(true)
+            } else {
+                // If not in list, maybe we need to fetch it specifically or it's on another page?
+                // For now, assume it's in the list if recently created.
+            }
+        }
+
+        // 2. Handle Assignment (Claim Anonymous Scan)
+        if (isVerified && highlightId && !processedParams.current.has(`assign-${highlightId}`)) {
+            processedParams.current.add(`assign-${highlightId}`)
+
+            // Call API to assign
+            fetch('/api/scans/assign-to-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scanId: highlightId })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('✅ Scan assigned to user')
+                        // Refresh list to show updated ownership if needed
+                        fetchScans(true)
+                    } else {
+                        console.error('Failed to assign scan:', data.error)
+                    }
+                })
+                .catch(err => console.error('Assignment error:', err))
+        }
+
+        // 3. Handle Post-Purchase Feedback
+        if (isPurchased && highlightId && !processedParams.current.has(`purchase-${highlightId}`)) {
+            processedParams.current.add(`purchase-${highlightId}`)
+            // Could show confetti or toast here
+            console.log('💰 Purchase confirmed for:', highlightId)
+            // Force refresh to ensure status/unlocks are correct
+            fetchScans(true)
+        }
+
+    }, [searchParams, scans, selectedScanId]) // Re-run when scans load so we can find the highlighted one
+
     const selectedScan = scans.find(s => s.id === selectedScanId)
 
     const handleScanClick = (id: string) => {
@@ -236,6 +294,17 @@ function ScansReportsContent() {
         return filteredScans.slice(0, page * itemsPerPage)
     }, [filteredScans, page])
 
+    // Billing Status for Header
+    const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null)
+
+    const fetchBilling = () => {
+        getTenantBillingStatus().then(setBillingStatus).catch(err => console.error('Billing fetch error', err))
+    }
+
+    useEffect(() => {
+        fetchBilling()
+    }, [scans]) // Refresh quota when scans list updates
+
     return (
         <RSBackground
             variant="technical"
@@ -253,7 +322,9 @@ function ScansReportsContent() {
                             </h1>
                             <div className="hidden lg:flex items-center gap-3 px-3 py-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l1)] rounded-[var(--rs-radius-element)]">
                                 <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] rs-etched opacity-60">Usage_Quota</span>
-                                <span className="text-[10px] font-mono font-bold text-rs-text-primary">15/50_SCANS</span>
+                                <span className="text-[10px] font-mono font-bold text-rs-text-primary">
+                                    {billingStatus ? `${billingStatus.scansUsed}/${billingStatus.monthlyScanLimit}_SCANS` : '..._SCANS'}
+                                </span>
                             </div>
                         </div>
 
@@ -361,7 +432,7 @@ function ScansReportsContent() {
                                         ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" // Max 4 cols
                                         : "grid-cols-1"
                                 )}>
-                                    <AnimatePresence mode="popLayout">
+                                    <AnimatePresence>
                                         {visibleScans.map(scan => (
                                             <ScanCard
                                                 key={scan.id}
@@ -403,7 +474,7 @@ function ScansReportsContent() {
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
                             className="fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[#FDFDFC] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
                         >
                             {/* Drawer Header */}
@@ -666,7 +737,6 @@ function ScanCard({ scan, isSelected, isBulkSelected, onBulkToggle, onClick }: {
 
     return (
         <motion.div
-            layout
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

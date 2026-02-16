@@ -6,6 +6,10 @@ interface SampleReportEmailProps {
     riskLevel: string
     findingsCount: number
     magicLink: string
+    topFinding?: {
+        title: string
+        severity: string
+    }
 }
 
 export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
@@ -13,6 +17,7 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
     riskLevel,
     findingsCount,
     magicLink,
+    topFinding,
 }) => {
     // Dieter Rams / Clay White Palette
     const colors = {
@@ -21,8 +26,19 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
         ink: '#1A1A1A',
         orange: '#FF4F00',
         grey: '#666666',
-        lightGrey: '#DDDDDD'
+        lightGrey: '#DDDDDD',
+        critical: '#D10000',
+        safe: '#1E8E3E',
+        caution: '#B56A00',
     }
+
+    const riskLabel = riskLevel.toUpperCase()
+    const isCritical = riskLabel.includes('CRITICAL') || riskLabel.includes('HIGH')
+    const isCaution = riskLabel.includes('MEDIUM') || riskLabel.includes('REVIEW') || riskLabel.includes('CAUTION')
+    const isLowRisk = riskLabel.includes('LOW') || riskLabel.includes('SAFE')
+    const riskTone = isCritical ? colors.critical : isCaution ? colors.caution : colors.safe
+    const topFindingBg = isCritical ? '#FFF0ED' : isCaution ? '#FFF7E6' : '#EDF7EF'
+    const topFindingLabel = isLowRisk ? 'Top Finding' : 'Top Detected Risk'
 
     return (
         <div style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', backgroundColor: colors.bg, padding: '40px 20px', margin: 0 }}>
@@ -50,7 +66,7 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
                             <span style={{ fontSize: '11px', fontWeight: 700, color: colors.grey, textTransform: 'uppercase', letterSpacing: '1px' }}>
                                 ClearCheck Score
                             </span>
-                            <span style={{ display: 'inline-block', marginLeft: '10px', backgroundColor: colors.lightGrey, padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 800, color: colors.orange, textTransform: 'uppercase' }}>
+                            <span style={{ display: 'inline-block', marginLeft: '10px', backgroundColor: colors.lightGrey, padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 800, color: riskTone, textTransform: 'uppercase' }}>
                                 {riskLevel}
                             </span>
                         </div>
@@ -58,14 +74,30 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
 
                     <hr style={{ border: 0, borderTop: `1px solid ${colors.lightGrey}`, margin: '0 0 30px 0' }} />
 
+                    {/* Top Finding Injection */}
+                    {topFinding && (
+                        <div style={{ backgroundColor: topFindingBg, borderLeft: `4px solid ${riskTone}`, padding: '16px', marginBottom: '30px' }}>
+                            <p style={{ margin: '0 0 4px 0', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: riskTone, letterSpacing: '1px' }}>
+                                {topFindingLabel}
+                            </p>
+                            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: colors.ink }}>
+                                {topFinding.title}
+                            </p>
+                        </div>
+                    )}
+
                     {/* Findings */}
                     <div style={{ marginBottom: '40px' }}>
                         <p style={{ fontSize: '16px', lineHeight: '1.5', color: colors.ink, marginBottom: '20px' }}>
-                            Analysis complete. We identified <strong>{findingsCount} risk indicators</strong> in your uploaded content.
+                            {isLowRisk ? (
+                                <>Analysis complete. We found <strong>{findingsCount} {findingsCount === 1 ? 'signal' : 'signals'}</strong> to review. Overall risk remains low.</>
+                            ) : (
+                                <>Analysis complete. We identified <strong>{findingsCount} risk indicators</strong> in your uploaded content.</>
+                            )}
                         </p>
                         <ul style={{ paddingLeft: '20px', margin: 0, color: colors.grey, fontSize: '14px', lineHeight: '1.8' }}>
-                            <li>IP & Trademark Exposure</li>
-                            <li>Brand Safety Violations</li>
+                            <li>IP & Trademark {isLowRisk ? 'Checks' : 'Exposure'}</li>
+                            <li>Brand Safety {isLowRisk ? 'Checks' : 'Violations'}</li>
                             <li>Provenance Verification (C2PA)</li>
                         </ul>
                     </div>

@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe'
 import { type PlanId } from '@/lib/plans'
+import { getSessionId } from '@/lib/session'
 
 // Price IDs from Stripe Dashboard - map plan + interval to Stripe Price ID
 const PRICE_IDS: Record<string, string | undefined> = {
@@ -34,32 +36,75 @@ function getMeteredPriceId(planId: PlanId): string | null {
     return PRICE_IDS[key] || null
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
         const { scanId, purchaseType, planId, interval = 'monthly' } = body
 
+        const cookieStore = await cookies()
+        const sessionId = await getSessionId()
+        const magicEmail = cookieStore.get('magic_auth_email')?.value
+
         const supabase = await createClient()
-
-        // 1. Authenticate User
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            return NextResponse.json({ error: 'Please sign in to continue' }, { status: 401 })
+
+        // 1. Prepare Customer Info
+        let customerEmail = user?.email
+        let tenantId = 'anonymous'
+        let userId = user?.id || 'anonymous'
+
+        if (user) {
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('tenant_id')
+                .eq('id', user.id)
+                .single()
+
+            const profile = profileData as any
+
+            if (profile?.tenant_id) {
+                tenantId = profile.tenant_id
+            } else {
+                return NextResponse.json({ error: 'Account setup incomplete' }, { status: 400 })
+            }
+        } else {
+            // Anonymous: try to get email from capture-email cookie to pre-fill Stripe
+            customerEmail = magicEmail
         }
 
-        // 2. Get Tenant ID
-        const { data: profileData } = await supabase
-            .from('profiles')
-            .select('tenant_id')
-            .eq('id', user.id)
-            .single()
+        // 2. Validate Scan Ownership (CRITICAL)
+        // Ensure the user (or anonymous session) actually owns the scan they're trying to buy
+        if (scanId) {
+            const { data: scanData, error } = await supabase
+                .from('scans')
+                .select('id, user_id, session_id, tenant_id')
+                .eq('id', scanId)
+                .single()
 
-        const profile = profileData as any
-        if (!profile?.tenant_id) {
-            return NextResponse.json({ error: 'Account setup incomplete' }, { status: 400 })
+            const scan = scanData as any
+
+            if (error || !scanData) {
+                return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
+            }
+
+
+
+            if (user) {
+                const ownsByUser = scan.user_id === user.id
+                const ownsByTenant = scan.tenant_id === tenantId
+                const ownsBySession = sessionId && scan.session_id === sessionId
+                if (!ownsByUser && !ownsByTenant && !ownsBySession) {
+                    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+                }
+            } else {
+                // If anonymous, scan must belong to the anonymous session
+                if (!sessionId || scan.session_id !== sessionId) {
+                    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+                }
+            }
         }
 
-        // 3. Determine Price
+        // 3. Determine Price & URLs
         let priceId: string | null = null
         let mode: 'payment' | 'subscription' = 'subscription'
         let successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgrade=success`
@@ -69,8 +114,17 @@ export async function POST(request: Request) {
             // One-time report purchase
             priceId = PRICE_IDS.one_time || null
             mode = 'payment'
-            successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans/${scanId}?success=true`
-            cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans/${scanId}?canceled=true`
+
+            if (user) {
+                successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans-reports?highlight=${scanId}&purchased=true`
+            } else {
+                // Anonymous Success: Send to Login with magic link flag
+                // Webhook will create user and send magic link email
+                successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login?magic_link_sent=true`
+            }
+
+            cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans-reports?highlight=${scanId}&canceled=true`
+
         } else if (purchaseType === 'subscription' && planId) {
             // Subscription purchase
             if (planId === 'free' || planId === 'enterprise') {
@@ -78,6 +132,11 @@ export async function POST(request: Request) {
             }
             priceId = getPriceId(planId as PlanId, interval)
             mode = 'subscription'
+
+            if (!user) {
+                // Anonymous subscription? Force login on success
+                successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login?magic_link_sent=true`
+            }
         } else {
             return NextResponse.json({ error: 'Invalid purchase parameters' }, { status: 400 })
         }
@@ -90,38 +149,37 @@ export async function POST(request: Request) {
         }
 
         // 4. Create Checkout Session
-        // Build line items - for subscriptions, include metered price for overage billing
         const lineItems: { price: string; quantity?: number }[] = [{ price: priceId, quantity: 1 }]
 
-        // Add metered usage price for paid subscriptions (for overage billing)
         if (mode === 'subscription' && planId) {
             const meteredPriceId = getMeteredPriceId(planId as PlanId)
             if (meteredPriceId) {
-                lineItems.push({ price: meteredPriceId }) // No quantity for metered prices
+                lineItems.push({ price: meteredPriceId })
             }
         }
 
         const sessionConfig: any = {
-            customer_email: user.email,
+            customer_email: customerEmail, // Optional, Stripe handles if missing
             line_items: lineItems,
             mode: mode,
             success_url: successUrl,
             cancel_url: cancelUrl,
             metadata: {
-                userId: user.id,
-                tenantId: profile.tenant_id,
+                userId,     // 'anonymous' if not logged in
+                tenantId,   // 'anonymous' if not logged in
                 purchaseType,
                 planId: planId || 'one_time',
                 interval,
+                scanId: scanId || '',
+                isAnonymous: !user ? 'true' : 'false'
             },
             allow_promotion_codes: true,
         }
 
-        // Add subscription-specific config
         if (mode === 'subscription') {
             sessionConfig.subscription_data = {
                 metadata: {
-                    tenantId: profile.tenant_id,
+                    tenantId,
                     planId,
                 }
             }

@@ -50,14 +50,16 @@ export function UpgradeModal({ scanId, onClose }: Props) {
           <div className="absolute top-6 right-[-30px] bg-[var(--rs-signal)] text-white text-[8px] font-black px-10 py-1 rotate-45 uppercase tracking-widest shadow-lg">Save 50%</div>
           <h3 className="font-bold text-xl mb-3 text-[var(--rs-text-primary)] uppercase tracking-wide">Pro Membership</h3>
           <ul className="text-xs text-[var(--rs-text-secondary)] space-y-3 mb-8 flex-grow">
-            <li className="flex items-center"><TrendingUp className="w-4 h-4 mr-2 text-[var(--rs-text-primary)]" />Unlimited Full Reports</li>
-            <li className="flex items-center"><Shield className="w-4 h-4 mr-2 text-[var(--rs-text-primary)]" />C2PA Content Credentials</li>
-            <li className="flex items-center"><TrendingUp className="w-4 h-4 mr-2 text-[var(--rs-text-primary)]" />Priority API Endpoints</li>
+            <li className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-2 text-[var(--rs-text-primary)]" />Everything in Single Report</li>
+            <li className="flex items-center"><TrendingUp className="w-4 h-4 mr-2 text-[var(--rs-text-primary)]" />50 Scans / Month</li>
+            <li className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-2 text-[var(--rs-text-primary)]" />5 Full Reports / Month</li>
+            <li className="flex items-center"><Shield className="w-4 h-4 mr-2 text-[var(--rs-text-primary)]" />Video Analysis Support</li>
+            <li className="flex items-center"><TrendingUp className="w-4 h-4 mr-2 text-[var(--rs-text-primary)]" />30-Day History Retention</li>
           </ul>
           <div className="mb-8">
             <p className="text-[10px] text-[var(--rs-text-tertiary)] uppercase tracking-widest font-bold">Starting At</p>
             <div className="inline-flex items-baseline">
-              <span className="text-[var(--rs-text-primary)] text-4xl font-black font-mono">$49.99</span>
+              <span className="text-[var(--rs-text-primary)] text-4xl font-black font-mono">$49.00</span>
               <span className="text-[var(--rs-text-secondary)] text-sm font-medium ml-1">/mo</span>
             </div>
           </div>

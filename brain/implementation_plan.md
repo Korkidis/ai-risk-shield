@@ -1,5 +1,5 @@
 # Implementation Plan — Conversion Gate & Canonical Dashboard
-*Last updated: 2026-02-11*
+*Last updated: 2026-02-15*
 
 ## Intent
 Unify post‑scan experience around **one product reality**:
@@ -23,17 +23,17 @@ This plan improves conversion without breaking the current flow and keeps the PD
 
 Replace the “Authorized Recipient” flow with a **mini sign‑up**:
 - Email input (same styling)
-- Opt‑in checkbox (marketing consent)
 - Sub‑text: “Creates your free AI Risk Shield account (pending verification)”
 - Button: “CREATE ACCOUNT & DOWNLOAD REPORT”
 
 On submit:
-1. POST `/api/scans/capture-email` with `{ scanId, email, marketingConsent }`
+1. POST `/api/scans/capture-email` with `{ scanId, email }`
 2. Immediately download **sample PDF** client‑side (insurance against email failure)
 3. Replace form with success state:
    - “Account created (pending verification). Sample report downloading.”
    - “Check email for full dashboard access.”
 4. Show **inline CTAs** ($29 one‑time, $49/mo Pro) **in‑context**
+> **Note:** Marketing consent is optional/backlog — not yet wired in current flow.
 
 **Also:** pass `filename` and `isVideo` through from landing upload so PDF generation has correct metadata.
 
@@ -51,10 +51,8 @@ Reuse `generateForensicReport()` from `lib/pdf-generator.ts`:
 ## Step 3 — Update Capture Email API
 **File:** `app/api/scans/capture-email/route.ts`
 
-- Accept `marketingConsent` boolean
-- Store in `user_metadata` on shadow user
 - Update redirect URL to:
-  `/auth/callback?next=/dashboard/scans-reports?scan=${scanId}&welcome=true`
+  `/auth/callback?next=/dashboard/scans-reports?highlight=${scanId}&verified=true`
 
 ---
 
@@ -82,9 +80,9 @@ Change CTA text to **“Go to Your Scans & Reports”**.
 ## Step 6 — Dashboard Scans & Reports Param Handling
 **File:** `app/(dashboard)/dashboard/scans-reports/page.tsx`
 
-- Read `scan` and `welcome` from search params
-- If `scan`: auto‑select and open drawer
-- If `welcome=true`: show dismissible banner and call `/api/scans/assign-to-user`
+- Read `highlight` and `verified` from search params
+- If `highlight`: auto‑select and open drawer
+- If `verified=true`: call `/api/scans/assign-to-user`
 
 ---
 
@@ -116,7 +114,7 @@ Until fully wired:
 - Keep current flow (auto‑download + audit modal)
 
 After:
-- Authenticated → redirect to `/dashboard/scans-reports?scan={id}`
+- Authenticated → redirect to `/dashboard/scans-reports?highlight={id}`
 - Unauthenticated → minimal teaser + “Create Account”
 
 ---
@@ -131,7 +129,7 @@ After:
 1. Upload on landing
 2. Enter email → **PDF downloads immediately**
 3. Email arrives → click magic link
-4. Land on `/dashboard/scans-reports?scan=...&welcome=true`
+4. Land on `/dashboard/scans-reports?highlight=...&verified=true`
 5. Drawer open, CTAs visible, purchase works
 
 ---

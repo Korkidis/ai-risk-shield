@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { UpgradeModal } from './UpgradeModal'
 import { RiskProfile } from '@/lib/gemini-types'
 import { RSRadialMeter } from '../rs/RSRadialMeter'
@@ -14,9 +13,10 @@ import { getRiskTier, toUIRiskLevel } from '@/lib/risk/tiers'
 export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, riskProfile: RiskProfile }) {
 
     const [showUpgrade, setShowUpgrade] = useState(false)
-    const router = useRouter()
     // const [mounted, setMounted] = useState(false)
     const [logs, setLogs] = useState<{ id: string, message: string, status: 'pending' | 'active' | 'done' | 'error', timestamp: string }[]>([])
+    const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+    const [emailError, setEmailError] = useState<string | null>(null)
 
     useEffect(() => {
         // Simulate log loading
@@ -128,6 +128,12 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                         placeholder="officer@company.com"
                                         className="flex-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] text-[var(--rs-text-primary)] text-sm px-3 py-2 rounded-[var(--rs-radius-small)] outline-none focus:border-[var(--rs-text-primary)] transition-colors placeholder:text-[var(--rs-text-tertiary)]"
                                         id="email-input-forensic"
+                                        onChange={() => {
+                                            if (emailStatus !== 'idle') {
+                                                setEmailStatus('idle')
+                                                setEmailError(null)
+                                            }
+                                        }}
                                     />
                                 </div>
                                 <div className="p-1 rounded-[var(--rs-radius-element)] border border-[var(--rs-border-primary)] bg-[var(--rs-bg-element)] shadow-[var(--rs-shadow-l1)]">
@@ -135,13 +141,17 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                         className="w-full justify-center tracking-widest text-xs font-bold"
                                         variant="primary"
                                         onClick={async () => {
+                                            if (emailStatus === 'sending') return
                                             const email = (document.getElementById('email-input-forensic') as HTMLInputElement)?.value;
                                             if (!email || !email.includes('@')) {
-                                                alert('Please enter a valid email');
+                                                setEmailStatus('error')
+                                                setEmailError('Please enter a valid email.')
                                                 return;
                                             }
 
                                             try {
+                                                setEmailStatus('sending')
+                                                setEmailError(null)
                                                 const res = await fetch('/api/scans/capture-email', {
                                                     method: 'POST',
                                                     headers: { 'Content-Type': 'application/json' },
@@ -153,17 +163,27 @@ export function ScanResultsWithGate({ scanId, riskProfile }: { scanId: string, r
                                                     const errorMsg = errorData.details || errorData.error || 'Failed to send email';
                                                     throw new Error(errorMsg);
                                                 }
-
-                                                alert('✅ Authentication successful! Unlocking full report...');
-                                                router.push(`/scan/${scanId}?verified=true&email_captured=true`)
+                                                setEmailStatus('sent')
                                             } catch (error) {
                                                 console.error(error);
-                                                alert(`❌ ${error instanceof Error ? error.message : 'Failed to send email. Please try again.'}`);
+                                                setEmailStatus('error')
+                                                setEmailError(error instanceof Error ? error.message : 'Failed to send email. Please try again.')
                                             }
                                         }}
+                                        disabled={emailStatus === 'sending'}
                                     >
-                                        UNLOCK FULL REPORT
+                                        {emailStatus === 'sending' ? 'SENDING…' : emailStatus === 'sent' ? 'RESEND LINK' : 'UNLOCK FULL REPORT'}
                                     </RSButton>
+                                    {emailStatus === 'sent' && (
+                                        <div className="mt-2 text-[10px] text-[var(--rs-text-tertiary)] text-center leading-tight">
+                                            Email sent. Check your inbox for a secure access link (expires in 15 minutes).
+                                        </div>
+                                    )}
+                                    {emailStatus === 'error' && emailError && (
+                                        <div className="mt-2 text-[10px] text-[var(--rs-risk-high)] text-center leading-tight">
+                                            {emailError}
+                                        </div>
+                                    )}
                                     <div className="mt-2 text-[9px] text-[var(--rs-text-tertiary)] text-center leading-tight">
                                         By unlocking, a secure guest account will be created to manage your report.
                                     </div>

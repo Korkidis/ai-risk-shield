@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { Upload } from 'lucide-react';
 import { RSScanner } from '@/components/rs/RSScanner';
 import { RSTelemetryPanel, TelemetryRow } from '@/components/rs/RSTelemetryPanel';
@@ -55,7 +56,6 @@ export default function DashboardPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileProcess = async (file: File) => {
-
         // 1. Setup Preview
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
@@ -69,69 +69,87 @@ export default function DashboardPage() {
         addLog(`Acquired asset: ${file.name.substring(0, 15)}...`, 'done');
         addLog("Initializing forensic deep-scan protocol...", 'active');
 
-        // 4. API Call
+        // 4. Async Upload & Realtime Tracking
         const formData = new FormData();
         formData.append('file', file);
         formData.append('guidelineId', 'default');
 
         try {
-            // Concurrent Telemetry (The "Impressive" layer) - Expanded & Paced
-            const telemetrySteps = [
-                "Initializing forensic core (v2.4.1)...",
-                "Acquiring file stream & hashing buffers...",
-                "Mounting virtual sandbox environment...",
-                "Parsing file headers & metadata structures...",
-                "Decrypting embedded C2PA manifest assertions...",
-                "Cross-referencing Global IP Blocklists...",
-                "Analysis: Trademark vector search...",
-                "Analysis: Biometric celebrity matching...",
-                "Detecting latent diffusion artifacts (CNN)...",
-                "Verifying C2PA cryptographic signature...",
-                "Resolving XMP sidecar data...",
-                "Validating chain of custody assertions...",
-                "Synthesizing composite risk profile...",
-                "Finalizing report & unlocking interface..."
-            ];
-
-            let currentStep = 0;
-            // Increased speed slightly (800ms) but added more steps to cover the API wait time smoothly
-            const telemetryInterval = setInterval(() => {
-                if (currentStep < telemetrySteps.length) {
-                    addLog(telemetrySteps[currentStep], 'active');
-                } else {
-                    // Holding pattern to prevent "frozen" state
-                    const holdingPatternLogs = [
-                        "Deep-scanning neural layers...",
-                        "Re-verifying cryptographic entropy...",
-                        "Awaiting final consensus from risk models...",
-                        "Processing latent signal directives...",
-                        "Optimizing result vectors..."
-                    ];
-                    const holdingIndex = (currentStep - telemetrySteps.length) % holdingPatternLogs.length;
-                    addLog(holdingPatternLogs[holdingIndex], 'active');
-                }
-                currentStep++;
-            }, 800);
-
-            const response = await fetch('/api/analyze', {
+            // A. Upload (Authenticated)
+            const uploadRes = await fetch('/api/scans/upload', {
                 method: 'POST',
                 body: formData,
             });
 
-            clearInterval(telemetryInterval);
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                addLog(`CRITICAL FAILURE: ${errorData.error}`, 'error');
-                throw new Error(errorData.error || 'Analysis failed');
+            if (!uploadRes.ok) {
+                const errorData = await uploadRes.json();
+                throw new Error(errorData.error || 'Upload failed');
             }
 
-            const data: RiskProfile = await response.json();
+            const { scanId } = await uploadRes.json();
 
-            // Ensure we show at least the final step before completing if it was fast
-            addLog("Analysis finalized. Telemetry stream active.", 'done');
-            setAnalysisResult(data);
-            setScanStatus('complete');
+            // B. Subscribe to Realtime Progress
+            const supabase = createClient();
+            const channel = supabase.channel(`scan-${scanId}`);
+
+            channel
+                .on('broadcast', { event: 'progress' }, (payload) => {
+                    if (payload.payload) {
+                        const { message } = payload.payload;
+                        if (message) addLog(message, 'active');
+                    }
+                })
+                .subscribe();
+
+            // C. Poll for Completion (Backup for lost packets / DB updates)
+            // We poll the status endpoint which returns the full scan object when done
+            const pollInterval = setInterval(async () => {
+                try {
+                    const statusRes = await fetch(`/api/scans/${scanId}/status`);
+                    if (!statusRes.ok) return;
+
+                    const scan = await statusRes.json();
+
+                    if (scan.status === 'processing') {
+                        // Still running
+                    } else if (scan.status === 'complete') {
+                        clearInterval(pollInterval);
+                        supabase.removeChannel(channel);
+
+                        addLog("Analysis finalized. Telemetry stream active.", 'done');
+
+                        // Map DB Result to RiskProfile Interface
+                        const profile: RiskProfile = {
+                            composite_score: scan.composite_score,
+                            verdict: scan.risk_level === 'critical' ? 'Critical Risk' :
+                                scan.risk_level === 'high' ? 'High Risk' :
+                                    scan.risk_level === 'review' ? 'Medium Risk' : 'Low Risk',
+                            ip_report: {
+                                score: scan.ip_risk_score,
+                                teaser: 'IP Analysis Complete'
+                            },
+                            safety_report: {
+                                score: scan.safety_risk_score,
+                                teaser: 'Safety Analysis Complete'
+                            },
+                            provenance_report: {
+                                score: scan.provenance_risk_score,
+                                teaser: 'Provenance Analysis Complete'
+                            },
+                            c2pa_report: scan.provenance_data || { status: 'missing' }
+                        };
+
+                        setAnalysisResult(profile);
+                        setScanStatus('complete');
+                    } else if (scan.status === 'failed') {
+                        clearInterval(pollInterval);
+                        supabase.removeChannel(channel);
+                        throw new Error(scan.error_message || 'Analysis failed via background job');
+                    }
+                } catch (err) {
+                    // Polling error, ignore and retry
+                }
+            }, 1000);
 
         } catch (err: any) {
             console.error(err);

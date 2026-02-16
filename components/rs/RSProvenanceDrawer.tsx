@@ -38,7 +38,7 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
             />
 
             {/* Drawer */}
-            <div className="relative w-full max-w-xl bg-rs-bg-surface-2 h-full shadow-[var(--rs-shadow-l3)] flex flex-col animate-in slide-in-from-right duration-500 ease-out border-l border-rs-border-primary">
+            <div className="relative w-full max-w-xl bg-rs-bg-surface-2 h-full shadow-[var(--rs-shadow-l3)] flex flex-col animate-in slide-in-from-right duration-500 ease-out border-l border-rs-border-primary motion-reduce:animate-none motion-reduce:transition-none">
                 {/* Header */}
                 <div className="p-8 border-b border-rs-border-primary flex justify-between items-center bg-rs-bg-surface">
                     <div>

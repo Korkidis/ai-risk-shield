@@ -21,6 +21,12 @@ async function run() {
     const { data: profs, error: pError } = await supabase.from('profiles').select('*').limit(1)
     if (pError) console.log('Profs error:', pError.message)
     else console.log('Profs keys:', profs && profs.length > 0 ? Object.keys(profs[0]) : 'Empty table')
+    const { data: scans, error: scError } = await supabase.from('scans').select('*').limit(1)
+    if (scError) console.log('Scans error:', scError.message)
+    else console.log('Scans keys:', scans && scans.length > 0 ? Object.keys(scans[0]) : 'Empty table')
+    const { data: assets, error: aError } = await supabase.from('assets').select('*').limit(1)
+    if (aError) console.log('Assets error:', aError.message)
+    else console.log('Assets keys:', assets && assets.length > 0 ? Object.keys(assets[0]) : 'Empty table')
 }
 
 run()
