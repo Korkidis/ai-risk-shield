@@ -1,5 +1,5 @@
 # Execution Plan
-*Single source of truth. Updated: 2026-02-15 (Build 7 performance added, docs aligned).*
+*Single source of truth. Updated: 2026-02-16 (Dashboard data wiring, dead code cleanup, docs aligned).*
 *If it's not in this file, it's not planned. If it's checked here, it's done.*
 
 ## Guiding Principle
@@ -180,9 +180,9 @@ Each build is a focused session (30 min–2 hrs with agents). The sequence is a 
 
 ### S3 — Remove `/api/debug-provenance`
 **Why:** Completely open endpoint, no auth, reveals database structure.
-- [ ] Delete the route file
+- [x] Delete the route file
 
-**Files:** `app/api/debug-provenance/route.ts`
+**Files:** `app/api/debug-provenance/route.ts` — DELETED (Feb 16)
 
 ### S4 — Fix `brand_guidelines` RLS
 **Why:** Policies reference `public.users` which doesn't exist (should be `public.profiles`). All brand_guidelines operations silently fail.
@@ -194,8 +194,8 @@ Each build is a focused session (30 min–2 hrs with agents). The sequence is a 
 
 ## Cleanup (Do when touching related files — not standalone tasks)
 
-- [ ] **Delete `app/api/auth/verify/route.ts`** (67 lines, queries dropped `magic_links` table) — then apply `20260208_cleanup_magic_links.sql`
-- [ ] **RSC2PAWidget `caution` state** — add `case 'caution'` to switch in `components/rs/RSC2PAWidget.tsx`
+- [x] **Delete `app/api/auth/verify/route.ts`** (67 lines, queries dropped `magic_links` table) — DELETED (Feb 16). Apply `20260208_cleanup_magic_links.sql` next.
+- [x] **RSC2PAWidget `caution` state** — added `case 'caution'` to switch in `components/rs/RSC2PAWidget.tsx` (Feb 16)
 - [ ] **Regenerate `types.ts`** from live schema — current version is missing ~15 columns, references non-existent ones
 - [ ] **Fix video frame count** — code says 5 (`scan-processor.ts:112`), docs say 10. Pick one, update both.
 - [ ] **Fix C2PA serial** — hardcoded `"C2PA-CERT-884-29-X"` in `lib/c2pa/verify.ts`. Extract from actual cert data.
@@ -216,6 +216,8 @@ Each build is a focused session (30 min–2 hrs with agents). The sequence is a 
 - [x] Supabase Realtime (replaced polling, fixed 139GB egress)
 - [x] Documentation alignment (Feb 14)
 - [x] NORTH_STAR Technical Constraints filled
+- [x] Dashboard data wiring — RSFindingsDossier, ProvenanceTelemetryStream, notes save, RSC2PAWidget caution (Feb 16)
+- [x] Dead code cleanup — deleted `/api/analyze`, `/api/auth/verify`, `/api/debug-provenance`, `lib/c2pa/index.ts` (Feb 16)
 
 ---
 

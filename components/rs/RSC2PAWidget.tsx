@@ -8,7 +8,7 @@ import React from 'react';
 interface RSC2PAWidgetProps {
     className?: string;
     isComplete?: boolean;
-    status?: 'valid' | 'missing' | 'invalid' | 'error';
+    status?: 'valid' | 'missing' | 'invalid' | 'error' | 'caution';
     onViewDetails?: () => void;
     showOverlay?: boolean;
 }
@@ -30,6 +30,13 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
                     color: 'text-rs-risk-review',
                     dot: 'bg-rs-risk-review',
                     desc: 'Missing Metadata • Elevated Content Risk',
+                };
+            case 'caution':
+                return {
+                    label: 'PROVENANCE_PARTIAL_MATCH',
+                    color: 'text-rs-risk-caution',
+                    dot: 'bg-rs-risk-caution',
+                    desc: 'Non-Standard Structure • Verified via Fallback Manifest',
                 };
             case 'invalid':
                 return {

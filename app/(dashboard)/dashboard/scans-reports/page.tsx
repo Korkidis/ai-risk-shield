@@ -173,7 +173,10 @@ function ScansReportsContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ scanId: highlightId })
             })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                    return res.json()
+                })
                 .then(data => {
                     if (data.success) {
                         console.log('✅ Scan assigned to user')
@@ -231,20 +234,27 @@ function ScansReportsContent() {
         }
     }, [selectedScanId, scans]) // Update when scan selection or data changes
 
-    const handleSaveNotes = (newNotes: string) => {
+    const handleSaveNotes = async (newNotes: string) => {
         if (!selectedScanId) return
         // Only save if changed
         const currentNotes = scans.find(s => s.id === selectedScanId)?.notes
         if (newNotes === currentNotes) return
 
         setUpdating(true)
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            await fetch(`/api/scans/${selectedScanId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: newNotes })
+            })
             setScans(prev => prev.map(s =>
                 s.id === selectedScanId ? { ...s, notes: newNotes } : s
             ))
+        } catch (err) {
+            console.error('Failed to save notes:', err)
+        } finally {
             setUpdating(false)
-        }, 800)
+        }
     }
 
     const handleUpload = async (file: File) => {
@@ -613,7 +623,19 @@ function ScansReportsContent() {
                                     {/* C2PA Forensic Manifest Stream */}
                                     <div className="pt-2">
                                         <ProvenanceTelemetryStream
-                                            details={selectedScan?.provenance_details}
+                                            details={
+                                                // Prefer DB join data, fallback to risk_profile.c2pa_report blob
+                                                selectedScan?.provenance_details ||
+                                                (selectedScan?.risk_profile?.c2pa_report ? {
+                                                    signature_status: selectedScan.risk_profile.c2pa_report.status === 'valid' ? 'valid' :
+                                                        selectedScan.risk_profile.c2pa_report.status === 'caution' ? 'caution' : 'invalid',
+                                                    creator_name: selectedScan.risk_profile.c2pa_report.creator || null,
+                                                    creation_tool: selectedScan.risk_profile.c2pa_report.tool || null,
+                                                    creation_timestamp: selectedScan.risk_profile.c2pa_report.timestamp || null,
+                                                    raw_manifest: selectedScan.risk_profile.c2pa_report.raw_manifest || null,
+                                                    edit_history: selectedScan.risk_profile.c2pa_report.history || null,
+                                                } as any : null)
+                                            }
                                             scanStatus={selectedScan?.status || 'complete'}
                                         />
                                     </div>

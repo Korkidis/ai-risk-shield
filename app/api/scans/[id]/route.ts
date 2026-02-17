@@ -33,8 +33,10 @@ export async function GET(
                 filename,
                 file_type,
                 mime_type,
-                file_size
-            )
+                file_size,
+                storage_path
+            ),
+            status
         `
 
         // Fetch scan with risk scores, findings, and the stored risk_profile blob
@@ -169,9 +171,19 @@ export async function GET(
             }
         }
 
+        // Generate signed URL for asset preview
+        let assetUrl = null
+        if (scan.assets?.storage_path) {
+            const { data: signedData } = await supabase.storage
+                .from('uploads')
+                .createSignedUrl(scan.assets.storage_path, 3600) // 1 hour
+            assetUrl = signedData?.signedUrl || null
+        }
+
         return NextResponse.json({
             ...scan,
-            risk_profile: riskProfile
+            risk_profile: riskProfile,
+            asset_url: assetUrl,
         })
     } catch (error) {
         console.error('Failed to fetch scan:', error)

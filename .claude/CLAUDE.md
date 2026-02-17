@@ -1,7 +1,7 @@
 # AI Risk Shield - Claude Code Guide
 
 ## Project Overview
-SaaS platform for AI content risk validation. Stack: Next.js 14 (App Router) + Supabase + Google Gemini 2.5 Flash + Stripe.
+SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Turbopack) + Supabase + Google Gemini 2.5 Flash + Stripe.
 
 **Business Model:** Freemium SaaS (3 free scans/month → $29 one-time reports or $49-599/mo subscriptions)
 
@@ -42,7 +42,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 14 (App Router) + S
 - **Service role key:** Server-side only, NEVER expose to client
 - **Anon key:** Client-side only, limited permissions
 - **Input validation:** Sanitize all user inputs (file names, emails, etc.)
-- **`/api/scans/process` has no authentication** — anyone who guesses a scan ID can trigger reprocessing. Must fix.
+- **`/api/scans/process` auth + idempotency added** — validates origin and rejects duplicate processing (S1 fixed)
 
 ### Multi-Tenant Isolation
 - **Every table must have tenant_id** column with RLS policy
@@ -51,7 +51,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 14 (App Router) + S
 
 ## Architecture Principles
 
-### Next.js 14 App Router
+### Next.js 16 App Router
 - **Server Components by default** - Use "use client" only when needed (useState, useEffect, browser APIs)
 - **Server Actions** for mutations (no need for API routes for simple forms)
 - **API routes** for complex workflows (file upload, Gemini analysis)
@@ -82,7 +82,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 14 (App Router) + S
 ### Authentication
 - **Password-based:** signup + login via Server Actions
 - **Magic link (freemium):** Shadow user creation via `supabase.auth.admin.createUser()` + `generateLink()`, delivered via Resend
-- **Legacy:** Custom `magic_links` table is deprecated. Migration to drop exists (`20260208_cleanup_magic_links.sql`) but `/api/auth/verify/route.ts` still queries it. Delete route first, then apply migration.
+- **Legacy:** Custom `magic_links` table is deprecated. Migration to drop exists (`20260208_cleanup_magic_links.sql`). `/api/auth/verify/route.ts` has been deleted — migration can now be applied.
 
 ### Stripe Integration
 - **5-tier pricing:** FREE / PRO ($49) / TEAM ($199) / AGENCY ($499) / ENTERPRISE (custom) — see `lib/plans.ts`
@@ -120,8 +120,7 @@ app/
 │       └── design-lab/          # Internal component showcase (hide from customers)
 ├── (marketing)/         # Pricing page
 ├── api/                 # API routes
-│   ├── analyze/         # Authenticated analysis endpoint
-│   ├── scans/           # Anonymous upload, process, capture-email, assign-to-user
+│   ├── scans/           # Upload, process, capture-email, assign-to-user, list, [id]
 │   ├── stripe/          # Checkout + webhook
 │   └── guidelines/      # Brand guidelines CRUD
 ├── scan/[id]/           # Anonymous scan result (transitional — deprecate after dashboard covers it)
@@ -138,7 +137,7 @@ lib/
 ├── entitlements.ts     # Access control (report gating, quota checks)
 ├── pdf-generator.ts    # Sample/full PDF report generation
 ├── email.ts            # Resend email sending
-├── c2pa/               # C2PA verification (verify.ts)
+├── c2pa.ts             # C2PA verification (c2pa-node integration)
 ├── video/              # FFmpeg processing (extract-frames.ts)
 └── stripe/             # Stripe integration
 
@@ -244,20 +243,13 @@ if (!allowed && plan === 'free') {
 - **Region:** US East (iad1) - or closest to target users
 - **Environment:** Separate env vars for preview vs production
 
-## Known Issues (Current as of Feb 14, 2026)
+## Known Issues (Current as of Feb 16, 2026)
 
-### Pipeline Divergence (Phase A Blocker)
-Two separate analysis pipelines produce different quality output:
-- **Authenticated:** `/api/analyze` → `lib/gemini.ts` (synchronous, stores inline)
-- **Anonymous:** `/api/scans/anonymous-upload` → `/api/scans/process` → `lib/ai/scan-processor.ts` (async, different data shape)
-- **Impact:** Anonymous flow produces thinner data. C2PA skipped for anonymous images (`scan-processor.ts:87`).
-- **Fix:** Unify into single processor. See `tasks/todo.md` Phase A.
+### Pipeline Unified (Phase A Complete)
+Both authenticated and anonymous paths now route through `lib/ai/scan-processor.ts`. C2PA runs for all scans. `/api/analyze` (legacy sync endpoint) has been deleted.
 
-### Data Handoff Loss
-`GET /api/scans/[id]` reconstructs a thin `RiskProfile` from individual columns instead of reading the stored `risk_profile` JSON blob. Rich Gemini analysis teasers/reasoning are lost.
-
-### RSC2PAWidget Missing `caution` State
-`components/rs/RSC2PAWidget.tsx` — type union and switch statement missing `caution` case. Scoring module (`lib/risk/scoring.ts`) handles all 5 values correctly; UI widget does not.
+### Data Handoff — Fixed
+`GET /api/scans/[id]` now reads the stored `risk_profile` JSONB blob directly. Legacy fallback still exists for pre-blob scans (reconstructs from individual columns). RSFindingsDossier and ProvenanceTelemetryStream now consume real Gemini data.
 
 ### Brand Guidelines Not Wired
 UI (`/dashboard/brand-guidelines`) works for CRUD. Dashboard upload sends `guidelineId: 'default'` (hardcoded). Gemini prompts don't reference custom guidelines. Feature exists in UI but doesn't affect analysis.
@@ -295,7 +287,7 @@ UI (`/dashboard/brand-guidelines`) works for CRUD. Dashboard upload sends `guide
 - **Shadow user creation** via `supabase.auth.admin.createUser()` with `email_confirm: false`
 - **Magic link** via `supabase.auth.admin.generateLink()` — not the legacy custom `magic_links` table
 - **Cookie-based instant access** — `magic_auth_email` httpOnly cookie for UX before email click
-- **Scalability issue** in `capture-email/route.ts` — `listUsers()` fetches ALL users to check if email exists
+- **Scalability issue fixed** — `capture-email/route.ts` now uses `createUser()` + catch instead of `listUsers()`
 
 ### Step 6: Risk Model Unification (2026-02-11)
 - **Canonical tiers and scoring** in `lib/risk/tiers.ts` and `lib/risk/scoring.ts`
@@ -309,4 +301,4 @@ UI (`/dashboard/brand-guidelines`) works for CRUD. Dashboard upload sends `guide
 
 ---
 
-**Last Updated:** 2026-02-14 (Strategy alignment — conversion flow + documentation audit)
+**Last Updated:** 2026-02-16 (Dashboard data wiring — RSFindingsDossier, ProvenanceTelemetryStream, notes save, dead code cleanup)

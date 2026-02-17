@@ -47,8 +47,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protected routes - redirect to login if not authenticated
+  // Exception: /dashboard?scan=<id> is allowed for anonymous users (scan viewer mode)
+  const hasScanParam = request.nextUrl.pathname === '/dashboard' && request.nextUrl.searchParams.has('scan')
+
   if (
     !user &&
+    !hasScanParam &&
     (request.nextUrl.pathname.startsWith('/dashboard') ||
       request.nextUrl.pathname.startsWith('/scans'))
   ) {

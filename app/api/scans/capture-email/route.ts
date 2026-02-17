@@ -100,8 +100,8 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     })
 
-    // 3. Generate Magic Link (Auth Token) - Reformatted to point to Dashboard
-    const nextUrl = `/dashboard/scans-reports?highlight=${scanId}&verified=true`
+    // 3. Generate Magic Link (Auth Token) - Points to dashboard scan viewer
+    const nextUrl = `/dashboard?scan=${scanId}&verified=true`
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email,

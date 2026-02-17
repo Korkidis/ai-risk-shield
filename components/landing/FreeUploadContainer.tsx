@@ -26,14 +26,21 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   const [limit, setLimit] = useState(3)
 
   useEffect(() => {
-    // Fetch real quota
+    // Fetch real quota — must handle all failure modes for incognito/blocked contexts
     fetch('/api/scans/anonymous-quota')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then(data => {
         if (data.remaining !== undefined) setScansRemaining(data.remaining)
         if (data.limit !== undefined) setLimit(data.limit)
       })
-      .catch(err => console.error('Failed to fetch quota', err))
+      .catch(() => {
+        // Fail gracefully — default quota shown, user can still try uploading
+        setScansRemaining(3)
+        setLimit(3)
+      })
   }, [])
 
   /* Cleanup preview URL on unmount */
@@ -65,10 +72,15 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       })
 
       if (!uploadRes.ok) {
-        const errorData = await uploadRes.json()
-        const errorMessage = errorData.details
-          ? `${errorData.error}: ${errorData.details}`
-          : errorData.error || 'Upload failed'
+        let errorMessage = 'Upload failed'
+        try {
+          const errorData = await uploadRes.json()
+          errorMessage = errorData.details
+            ? `${errorData.error}: ${errorData.details}`
+            : errorData.error || errorMessage
+        } catch {
+          errorMessage = `Upload failed (HTTP ${uploadRes.status})`
+        }
         throw new Error(errorMessage)
       }
 
@@ -105,7 +117,13 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
           throw new Error('Failed to check scan status')
         }
 
-        const scanStatus = await statusRes.json()
+        let scanStatus
+        try {
+          scanStatus = await statusRes.json()
+        } catch {
+          cleanupRealtime()
+          throw new Error('Invalid response from status endpoint')
+        }
 
         if (scanStatus.status === 'complete') {
           cleanupRealtime()

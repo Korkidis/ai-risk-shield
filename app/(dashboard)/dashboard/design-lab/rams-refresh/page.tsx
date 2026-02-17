@@ -10,10 +10,10 @@ import { Upload, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Mock Data for "Active" State matching the reference image (Mickey Mouse / 95% Risk)
-const MOCK_RESULTS = {
-    ipRisk: 98,
-    brandSafety: 5,
-    provenance: 80
+const MOCK_RISK_PROFILE = {
+    ip_report: { score: 98, teaser: 'Direct reproduction of protected Disney IP detected. Asset contains Mickey Mouse character likeness.' },
+    safety_report: { score: 5, teaser: 'No brand safety concerns identified.' },
+    provenance_report: { score: 80, teaser: 'Provenance verification indicates gaps in chain of custody.' },
 };
 
 export default function RamsRefreshPage() {
@@ -179,7 +179,9 @@ export default function RamsRefreshPage() {
                             <RSFindingsDossier
                                 key={viewState} // Force re-mount on state change for clean entry
                                 isComplete={true}
-                                results={viewState === 'active' ? MOCK_RESULTS : { ipRisk: 0, brandSafety: 0, provenance: 0 }}
+                                riskProfile={viewState === 'active' ? MOCK_RISK_PROFILE : null}
+                                scanId="DEMO-LAB"
+                                ctaMode="paid"
                                 className="w-full h-full rounded-2xl shadow-xl"
                             />
                         </AnimatePresence>

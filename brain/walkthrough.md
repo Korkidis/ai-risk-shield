@@ -37,6 +37,10 @@ This file exists to orient new sessions on *what's real, what's broken, and what
 | `risk_profile` JSONB blob storage | Working | `scans.risk_profile` column |
 | Supabase Realtime (scan status updates) | Working (broadcast events + db updates) | `hooks/useRealtimeScans.ts` |
 | Scans & Reports dashboard page | Working (the canonical product page) | `app/(dashboard)/dashboard/scans-reports/` |
+| RSFindingsDossier (real Gemini data) | Working (wired to risk_profile + scan_findings) | `components/rs/RSFindingsDossier.tsx` |
+| ProvenanceTelemetryStream (C2PA data) | Working (fallback to risk_profile.c2pa_report) | `components/rs/ProvenanceTelemetryStream.tsx` |
+| Notes save (persisted to DB) | Working (PATCH /api/scans/[id]) | `scans-reports/page.tsx` |
+| RSC2PAWidget (all 5 C2PA states) | Working (valid/missing/invalid/error/caution) | `components/rs/RSC2PAWidget.tsx` |
 | PDF Download / Export | Working (client-side generation) | `scans-reports/page.tsx` → `lib/pdf-generator.ts` |
 | Quota Displays (Anonymous & Tenant) | Working (real limits from DB/API) | `FreeUploadContainer.tsx`, `RSSidebar.tsx` |
 
@@ -50,15 +54,17 @@ This file exists to orient new sessions on *what's real, what's broken, and what
 
 | Issue | Severity | Fix |
 |:---|:---|:---|
-| `/api/scans/process` has no auth | CRITICAL | S1 in todo.md — do alongside builds |
-| `listUsers()` fetches ALL users on email capture | HIGH | S2 in todo.md — do alongside builds |
-| `/api/debug-provenance` completely open | HIGH | S3 in todo.md — do alongside builds |
+| ~~`/api/scans/process` has no auth~~ | ~~CRITICAL~~ | S1 — FIXED (auth + idempotency added) |
+| ~~`listUsers()` fetches ALL users on email capture~~ | ~~HIGH~~ | S2 — FIXED (createUser + catch) |
+| ~~`/api/debug-provenance` completely open~~ | ~~HIGH~~ | S3 — FIXED (route deleted) |
 | `brand_guidelines` RLS references nonexistent table | MEDIUM | S4 in todo.md — do alongside builds |
 
 ## Cleanup (Do When Touching Related Files)
 
-- Delete `/api/auth/verify/route.ts` (queries dropped `magic_links` table)
-- RSC2PAWidget missing `caution` case
+- ~~Delete `/api/auth/verify/route.ts`~~ — DONE (deleted Feb 16)
+- ~~RSC2PAWidget missing `caution` case~~ — DONE (added Feb 16)
+- ~~Delete `/api/analyze/route.ts`~~ — DONE (deleted Feb 16, zero callers)
+- ~~Delete `lib/c2pa/index.ts`~~ — DONE (deleted Feb 16, mock module)
 - Regenerate `types.ts` (massively outdated)
 - Fix video frame count (5 in code, 10 in docs)
 - Fix hardcoded C2PA serial `"C2PA-CERT-884-29-X"`
