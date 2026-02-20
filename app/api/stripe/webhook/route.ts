@@ -9,6 +9,11 @@ import Stripe from 'stripe'
 // Must enable raw body for webhook signature verification
 // Next.js 13+ App Router: We just read text() from request
 
+// Idempotency: Track processed event IDs to prevent duplicate handling on Stripe retries.
+// In-memory set covers single-process; for multi-instance, use a DB table.
+const processedEvents = new Set<string>()
+const MAX_PROCESSED_EVENTS = 10000 // Prevent unbounded memory growth
+
 /**
  * Map Stripe Price IDs to Plan IDs
  * TODO: Move to environment variables or database
@@ -42,6 +47,19 @@ export async function POST(request: Request) {
         console.error('Webhook signature verification failed.', err.message)
         return NextResponse.json({ error: 'Webhook signature verification failed.' }, { status: 400 })
     }
+
+    // Idempotency check: skip if we've already processed this event
+    if (processedEvents.has(event.id)) {
+        console.log(`[Webhook] Duplicate event ${event.id}, skipping`)
+        return NextResponse.json({ received: true })
+    }
+
+    // Evict oldest entries if set is too large
+    if (processedEvents.size >= MAX_PROCESSED_EVENTS) {
+        const first = processedEvents.values().next().value
+        if (first) processedEvents.delete(first)
+    }
+    processedEvents.add(event.id)
 
     const supabase = await createServiceRoleClient()
 

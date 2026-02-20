@@ -59,7 +59,14 @@ export async function POST(req: NextRequest) {
 
         // Clean JSON from backticks if present
         const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim()
-        const extractedData = JSON.parse(cleanedText)
+
+        let extractedData
+        try {
+            extractedData = JSON.parse(cleanedText)
+        } catch {
+            console.error('Gemini returned invalid JSON for guideline extraction')
+            return NextResponse.json({ error: 'Failed to parse extracted guidelines. Please try again.' }, { status: 422 })
+        }
 
         return NextResponse.json(extractedData)
     } catch (error) {

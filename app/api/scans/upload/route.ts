@@ -144,9 +144,10 @@ export async function POST(request: Request) {
             }, { status: 500 })
         }
 
-        // Validate brand guideline if provided (tenant-scoped)
+        // Validate brand guideline if provided (tenant-scoped, UUID format check)
+        const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
         let validatedGuidelineId: string | null = null
-        if (guidelineId && guidelineId !== 'default') {
+        if (guidelineId && guidelineId !== 'default' && UUID_REGEX.test(guidelineId)) {
             const { data: guideline } = await supabase
                 .from('brand_guidelines')
                 .select('id')

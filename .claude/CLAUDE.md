@@ -327,6 +327,15 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Scan processor race guard**: `processScan()` now checks scan status before processing — skips if already in terminal state (`complete`/`failed`) to prevent duplicate analysis
 - **Error detail leak sealed**: Upload route `scanError.message` no longer exposed to clients in scan creation failure response
 
+### Phase N Complete (Feb 20, 2026)
+- **Stripe webhook idempotency**: Event IDs tracked in-memory Set — duplicate events from Stripe retries are now skipped (prevents double charges, duplicate user creation)
+- **NaN-safe pagination**: `parseInt` calls in `/api/scans/list` now have `|| fallback` after radix 10 — prevents `NaN` offset from empty string params
+- **JSON.parse safety**: `guidelines/extract` now catches malformed Gemini JSON responses with 422 instead of unhandled exception
+- **Security headers**: Added `Permissions-Policy` (camera/mic/geo disabled) and `X-Permitted-Cross-Domain-Policies: none` to `next.config.js`
+- **Stripe checkout input validation**: `planId` validated against whitelist (`pro/team/agency`), `interval` validated against `monthly/annual`, price config `details` leak removed
+- **guidelineId UUID validation**: Upload route now validates UUID format before querying DB — prevents wasted queries on malformed input
+- **PII scrubbed from scan access logs**: `scans/[id]` debug logs no longer expose user IDs, tenant IDs, or scan IDs
+
 ### Known Tech Debt: `lib/supabase/types.ts`
 The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id <PROJECT_ID> > lib/supabase/types.ts` against the live database to auto-generate correct types.
 
@@ -377,4 +386,4 @@ The `Database` type in `lib/supabase/types.ts` is manually maintained and signif
 
 ---
 
-**Last Updated:** 2026-02-19 (Phase M — Free-tier video block, RPC fix, cookie hardening, scan processor race guard)
+**Last Updated:** 2026-02-20 (Phase N — Webhook idempotency, NaN-safe pagination, JSON.parse safety, security headers, checkout validation)

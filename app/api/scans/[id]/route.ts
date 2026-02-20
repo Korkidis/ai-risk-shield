@@ -99,7 +99,7 @@ export async function GET(
             if (userTenantId === scan.tenant_id) {
                 isAuthorized = true
             } else {
-                console.log(`[AuthDebug] Tenant mismatch: User ${userTenantId} vs Scan ${scan.tenant_id} `)
+                console.log('[AuthDebug] Tenant mismatch on scan access')
             }
         }
 
@@ -107,11 +107,11 @@ export async function GET(
         if (user && scan.analyzed_by === user.id) {
             isAuthorized = true
         } else if (user) {
-            console.log(`[AuthDebug] User mismatch: User ${user.id} vs Scan AnalyzedBy ${scan.analyzed_by} `)
+            console.log('[AuthDebug] User mismatch on scan access')
         }
 
         if (!isAuthorized) {
-            console.warn(`[AuthDebug] 403 Access Denied.ScanId: ${params.id}, User: ${user?.id}, Session: ${sessionId} `)
+            console.warn('[AuthDebug] 403 Access Denied on scan access')
             return NextResponse.json({ error: 'Unauthorized access to scan' }, { status: 403 })
         }
 

@@ -52,9 +52,9 @@ export async function GET(req: NextRequest) {
       query = query.filter('assets.file_type', 'eq', fileType)
     }
 
-    // Pagination
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '50')))
+    // Pagination (NaN-safe: parseInt('') returns NaN, || provides fallback)
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '50', 10) || 50))
     const offset = (page - 1) * limit
 
     // Sorting

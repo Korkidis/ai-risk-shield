@@ -39,7 +39,13 @@ function getMeteredPriceId(planId: PlanId): string | null {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { scanId, purchaseType, planId, interval = 'monthly' } = body
+        const { scanId, purchaseType, planId: rawPlanId, interval: rawInterval = 'monthly' } = body
+
+        // Validate planId and interval upfront
+        const VALID_PLAN_IDS = ['pro', 'team', 'agency']
+        const VALID_INTERVALS = ['monthly', 'annual']
+        const planId = VALID_PLAN_IDS.includes(rawPlanId) ? rawPlanId : rawPlanId // preserve for one_time path
+        const interval = VALID_INTERVALS.includes(rawInterval) ? rawInterval : 'monthly'
 
         const cookieStore = await cookies()
         const sessionId = await getSessionId()
@@ -126,8 +132,8 @@ export async function POST(request: NextRequest) {
             cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans-reports?highlight=${scanId}&canceled=true`
 
         } else if (purchaseType === 'subscription' && planId) {
-            // Subscription purchase
-            if (planId === 'free' || planId === 'enterprise') {
+            // Subscription purchase — only allow purchasable plans
+            if (!VALID_PLAN_IDS.includes(planId)) {
                 return NextResponse.json({ error: 'Invalid plan for checkout' }, { status: 400 })
             }
             priceId = getPriceId(planId as PlanId, interval)
@@ -142,9 +148,9 @@ export async function POST(request: NextRequest) {
         }
 
         if (!priceId) {
+            console.error(`[Checkout] Price not configured for ${planId}_${interval}`)
             return NextResponse.json({
-                error: 'Price not configured. Please contact support.',
-                details: `Missing: ${planId}_${interval}`
+                error: 'Price not configured. Please contact support.'
             }, { status: 500 })
         }
 
