@@ -9,7 +9,7 @@ import { cookies } from 'next/headers'
 import { v4 as uuidv4 } from 'uuid'
 
 const SESSION_COOKIE_NAME = 'ars_session_id'
-const SESSION_EXPIRY_DAYS = 30
+const SESSION_EXPIRY_DAYS = 7 // Reduced from 30 to minimize exposure window
 
 /**
  * Get or create session ID

@@ -8,7 +8,7 @@ const TTL_SECONDS = 900; // 15 minutes
 const API_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 if (!API_URL || !SERVICE_KEY) {
-    console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars');
+    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars — switch-tenant route cannot function');
 }
 
 // Helper: call Supabase Auth user endpoint with the caller's token

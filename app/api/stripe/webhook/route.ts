@@ -94,6 +94,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
     const { scanId, purchaseType } = meta
     let { userId, tenantId } = meta
 
+    // Validate metadata inputs
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const VALID_PURCHASE_TYPES = ['one_time', 'subscription']
+    if (purchaseType && !VALID_PURCHASE_TYPES.includes(purchaseType)) {
+        console.error(`[Webhook] Invalid purchaseType in metadata: ${purchaseType}`)
+        return
+    }
+    if (scanId && !UUID_REGEX.test(scanId)) {
+        console.error('[Webhook] Invalid scanId format in metadata')
+        return
+    }
+
     const customerEmail = session.customer_details?.email ?? session.customer_email
 
     async function ensureProfileAndTenant(resolvedUserId: string, email: string): Promise<string | null> {

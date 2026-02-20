@@ -336,6 +336,13 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **guidelineId UUID validation**: Upload route now validates UUID format before querying DB — prevents wasted queries on malformed input
 - **PII scrubbed from scan access logs**: `scans/[id]` debug logs no longer expose user IDs, tenant IDs, or scan IDs
 
+### Phase O Complete (Feb 20, 2026)
+- **Open redirect fixed (CRITICAL)**: Middleware `next` param and auth callback `next` param now validated — must start with `/` and not `//` to prevent `//evil.com` redirect attacks
+- **Webhook metadata validated**: `handleCheckoutCompleted` now validates `scanId` (UUID format) and `purchaseType` (`one_time`/`subscription`) before processing — prevents malformed metadata from corrupting data
+- **Cross-Origin-Opener-Policy header**: Added `same-origin` to prevent cross-origin window reference attacks (Spectre-class)
+- **Switch-tenant fail-fast**: Missing `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` env vars now throw at module load instead of silently failing at request time
+- **Session cookie expiry reduced**: Anonymous session cookie reduced from 30 days to 7 days to minimize exposure window
+
 ### Known Tech Debt: `lib/supabase/types.ts`
 The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id <PROJECT_ID> > lib/supabase/types.ts` against the live database to auto-generate correct types.
 
@@ -386,4 +393,4 @@ The `Database` type in `lib/supabase/types.ts` is manually maintained and signif
 
 ---
 
-**Last Updated:** 2026-02-20 (Phase N — Webhook idempotency, NaN-safe pagination, JSON.parse safety, security headers, checkout validation)
+**Last Updated:** 2026-02-20 (Phase O — Open redirect fix, webhook metadata validation, COOP header, env var fail-fast, session expiry reduction)

@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  if (next) {
+  // Validate redirect: must be a relative path starting with / (prevent open redirect)
+  if (next && next.startsWith('/') && !next.startsWith('//')) {
     return NextResponse.redirect(requestUrl.origin + next)
   }
 

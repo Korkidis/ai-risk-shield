@@ -71,11 +71,10 @@ export async function updateSession(request: NextRequest) {
   ) {
     const redirectUrl = request.nextUrl.clone()
     const next = request.nextUrl.searchParams.get('next')
-    if (next) {
+    if (next && next.startsWith('/') && !next.startsWith('//')) {
+      // Validate: must be a relative path (no protocol, no double-slash open redirect)
       redirectUrl.pathname = next
-      // Keep search params from the next url if any? 
-      // Simplified: Just use the string if it's relative
-      return NextResponse.redirect(new URL(next, request.url))
+      return NextResponse.redirect(redirectUrl)
     }
 
     redirectUrl.pathname = '/dashboard'
