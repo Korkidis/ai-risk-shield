@@ -92,7 +92,12 @@ export default function DashboardPage() {
             const res = await fetch(`/api/scans/${scanId}`, { cache: 'no-store' });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({ error: 'Failed to load scan' }));
-                throw new Error(err.error || `HTTP ${res.status}`);
+                const message = res.status === 403
+                    ? 'You do not have access to this scan. Please log in or check the link.'
+                    : res.status === 404
+                        ? 'This scan could not be found. It may have expired or been deleted.'
+                        : err.error || `HTTP ${res.status}`;
+                throw new Error(message);
             }
 
             const scan = await res.json();
