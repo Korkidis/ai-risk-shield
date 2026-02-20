@@ -69,11 +69,18 @@ export async function POST(request: Request) {
         const retentionDays = tenant.retention_days || 7 // Default 7 days
         const isOverage = used >= limit
 
+        // Video uploads require a paid plan
+        if (isVideo && plan === 'free') {
+            return NextResponse.json({
+                error: 'Video analysis requires a paid plan',
+                code: 'VIDEO_REQUIRES_PAID'
+            }, { status: 403 })
+        }
+
         // Block FREE users at limit - paid plans can proceed with overage
         if (isOverage && plan === 'free') {
             return NextResponse.json({
-                error: 'Monthly scan limit reached',
-                details: `You have used ${used} of ${limit} scans. Please upgrade your plan.`
+                error: 'Monthly scan limit reached'
             }, { status: 403 })
         }
 
@@ -172,21 +179,20 @@ export async function POST(request: Request) {
         if (scanError) {
             console.error('Scan creation error:', scanError)
             return NextResponse.json({
-                error: 'Failed to create scan',
-                details: scanError.message
+                error: 'Failed to create scan'
             }, { status: 500 })
         }
 
-        // 2. Increment Usage (Fire and Forget or Await?)
-        // We await to ensure data integrity, though it adds latency.
-        const { error: rpcError } = await (supabase.rpc as any)('increment_scans_used', {
-            p_tenant: tenantId
-        })
+        // 2. Increment Usage — Direct update (increment_scans_used RPC not deployed)
+        const { error: usageError } = await supabase
+            .from('tenants')
+            // @ts-ignore - scans_used_this_month may not be in generated types
+            .update({ scans_used_this_month: used + 1 })
+            .eq('id', tenantId)
 
-        if (rpcError) {
-            console.error('Failed to increment scan usage', rpcError)
-            // We do NOT fail the request here, as the scan was created successfully.
-            // Just log it for audit.
+        if (usageError) {
+            console.error('Failed to increment scan usage:', usageError)
+            // Non-blocking — scan was created successfully, usage is best-effort
         }
 
         // 3. Report usage to Stripe for metered billing (fire-and-forget)

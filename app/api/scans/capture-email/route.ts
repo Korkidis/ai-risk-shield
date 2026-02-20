@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24, // 24 hours (minimize exposure window)
     })
 
     // 3. Generate Magic Link (Auth Token) - Points to dashboard scan viewer

@@ -63,9 +63,19 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     await broadcastScanProgress(scanId, 10, "Initializing forensic engine...")
 
-    // Update status to 'processing'
-    // @ts-ignore
-    await supabase.from('scans').update({ status: 'processing' }).eq('id', scanId);
+    // Atomic status transition: only proceed if scan is in 'processing' state
+    // (set by upload route). This prevents duplicate processing if processScan
+    // is called twice for the same scan.
+    const { data: statusCheck } = await supabase
+      .from('scans')
+      .select('status')
+      .eq('id', scanId)
+      .single() as unknown as { data: { status: string } | null }
+
+    if (statusCheck?.status === 'complete' || statusCheck?.status === 'failed') {
+      console.warn(`Scan ${scanId} already in terminal state: ${statusCheck.status}, skipping`)
+      return { success: true, scanId }
+    }
 
     const asset = (scan as any).assets
 

@@ -320,6 +320,13 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Anonymous video blocked**: `anonymous-upload` now returns 403 for video uploads — per business model, video analysis requires paid plan
 - **Pagination wired**: `/api/scans/list` accepts `page` and `limit` query params, uses `.range()` instead of `.limit(50)`, returns `{ page, limit, hasMore }` metadata
 
+### Phase M Complete (Feb 19, 2026)
+- **Free-tier video blocked (authenticated)**: `/api/scans/upload` now checks `plan === 'free'` and returns 403 for video uploads — was only blocked for anonymous users
+- **increment_scans_used RPC replaced**: Non-existent RPC call replaced with direct `.update({ scans_used_this_month: used + 1 })` — was silently failing
+- **Cookie maxAge reduced**: `magic_auth_email` cookie reduced from 7 days to 24 hours to minimize exposure window
+- **Scan processor race guard**: `processScan()` now checks scan status before processing — skips if already in terminal state (`complete`/`failed`) to prevent duplicate analysis
+- **Error detail leak sealed**: Upload route `scanError.message` no longer exposed to clients in scan creation failure response
+
 ### Known Tech Debt: `lib/supabase/types.ts`
 The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id <PROJECT_ID> > lib/supabase/types.ts` against the live database to auto-generate correct types.
 
@@ -370,4 +377,4 @@ The `Database` type in `lib/supabase/types.ts` is manually maintained and signif
 
 ---
 
-**Last Updated:** 2026-02-19 (Phase L — Scan session hijacking fix, UUID validation, anonymous video block, pagination)
+**Last Updated:** 2026-02-19 (Phase M — Free-tier video block, RPC fix, cookie hardening, scan processor race guard)
