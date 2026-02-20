@@ -95,5 +95,5 @@ async function ensureProfileExists(user: { id: string; email?: string; user_meta
     return
   }
 
-  console.log(`[auth/callback] Auto-provisioned tenant + profile for shadow user: ${user.email}`)
+  console.log(`[auth/callback] Auto-provisioned tenant + profile for shadow user: ${user.id}`)
 }

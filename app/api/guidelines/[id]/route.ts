@@ -63,11 +63,12 @@ export async function DELETE(
         const tenantId = await getTenantId()
         const supabase = await createClient()
 
-        // Check if any scans depend on it
+        // Check if any scans in this tenant depend on it
         const { count, error: countError } = await supabase
             .from('scans')
             .select('*', { count: 'exact', head: true })
             .eq('guideline_id', params.id)
+            .eq('tenant_id', tenantId)
 
         if (countError) throw countError
         if (count && count > 0) {

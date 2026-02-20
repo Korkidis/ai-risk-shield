@@ -307,6 +307,13 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **SHA-256 checksums**: Upload routes compute real checksums from file buffer instead of storing `'pending'`
 - **Error message leak fixed**: Upload and process routes no longer expose raw `error.message` to clients
 
+### Phase K Complete (Feb 19, 2026)
+- **Cross-tenant fix**: Guidelines DELETE dependency check now filters by `tenant_id` — was querying all tenants' scans
+- **Error detail leaks sealed**: `create-checkout`, `switch-tenant` (×2), `upload` (storage + asset), `anonymous-upload` (storage + asset) no longer expose raw `error.message`/`details`/`code` to clients
+- **PII scrubbed from logs**: Removed email addresses from `console.log` in capture-email, webhook (×4), auth actions, auth callback — replaced with user IDs
+- **sortOrder validated**: `/api/scans/list` now validates `sort_order` to only accept `'asc'`/`'desc'` (was missed in Phase J sort_by whitelist)
+- **Referrer policy**: `/scan/[id]` exports `metadata.referrer = 'no-referrer'` to prevent share token leakage via Referer header
+
 ### Known Tech Debt: `lib/supabase/types.ts`
 The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id <PROJECT_ID> > lib/supabase/types.ts` against the live database to auto-generate correct types.
 
@@ -357,4 +364,4 @@ The `Database` type in `lib/supabase/types.ts` is manually maintained and signif
 
 ---
 
-**Last Updated:** 2026-02-19 (Phase J — Input validation, timing-safe auth, file size limits, SHA-256 checksums, error message hardening)
+**Last Updated:** 2026-02-19 (Phase K — Cross-tenant fix, error detail leaks, PII scrub, sortOrder validation, referrer policy)

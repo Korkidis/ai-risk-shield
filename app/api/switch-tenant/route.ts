@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
         try {
             user = await getUserFromToken(bearer);
         } catch (err: any) {
-            return NextResponse.json({ error: 'Invalid session token', detail: String(err.message) }, { status: 401 });
+            return NextResponse.json({ error: 'Invalid session token' }, { status: 401 });
         }
 
         const actor_user_id = user?.id ?? null;
@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
         try {
             tokenData = await createShortLivedToken(actor_user_id, active_tenant);
         } catch (err: any) {
-            return NextResponse.json({ error: 'Could not mint short-lived token', detail: String(err.message) }, { status: 500 });
+            return NextResponse.json({ error: 'Could not mint short-lived token' }, { status: 500 });
         }
 
         // tokenData expected shape: { access_token, expires_at, ... }

@@ -142,7 +142,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
 
     // 1. Handle Anonymous User Creation
     if ((userId === 'anonymous' || !userId) && customerEmail) {
-        console.log(`[Webhook] Processing anonymous purchase for ${customerEmail}`)
+        console.log('[Webhook] Processing anonymous purchase')
         try {
             // Try to create user
             const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -166,7 +166,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                 if (profile) {
                     userId = profile.id
                     tenantId = profile.tenant_id
-                    console.log(`[Webhook] Found existing profile for ${customerEmail}`)
+                    console.log(`[Webhook] Found existing profile for user ${profile.id}`)
                 } else {
                     // Profile not found — likely trigger lag. Retry after delay.
                     console.warn('[Webhook] User exists but profile not found. Retrying after delay...')
@@ -179,7 +179,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                     if (retryProfile) {
                         userId = retryProfile.id
                         tenantId = retryProfile.tenant_id
-                        console.log(`[Webhook] Found profile on retry for ${customerEmail}`)
+                        console.log(`[Webhook] Found profile on retry for user ${retryProfile.id}`)
                     } else {
                         // Last resort: paginated listUsers (bounded, not full table scan)
                         console.error('[Webhook] Profile still not found. Using paginated listUsers.')
@@ -233,7 +233,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
 
                 if (linkData && linkData.properties?.action_link) {
                     await sendMagicLinkEmail(customerEmail, linkData.properties.action_link)
-                    console.log(`[Webhook] Sent magic link to ${customerEmail}`)
+                    console.log(`[Webhook] Sent magic link to user ${userId}`)
                 } else {
                     console.error(`[Webhook] Failed to generate magic link: ${linkError?.message}`)
                 }

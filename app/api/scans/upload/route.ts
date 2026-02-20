@@ -102,8 +102,7 @@ export async function POST(request: Request) {
         if (uploadError) {
             console.error('Supabase Storage Error:', uploadError)
             return NextResponse.json({
-                error: 'Upload failed',
-                details: uploadError.message
+                error: 'Upload failed'
             }, { status: 500 })
         }
 
@@ -134,9 +133,7 @@ export async function POST(request: Request) {
             await adminClient.storage.from('uploads').remove([uploadData.path])
 
             return NextResponse.json({
-                error: 'Failed to create asset',
-                details: assetError.message,
-                code: assetError.code
+                error: 'Failed to create asset'
             }, { status: 500 })
         }
 

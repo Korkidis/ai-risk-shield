@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       console.log('🔗 [DEV] Magic Link:', magicLink)
     }
 
-    console.log('✅ Shadow User Created & Auth Link Sent to:', email)
+    console.log('✅ Shadow User Created & Auth Link Sent')
     return NextResponse.json({ success: true, verified: true })
   } catch (error) {
     console.error('Email capture error:', error)

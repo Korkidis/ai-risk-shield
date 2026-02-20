@@ -185,7 +185,7 @@ export async function login(_prevState: unknown, formData: FormData) {
     }
   }
 
-  console.log('✅ Login successful for:', email)
+  console.log('✅ Login successful for user:', data.user?.id)
 
   // Success! Redirect to dashboard
   redirect('/dashboard')

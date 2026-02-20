@@ -83,8 +83,7 @@ export async function POST(request: Request) {
     if (uploadError) {
       console.error('Supabase Storage Error:', uploadError)
       return NextResponse.json({
-        error: 'Upload failed',
-        details: uploadError.message
+        error: 'Upload failed'
       }, { status: 500 })
     }
 
@@ -114,8 +113,7 @@ export async function POST(request: Request) {
 
     if (assetError) {
       return NextResponse.json({
-        error: 'Failed to create asset',
-        details: assetError.message,
+        error: 'Failed to create asset'
       }, { status: 500 })
     }
 
