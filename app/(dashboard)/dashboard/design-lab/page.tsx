@@ -68,7 +68,7 @@ import { RSSidebar } from '@/components/rs/RSSidebar';
 import { RSCallout } from '@/components/rs/RSCallout';
 import { RSToastItem } from '@/components/rs/RSToast';
 import { RSTooltip } from '@/components/rs/RSTooltip';
-import { UpgradeModal } from '@/components/landing/UpgradeModal';
+import { AuditModal } from '@/components/marketing/AuditModal';
 
 
 export default function DesignLabPage() {
@@ -82,7 +82,7 @@ export default function DesignLabPage() {
     // System Data Generation Logic (Simplified for lab)
     const [showModal, setShowModal] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [showAuditModal, setShowAuditModal] = useState(false);
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -1156,10 +1156,10 @@ export default function DesignLabPage() {
                                 <div className="space-y-12">
                                     {/* Upgrade Logic */}
                                     <div className="bg-[var(--rs-bg-surface)] p-8 rounded-[var(--rs-radius-chassis)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l1)]">
-                                        <h3 className="text-sm font-bold uppercase tracking-widest mb-4">Upgrade Conversion Logic</h3>
+                                        <h3 className="text-sm font-bold uppercase tracking-widest mb-4">Audit Unlock Flow</h3>
                                         <div className="flex items-center gap-4">
-                                            <RSButton onClick={() => setShowUpgradeModal(true)}>Trigger Upgrade Modal</RSButton>
-                                            <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest">Test the conversion flow modal (A/B)</span>
+                                            <RSButton onClick={() => setShowAuditModal(true)}>Trigger Audit Modal</RSButton>
+                                            <span className="text-[10px] font-mono text-[var(--rs-text-tertiary)] uppercase tracking-widest">Test the $29 one-time + Pro subscription conversion flow</span>
                                         </div>
                                     </div>
 
@@ -1262,7 +1262,7 @@ export default function DesignLabPage() {
             </div >
 
             {/* Modals outside main flow */}
-            {showUpgradeModal && <UpgradeModal scanId="test-scan-id" onClose={() => setShowUpgradeModal(false)} />}
+            <AuditModal isOpen={showAuditModal} onClose={() => setShowAuditModal(false)} scanId="test-scan-id" />
 
             <style jsx global>{`
              @keyframes scan {

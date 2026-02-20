@@ -50,6 +50,17 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       throw new Error('Scan not found: ' + scanId)
     }
 
+    // Fetch brand guideline if scan has one (for Gemini prompt injection)
+    let brandGuideline = null
+    if ((scan as any).guideline_id) {
+      const { data: gl } = await supabase
+        .from('brand_guidelines')
+        .select('*')
+        .eq('id', (scan as any).guideline_id)
+        .single()
+      brandGuideline = gl
+    }
+
     await broadcastScanProgress(scanId, 10, "Initializing forensic engine...")
 
     // Update status to 'processing'
@@ -109,7 +120,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       await broadcastScanProgress(scanId, 30, "Extracting keyframes for analysis...")
 
       // Extract frames
-      const frames = await extractFrames(fileBuffer, 5) // Analyze 5 frames max for MVP
+      const frames = await extractFrames(fileBuffer, 5) // MVP: 5 frames (cost), increase to 10 post-MVP
 
       // VIDEO C2PA CHECK
       try {
@@ -191,7 +202,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // IMAGE PIPELINE - Use full enterprise analysis
       await broadcastScanProgress(scanId, 30, "Analyzing visual spectrum and IP databases...")
       const { analyzeImageMultiPersona } = await import('@/lib/gemini')
-      riskProfile = await analyzeImageMultiPersona(fileBuffer, mimeType, asset.filename)
+      riskProfile = await analyzeImageMultiPersona(fileBuffer, mimeType, asset.filename, brandGuideline || undefined)
 
       // Extract scores from risk profile
       ipResult = {

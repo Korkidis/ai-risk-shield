@@ -28,6 +28,10 @@ import { formatBytes } from '@/lib/utils'
 import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
 import { getTenantBillingStatus, BillingStatus } from '@/app/actions/billing'
 import { generateForensicReport } from '@/lib/pdf-generator'
+import { Entitlements } from '@/lib/entitlements'
+import { type PlanId } from '@/lib/plans'
+import { AuditModal } from '@/components/marketing/AuditModal'
+import { createClient } from '@/lib/supabase/client'
 
 // Wrapper to handle Suspense boundary for useSearchParams
 export default function ScansReportsPage() {
@@ -62,6 +66,11 @@ function ScansReportsContent() {
     const [updating, setUpdating] = useState(false)
 
     const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+    // Entitlements State
+    const [userContext, setUserContext] = useState<{ id: string; tenant_id: string; plan: PlanId } | null>(null)
+    const [showAuditModal, setShowAuditModal] = useState(false)
+    const [shareToast, setShareToast] = useState<string | null>(null)
 
     // Upload State
     const [showUploadModal, setShowUploadModal] = useState(false)
@@ -316,21 +325,57 @@ function ScansReportsContent() {
         fetchBilling()
     }, [scans]) // Refresh quota when scans list updates
 
+    // Build user context for entitlement checks
+    useEffect(() => {
+        if (!billingStatus || scans.length === 0) return
+        const supabase = createClient()
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                const tenantId = scans[0]?.tenant_id || ''
+                setUserContext({ id: user.id, tenant_id: tenantId, plan: (billingStatus.planId || 'free') as PlanId })
+            }
+        })
+    }, [billingStatus, scans])
+
+    // Computed entitlement for selected scan
+    const canViewFull = selectedScan && userContext
+        ? Entitlements.canViewFullReport(userContext, selectedScan as any)
+        : false
+
     const handleDownload = (scan: ScanWithRelations) => {
         if (!scan) return
         try {
-            // Ensure risk_profile is present (it should be for completed scans)
-            // If incomplete, maybe we shouldn't allow download, or download partial.
-            // The requirement is "Wire the Download button... deliver the PDF"
             if (scan.status !== 'complete' || !scan.risk_profile) {
                 console.warn("Cannot download incomplete report")
                 return
             }
 
-            generateForensicReport(scan, scan.risk_profile, false)
+            // Entitlement-gated: sample PDF for free users, full for paid/purchased
+            const isSample = userContext ? !Entitlements.canViewFullReport(userContext, scan as any) : true
+            generateForensicReport(scan, scan.risk_profile, isSample)
         } catch (e) {
             console.error("PDF Generation failed", e)
             alert("Failed to generate PDF report. Please contact support.")
+        }
+    }
+
+    const handleShare = async (scanId: string) => {
+        try {
+            const res = await fetch(`/api/scans/${scanId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'share' })
+            })
+            if (!res.ok) throw new Error('Failed to generate share link')
+            const data = await res.json()
+            const shareUrl = `${window.location.origin}/scan/${scanId}?token=${data.scan.share_token}`
+            await navigator.clipboard.writeText(shareUrl)
+            setShareToast('Link_Copied')
+            setTimeout(() => setShareToast(null), 2500)
+        } catch (err) {
+            console.error('Share failed:', err)
+            setShareToast('Share_Failed')
+            setTimeout(() => setShareToast(null), 2500)
         }
     }
 
@@ -478,6 +523,7 @@ function ScansReportsContent() {
                                                 }}
                                                 onClick={() => handleScanClick(scan.id)}
                                                 onDownload={() => handleDownload(scan)}
+                                                onShare={() => handleShare(scan.id)}
                                             />
                                         ))}
                                     </AnimatePresence>
@@ -556,7 +602,7 @@ function ScansReportsContent() {
                                         className="shadow-sm"
                                     />
 
-                                    {/* Findings List (Timeline Style) */}
+                                    {/* Findings List (Timeline Style) — Entitlement-Gated */}
                                     <div className="border border-rs-border-primary bg-white">
                                         <div className="px-5 py-3 border-b border-rs-border-primary bg-rs-gray-50/50 flex items-center justify-between">
                                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Detected_Anomalies</span>
@@ -565,34 +611,56 @@ function ScansReportsContent() {
                                             </div>
                                         </div>
                                         <div className="p-6">
-                                            {selectedScan?.scan_findings && selectedScan.scan_findings.length > 0 ? (
-                                                <div className="relative border-l border-dashed border-rs-border-primary space-y-8 ml-2">
-                                                    {selectedScan.scan_findings.map((finding: any) => (
-                                                        <div key={finding.id} className="relative pl-6">
-                                                            {/* Timeline Dot */}
-                                                            <div className={cn(
-                                                                "absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white",
-                                                                finding.severity === 'critical' ? 'bg-rs-destruct' :
-                                                                    finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
-                                                            )} />
-
-                                                            <div className="space-y-1">
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-[10px] font-bold text-rs-text-primary uppercase tracking-tight">{finding.title}</span>
-                                                                    <span className="text-[9px] font-mono text-rs-text-tertiary">{finding.confidence_score}%_CONF</span>
+                                            {canViewFull ? (
+                                                // FULL ACCESS: Show all findings
+                                                selectedScan?.scan_findings && selectedScan.scan_findings.length > 0 ? (
+                                                    <div className="relative border-l border-dashed border-rs-border-primary space-y-8 ml-2">
+                                                        {selectedScan.scan_findings.map((finding: any) => (
+                                                            <div key={finding.id} className="relative pl-6">
+                                                                <div className={cn(
+                                                                    "absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white",
+                                                                    finding.severity === 'critical' ? 'bg-rs-destruct' :
+                                                                        finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
+                                                                )} />
+                                                                <div className="space-y-1">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-[10px] font-bold text-rs-text-primary uppercase tracking-tight">{finding.title}</span>
+                                                                        <span className="text-[9px] font-mono text-rs-text-tertiary">{finding.confidence_score}%_CONF</span>
+                                                                    </div>
+                                                                    <p className="text-[10px] text-rs-text-secondary leading-relaxed bg-rs-gray-50 p-3 rounded-[2px] border border-rs-border-primary/50 relative">
+                                                                        <span className="absolute top-2 -left-1 w-2 h-2 bg-rs-gray-50 border-t border-l border-rs-border-primary/50 -rotate-45" />
+                                                                        {finding.description}
+                                                                    </p>
                                                                 </div>
-                                                                <p className="text-[10px] text-rs-text-secondary leading-relaxed bg-rs-gray-50 p-3 rounded-[2px] border border-rs-border-primary/50 relative">
-                                                                    {/* Speech bubble notch */}
-                                                                    <span className="absolute top-2 -left-1 w-2 h-2 bg-rs-gray-50 border-t border-l border-rs-border-primary/50 -rotate-45" />
-                                                                    {finding.description}
-                                                                </p>
                                                             </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-4">
+                                                        <span className="text-[10px] font-mono text-rs-text-tertiary uppercase tracking-widest opacity-50">No_Anomalies_Recorded</span>
+                                                    </div>
+                                                )
                                             ) : (
-                                                <div className="text-center py-4">
-                                                    <span className="text-[10px] font-mono text-rs-text-tertiary uppercase tracking-widest opacity-50">No_Anomalies_Recorded</span>
+                                                // LOCKED: Show gated state with unlock CTA
+                                                <div className="text-center py-8 space-y-4">
+                                                    <div className="w-12 h-12 mx-auto rounded-full bg-rs-gray-100 flex items-center justify-center">
+                                                        <span className="text-lg">🔒</span>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <p className="text-[10px] font-bold text-rs-text-primary uppercase tracking-widest">
+                                                            {selectedScan?.scan_findings?.length || 0} Findings_Detected
+                                                        </p>
+                                                        <p className="text-[10px] text-rs-text-secondary max-w-xs mx-auto leading-relaxed">
+                                                            Detailed analysis, severity levels, and mitigation strategies are restricted. Unlock the full report to view.
+                                                        </p>
+                                                    </div>
+                                                    <RSButton
+                                                        variant="primary"
+                                                        className="mx-auto text-[9px] uppercase tracking-widest font-black"
+                                                        onClick={() => setShowAuditModal(true)}
+                                                    >
+                                                        Unlock_Full_Report
+                                                    </RSButton>
                                                 </div>
                                             )}
                                         </div>
@@ -664,7 +732,14 @@ function ScansReportsContent() {
                                         className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-rs-gray-50 hover:border-rs-text-primary transition-all"
                                         onClick={() => selectedScan && handleDownload(selectedScan)}
                                     >
-                                        Export_Dossier
+                                        {canViewFull ? 'Export_Dossier' : 'Download_Sample'}
+                                    </RSButton>
+                                    <RSButton
+                                        variant="ghost"
+                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-rs-gray-50 hover:border-rs-text-primary transition-all"
+                                        onClick={() => selectedScan && handleShare(selectedScan.id)}
+                                    >
+                                        {shareToast || 'Share_Link'}
                                     </RSButton>
                                     <RSButton
                                         variant="ghost"
@@ -683,8 +758,16 @@ function ScansReportsContent() {
                 <RSBulkActionBar
                     selectedCount={selectedIds.length}
                     onClear={() => setSelectedIds([])}
-                    onDownload={() => console.log('Download batch', selectedIds)}
-                    onShare={() => console.log('Share batch', selectedIds)}
+                    onDownload={() => {
+                        selectedIds.forEach(id => {
+                            const scan = scans.find(s => s.id === id)
+                            if (scan && scan.status === 'complete') handleDownload(scan)
+                        })
+                    }}
+                    onShare={() => {
+                        // Share the first selected scan (batch share needs dedicated API)
+                        if (selectedIds.length > 0) handleShare(selectedIds[0])
+                    }}
                     onDelete={() => {
                         if (confirm(`Purge ${selectedIds.length} records from the archive?`)) {
                             setScans(prev => prev.filter(s => !selectedIds.includes(s.id)))
@@ -726,12 +809,33 @@ function ScansReportsContent() {
                         )}
                     </div>
                 </RSModal>
+
+                {/* Audit Modal — Unlock Full Report CTA */}
+                <AuditModal
+                    isOpen={showAuditModal}
+                    onClose={() => setShowAuditModal(false)}
+                    scanId={selectedScanId || ''}
+                />
+
+                {/* Share Toast */}
+                <AnimatePresence>
+                    {shareToast && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] px-6 py-3 bg-rs-text-primary text-white text-[10px] font-mono font-bold uppercase tracking-widest rounded-[2px] shadow-lg"
+                        >
+                            {shareToast}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </RSBackground>
     )
 }
 
-function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage, onBulkToggle, onClick, onDownload }: {
+function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage, onBulkToggle, onClick, onDownload, onShare }: {
     scan: ScanWithRelations;
     isSelected: boolean;
     isBulkSelected: boolean;
@@ -740,6 +844,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage,
     onBulkToggle: (checked: boolean) => void;
     onClick: () => void;
     onDownload: () => void;
+    onShare: () => void;
 }) {
     const score = scan.risk_profile?.composite_score || 0;
     const thumbnailPath = scan.tenant_id && scan.asset_id ? `${scan.tenant_id}/${scan.asset_id}_thumb.jpg` : null;
@@ -933,7 +1038,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage,
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); console.log('Share', scan.id); }}
+                        onClick={(e) => { e.stopPropagation(); onShare(); }}
                         className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-rs-gray-50 transition-all group/btn"
                         title="Share scan"
                     >

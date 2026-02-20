@@ -32,7 +32,8 @@ export async function createScan(
   _fileUrl: string,
   fileName: string,
   fileSize: number,
-  fileType: 'image' | 'video'
+  fileType: 'image' | 'video',
+  sha256Checksum: string = 'pending'
 ): Promise<UploadResult> {
   try {
     const user = await getCurrentUser()
@@ -80,7 +81,7 @@ export async function createScan(
         file_size: fileSize,
         storage_path: filePath,
         storage_bucket: 'uploads',
-        sha256_checksum: 'pending', // TODO: Calculate actual checksum
+        sha256_checksum: sha256Checksum,
         uploaded_by: (user as any).id,
         delete_after: deleteAfter.toISOString(),
       })

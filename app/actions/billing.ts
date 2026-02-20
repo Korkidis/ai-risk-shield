@@ -32,7 +32,7 @@ export async function getTenantBillingStatus(tenantId?: string): Promise<Billing
         .single();
 
     if (tenantError || !tenantData) return null;
-    const tenant = tenantData as any;
+    const tenant = tenantData as unknown as Pick<import('@/types/database').ExtendedTenant, 'plan' | 'monthly_scan_limit' | 'seat_limit' | 'subscription_status'>;
 
     // 2. Count Seats (Profiles in this tenant)
     const { count: seatsUsed } = await supabase
@@ -58,6 +58,6 @@ export async function getTenantBillingStatus(tenantId?: string): Promise<Billing
         seatsUsed: seatsUsed || 0,
         monthlyScanLimit: tenant.monthly_scan_limit || 3,
         scansUsed: scansUsed || 0,
-        subscriptionStatus: tenant.subscription_status
+        subscriptionStatus: tenant.subscription_status ?? null
     };
 }

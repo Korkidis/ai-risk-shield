@@ -56,6 +56,8 @@ export async function GET(
       findings: hasEmail ? findings : findings.slice(0, 3),
       total_findings: findings.length,
       filename: typedScan.assets?.filename,
+      // Include real Gemini risk_profile blob when scan is complete
+      risk_profile: typedScan.status === 'complete' ? typedScan.risk_profile : undefined,
     })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

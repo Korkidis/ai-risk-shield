@@ -1,4 +1,5 @@
 import { createC2pa } from 'c2pa-node';
+import { createHash } from 'crypto';
 import { C2PAReport } from './c2pa-types';
 
 export type { C2PAReport };
@@ -58,8 +59,23 @@ export async function verifyContentCredentials(filePath: string): Promise<C2PARe
         const signatureInfo = activeManifest.signature_info;
         const issuer = signatureInfo?.issuer || 'Unknown CA';
         const timestamp = signatureInfo?.time || undefined;
-        // In some cases we can extract serial from cert data if needed, using mock for now
-        const serial = "C2PA-CERT-884-29-X";
+
+        // Extract cert serial from runtime data (c2pa-rs may serialize it as a dynamic property
+        // even though it's not in the TypeScript type definition)
+        let serial: string | undefined = undefined;
+        if (signatureInfo) {
+            const runtimeSerial = (signatureInfo as any).cert_serial_number
+                ?? (signatureInfo as any).serial_number
+                ?? (signatureInfo as any).serial;
+            if (typeof runtimeSerial === 'string' && runtimeSerial.length > 0) {
+                serial = runtimeSerial;
+            }
+        }
+        // Deterministic fallback: hash from issuer + timestamp so each unique signer gets a stable ID
+        if (!serial && (issuer !== 'Unknown CA' || timestamp)) {
+            const hash = createHash('sha256').update(`${issuer}:${timestamp || 'no-time'}`).digest('hex');
+            serial = `C2PA-${hash.substring(0, 4).toUpperCase()}-${hash.substring(4, 8).toUpperCase()}-${hash.substring(8, 12).toUpperCase()}`;
+        }
 
         // Extract Assertions for History & Identity
         let creator = 'Unknown Creator';

@@ -44,6 +44,10 @@ export default function DashboardPage() {
     const [currentScanId, setCurrentScanId] = React.useState<string | null>(scanIdParam);
     const [emailCaptured, setEmailCaptured] = React.useState(false);
 
+    // Brand Guidelines
+    const [guidelines, setGuidelines] = React.useState<Array<{id: string, name: string}>>([]);
+    const [selectedGuidelineId, setSelectedGuidelineId] = React.useState<string>('default');
+
     // Track whether we've already processed the scan param (prevent double-fetch)
     const processedScanParam = useRef(false);
     const processedAssignment = useRef(false);
@@ -67,6 +71,16 @@ export default function DashboardPage() {
     };
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Fetch brand guidelines for selector
+    useEffect(() => {
+        fetch('/api/guidelines')
+            .then(r => r.json())
+            .then(data => {
+                if (data.guidelines?.length) setGuidelines(data.guidelines)
+            })
+            .catch(() => {}) // Silently fail — selector stays at 'default'
+    }, [])
 
     // ─── VIEWER MODE: Load scan from ?scan=<id> param ────────────────────────
     const loadScanFromParam = useCallback(async (scanId: string) => {
@@ -219,7 +233,7 @@ export default function DashboardPage() {
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('guidelineId', 'default');
+        formData.append('guidelineId', selectedGuidelineId);
 
         try {
             const uploadRes = await fetch('/api/scans/upload', {
@@ -334,6 +348,23 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-rs-signal font-mono text-[10px] tracking-widest uppercase">CH_01_INPUT</div>
                 </div>
+
+                {/* Brand Guideline Selector — only show if user has guidelines */}
+                {guidelines.length > 0 && !isAnonymous && (
+                    <div className="flex items-center gap-3 px-4 py-2 mb-4 bg-white/5 border border-white/10 rounded-[var(--rs-radius-element)] relative z-10 shrink-0">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-rs-signal/50">Brand_Protocol</span>
+                        <select
+                            value={selectedGuidelineId}
+                            onChange={(e) => setSelectedGuidelineId(e.target.value)}
+                            className="flex-1 text-[10px] font-mono font-bold bg-transparent border-none text-rs-signal focus:outline-none cursor-pointer"
+                        >
+                            <option value="default">DEFAULT_POLICY</option>
+                            {guidelines.map(g => (
+                                <option key={g.id} value={g.id}>{g.name.toUpperCase()}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 {/* Main Viewport */}
                 <div

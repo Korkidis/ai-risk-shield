@@ -20,8 +20,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const riskLevel = searchParams.get('risk_level')
     const fileType = searchParams.get('file_type')
-    const sortBy = searchParams.get('sort_by') || 'created_at'
     const sortOrder = searchParams.get('sort_order') || 'desc'
+
+    // Whitelist allowed sort fields to prevent injection via .order()
+    const ALLOWED_SORT_FIELDS = ['created_at', 'composite_score', 'risk_level', 'status']
+    const rawSortBy = searchParams.get('sort_by') || 'created_at'
+    const sortBy = ALLOWED_SORT_FIELDS.includes(rawSortBy) ? rawSortBy : 'created_at'
 
     const tenantId = await getTenantId()
     const supabase = await createClient()

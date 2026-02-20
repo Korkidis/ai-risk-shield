@@ -130,7 +130,8 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
           setProgress(100)
           setStatusMessage("Analysis complete. Compiling dossier.")
 
-          const riskProfile: RiskProfile = {
+          // Use real Gemini risk_profile when available, fallback for legacy scans
+          const riskProfile: RiskProfile = scanStatus.risk_profile || {
             composite_score: scanStatus.composite_score || 0,
             verdict: scanStatus.risk_level === 'critical' ? 'Critical Risk' :
               scanStatus.risk_level === 'high' ? 'High Risk' :

@@ -47,7 +47,7 @@ export interface ExtendedScan {
   tenant_id: string | null
   analyzed_by?: string | null // User ID who analyzed
   asset_id: string
-  guideline_id?: string
+  guideline_id?: string | null
   status: 'pending' | 'processing' | 'complete' | 'failed'
   is_video?: boolean
   ip_risk_score?: number
@@ -58,6 +58,8 @@ export interface ExtendedScan {
   email?: string | null // For anonymous email capture
   purchased?: boolean | null
   purchase_type?: string | null
+  stripe_payment_intent_id?: string | null
+  user_id?: string | null  // Set by webhook for purchased scans (parallel to analyzed_by)
   created_at: string
   updated_at: string
   notes?: string
@@ -98,14 +100,42 @@ export interface ScanWithRelations extends ExtendedScan {
 export interface ExtendedTenant {
   id: string
   name: string
-  plan: 'free' | 'individual' | 'team' | 'agency' | 'enterprise'
+  plan: 'free' | 'pro' | 'team' | 'agency' | 'enterprise'
+
+  // Core limits (synced from lib/plans.ts via webhook applyPlanToTenant)
   monthly_scan_limit: number
+  monthly_report_limit?: number
+  seat_limit?: number
+  brand_profile_limit?: number
+  retention_days?: number
   scans_used_this_month: number
   usage_limit_mitigation: number
-  parent_tenant_id?: string | null // For Agency/Enterprise hierarchy
+
+  // Overage costs (cents, from PlanConfig)
+  scan_overage_cost_cents?: number
+  report_overage_cost_cents?: number
+
+  // Feature flags (from PlanConfig.features)
+  feature_bulk_upload?: boolean
+  feature_co_branding?: boolean
+  feature_white_label?: boolean
+  feature_team_dashboard?: boolean
+  feature_audit_logs?: boolean
+  feature_priority_queue?: boolean
+  feature_sso?: boolean
+
+  // Stripe integration
   stripe_customer_id?: string | null
+  stripe_subscription_id?: string | null
+  stripe_metered_item_id?: string | null
   subscription_status?: 'active' | 'past_due' | 'canceled' | 'trialing' | 'incomplete' | null
+
+  // Hierarchy
+  parent_tenant_id?: string | null
+
+  // Timestamps
   created_at: string
+  updated_at?: string
 }
 
 export interface ProvenanceDetails {
@@ -124,7 +154,7 @@ export interface ProvenanceDetails {
   signature_status: 'valid' | 'invalid' | 'caution'
   certificate_issuer?: string | null
   certificate_serial?: string | null
-  hashing_algorithm: string // default 'sha256'
+  hashing_algorithm?: string // default 'sha256' (DB default, scan-processor doesn't write explicitly)
 
   // -- Deep Data (JSONB) --
   // These replace the flat columns that were previously assumed

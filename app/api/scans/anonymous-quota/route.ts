@@ -18,7 +18,7 @@ export async function GET() {
         })
     } catch (error) {
         console.error('Quota check error:', error)
-        // Fail open or closed? For UI, maybe just return default
-        return NextResponse.json({ remaining: 3, allowed: true })
+        // Fail closed — don't allow scans when quota service is down
+        return NextResponse.json({ remaining: 0, allowed: false, limit: 3 }, { status: 503 })
     }
 }

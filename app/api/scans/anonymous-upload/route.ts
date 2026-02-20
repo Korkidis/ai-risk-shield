@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getOrCreateSessionId } from '@/lib/session'
+import { createHash } from 'crypto'
 import type { ExtendedAsset, ExtendedScan } from '@/types/database'
 
 /**
@@ -40,6 +41,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    // Validate file size (100MB for images, 500MB for videos)
+    const MAX_IMAGE_SIZE = 100 * 1024 * 1024
+    const MAX_VIDEO_SIZE = 500 * 1024 * 1024
+    const sizeLimit = file.type.startsWith('video/') ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE
+    if (file.size > sizeLimit) {
+      return NextResponse.json({
+        error: 'File too large',
+        details: `Maximum file size is ${sizeLimit / (1024 * 1024)}MB`
+      }, { status: 413 })
+    }
+
     // Validate file type
     const isImage = file.type.startsWith('image/')
     const isVideo = file.type.startsWith('video/')
@@ -50,6 +62,10 @@ export async function POST(request: Request) {
 
     const fileType = isImage ? 'image' : 'video'
 
+    // Read file buffer for checksum + upload
+    const fileBuffer = Buffer.from(await file.arrayBuffer())
+    const sha256Checksum = createHash('sha256').update(fileBuffer).digest('hex')
+
     // Use service role to bypass RLS (anonymous users don't have tenant_id)
     const supabase = await createServiceRoleClient()
 
@@ -58,9 +74,10 @@ export async function POST(request: Request) {
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('uploads')
-      .upload(fileName, file, {
+      .upload(fileName, fileBuffer, {
         cacheControl: '3600',
         upsert: false,
+        contentType: file.type,
       })
 
     if (uploadError) {
@@ -85,7 +102,7 @@ export async function POST(request: Request) {
       file_size: file.size,
       storage_path: uploadData.path,
       storage_bucket: 'uploads',
-      sha256_checksum: 'pending',
+      sha256_checksum: sha256Checksum,
       delete_after: deleteAfter.toISOString(),
     }
 

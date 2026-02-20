@@ -168,12 +168,27 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                     tenantId = profile.tenant_id
                     console.log(`[Webhook] Found existing profile for ${customerEmail}`)
                 } else {
-                    console.error('[Webhook] User exists but profile not found. Fallback to listUsers.')
-                    const { data: users } = await supabase.auth.admin.listUsers()
-                    const found = users.users.find((u: any) => u.email === customerEmail)
-                    if (found) {
-                        userId = found.id
-                        console.log(`[Webhook] Found user via listUsers: ${userId}`)
+                    // Profile not found — likely trigger lag. Retry after delay.
+                    console.warn('[Webhook] User exists but profile not found. Retrying after delay...')
+                    await new Promise(r => setTimeout(r, 1000))
+                    const { data: retryProfile } = await supabase
+                        .from('profiles')
+                        .select('id, tenant_id')
+                        .eq('email', customerEmail)
+                        .single()
+                    if (retryProfile) {
+                        userId = retryProfile.id
+                        tenantId = retryProfile.tenant_id
+                        console.log(`[Webhook] Found profile on retry for ${customerEmail}`)
+                    } else {
+                        // Last resort: paginated listUsers (bounded, not full table scan)
+                        console.error('[Webhook] Profile still not found. Using paginated listUsers.')
+                        const { data: users } = await supabase.auth.admin.listUsers({ perPage: 50 })
+                        const found = users.users.find((u: any) => u.email === customerEmail)
+                        if (found) {
+                            userId = found.id
+                            console.log(`[Webhook] Found user via listUsers: ${userId}`)
+                        }
                     }
                 }
             } else if (newUser.user) {
@@ -182,10 +197,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
 
                 // Poll for profile creation (trigger)
                 let profileLoop = null
-                for (let i = 0; i < 3; i++) {
+                for (let i = 0; i < 5; i++) {
                     const { data: p } = await supabase.from('profiles').select('id, tenant_id').eq('id', userId).single()
                     if (p) { profileLoop = p; break }
-                    await new Promise(r => setTimeout(r, 500))
+                    await new Promise(r => setTimeout(r, 1000))
                 }
 
                 if (profileLoop?.tenant_id) {

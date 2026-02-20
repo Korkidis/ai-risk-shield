@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getTenantId, requireAuth } from '@/lib/supabase/auth'
 import { reportScanUsage } from '@/lib/stripe-usage'
+import { createHash } from 'crypto'
 
 /**
  * POST /api/scans/upload
@@ -21,9 +22,21 @@ export async function POST(request: Request) {
 
         const formData = await request.formData()
         const file = formData.get('file') as File
+        const guidelineId = formData.get('guidelineId') as string | null
 
         if (!file) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+        }
+
+        // Validate file size (100MB for images, 500MB for videos)
+        const MAX_IMAGE_SIZE = 100 * 1024 * 1024
+        const MAX_VIDEO_SIZE = 500 * 1024 * 1024
+        const sizeLimit = file.type.startsWith('video/') ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE
+        if (file.size > sizeLimit) {
+            return NextResponse.json({
+                error: 'File too large',
+                details: `Maximum file size is ${sizeLimit / (1024 * 1024)}MB`
+            }, { status: 413 })
         }
 
         // Validate file type
@@ -68,6 +81,10 @@ export async function POST(request: Request) {
         const deleteAfter = new Date()
         deleteAfter.setDate(deleteAfter.getDate() + retentionDays)
 
+        // Read file buffer for checksum + upload
+        const fileBuffer = Buffer.from(await file.arrayBuffer())
+        const sha256Checksum = createHash('sha256').update(fileBuffer).digest('hex')
+
         // Use service role client for storage (bypasses RLS folder restrictions)
         const adminClient = await createServiceRoleClient()
 
@@ -76,9 +93,10 @@ export async function POST(request: Request) {
 
         const { data: uploadData, error: uploadError } = await adminClient.storage
             .from('uploads')
-            .upload(fileName, file, {
+            .upload(fileName, fileBuffer, {
                 cacheControl: '3600',
                 upsert: false,
+                contentType: file.type,
             })
 
         if (uploadError) {
@@ -98,7 +116,7 @@ export async function POST(request: Request) {
             file_size: file.size,
             storage_path: uploadData.path,
             storage_bucket: 'uploads',
-            sha256_checksum: 'pending',
+            sha256_checksum: sha256Checksum,
             uploaded_by: user.id,
             delete_after: deleteAfter.toISOString()
         }
@@ -122,13 +140,29 @@ export async function POST(request: Request) {
             }, { status: 500 })
         }
 
+        // Validate brand guideline if provided (tenant-scoped)
+        let validatedGuidelineId: string | null = null
+        if (guidelineId && guidelineId !== 'default') {
+            const { data: guideline } = await supabase
+                .from('brand_guidelines')
+                .select('id')
+                .eq('id', guidelineId)
+                .eq('tenant_id', tenantId)
+                .single() as unknown as { data: { id: string } | null }
+            if (guideline) {
+                validatedGuidelineId = guideline.id
+            }
+            // If not found, silently proceed without guideline (don't block upload)
+        }
+
         // Create scan record
         const scanData = {
             tenant_id: tenantId,
             asset_id: (asset as any).id,
             is_video: fileType === 'video',
             status: 'processing', // Must match check constraint: processing, complete, failed
-            analyzed_by: user.id
+            analyzed_by: user.id,
+            guideline_id: validatedGuidelineId
         }
 
         const { data: scan, error: scanError } = await supabase
@@ -178,6 +212,6 @@ export async function POST(request: Request) {
         })
     } catch (error: any) {
         console.error('Upload error:', error)
-        return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+        return NextResponse.json({ error: 'Upload failed. Please try again.' }, { status: 500 })
     }
 }

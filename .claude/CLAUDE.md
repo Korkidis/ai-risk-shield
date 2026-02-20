@@ -17,16 +17,17 @@ SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Tur
 - **`/scan/[id]` is transitional.** Do NOT break it — it's still used for auto-download + verification. Deprecate only after dashboard path fully covers its functions.
 
 ### Conversion Flow (Current → Target)
-**Current:** Upload → results → email gate → magic link → `/scan/[id]` (dead end) → AuditModal popup
-**Target:** Upload → results → "Create account" gate (email + consent) → instant PDF download → magic link → `/dashboard/scans-reports` (scan auto-selected) → purchase CTAs in drawer
+**Current:** Upload → results inline → redirect to `/dashboard?scan=[id]` → magic link for persistence → `/dashboard/scans-reports` (scan auto-selected) → purchase CTAs in drawer
+**Remaining:** Email gate before redirect (consent collection), instant PDF download before account creation
 
-### Known Theater (Must Fix)
-- Telemetry stream is scripted, not real analysis progress (`dashboard/page.tsx:79-114`, `FreeUploadContainer.tsx:46-59`)
-- "3/3 REMAINING" counter is hardcoded (`FreeUploadContainer.tsx:208`)
-- Sidebar "PRO PLAN 4/10 seats" is hardcoded
-- Quota display "15/50_SCANS" in scans-reports is hardcoded
-- AuditModal lists features that don't exist ("Unlimited Scans", "API Access")
-- Price inconsistency: `UpgradeModal.tsx` says $49.99/mo, `plans.ts` says $49.00 — pick one
+### Known Theater (Status)
+- ~~Telemetry stream is scripted~~ — **FIXED**: Dashboard + Landing use Supabase Realtime progress (Step 7)
+- ~~"3/3 REMAINING" counter is hardcoded~~ — **FIXED**: `FreeUploadContainer` fetches from `/api/scans/anonymous-quota`
+- ~~Sidebar "PRO PLAN 4/10 seats" is hardcoded~~ — **FIXED**: `TenantPlanBadge` reads real billing data
+- ~~Quota display "15/50_SCANS" is hardcoded~~ — **FIXED**: scans-reports reads `billingStatus.scansUsed/monthlyScanLimit`
+- ~~AuditModal lies~~ — **FIXED**: Features match `plans.ts` PRO tier (Phase D)
+- ~~Price inconsistency~~ — **FIXED**: `UpgradeModal.tsx` deleted, AuditModal shows $49 (Phase D)
+- `FreeForensicReport.tsx` (design-lab only, not customer-facing) — cosmetic fix applied Phase E
 
 ## Critical Security Rules
 
@@ -82,7 +83,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Tur
 ### Authentication
 - **Password-based:** signup + login via Server Actions
 - **Magic link (freemium):** Shadow user creation via `supabase.auth.admin.createUser()` + `generateLink()`, delivered via Resend
-- **Legacy:** Custom `magic_links` table is deprecated. Migration to drop exists (`20260208_cleanup_magic_links.sql`). `/api/auth/verify/route.ts` has been deleted — migration can now be applied.
+- **Legacy:** Custom `magic_links` table is deprecated. Migration to drop exists (`20260208_cleanup_magic_links.sql`). `/api/auth/verify/route.ts` has been deleted — migration can now be applied. Empty `app/auth/verify/` directory cleaned up (Phase E).
 
 ### Stripe Integration
 - **5-tier pricing:** FREE / PRO ($49) / TEAM ($199) / AGENCY ($499) / ENTERPRISE (custom) — see `lib/plans.ts`
@@ -101,7 +102,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Tur
 ❌ **Don't store Stripe card data** - Stripe handles it, we only store customer IDs
 ❌ **Don't block paid users at quota** - Allow overages, bill automatically
 ❌ **Don't add hardcoded risk thresholds** - Use `lib/risk/tiers.ts` exclusively
-❌ **Don't create duplicate analysis pipelines** - Route all flows through the same processor (known issue: auth vs anon paths diverge)
+❌ **Don't create duplicate analysis pipelines** - Route all flows through the same processor (FIXED: unified in Phase A)
 ❌ **Don't reconstruct data you already stored** - Read the `risk_profile` blob from scans table
 
 ## File Structure Patterns
@@ -120,8 +121,9 @@ app/
 │       └── design-lab/          # Internal component showcase (hide from customers)
 ├── (marketing)/         # Pricing page
 ├── api/                 # API routes
-│   ├── scans/           # Upload, process, capture-email, assign-to-user, list, [id]
+│   ├── scans/           # Upload, process, capture-email, assign-to-user, list, [id], anonymous-quota, anonymous-upload
 │   ├── stripe/          # Checkout + webhook
+│   ├── switch-tenant/   # Multi-tenant switching
 │   └── guidelines/      # Brand guidelines CRUD
 ├── scan/[id]/           # Anonymous scan result (transitional — deprecate after dashboard covers it)
 ├── auth/callback/       # Supabase auth callback
@@ -143,7 +145,7 @@ lib/
 
 components/
 ├── rs/                 # Design system (62+ "forensic instrument" components)
-├── landing/            # Landing page components (FreeUploadContainer, ScanResultsWithGate, etc.)
+├── landing/            # Landing page components (FreeUploadContainer, LandingClient, etc.)
 ├── marketing/          # AuditModal, pricing components
 ├── billing/            # UpgradeButton, OneTimePurchaseButton
 ├── email/              # React Email templates (SampleReportEmail, MagicLinkEmail)
@@ -178,7 +180,7 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) —
 
 - [ ] Upload image → verify scores appear
 - [ ] Upload video as free user → verify blocked
-- [ ] Upload video as paid user → verify 10 frames analyzed
+- [ ] Upload video as paid user → verify 5 frames analyzed (MVP)
 - [ ] Hit quota limit (free) → verify upgrade modal
 - [ ] Hit quota limit (paid) → verify overage allowed
 - [ ] Cross-tenant test → verify can't access other tenant's data
@@ -194,7 +196,7 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) —
 - `tenants` - Organizations (stores plan/quota/Stripe IDs, `stripe_metered_item_id` for overage)
 - `profiles` - Links auth.users to tenants (role: owner/admin/member)
 - `assets` - Uploaded file metadata (path, checksum, size, `session_id` for anonymous)
-- `scans` - Analysis records (scores, risk level, status, `risk_profile` JSON blob, `session_id`, `purchased`, `purchase_type`)
+- `scans` - Analysis records (scores, risk level, status, `risk_profile` JSON blob, `session_id`, `purchased`, `purchase_type`, `share_token`, `share_expires_at`)
 - `scan_findings` - Detailed findings (type, severity, description, confidence_score)
 - `video_frames` - Frame-by-frame analysis for videos
 - `brand_profiles` - Custom brand guidelines (encryption NOT yet implemented)
@@ -210,6 +212,8 @@ Two migrations created but NOT applied to live DB:
 - `20260211_add_tenant_invites_metadata.sql`
 - `20260211_add_tenant_switch_audit_created_at_index.sql` (CONCURRENTLY — must run outside transaction)
 
+Note: User reported applying these + the Feb 15 migrations (`risk_profile_blob`, `fix_scan_assignment`, `cleanup_shadow_users_rpc`, `enable_realtime_scans`) on Feb 16. Verify in Supabase dashboard if uncertain.
+
 ### Every Table Must Have
 - `id` (UUID primary key)
 - `created_at` (timestamp)
@@ -219,10 +223,10 @@ Two migrations created but NOT applied to live DB:
 ## Video Processing Rules
 
 - **Paid tiers only** - Check plan before allowing upload
-- **Extract 10 frames** - Evenly distributed (0%, 12.5%, 25%, ..., 95%, 100%)
+- **Extract 5 frames (MVP)** - Evenly distributed across video duration. Will increase to 10 post-MVP once cost model validated.
 - **Aggregate scores** - Use MAX(all frame scores), not average
 - **Storage** - Delete frames after retention period (same as video)
-- **Frame limit** - 10 frames balances cost vs coverage
+- **Frame limit** - 5 frames for MVP cost efficiency; `extractFrames()` default parameter is 10 for future use
 
 ## Quota Enforcement
 
@@ -243,7 +247,7 @@ if (!allowed && plan === 'free') {
 - **Region:** US East (iad1) - or closest to target users
 - **Environment:** Separate env vars for preview vs production
 
-## Known Issues (Current as of Feb 16, 2026)
+## Known Issues (Current as of Feb 17, 2026)
 
 ### Pipeline Unified (Phase A Complete)
 Both authenticated and anonymous paths now route through `lib/ai/scan-processor.ts`. C2PA runs for all scans. `/api/analyze` (legacy sync endpoint) has been deleted.
@@ -251,8 +255,60 @@ Both authenticated and anonymous paths now route through `lib/ai/scan-processor.
 ### Data Handoff — Fixed
 `GET /api/scans/[id]` now reads the stored `risk_profile` JSONB blob directly. Legacy fallback still exists for pre-blob scans (reconstructs from individual columns). RSFindingsDossier and ProvenanceTelemetryStream now consume real Gemini data.
 
-### Brand Guidelines Not Wired
-UI (`/dashboard/brand-guidelines`) works for CRUD. Dashboard upload sends `guidelineId: 'default'` (hardcoded). Gemini prompts don't reference custom guidelines. Feature exists in UI but doesn't affect analysis.
+### Brand Guidelines — Wired (Phase F)
+Upload API extracts `guidelineId` from formData, validates tenant ownership, stores `guideline_id` on scan record. Scan processor fetches the guideline and passes it to `analyzeImageMultiPersona()`. Dashboard has guideline selector dropdown (only shows if user has created guidelines). Video pipeline guidelines deferred (needs per-frame prompt injection).
+
+### Phase D Complete (Feb 17, 2026)
+- Entitlements enforced in scans-reports drawer (gated findings, sample vs full PDF via `Entitlements.canViewFullReport()`)
+- Share button wired: API call → clipboard copy → animated toast
+- AuditModal rendering with real Stripe checkout buttons (`OneTimePurchaseButton` + `UpgradeButton`)
+- Bulk download/share wired in `RSBulkActionBar`
+- Dead code deleted: `ScanResultsWithGate.tsx`, `UpgradeModal.tsx`; design-lab updated to use `AuditModal`
+
+### Phase E Complete (Feb 17, 2026)
+- C2PA serial placeholder replaced with runtime extraction + deterministic hash fallback (`lib/c2pa.ts`)
+- CLAUDE.md Known Theater section updated — all 6 items resolved
+- Video frame count docs aligned with code (5 for MVP)
+- FreeForensicReport.tsx cosmetic fix ($49, "50 scans/mo")
+
+### Phase F Complete (Feb 18, 2026)
+- Brand guidelines wired end-to-end: upload API validates + stores `guideline_id`, scan processor fetches + passes to Gemini
+- Dashboard scanner has guideline selector dropdown (hidden when no guidelines exist)
+- Conversion flow docs updated to reflect actual `LandingClient.tsx` redirect behavior
+- All three Gemini personas (IP, Safety, Provenance) now receive custom brand rules via `formatGuidelineRules()`
+
+### Phase G Complete (Feb 18, 2026)
+- `types/database.ts` drift fixed: added `stripe_payment_intent_id`, `user_id` to ExtendedScan; fixed plan type `'individual'`→`'pro'`; `guideline_id` nullable
+- Status API (`/api/scans/[id]/status`) now returns real `risk_profile` blob when scan is complete
+- `FreeUploadContainer.tsx` uses real Gemini risk_profile (falls back to constructed one for legacy scans)
+- Webhook `listUsers()` hardened: retry profile query after 1s delay, paginated fallback (`perPage: 50`)
+- Webhook profile polling increased from 1.5s (3×500ms) to 5s (5×1000ms) for trigger resilience
+
+### Phase H Complete (Feb 18, 2026)
+- **Share token validation wired end-to-end**: GET `/api/scans/[id]` validates `?token=` against `share_token` + `share_expires_at`; tokens stripped from response
+- **Public shared scan page**: `/scan/[id]?token=` renders `SharedScanView` with `RSRiskPanel`, `RSFindingsDossier`, asset preview, CTA footer; no-token redirects to dashboard
+- **ExtendedTenant type sync**: Added 20 missing fields (limits, overage costs, feature flags, Stripe IDs) matching webhook `applyPlanToTenant()`
+- **ProvenanceDetails fix**: `hashing_algorithm` now optional (DB default, never explicitly written)
+- **Error/not-found pages**: Root `error.tsx`, `not-found.tsx`, dashboard `error.tsx` — all using RS design system components
+
+### Phase I Complete (Feb 19, 2026)
+- **Share link bug fixed**: `handleShare` was reading `data.share_token` but PATCH returns `{ scan: updatedScan }` — fixed to `data.scan.share_token`
+- **billing.ts `as any` removed**: Cast replaced with `Pick<ExtendedTenant, ...>` for real type safety
+- **Soft gate data leak fixed**: `scan_findings` descriptions were returned in full for unauthenticated viewers — now masked with "Unlock full report to view details." (titles/severity preserved as teasers)
+- **Provenance masking gap fixed**: `provenance_report.reasoning` was not masked in the soft gate while IP and safety reports were — now masked consistently
+- **Supabase types note**: `lib/supabase/types.ts` is stale (still has old column names) — causes `as any` casts across the codebase. Run `supabase gen types typescript` against live DB to regenerate.
+
+### Phase J Complete (Feb 19, 2026)
+- **sort_by injection fixed**: `/api/scans/list` now whitelists allowed sort fields (`created_at`, `composite_score`, `risk_level`, `status`) — prevents injection via `.order()`
+- **Anonymous quota fail-closed**: `/api/scans/anonymous-quota` now returns `{ allowed: false }` with 503 when quota service errors (was fail-open with `allowed: true`)
+- **Process route timing-safe auth**: Service role key comparison uses `crypto.timingSafeEqual()` instead of `===`
+- **File size validation**: Both upload endpoints enforce 100MB image / 500MB video limits with 413 response
+- **Email validation**: `capture-email` now uses proper regex (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) instead of simple `@` check
+- **SHA-256 checksums**: Upload routes compute real checksums from file buffer instead of storing `'pending'`
+- **Error message leak fixed**: Upload and process routes no longer expose raw `error.message` to clients
+
+### Known Tech Debt: `lib/supabase/types.ts`
+The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id <PROJECT_ID> > lib/supabase/types.ts` against the live database to auto-generate correct types.
 
 ## Lessons Learned (Updated as we build)
 
@@ -301,4 +357,4 @@ UI (`/dashboard/brand-guidelines`) works for CRUD. Dashboard upload sends `guide
 
 ---
 
-**Last Updated:** 2026-02-16 (Dashboard data wiring — RSFindingsDossier, ProvenanceTelemetryStream, notes save, dead code cleanup)
+**Last Updated:** 2026-02-19 (Phase J — Input validation, timing-safe auth, file size limits, SHA-256 checksums, error message hardening)

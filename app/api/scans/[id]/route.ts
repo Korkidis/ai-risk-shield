@@ -36,6 +36,8 @@ export async function GET(
                 file_size,
                 storage_path
             ),
+            share_token,
+            share_expires_at,
             status
         `
 
@@ -77,6 +79,15 @@ export async function GET(
         const scan = data as any
 
         // Authorization Logic
+        // 0. Share Token Access (public, no auth required)
+        const tokenParam = _req.nextUrl.searchParams.get('token')
+        if (tokenParam && scan.share_token === tokenParam) {
+            const expiresAt = scan.share_expires_at ? new Date(scan.share_expires_at) : null
+            if (expiresAt && expiresAt > new Date()) {
+                isAuthorized = true
+            }
+        }
+
         // 1. Session Match (Anonymous creator)
         if (scan.session_id && scan.session_id === sessionId) {
             isAuthorized = true
@@ -124,11 +135,18 @@ export async function GET(
                     chief_officer_strategy: "Analysis complete. Unlock full report to view strategic mitigation steps.",
                     ip_report: { ...riskProfile.ip_report, reasoning: "Unlock to view detailed reasoning." },
                     safety_report: { ...riskProfile.safety_report, reasoning: "Unlock to view safety details." },
-                    // Hide raw manifest details?
+                    provenance_report: { ...riskProfile.provenance_report, reasoning: "Unlock to view provenance details." },
                     c2pa_report: { ...riskProfile.c2pa_report, raw_manifest: undefined, history: undefined }
                 }
-                // Mask findings (don't send them at all in scan_findings relation?)
-                // scan.scan_findings = [] // Or filtered
+                // Strip detailed findings — only titles/severity visible, descriptions hidden
+                scan.scan_findings = (scan.scan_findings || []).map((f: any) => ({
+                    id: f.id,
+                    title: f.title,
+                    severity: f.severity,
+                    finding_type: f.finding_type,
+                    description: 'Unlock full report to view details.',
+                    confidence_score: f.confidence_score,
+                }))
             }
         } else {
             // Legacy fallback: reconstruct from individual columns
@@ -179,6 +197,10 @@ export async function GET(
                 .createSignedUrl(scan.assets.storage_path, 3600) // 1 hour
             assetUrl = signedData?.signedUrl || null
         }
+
+        // Strip share_token from response (don't leak to clients)
+        delete scan.share_token
+        delete scan.share_expires_at
 
         return NextResponse.json({
             ...scan,

@@ -13,15 +13,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processScan, processPendingScans } from '@/lib/ai/scan-processor'
 import { createClient } from '@/lib/supabase/server'
+import { timingSafeEqual } from 'crypto'
+
+function isValidServiceRole(authHeader: string | null): boolean {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!authHeader || !key) return false
+  const expected = `Bearer ${key}`
+  if (authHeader.length !== expected.length) return false
+  try {
+    return timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+  } catch {
+    return false
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // 1. Auth Check: User Session OR Service Role Key
+    // 1. Auth Check: User Session OR Service Role Key (timing-safe comparison)
     const { data: { user } } = await supabase.auth.getUser()
     const authHeader = request.headers.get('authorization')
-    const isServiceRole = authHeader === `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+    const isServiceRole = isValidServiceRole(authHeader)
 
     if (!user && !isServiceRole) {
       return NextResponse.json(
@@ -120,7 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: (error as Error).message,
+        error: 'Processing failed. Please try again.',
       },
       { status: 500 }
     )

@@ -221,8 +221,8 @@ export function FreeForensicReport({ riskProfile, assetName, scanDate }: Props) 
                         </div>
                         <TrendingUp className="w-8 h-8 text-[var(--rs-text-primary)] mb-3" />
                         <h3 className="font-bold text-[var(--rs-text-primary)] mb-2 uppercase tracking-wide text-xs">Upgrade to Pro</h3>
-                        <p className="text-[10px] text-[var(--rs-text-secondary)] mb-4">Unlimited scans + team features</p>
-                        <div className="text-2xl font-bold text-[var(--rs-text-primary)] mb-1 font-mono">$49.99<span className="text-[10px] font-normal text-[var(--rs-text-tertiary)]">/mo</span></div>
+                        <p className="text-[10px] text-[var(--rs-text-secondary)] mb-4">50 scans/mo + full reports</p>
+                        <div className="text-2xl font-bold text-[var(--rs-text-primary)] mb-1 font-mono">$49<span className="text-[10px] font-normal text-[var(--rs-text-tertiary)]">/mo</span></div>
                         <RSButton variant="primary" fullWidth size="sm" className="mt-4">
                             Start Trial
                         </RSButton>

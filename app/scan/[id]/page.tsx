@@ -1,24 +1,18 @@
-'use client'
+import SharedScanView from '@/components/scan/SharedScanView'
+import ScanRedirectClient from '@/components/scan/ScanRedirectClient'
 
-import { useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+interface Props {
+    params: Promise<{ id: string }>
+    searchParams: Promise<{ token?: string }>
+}
 
-export default function ScanRedirect() {
-    const params = useParams()
-    const router = useRouter()
-    const id = params.id
+export default async function ScanPage({ params, searchParams }: Props) {
+    const { id } = await params
+    const { token } = await searchParams
 
-    useEffect(() => {
-        if (id) {
-            router.replace(`/dashboard/scans-reports?highlight=${id}`)
-        } else {
-            router.replace('/dashboard/scans-reports')
-        }
-    }, [id, router])
+    if (token) {
+        return <SharedScanView scanId={id} token={token} />
+    }
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-[#09090b] text-[#a1a1aa] font-mono text-sm">
-            <p className="animate-pulse">Redirecting to secure dashboard...</p>
-        </div>
-    )
+    return <ScanRedirectClient id={id} />
 }

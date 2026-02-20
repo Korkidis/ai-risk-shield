@@ -17,7 +17,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No session' }, { status: 401 })
     }
 
-    if (!email || !email.includes('@')) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email || !emailRegex.test(email)) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
     }
 
