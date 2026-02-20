@@ -314,6 +314,12 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **sortOrder validated**: `/api/scans/list` now validates `sort_order` to only accept `'asc'`/`'desc'` (was missed in Phase J sort_by whitelist)
 - **Referrer policy**: `/scan/[id]` exports `metadata.referrer = 'no-referrer'` to prevent share token leakage via Referer header
 
+### Phase L Complete (Feb 19, 2026)
+- **Scan session hijacking fixed**: `capture-email` now validates `scanId` belongs to current `session_id` before attaching email — was allowing cross-session scan theft
+- **UUID validation**: `capture-email` validates `scanId` format (UUID v4 regex) before database queries
+- **Anonymous video blocked**: `anonymous-upload` now returns 403 for video uploads — per business model, video analysis requires paid plan
+- **Pagination wired**: `/api/scans/list` accepts `page` and `limit` query params, uses `.range()` instead of `.limit(50)`, returns `{ page, limit, hasMore }` metadata
+
 ### Known Tech Debt: `lib/supabase/types.ts`
 The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id <PROJECT_ID> > lib/supabase/types.ts` against the live database to auto-generate correct types.
 
@@ -364,4 +370,4 @@ The `Database` type in `lib/supabase/types.ts` is manually maintained and signif
 
 ---
 
-**Last Updated:** 2026-02-19 (Phase K — Cross-tenant fix, error detail leaks, PII scrub, sortOrder validation, referrer policy)
+**Last Updated:** 2026-02-19 (Phase L — Scan session hijacking fix, UUID validation, anonymous video block, pagination)

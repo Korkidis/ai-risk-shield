@@ -52,10 +52,15 @@ export async function GET(req: NextRequest) {
       query = query.filter('assets.file_type', 'eq', fileType)
     }
 
+    // Pagination
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '50')))
+    const offset = (page - 1) * limit
+
     // Sorting
     query = query.order(sortBy, { ascending: sortOrder === 'asc' })
 
-    const { data: scans, error } = await query.limit(50)
+    const { data: scans, error } = await query.range(offset, offset + limit - 1)
 
     if (error) {
       console.error('Failed to fetch scans:', error)
@@ -85,7 +90,12 @@ export async function GET(req: NextRequest) {
       }
     }))
 
-    return NextResponse.json({ scans: enrichedScans })
+    return NextResponse.json({
+      scans: enrichedScans,
+      page,
+      limit,
+      hasMore: enrichedScans.length === limit
+    })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

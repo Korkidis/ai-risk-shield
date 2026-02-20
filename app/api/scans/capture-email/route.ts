@@ -22,7 +22,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
     }
 
+    // Validate scanId format (UUID v4)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    if (!scanId || !uuidRegex.test(scanId)) {
+      return NextResponse.json({ error: 'Invalid scan ID' }, { status: 400 })
+    }
+
     const supabase = await createServiceRoleClient()
+
+    // Validate scan belongs to current session (prevent cross-session hijacking)
+    const { data: scanOwnership } = await supabase
+      .from('scans')
+      .select('id')
+      .eq('id', scanId)
+      .eq('session_id', sessionId)
+      .single()
+
+    if (!scanOwnership) {
+      return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
+    }
 
     // 1. Optimistic User Creation (Scalability Fix: Don't list all users)
     // We try to create. If it fails because "already registered", we proceed.

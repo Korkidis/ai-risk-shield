@@ -60,6 +60,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
     }
 
+    // Video uploads require a paid plan — block for anonymous users
+    if (isVideo) {
+      return NextResponse.json({
+        error: 'Video analysis requires a paid plan',
+        code: 'VIDEO_REQUIRES_PAID'
+      }, { status: 403 })
+    }
+
     const fileType = isImage ? 'image' : 'video'
 
     // Read file buffer for checksum + upload
