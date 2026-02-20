@@ -201,6 +201,8 @@ export default function DashboardPage() {
             }
 
             // Trigger scan assignment if coming from magic link
+            // IMPORTANT: Must await assignment before loading scan, otherwise scan
+            // may still be session-owned (not yet migrated to tenant) and auth fails
             if (user && isVerified && !processedAssignment.current) {
                 processedAssignment.current = true;
                 fetch('/api/scans/assign-to-user', {
@@ -217,11 +219,15 @@ export default function DashboardPage() {
                             setEmailCaptured(true);
                         }
                     })
-                    .catch(err => console.error('[Dashboard] Scan assignment failed:', err));
+                    .catch(err => console.error('[Dashboard] Scan assignment failed:', err))
+                    .finally(() => {
+                        // Load scan AFTER assignment completes (success or failure)
+                        loadScanFromParam(scanIdParam);
+                    });
+            } else {
+                // No assignment needed — load scan immediately
+                loadScanFromParam(scanIdParam);
             }
-
-            // Load the scan data
-            loadScanFromParam(scanIdParam);
         });
     }, [scanIdParam, isVerified, loadScanFromParam]);
 
