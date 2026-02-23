@@ -12,7 +12,7 @@ import { logWebhookEvent } from '@/lib/webhook-monitor'
 export async function GET(request: Request) {
     // Verify cron secret (Vercel sets this automatically for cron jobs)
     const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

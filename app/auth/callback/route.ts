@@ -27,6 +27,20 @@ export async function GET(request: NextRequest) {
       // Auto-provision tenant + profile for shadow users (created via capture-email)
       // Normal signup users already have these from the signup action.
       await ensureProfileExists(sessionData.user)
+
+      // Track magic link click server-side via PostHog HTTP API (fire-and-forget)
+      if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+        fetch(`${process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'}/capture/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_key: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+            event: 'magic_link_clicked',
+            distinct_id: sessionData.user.id,
+            properties: { $set: { email_verified: true } }
+          })
+        }).catch(() => { })
+      }
     }
   }
 

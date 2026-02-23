@@ -128,6 +128,27 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
 
                 </div>
 
+                {/* Upsell Section */}
+                <div style={{ padding: '0 40px 30px' }}>
+                    <div style={{ padding: '18px 20px', backgroundColor: '#F4F4F4', borderRadius: '6px', border: `1px solid ${colors.lightGrey}` }}>
+                        <p style={{ margin: '0 0 10px 0', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: colors.grey }}>
+                            Want full access?
+                        </p>
+                        <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: colors.ink, lineHeight: '1.5' }}>
+                            <strong>$29</strong> unlocks this full report. Or go Pro at <strong>$49/month</strong> — 50 scans, 5 full reports/mo, video support, and 30-day history.
+                        </p>
+                        <ul style={{ paddingLeft: '16px', margin: '0 0 8px 0', color: colors.grey, fontSize: '11px', lineHeight: '1.8' }}>
+                            <li>Complete IP risk analysis with evidence citations</li>
+                            <li>Full brand safety breakdown + severity scores</li>
+                            <li>Legal remediation steps you can act on</li>
+                            <li>Downloadable PDF audit trail</li>
+                        </ul>
+                        <p style={{ margin: 0, fontSize: '10px', color: '#999999', fontStyle: 'italic' }}>
+                            Your findings are available for 30 days.
+                        </p>
+                    </div>
+                </div>
+
                 {/* Footer */}
                 <div style={{ borderTop: `1px solid ${colors.lightGrey}`, padding: '20px', textAlign: 'center', backgroundColor: '#FFFFFF' }}>
                     <p style={{ margin: 0, fontSize: '9px', textTransform: 'uppercase', color: colors.grey, letterSpacing: '1px' }}>

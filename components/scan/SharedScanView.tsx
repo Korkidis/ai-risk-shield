@@ -175,7 +175,7 @@ export default function SharedScanView({ scanId, token }: SharedScanViewProps) {
                     findings={scan.scan_findings}
                     riskProfile={riskProfile}
                     scanId={scanId}
-                    ctaMode="free"
+                    ctaMode="paid"
                 />
             </main>
 

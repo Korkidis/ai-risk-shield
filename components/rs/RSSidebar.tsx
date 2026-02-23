@@ -26,7 +26,6 @@ const NAV_ITEMS: NavItem[] = [
     { label: "Scans & Reports", icon: <FileSearch />, href: "/dashboard/scans-reports" },
     { label: "Guidelines & Policies", icon: <ShieldAlert />, href: "/dashboard/brand-guidelines" },
     { label: "Help & Documentation", icon: <BookOpen />, href: "/dashboard/help" },
-    { label: "Design Lab", icon: <BookOpen />, href: "/dashboard/design-lab" },
 ];
 
 interface RSSidebarProps extends React.HTMLAttributes<HTMLDivElement> {

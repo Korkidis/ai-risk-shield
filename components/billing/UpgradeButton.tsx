@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
+import { trackEvent } from '@/lib/analytics'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -9,6 +10,7 @@ export function UpgradeButton({ scanId }: { scanId: string }) {
     const [loading, setLoading] = useState(false)
 
     const handleUpgrade = async () => {
+        trackEvent('checkout_initiated', { scanId, purchase_type: 'subscription', planId: 'pro' })
         setLoading(true)
         try {
             const response = await fetch('/api/stripe/create-checkout', {

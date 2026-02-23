@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Lock, Mail, CheckCircle } from 'lucide-react';
 import { RSButton } from '@/components/rs/RSButton';
 import { cn } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 
 const RISK_THEME = {
     surface: "bg-[#EBE9E4]",
@@ -55,6 +56,7 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
             }
 
             setStatus('sent');
+            trackEvent('email_captured', { scanId });
             onEmailCaptured();
         } catch (err) {
             console.error('[EmailGate]', err);

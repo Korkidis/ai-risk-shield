@@ -58,10 +58,11 @@ interface RSFindingsDossierProps {
     } | null;
     scanId?: string;
     ctaMode?: 'free' | 'paid';
+    onUpgradeClick?: () => void;
     className?: string;
 }
 
-export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, ctaMode = 'paid', className }: RSFindingsDossierProps) {
+export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, ctaMode = 'paid', onUpgradeClick, className }: RSFindingsDossierProps) {
     if (!isComplete) return null;
 
     // Build display findings from best available source
@@ -193,6 +194,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
                             fullWidth
                             size="lg"
                             className="font-bold tracking-[0.3em] shadow-lg rounded-[2px]"
+                            onClick={onUpgradeClick}
                         >
                             Unlock Full Report
                         </RSButton>

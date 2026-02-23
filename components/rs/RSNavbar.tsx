@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import { Search, Bell, Settings } from 'lucide-react';
 import { RSAvatar } from './RSAvatar';
+import { createClient } from '@/lib/supabase/client';
 
 interface RSNavbarProps extends React.HTMLAttributes<HTMLDivElement> {
     children?: React.ReactNode; // e.g. Breadcrumbs
@@ -15,6 +16,26 @@ export function RSNavbar({
     children,
     ...props
 }: RSNavbarProps) {
+    const [userInitials, setUserInitials] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (!user) return;
+            const name = user.user_metadata?.full_name || user.email || '';
+            if (user.user_metadata?.full_name) {
+                const parts = (name as string).split(' ');
+                setUserInitials(
+                    parts.length >= 2
+                        ? `${parts[0][0]}${parts[parts.length - 1][0]}`
+                        : (name as string).slice(0, 2)
+                );
+            } else if (user.email) {
+                setUserInitials(user.email.slice(0, 2));
+            }
+        });
+    }, []);
+
     return (
         <header
             className={cn(
@@ -62,7 +83,7 @@ export function RSNavbar({
                 </button>
 
                 <div className="pl-2">
-                    <RSAvatar className="cursor-pointer hover:ring-2 hover:ring-rs-black/10 transition-all" />
+                    <RSAvatar initials={userInitials} className="cursor-pointer hover:ring-2 hover:ring-rs-black/10 transition-all" />
                 </div>
             </div>
         </header>

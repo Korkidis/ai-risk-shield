@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { getTenantBillingStatus } from '@/app/actions/billing';
 import { Upload, Terminal } from 'lucide-react';
 import { RSScanner } from '@/components/rs/RSScanner';
 import { RSTelemetryPanel, TelemetryRow } from '@/components/rs/RSTelemetryPanel';
@@ -10,8 +11,10 @@ import { RSRiskPanel } from '@/components/rs/RSRiskPanel';
 import { RSProvenanceDrawer } from '@/components/rs/RSProvenanceDrawer';
 import { RSFindingsDossier } from '@/components/rs/RSFindingsDossier';
 import { DashboardEmailGate } from '@/components/dashboard/DashboardEmailGate';
+import { AuditModal } from '@/components/marketing/AuditModal';
 import { cn } from '@/lib/utils';
 import { getRiskTier } from '@/lib/risk-utils';
+import { trackEvent } from '@/lib/analytics';
 
 // Interface matching the backend response
 interface RiskProfile {
@@ -43,9 +46,11 @@ export default function DashboardPage() {
     const [isAnonymous, setIsAnonymous] = React.useState(false);
     const [currentScanId, setCurrentScanId] = React.useState<string | null>(scanIdParam);
     const [emailCaptured, setEmailCaptured] = React.useState(false);
+    const [showAuditModal, setShowAuditModal] = React.useState(false);
+    const [userPlan, setUserPlan] = React.useState<string>('free');
 
     // Brand Guidelines
-    const [guidelines, setGuidelines] = React.useState<Array<{id: string, name: string}>>([]);
+    const [guidelines, setGuidelines] = React.useState<Array<{ id: string, name: string }>>([]);
     const [selectedGuidelineId, setSelectedGuidelineId] = React.useState<string>('default');
 
     // Track whether we've already processed the scan param (prevent double-fetch)
@@ -79,7 +84,7 @@ export default function DashboardPage() {
             .then(data => {
                 if (data.guidelines?.length) setGuidelines(data.guidelines)
             })
-            .catch(() => {}) // Silently fail — selector stays at 'default'
+            .catch(() => { }) // Silently fail — selector stays at 'default'
     }, [])
 
     // ─── VIEWER MODE: Load scan from ?scan=<id> param ────────────────────────
@@ -130,6 +135,7 @@ export default function DashboardPage() {
             setAnalysisResult(profile);
             setScanStatus('complete');
             addLog('Analysis finalized. Telemetry stream active.', 'done');
+            trackEvent('scan_completed', { scanId, score: profile.composite_score });
         } catch (err: any) {
             console.error('[Dashboard] Failed to load scan:', err);
             setScanStatus('error');
@@ -175,6 +181,7 @@ export default function DashboardPage() {
 
                     setAnalysisResult(profile);
                     setScanStatus('complete');
+                    trackEvent('scan_completed', { scanId, score: profile.composite_score });
                 } else if (scan.status === 'failed') {
                     clearInterval(pollInterval);
                     supabase.removeChannel(channel);
@@ -198,6 +205,13 @@ export default function DashboardPage() {
         supabase.auth.getUser().then(({ data: { user } }) => {
             if (!user) {
                 setIsAnonymous(true);
+            } else {
+                // Fetch user's plan for entitlement-based CTA
+                getTenantBillingStatus().then(billing => {
+                    if (billing?.planId && billing.planId !== 'free') {
+                        setUserPlan(billing.planId);
+                    }
+                }).catch(() => { }); // Silent — default stays 'free'
             }
 
             // Trigger scan assignment if coming from magic link
@@ -490,7 +504,11 @@ export default function DashboardPage() {
                                 isComplete={isComplete}
                                 riskProfile={analysisResult}
                                 scanId={currentScanId || undefined}
-                                ctaMode={isAnonymous ? 'free' : 'paid'}
+                                ctaMode={userPlan === 'free' ? 'free' : 'paid'}
+                                onUpgradeClick={() => {
+                                    trackEvent('upgrade_modal_opened', { scanId: currentScanId, source: 'dashboard_findings' })
+                                    setShowAuditModal(true)
+                                }}
                                 className="w-full h-full"
                             />
                         </div>
@@ -513,6 +531,12 @@ export default function DashboardPage() {
                 onClose={() => setIsDrawerOpen(false)}
                 status={analysisResult?.c2pa_report?.status as any}
                 details={analysisResult?.c2pa_report as any}
+            />
+
+            <AuditModal
+                isOpen={showAuditModal}
+                onClose={() => setShowAuditModal(false)}
+                scanId={currentScanId || ''}
             />
         </div>
     );

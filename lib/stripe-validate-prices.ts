@@ -28,6 +28,10 @@ export async function validateStripePrices(): Promise<{
         STRIPE_PRICE_PRO_ANNUAL: process.env.STRIPE_PRICE_PRO_ANNUAL,
         STRIPE_PRICE_TEAM_ANNUAL: process.env.STRIPE_PRICE_TEAM_ANNUAL,
         STRIPE_PRICE_AGENCY_ANNUAL: process.env.STRIPE_PRICE_AGENCY_ANNUAL,
+        // Metered prices — missing these causes silent overage billing failure
+        STRIPE_PRICE_PRO_METERED: process.env.STRIPE_PRICE_PRO_METERED,
+        STRIPE_PRICE_TEAM_METERED: process.env.STRIPE_PRICE_TEAM_METERED,
+        STRIPE_PRICE_AGENCY_METERED: process.env.STRIPE_PRICE_AGENCY_METERED,
     }
 
     const errors: string[] = []
