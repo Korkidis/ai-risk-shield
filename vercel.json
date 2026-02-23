@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/reset-quotas",
+      "schedule": "5 0 1 * *"
+    },
+    {
+      "path": "/api/cron/retry-usage-reports",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

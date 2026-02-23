@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe'
 import { type PlanId } from '@/lib/plans'
 import { getSessionId } from '@/lib/session'
+import { validateStripePrices } from '@/lib/stripe-validate-prices'
 
 // Price IDs from Stripe Dashboard - map plan + interval to Stripe Price ID
 const PRICE_IDS: Record<string, string | undefined> = {
@@ -38,6 +39,12 @@ function getMeteredPriceId(planId: PlanId): string | null {
 
 export async function POST(request: NextRequest) {
     try {
+        // Lazy price validation — runs once on first checkout, caches result
+        const priceValidation = await validateStripePrices()
+        if (!priceValidation.valid) {
+            console.warn('[Checkout] Some Stripe prices are invalid:', priceValidation.errors)
+        }
+
         const body = await request.json()
         const { scanId, purchaseType, planId: rawPlanId, interval: rawInterval = 'monthly' } = body
 

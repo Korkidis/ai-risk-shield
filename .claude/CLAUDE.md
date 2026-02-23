@@ -83,7 +83,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Tur
 ### Authentication
 - **Password-based:** signup + login via Server Actions
 - **Magic link (freemium):** Shadow user creation via `supabase.auth.admin.createUser()` + `generateLink()`, delivered via Resend
-- **Legacy:** Custom `magic_links` table is deprecated. Migration to drop exists (`20260208_cleanup_magic_links.sql`). `/api/auth/verify/route.ts` has been deleted — migration can now be applied. Empty `app/auth/verify/` directory cleaned up (Phase E).
+- **Legacy:** Custom `magic_links` table dropped (migration `20260208_cleanup_magic_links.sql` applied Phase P). Verify route and `app/auth/verify/` directory already deleted (Phase E).
 
 ### Stripe Integration
 - **5-tier pricing:** FREE / PRO ($49) / TEAM ($199) / AGENCY ($499) / ENTERPRISE (custom) — see `lib/plans.ts`
@@ -343,8 +343,17 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Switch-tenant fail-fast**: Missing `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` env vars now throw at module load instead of silently failing at request time
 - **Session cookie expiry reduced**: Anonymous session cookie reduced from 30 days to 7 days to minimize exposure window
 
+### Phase P Complete (Feb 22, 2026)
+- **Monthly quota reset implemented**: Hybrid approach — Vercel Cron (`/api/cron/reset-quotas`) resets free tenants on 1st of each month; Stripe `invoice.paid` webhook resets paid tenants on billing cycle
+- **Stripe usage reporting retry**: Failed reports written to `failed_usage_reports` table; Vercel Cron retries every 15 min with exponential backoff (5m→15m→45m→2h→6h); alerts on max-attempt exhaustion
+- **Stripe customer ID stored on all webhook paths**: `handleSubscriptionUpdated`, `handleSubscriptionCanceled`, and one-time purchase path now all persist `stripe_customer_id` (was only subscription checkout)
+- **Webhook health alerting**: `lib/webhook-monitor.ts` writes failures to `audit_log` table + optional email alerts via Resend (`WEBHOOK_ALERT_EMAIL` env var). Instrumented: signature failures, plan apply errors, scan purchase failures, anonymous user resolution errors
+- **Stripe price ID validation**: Lazy validation on first checkout request via `lib/stripe-validate-prices.ts` — validates all configured `STRIPE_PRICE_*` env vars against Stripe API, caches result, logs errors
+- **Legacy magic_links table dropped**: Migration `20260208_cleanup_magic_links.sql` applied
+- **Vercel Cron configured**: `vercel.json` with two cron jobs (monthly quota reset + 15-min usage retry)
+
 ### Known Tech Debt: `lib/supabase/types.ts`
-The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id <PROJECT_ID> > lib/supabase/types.ts` against the live database to auto-generate correct types.
+The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`, `failed_usage_reports`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id sbhzmkuorxzyurnycmww > lib/supabase/types.ts` against the live database to auto-generate correct types.
 
 ## Lessons Learned (Updated as we build)
 

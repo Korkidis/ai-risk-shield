@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getPlan, type PlanId } from '@/lib/plans'
 import { sendMagicLinkEmail } from '@/lib/email'
+import { logWebhookEvent, alertWebhookFailure } from '@/lib/webhook-monitor'
 import Stripe from 'stripe'
 
 // Must enable raw body for webhook signature verification
@@ -45,6 +46,12 @@ export async function POST(request: Request) {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err: any) {
         console.error('Webhook signature verification failed.', err.message)
+        logWebhookEvent({
+            action: 'signature_verification_failed',
+            resourceType: 'stripe_webhook',
+            severity: 'error',
+            metadata: { error: err.message },
+        }).catch(() => {}) // Fire-and-forget for signature failures
         return NextResponse.json({ error: 'Webhook signature verification failed.' }, { status: 400 })
     }
 
@@ -78,6 +85,11 @@ export async function POST(request: Request) {
         case 'customer.subscription.deleted':
             const canceledSub = event.data.object as Stripe.Subscription
             await handleSubscriptionCanceled(canceledSub, supabase)
+            break
+
+        case 'invoice.paid':
+            const paidInvoice = event.data.object as Stripe.Invoice
+            await handleInvoicePaid(paidInvoice, supabase)
             break
 
         default:
@@ -271,6 +283,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
 
         } catch (err: any) {
             console.error('[Webhook] Anonymous user resolution failed:', err)
+            await logWebhookEvent({
+                action: 'anonymous_user_resolution_failed',
+                resourceType: 'stripe_webhook',
+                severity: 'critical',
+                metadata: { error: err.message, scanId },
+            })
+            await alertWebhookFailure({
+                eventType: 'anonymous_user_resolution',
+                errorMessage: err.message,
+            })
         }
     }
 
@@ -347,6 +369,26 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
 
         if (error) {
             console.error('Failed to update scan purchase status:', error)
+            await logWebhookEvent({
+                action: 'scan_purchase_update_failed',
+                resourceType: 'stripe_webhook',
+                tenantId: tenantId || null,
+                severity: 'critical',
+                metadata: { scanId, error: error.message },
+            })
+            await alertWebhookFailure({
+                eventType: 'scan_purchase_update',
+                errorMessage: error.message,
+                tenantId,
+            })
+        }
+
+        // Also persist Stripe customer ID for one-time purchasers
+        if (tenantId && tenantId !== 'anonymous' && session.customer) {
+            await supabase
+                .from('tenants')
+                .update({ stripe_customer_id: session.customer as string } as any)
+                .eq('id', tenantId)
         }
     }
 
@@ -392,7 +434,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription, supa
     const planId = STRIPE_PRICE_TO_PLAN[priceId] || 'pro'
 
     await applyPlanToTenant(supabase, tenantId, planId, {
-        subscription_status: subscription.status
+        subscription_status: subscription.status,
+        stripe_customer_id: subscription.customer as string,
+        stripe_subscription_id: subscription.id,
     })
 }
 
@@ -400,11 +444,79 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription, sup
     const tenantId = subscription.metadata?.tenantId
     if (!tenantId) return
 
-    // Downgrade to free
+    // Downgrade to free — preserve customer ID for re-subscription
     await applyPlanToTenant(supabase, tenantId, 'free', {
         subscription_status: 'canceled',
-        stripe_subscription_id: null
+        stripe_subscription_id: null,
+        stripe_customer_id: subscription.customer as string,
     })
+}
+
+/**
+ * Reset monthly quota when Stripe invoice is paid.
+ * Only applies to subscription invoices — one-time payments are skipped.
+ * This ensures paid users' quota resets on their billing cycle, not a calendar month.
+ */
+async function handleInvoicePaid(invoice: Stripe.Invoice, supabase: any) {
+    // Only reset on subscription invoices (not one-time payments)
+    const subscriptionRef = invoice.parent?.subscription_details?.subscription
+    if (!subscriptionRef) return
+
+    try {
+        const subscriptionId = typeof subscriptionRef === 'string'
+            ? subscriptionRef
+            : subscriptionRef.id
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        const tenantId = subscription.metadata?.tenantId
+        if (!tenantId) {
+            console.warn('[Webhook] invoice.paid: No tenantId in subscription metadata')
+            return
+        }
+
+        // Reset the monthly quota counter
+        const { error } = await (supabase
+            .from('tenants') as any)
+            .update({
+                scans_used_this_month: 0,
+                billing_period_start: new Date().toISOString(),
+            })
+            .eq('id', tenantId)
+
+        if (error) {
+            console.error(`[Webhook] Failed to reset quota for tenant ${tenantId}:`, error)
+            await logWebhookEvent({
+                action: 'quota_reset_failed',
+                resourceType: 'stripe_webhook',
+                resourceId: tenantId,
+                tenantId,
+                severity: 'critical',
+                metadata: { invoiceId: invoice.id, error: error.message },
+            })
+            await alertWebhookFailure({
+                eventType: 'invoice_paid_quota_reset',
+                errorMessage: error.message,
+                tenantId,
+            })
+        } else {
+            console.log(`[Webhook] Reset quota for tenant ${tenantId} (invoice: ${invoice.id})`)
+            await logWebhookEvent({
+                action: 'quota_reset_success',
+                resourceType: 'stripe_webhook',
+                resourceId: tenantId,
+                tenantId,
+                severity: 'info',
+                metadata: { invoiceId: invoice.id },
+            })
+        }
+    } catch (err: any) {
+        console.error('[Webhook] handleInvoicePaid error:', err)
+        await logWebhookEvent({
+            action: 'invoice_paid_handler_error',
+            resourceType: 'stripe_webhook',
+            severity: 'critical',
+            metadata: { invoiceId: invoice.id, error: err.message },
+        })
+    }
 }
 
 /**
@@ -449,5 +561,18 @@ async function applyPlanToTenant(
 
     if (error) {
         console.error(`Failed to apply plan to tenant ${tenantId}:`, error)
+        await logWebhookEvent({
+            action: 'apply_plan_failed',
+            resourceType: 'stripe_webhook',
+            resourceId: tenantId,
+            tenantId,
+            severity: 'critical',
+            metadata: { planId, error: error.message },
+        })
+        await alertWebhookFailure({
+            eventType: 'apply_plan_to_tenant',
+            errorMessage: error.message,
+            tenantId,
+        })
     }
 }

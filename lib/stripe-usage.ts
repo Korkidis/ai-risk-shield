@@ -58,8 +58,20 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1): P
     } catch (error: any) {
         console.error('Failed to report usage to Stripe:', error)
 
+        // Record failure for retry via cron job
+        try {
+            const retrySupabase = await createServiceRoleClient()
+            await (retrySupabase.from('failed_usage_reports') as any).insert({
+                tenant_id: tenantId,
+                quantity,
+                last_error: (error.message || 'Unknown error').substring(0, 500),
+                next_retry_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 min
+            })
+        } catch (recordErr) {
+            console.error('Failed to record usage report failure:', recordErr)
+        }
+
         // Don't fail the scan if usage reporting fails
-        // Log for monitoring and retry later if needed
         return {
             success: false,
             error: error.message
