@@ -4,6 +4,46 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
+ * Shape of scan data returned by our dynamic select + joins.
+ * Supabase can't statically infer types from template-literal select strings,
+ * so we define the expected shape here and cast after the null check.
+ */
+type ScanApiResult = {
+    id: string
+    created_at: string
+    tenant_id: string | null
+    analyzed_by: string | null
+    session_id: string | null
+    email: string | null
+    composite_score: number | null
+    ip_risk_score: number | null
+    safety_risk_score: number | null
+    provenance_risk_score: number | null
+    risk_level: string | null
+    provenance_status: string | null
+    provenance_data: Record<string, any> | null
+    status: string
+    share_token: string | null
+    share_expires_at: string | null
+    risk_profile?: Record<string, any> | null
+    scan_findings: Array<{
+        id: string
+        title: string | null
+        severity: string | null
+        finding_type: string | null
+        description: string | null
+        confidence_score: number | null
+    }>
+    assets: {
+        filename: string | null
+        file_type: string | null
+        mime_type: string | null
+        file_size: number | null
+        storage_path: string | null
+    } | null
+}
+
+/**
  * GET /api/scans/[id]
  * Fetch scan results (public access for magic link verified users)
  */
@@ -57,7 +97,7 @@ export async function GET(
                 .eq('id', params.id)
                 .single()
 
-            data = fallback.data
+            data = fallback.data as typeof data
             error = fallback.error
         }
 
@@ -76,7 +116,9 @@ export async function GET(
             return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
         }
 
-        const scan = data as any
+        // Dynamic select means Supabase can't statically infer join types.
+        // Cast to our locally-defined ScanApiResult shape.
+        const scan = data as unknown as ScanApiResult
 
         // Authorization Logic
         // 0. Share Token Access (public, no auth required)
@@ -118,11 +160,13 @@ export async function GET(
         // If the stored risk_profile blob exists, return it directly.
         // This preserves the full Gemini multi-persona analysis (teasers, reasoning, etc.)
         // Only fall back to reconstruction for legacy scans that predate blob storage.
-        let riskProfile: any;
+        // riskProfile is a JSON blob built for the API response — may come from DB or be constructed
+        let riskProfile: Record<string, any>;
+        let responseFindingsOverride: ScanApiResult['scan_findings'] | undefined;
 
         if (scan.risk_profile) {
             // Rich path: stored blob from analyzeImageMultiPersona
-            riskProfile = scan.risk_profile
+            riskProfile = scan.risk_profile as Record<string, any>
 
             // SOFT GATE: Mask sensitive details if anonymous & no email captured
             // Allow full access if user is authenticated OR email is already associated
@@ -139,7 +183,7 @@ export async function GET(
                     c2pa_report: { ...riskProfile.c2pa_report, raw_manifest: undefined, history: undefined }
                 }
                 // Strip detailed findings — only titles/severity visible, descriptions hidden
-                scan.scan_findings = (scan.scan_findings || []).map((f: any) => ({
+                responseFindingsOverride = (scan.scan_findings || []).map((f) => ({
                     id: f.id,
                     title: f.title,
                     severity: f.severity,
@@ -151,10 +195,10 @@ export async function GET(
         } else {
             // Legacy fallback: reconstruct from individual columns
             const getTeaser = (type: string) => {
-                const critical = scan.scan_findings?.find((f: any) => f.finding_type?.startsWith(type) && f.severity === 'critical')
+                const critical = scan.scan_findings?.find(f => f.finding_type?.startsWith(type) && f.severity === 'critical')
                 if (critical) return critical.title
 
-                const high = scan.scan_findings?.find((f: any) => f.finding_type?.startsWith(type) && f.severity === 'high')
+                const high = scan.scan_findings?.find(f => f.finding_type?.startsWith(type) && f.severity === 'high')
                 if (high) return high.title
 
                 return 'No significant risks detected.'
@@ -165,7 +209,7 @@ export async function GET(
                 verdict: (scan.risk_level === 'critical' ? 'Critical Risk' :
                     scan.risk_level === 'high' ? 'High Risk' :
                         scan.risk_level === 'review' ? 'Medium Risk' :
-                            scan.risk_level === 'caution' ? 'Low Risk' : 'Low Risk') as any,
+                            scan.risk_level === 'caution' ? 'Low Risk' : 'Low Risk'),
                 ip_report: {
                     score: scan.ip_risk_score || 0,
                     teaser: getTeaser('ip'),
@@ -199,11 +243,11 @@ export async function GET(
         }
 
         // Strip share_token from response (don't leak to clients)
-        delete scan.share_token
-        delete scan.share_expires_at
+        const { share_token: _token, share_expires_at: _expires, scan_findings: _findings, ...scanResponse } = scan
 
         return NextResponse.json({
-            ...scan,
+            ...scanResponse,
+            scan_findings: responseFindingsOverride || _findings || [],
             risk_profile: riskProfile,
             asset_url: assetUrl,
         })
@@ -249,8 +293,8 @@ export async function PATCH(
             if (tags !== undefined) updateData.tags = tags
         }
 
-        const { data: updatedScan, error: updateError } = await (supabase
-            .from('scans') as any)
+        const { data: updatedScan, error: updateError } = await supabase
+            .from('scans')
             .update(updateData)
             .eq('id', params.id)
             .select()

@@ -34,7 +34,8 @@ export default function BrandGuidelinesPage() {
         industry: 'General',
         is_default: false,
         prohibitions: '',
-        requirements: ''
+        requirements: '',
+        context_modifiers: ''
     })
 
     const fetchGuidelines = async () => {
@@ -65,14 +66,15 @@ export default function BrandGuidelinesPage() {
                 body: JSON.stringify({
                     ...formData,
                     prohibitions: formData.prohibitions.split('\n').filter(Boolean),
-                    requirements: formData.requirements.split('\n').filter(Boolean)
+                    requirements: formData.requirements.split('\n').filter(Boolean),
+                    context_modifiers: formData.context_modifiers.split('\n').filter(Boolean)
                 })
             })
             if (!response.ok) throw new Error('Protocol initialization failed')
 
             await fetchGuidelines()
             setIsCreateOpen(false)
-            setFormData({ name: '', industry: 'General', is_default: false, prohibitions: '', requirements: '' })
+            setFormData({ name: '', industry: 'General', is_default: false, prohibitions: '', requirements: '', context_modifiers: '' })
         } catch (err: any) {
             alert(err.message)
         } finally {
@@ -219,6 +221,17 @@ export default function BrandGuidelinesPage() {
                             placeholder="// DEFINE_STRICT_REQUIREMENTS..."
                             value={formData.requirements}
                             onChange={e => setFormData(prev => ({ ...prev, requirements: e.target.value }))}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Approved Exceptions (One per line)</label>
+                        <p className="text-[8px] font-mono text-rs-text-tertiary mb-2 leading-relaxed">
+                            Items normally flagged as risky but acceptable for your brand. These override default scoring.
+                        </p>
+                        <RSTextarea
+                            placeholder={"Alcohol imagery is approved\nCannabis products are part of our brand\nFirearms shown in sporting context are acceptable"}
+                            value={formData.context_modifiers}
+                            onChange={e => setFormData(prev => ({ ...prev, context_modifiers: e.target.value }))}
                         />
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-rs-border-primary">

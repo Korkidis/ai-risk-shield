@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
     // Applied Filters
     if (riskLevel && riskLevel !== 'all') {
-      query = query.eq('risk_level', riskLevel)
+      query = query.eq('risk_level', riskLevel as 'critical' | 'high' | 'review' | 'caution' | 'safe')
     }
     if (fileType && fileType !== 'all') {
       // asset_id.file_type but we need to join or use filter

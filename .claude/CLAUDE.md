@@ -352,8 +352,23 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Legacy magic_links table dropped**: Migration `20260208_cleanup_magic_links.sql` applied
 - **Vercel Cron configured**: `vercel.json` with two cron jobs (monthly quota reset + 15-min usage retry)
 
-### Known Tech Debt: `lib/supabase/types.ts`
-The `Database` type in `lib/supabase/types.ts` is manually maintained and significantly out of date. The `scans` table still uses old column names (`file_url`, `file_path`, `overall_risk_level`) and is missing all new columns. Multiple tables (`assets`, `scan_findings`, `provenance_details`, `usage_ledger`, `failed_usage_reports`) are absent entirely. This forces `as any` casts in ~30 locations. **Fix:** Run `npx supabase gen types typescript --project-id sbhzmkuorxzyurnycmww > lib/supabase/types.ts` against the live database to auto-generate correct types.
+### Phase R Complete (Feb 24, 2026)
+- **Supabase types rebuilt**: `lib/supabase/types.ts` manually reconstructed from schema mapping (18 tables, 6 RPCs, `rate_limits` table added). Includes `Relationships: []` on all tables, `Views`, `CompositeTypes` for Supabase-js compatibility. `scans.status` and `scans.risk_level` narrowed to union types.
+- **`as any` casts eliminated**: Reduced from 107 → 8 legitimate casts (external libraries: C2PA, Stripe, React email, Next.js request). Zero `@ts-ignore` comments in app/lib/components.
+- **Type-check zero errors**: `npx tsc --noEmit` passes with zero errors. `types/database.ts` reconciled with regenerated types (`file_size` added to `ScanWithRelations`, `BrandGuideline` arrays made nullable).
+- **`scans/[id]/route.ts` refactored**: Introduced `ScanApiResult` local type for dynamic select casts (replaces 6 `as any` and `NonNullable<typeof>` workarounds). Legacy fallback uses clean spread instead of `delete` mutations.
+- **Rate limiting added to 6 endpoints**: Generic `checkRateLimit()` in `lib/ratelimit.ts` backed by `rate_limits` Supabase table (sliding-window + optional progressive block). Fail-open on DB errors.
+  - `signUp`: 5/15min per IP
+  - `login`: 5/15min per IP, 1-hour block after exhaustion
+  - `requestPasswordReset`: 3/1hr per IP
+  - `capture-email` (magic link): 5/1hr per IP → 429 with `Retry-After`
+  - `upload`: 10/1min per tenant → 429 with `Retry-After`
+  - `create-checkout`: 5/1hr per user (or IP if anonymous) → 429 with `Retry-After`
+- **Migration**: `20260224_rate_limits.sql` — `rate_limits` table with unique `(key, action)` index, RLS enabled (service role only), `cleanup_stale_rate_limits()` RPC for pruning
+
+### Pending Schema Drift (Updated Feb 24)
+Migration created but NOT applied to live DB:
+- `20260224_rate_limits.sql` — rate_limits table + cleanup function
 
 ## Lessons Learned (Updated as we build)
 

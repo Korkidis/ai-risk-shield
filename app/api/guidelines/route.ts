@@ -54,15 +54,14 @@ export async function POST(req: NextRequest) {
 
         // If is_default is true, unset other defaults for this tenant
         if (body.is_default) {
-            await (supabase
-                .from('brand_guidelines') as any)
+            await supabase
+                .from('brand_guidelines')
                 .update({ is_default: false })
                 .eq('tenant_id', tenantId)
         }
 
         const { data, error } = await supabase
             .from('brand_guidelines')
-            // @ts-ignore
             .insert({
                 name: body.name,
                 industry: body.industry,

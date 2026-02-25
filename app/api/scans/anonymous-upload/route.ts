@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getOrCreateSessionId } from '@/lib/session'
 import { createHash } from 'crypto'
-import type { ExtendedAsset, ExtendedScan } from '@/types/database'
+import type { Database } from '@/lib/supabase/types'
 
 /**
  * POST /api/scans/anonymous-upload
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     const deleteAfter = new Date()
     deleteAfter.setDate(deleteAfter.getDate() + 7) // 7 day retention for anonymous
 
-    const assetData: Partial<ExtendedAsset> = {
+    const assetData: Database['public']['Tables']['assets']['Insert'] = {
       session_id: sessionId,
       tenant_id: null,
       uploaded_by: null,
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
 
     const { data: asset, error: assetError } = await supabase
       .from('assets')
-      .insert(assetData as any) // Supabase insert requires exact type
+      .insert(assetData)
       .select()
       .single()
 
@@ -127,18 +127,18 @@ export async function POST(request: Request) {
 
 
     // Create scan record
-    const scanData: Partial<ExtendedScan> = {
+    const scanData: Database['public']['Tables']['scans']['Insert'] = {
       session_id: sessionId,
-      tenant_id: null as any, // Explicitly null for anonymous scans
-      analyzed_by: null as any, // Explicitly null for anonymous scans
-      asset_id: (asset as ExtendedAsset).id,
+      tenant_id: null,
+      analyzed_by: null,
+      asset_id: asset!.id,
       is_video: fileType === 'video',
       status: 'processing',
     }
 
     const { data: newScan, error: scanError } = await supabase
       .from('scans')
-      .insert(scanData as any) // Supabase insert requires exact type
+      .insert(scanData)
       .select()
       .single()
 
@@ -146,12 +146,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create scan' }, { status: 500 })
     }
 
-    const createdScan = newScan as ExtendedScan
-
     // 4. Queue async analysis (Direct call, bypass Auth-gated API)
     // Fire-and-forget
     import('@/lib/ai/scan-processor').then(({ processScan }) => {
-      processScan(createdScan.id).catch(err => console.error('Background analysis failed:', err))
+      processScan(newScan.id).catch(err => console.error('Background analysis failed:', err))
     })
 
     // 5. Record scan for quota tracking (only in production)
@@ -165,8 +163,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      scanId: createdScan.id,
-      assetId: (asset as ExtendedAsset).id,
+      scanId: newScan.id,
+      assetId: asset!.id,
       remaining: quotaRemaining
     })
   } catch (error) {

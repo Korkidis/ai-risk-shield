@@ -210,7 +210,8 @@ export const generateForensicReport = (
     y += 8
 
     // Build findings list: DB findings first, then synthesized from profile
-    let findings = [...((scan as any).scan_findings || [])]
+    // scan_findings comes from the joined query on ScanWithRelations
+    let findings = [...((scan as ExtendedScan & { scan_findings?: Array<{ title: string; severity: string; finding_type: string; description: string; _teaser?: string }> }).scan_findings || [])]
 
     if (findings.length === 0 && profile.composite_score > 25) {
         if (profile.ip_report.score > 25) {

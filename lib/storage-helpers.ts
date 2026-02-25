@@ -100,7 +100,7 @@ export async function deleteAssetWithStorage(
                 storage_path: assetData.storage_path,
                 storage_deleted: storageDeleted,
             },
-        } as any)
+        })
 
         return {
             success: true,

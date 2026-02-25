@@ -55,40 +55,39 @@ export async function createScan(
     const { count: monthlyScans } = await supabase
       .from('scans')
       .select('*', { count: 'exact', head: true })
-      .eq('tenant_id', (tenant as any).id)
+      .eq('tenant_id', tenant.id)
       .gte('created_at', `${currentMonth}-01`)
 
-    if ((monthlyScans || 0) >= (tenant as any).monthly_scan_limit) {
+    if ((monthlyScans || 0) >= tenant.monthly_scan_limit) {
       return {
         success: false,
-        error: `Monthly scan limit reached (${(tenant as any).monthly_scan_limit} scans). Please upgrade your plan.`,
+        error: `Monthly scan limit reached (${tenant.monthly_scan_limit} scans). Please upgrade your plan.`,
       }
     }
 
     // Step 1: Create asset record
-    const retentionDays = (tenant as any).retention_days || 7
+    const retentionDays = tenant.retention_days || 7
     const deleteAfter = new Date()
     deleteAfter.setDate(deleteAfter.getDate() + retentionDays)
 
     const { data: asset, error: assetError } = await supabase
       .from('assets')
-      // @ts-ignore - Supabase types require generation from live schema
       .insert({
-        tenant_id: (tenant as any).id,
+        tenant_id: tenant.id,
         filename: fileName,
         file_type: fileType,
-        mime_type: fileType === 'image' ? 'image/jpeg' : 'video/mp4', // Simplified, could detect actual mime type
+        mime_type: fileType === 'image' ? 'image/jpeg' : 'video/mp4',
         file_size: fileSize,
         storage_path: filePath,
         storage_bucket: 'uploads',
         sha256_checksum: sha256Checksum,
-        uploaded_by: (user as any).id,
+        uploaded_by: user.id,
         delete_after: deleteAfter.toISOString(),
       })
       .select()
       .single()
 
-    if (assetError) {
+    if (assetError || !asset) {
       console.error('Failed to create asset:', assetError)
       return {
         success: false,
@@ -99,18 +98,17 @@ export async function createScan(
     // Step 2: Create scan record
     const { data: scan, error: scanError } = await supabase
       .from('scans')
-      // @ts-ignore - Supabase types require generation from live schema
       .insert({
-        tenant_id: (tenant as any).id,
-        asset_id: (asset as any).id,
-        analyzed_by: (user as any).id,
+        tenant_id: tenant.id,
+        asset_id: asset.id,
+        analyzed_by: user.id,
         is_video: fileType === 'video',
         status: 'processing',
       })
       .select()
       .single()
 
-    if (scanError) {
+    if (scanError || !scan) {
       console.error('Failed to create scan:', scanError)
       return {
         success: false,
@@ -120,9 +118,9 @@ export async function createScan(
 
     return {
       success: true,
-      scanId: (scan as any).id,
-      assetId: (asset as any).id,
-      tenantId: (tenant as any).id,
+      scanId: scan.id,
+      assetId: asset.id,
+      tenantId: tenant.id,
     }
   } catch (err) {
     console.error('Unexpected error in createScan:', err)
@@ -149,11 +147,11 @@ export async function getMonthlyUsage(): Promise<{
   const { count } = await supabase
     .from('scans')
     .select('*', { count: 'exact', head: true })
-    .eq('tenant_id', (tenant as any).id)
+    .eq('tenant_id', tenant!.id)
     .gte('created_at', `${currentMonth}-01`)
 
   const used = count || 0
-  const limit = (tenant as any).monthly_scan_limit
+  const limit = tenant!.monthly_scan_limit
   const remaining = Math.max(0, limit - used)
 
   return { used, limit, remaining }

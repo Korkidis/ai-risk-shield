@@ -13,6 +13,7 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import type { Database, Json } from '@/lib/supabase/types'
 import { computeCompositeScore, computeRiskLevel, computeProvenanceScore, computeProvenanceStatus, type C2PAStatus } from '@/lib/risk/scoring'
 import { analyzeIP } from './ip-detection'
 import { analyzeBrandSafety } from './brand-safety'
@@ -39,7 +40,6 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     const supabase = await createServiceRoleClient()
 
     // 1. Get scan record with asset info
-    // @ts-ignore
     const { data: scan, error: scanError } = await supabase
       .from('scans')
       .select('*, assets(*)')
@@ -52,11 +52,11 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     // Fetch brand guideline if scan has one (for Gemini prompt injection)
     let brandGuideline = null
-    if ((scan as any).guideline_id) {
+    if (scan.guideline_id) {
       const { data: gl } = await supabase
         .from('brand_guidelines')
         .select('*')
-        .eq('id', (scan as any).guideline_id)
+        .eq('id', scan.guideline_id)
         .single()
       brandGuideline = gl
     }
@@ -70,14 +70,15 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       .from('scans')
       .select('status')
       .eq('id', scanId)
-      .single() as unknown as { data: { status: string } | null }
+      .single()
 
     if (statusCheck?.status === 'complete' || statusCheck?.status === 'failed') {
       console.warn(`Scan ${scanId} already in terminal state: ${statusCheck.status}, skipping`)
       return { success: true, scanId }
     }
 
-    const asset = (scan as any).assets
+    // The select('*, assets(*)') returns assets as a joined relation
+    const asset = (scan as Record<string, unknown>).assets as { storage_path: string; mime_type: string; file_type: string; filename: string } | null
 
     if (!asset) {
       throw new Error('Asset not found for scan: ' + scanId)
@@ -110,10 +111,10 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     const c2paResult = { hasManifest: false, valid: false }
 
     // 4. Content Analysis
-    let ipResult, brandSafetyResult, videoFramesData: any[] = []
+    let ipResult, brandSafetyResult, videoFramesData: Record<string, unknown>[] = []
     let compositeRisk: { score: number; level: 'safe' | 'caution' | 'review' | 'high' | 'critical' }
     let provenanceScore = 0
-    let riskProfile: any = null // Hoisted so findings section can access it
+    let riskProfile: Record<string, any> | null = null // Hoisted so findings section can access it
     // Canonical C2PA status (default to missing until verified)
     let c2paStatus: C2PAStatus = 'missing'
     // Provenance status type matches canonical C2PAStatus from scoring module
@@ -178,7 +179,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         })
 
         videoFramesData.push({
-          tenant_id: (scan as any).tenant_id,
+          tenant_id: scan.tenant_id,
           scan_id: scanId,
           frame_number: frame.timestamp, // treating timestamp as index/frame number
           timestamp_ms: frame.timestamp * 1000,
@@ -244,7 +245,6 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // Save the risk profile to the scan for later retrieval
       await supabase
         .from('scans')
-        // @ts-ignore
         .update({ risk_profile: riskProfile })
         .eq('id', scanId)
     }
@@ -252,13 +252,23 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     // 5. Calculate composite risk (Final) is already done above
 
     // 6. Save findings — use rich data from riskProfile for images (matches authenticated path)
-    const findings: any[] = []
+    const findings: Array<{
+      tenant_id: string | null
+      scan_id: string
+      finding_type: string
+      severity: string
+      title: string
+      description: string
+      recommendation?: string | null
+      evidence?: Json
+      confidence_score?: number
+    }> = []
 
     if (!isVideo && riskProfile) {
       // IMAGE: Rich findings from Gemini risk profile
       // C2PA / Provenance finding (always)
       findings.push({
-        tenant_id: (scan as any).tenant_id,
+        tenant_id: scan.tenant_id,
         scan_id: scanId,
         finding_type: 'provenance_issue',
         severity: (c2paStatus === 'valid' || c2paStatus === 'caution') ? 'low' :
@@ -279,7 +289,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // IP finding if score warrants it
       if (riskProfile.ip_report.score > 50) {
         findings.push({
-          tenant_id: (scan as any).tenant_id,
+          tenant_id: scan.tenant_id,
           scan_id: scanId,
           finding_type: 'ip_violation',
           severity: riskProfile.ip_report.score > 85 ? 'critical' : 'high',
@@ -293,7 +303,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // Safety finding if score warrants it
       if (riskProfile.safety_report.score > 50) {
         findings.push({
-          tenant_id: (scan as any).tenant_id,
+          tenant_id: scan.tenant_id,
           scan_id: scanId,
           finding_type: 'safety_violation',
           severity: riskProfile.safety_report.score > 85 ? 'critical' : 'high',
@@ -306,10 +316,9 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
       // Save provenance_details for valid/caution C2PA (matches authenticated path)
       if (['valid', 'caution'].includes(c2paStatus) && riskProfile.c2pa_report) {
-        // @ts-ignore - Supabase types not generated from live schema
         await supabase.from('provenance_details').insert({
           scan_id: scanId,
-          tenant_id: (scan as any).tenant_id,
+          tenant_id: scan.tenant_id,
           creator_name: riskProfile.c2pa_report.creator,
           creation_tool: riskProfile.c2pa_report.tool,
           creation_tool_version: riskProfile.c2pa_report.tool_version,
@@ -325,7 +334,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // VIDEO or no riskProfile: basic findings
       if (!c2paResult.hasManifest) {
         findings.push({
-          tenant_id: (scan as any).tenant_id,
+          tenant_id: scan.tenant_id,
           scan_id: scanId,
           finding_type: 'provenance_issue',
           severity: 'low',
@@ -339,14 +348,12 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     // Insert findings
     if (findings.length > 0) {
-      // @ts-ignore
       await supabase.from('scan_findings').insert(findings)
     }
 
     // Insert video frames if applicable
     if (videoFramesData.length > 0) {
-      // @ts-ignore
-      await supabase.from('video_frames').insert(videoFramesData)
+      await supabase.from('video_frames').insert(videoFramesData as Database['public']['Tables']['video_frames']['Insert'][])
     }
 
     // 7. Update scan record with results
@@ -356,7 +363,6 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     const { error: updateError } = await supabase
       .from('scans')
-      // @ts-ignore - Supabase types require generation from live schema
       .update({
         status: 'complete',
         risk_level: compositeRisk.level,
@@ -377,7 +383,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       throw new Error('Failed to update scan: ' + updateError.message)
     }
 
-    console.log(`✅ Scan ${scanId} completed in ${analysisTime}ms`)
+    console.log(`Scan ${scanId} completed in ${analysisTime}ms`)
 
     await broadcastScanProgress(scanId, 100, "Analysis complete.")
 
@@ -386,14 +392,13 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       scanId,
     }
   } catch (error) {
-    console.error(`❌ Scan ${scanId} failed:`, error)
+    console.error(`Scan ${scanId} failed:`, error)
 
     // Mark scan as failed
     try {
       const supabase = await createServiceRoleClient()
       await supabase
         .from('scans')
-        // @ts-ignore
         .update({
           status: 'failed',
           updated_at: new Date().toISOString(),
@@ -426,8 +431,6 @@ export async function processPendingScans(): Promise<{
 }> {
   const supabase = await createServiceRoleClient()
 
-  // Get all pending scans
-  // @ts-ignore
   const { data: pendingScans, error } = await supabase
     .from('scans')
     .select('id')
@@ -444,7 +447,7 @@ export async function processPendingScans(): Promise<{
 
   // Process each scan
   for (const scan of pendingScans) {
-    const result = await processScan((scan as any).id)
+    const result = await processScan(scan.id)
     if (result.success) {
       succeeded++
     } else {

@@ -51,6 +51,12 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   }, [previewUrl])
 
   const handleInitiateScan = async (file: File) => {
+    // Client-side video gate: anonymous users cannot upload video
+    if (file.type.startsWith('video/')) {
+      alert('Video scanning requires a paid plan.\n\nSign up for PRO to unlock video analysis, bulk scanning, and full forensic reports.')
+      return
+    }
+
     // Immediate preview for responsiveness
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
@@ -182,7 +188,8 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       let errorMessage = 'Analysis failed. Please try again.'
       if (err.message.includes('Scan limit reached')) errorMessage = 'Limit reached: 3 free scans per month.'
       else if (err.message.includes('Upload failed')) errorMessage = 'Upload connection failed.'
-      else if (err.message.includes('Invalid file type')) errorMessage = 'Invalid format. Use JPG, PNG, or MP4.'
+      else if (err.message.includes('Video analysis requires')) errorMessage = 'Video scanning requires a paid plan.'
+      else if (err.message.includes('Invalid file type')) errorMessage = 'Invalid format. Use JPG, PNG, or WebP.'
 
       alert(`${errorMessage}\n\nTechnical Details: ${err.message || JSON.stringify(err)}`)
       setIsProcessing(false)
@@ -246,6 +253,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
                 <div className="w-12 h-0.5 bg-white/20 rounded-full overflow-hidden">
                   <div className="w-full h-full bg-[var(--rs-signal)] -translate-x-full animate-[shimmer_2s_infinite] motion-reduce:animate-none" />
                 </div>
+                <span className="rs-type-mono text-[10px] text-white/30 tracking-[0.15em] uppercase mt-1">JPG, PNG, WebP • Max 50 MB • 100% Free</span>
               </div>
 
               <RSFileUpload
@@ -253,7 +261,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
                 onFileSelect={handleInitiateScan}
                 onDragChange={setIsDragActive}
                 maxSizeMB={50}
-                accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm,.wmv"
+                accept="image/*"
                 className="absolute inset-0 opacity-0 cursor-pointer z-50"
               />
             </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getSessionId } from '@/lib/session'
+import { checkRateLimit, getRateLimitKey } from '@/lib/ratelimit'
 
 /**
  * POST /api/scans/capture-email
@@ -15,6 +16,16 @@ export async function POST(request: Request) {
 
     if (!sessionId) {
       return NextResponse.json({ error: 'No session' }, { status: 401 })
+    }
+
+    // Rate limit: 5 magic link requests per hour per IP
+    const ipKey = await getRateLimitKey()
+    const rl = await checkRateLimit({ action: 'magic_link', key: ipKey, maxAttempts: 5, windowSeconds: 3600 })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter || 60) } }
+      )
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -77,8 +88,6 @@ export async function POST(request: Request) {
       .eq('id', scanId)
       .single()
 
-    const scan = scanData as any
-
     // Fetch findings count explicitly to avoid nested count issues
     const { count: findingsCount } = await supabase
       .from('scan_findings')
@@ -101,10 +110,10 @@ export async function POST(request: Request) {
       // Simple severity rank
       const severityRank: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1, info: 0 }
       // Type assertion to avoid 'never' error
-      topFinding = (topFindings as any[]).sort((a, b) => (severityRank[b.severity] || 0) - (severityRank[a.severity] || 0))[0]
+      topFinding = [...topFindings].sort((a, b) => (severityRank[b.severity ?? ''] || 0) - (severityRank[a.severity ?? ''] || 0))[0]
     }
 
-    const score = scan?.composite_score || 0
+    const score = scanData?.composite_score || 0
     const count = findingsCount || 0
 
     console.log(`[Email Capture Debug] ScanId: ${scanId}, Score: ${score}, Count: ${count}`)

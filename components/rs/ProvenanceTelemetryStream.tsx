@@ -13,7 +13,7 @@ export interface TelemetryRow {
 }
 
 interface ProvenanceTelemetryStreamProps {
-    details?: ProvenanceDetails | null;
+    details?: Partial<ProvenanceDetails> | null;
     customRows?: TelemetryRow[];
     scanStatus: 'pending' | 'processing' | 'complete' | 'failed';
     onDetailsClick?: () => void;

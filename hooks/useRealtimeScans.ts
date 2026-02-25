@@ -76,7 +76,14 @@ export function useRealtimeScans({
                     table: 'scans'
                 },
                 (payload) => {
-                    const newRecord = payload.new as any
+                    // Realtime postgres_changes payload shape for scan updates
+                    type RealtimeScanPayload = {
+                        id: string; status: string; composite_score: number | null;
+                        ip_risk_score: number | null; safety_risk_score: number | null;
+                        provenance_risk_score: number | null; risk_level: string | null;
+                        updated_at: string | null;
+                    }
+                    const newRecord = payload.new as RealtimeScanPayload
 
                     // Only process currently tracked scans
                     if (!processingIds.includes(newRecord?.id)) return
@@ -94,13 +101,13 @@ export function useRealtimeScans({
 
                     onUpdateRef.current({
                         id: newRecord.id,
-                        status: newStatus,
-                        composite_score: newRecord.composite_score,
-                        ip_risk_score: newRecord.ip_risk_score,
-                        safety_risk_score: newRecord.safety_risk_score,
-                        provenance_risk_score: newRecord.provenance_risk_score,
-                        risk_level: newRecord.risk_level,
-                        updated_at: newRecord.updated_at,
+                        status: newStatus as ScanWithRelations['status'],
+                        composite_score: newRecord.composite_score ?? undefined,
+                        ip_risk_score: newRecord.ip_risk_score ?? undefined,
+                        safety_risk_score: newRecord.safety_risk_score ?? undefined,
+                        provenance_risk_score: newRecord.provenance_risk_score ?? undefined,
+                        risk_level: (newRecord.risk_level ?? undefined) as ScanWithRelations['risk_level'],
+                        updated_at: newRecord.updated_at ?? undefined,
                     })
                 }
             )

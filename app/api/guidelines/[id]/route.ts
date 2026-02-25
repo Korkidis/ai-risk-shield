@@ -21,14 +21,14 @@ export async function PATCH(
 
         // If setting as default, unset others first
         if (body.is_default) {
-            await (supabase
-                .from('brand_guidelines') as any)
+            await supabase
+                .from('brand_guidelines')
                 .update({ is_default: false })
                 .eq('tenant_id', tenantId)
         }
 
-        const { data, error } = await (supabase
-            .from('brand_guidelines') as any)
+        const { data, error } = await supabase
+            .from('brand_guidelines')
             .update(body)
             .eq('id', params.id)
             .eq('tenant_id', tenantId) // Safety

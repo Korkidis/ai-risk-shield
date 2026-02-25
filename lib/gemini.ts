@@ -104,7 +104,20 @@ CRITICAL RULES:
 4. When in doubt, score HIGHER. Liability is expensive.`;
 
 async function analyzeIP(part: any, guidelineRules?: string): Promise<SpecialistReport> {
-    const instruction = IP_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES (OVERRIDE GENERIC POLICIES):\n${guidelineRules}` : '');
+    const instruction = IP_SYSTEM_INSTRUCTION + (guidelineRules ? `
+
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+BRAND GUIDELINE OVERRIDE \u2014 THIS SUPERSEDES ALL SCORING ABOVE
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+
+The client has provided explicit brand guidelines. These guidelines OVERRIDE
+the generic scoring tiers above. When a guideline says something is approved,
+you MUST score it 0-9 regardless of what the generic tiers say.
+
+${guidelineRules}
+
+CRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaults.
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550` : '');
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
         systemInstruction: instruction
@@ -166,7 +179,22 @@ CRITICAL RULES:
 3. Consider: "Would a Fortune 500 CMO be comfortable with this in an ad?"`;
 
 async function analyzeSafety(part: any, guidelineRules?: string): Promise<SpecialistReport> {
-    const instruction = SAFETY_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES (OVERRIDE GENERIC POLICIES):\n${guidelineRules}` : '');
+    const instruction = SAFETY_SYSTEM_INSTRUCTION + (guidelineRules ? `
+
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+BRAND GUIDELINE OVERRIDE \u2014 THIS SUPERSEDES ALL SCORING ABOVE
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+
+The client has provided explicit brand guidelines. These guidelines OVERRIDE
+the generic scoring tiers above. When a guideline says something is approved,
+you MUST score it 0-9 regardless of what the generic tiers say.
+
+${guidelineRules}
+
+CRITICAL: If the generic scoring says "Alcohol = 40-69" but the brand guideline
+says "Alcohol is approved", the brand guideline WINS. Score alcohol content 0-9.
+Brand-specific rules ALWAYS take priority over generic industry defaults.
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550` : '');
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
         systemInstruction: instruction
@@ -304,15 +332,40 @@ async function executePrompt(
     }
 }
 
-// Helper to format guideline rules
+// Helper to format guideline rules with explicit scoring directives
 function formatGuidelineRules(g: BrandGuideline): string {
-    return [
-        g.prohibitions.length > 0 ? `PROHIBITIONS (STRICT NO):\n- ${g.prohibitions.join('\n- ')}` : '',
-        g.requirements.length > 0 ? `REQUIREMENTS (MUST HAVE):\n- ${g.requirements.join('\n- ')}` : '',
-        g.context_modifiers.length > 0 ? `CONTEXTUAL EXCEPTIONS (IMPORTANT):\n- ${g.context_modifiers.join('\n- ')}` : '',
-        `TARGET MARKETS: ${g.target_markets.join(', ')}`,
-        `TARGET PLATFORMS: ${g.target_platforms.join(', ')}`
-    ].filter(Boolean).join('\n\n');
+    const sections: string[] = []
+
+    // Scoring overrides — the key piece that tells Gemini HOW to adjust scores
+    if (g.context_modifiers && g.context_modifiers.length > 0) {
+        sections.push(
+            `SCORING ADJUSTMENTS — These items are APPROVED by the brand and MUST score 0-9 (NO RISK):\n` +
+            g.context_modifiers.map(m => `  \u2022 ${m} \u2192 Score 0-9. This is explicitly brand-approved content.`).join('\n')
+        )
+    }
+
+    if (g.prohibitions && g.prohibitions.length > 0) {
+        sections.push(
+            `BRAND PROHIBITIONS — These items are BANNED and MUST score 90-100 (CRITICAL RISK):\n` +
+            g.prohibitions.map(p => `  \u2022 ${p} \u2192 Score 90-100. Brand explicitly prohibits this.`).join('\n')
+        )
+    }
+
+    if (g.requirements && g.requirements.length > 0) {
+        sections.push(
+            `BRAND REQUIREMENTS — Missing these items MUST increase score by +20:\n` +
+            g.requirements.map(r => `  \u2022 ${r}`).join('\n')
+        )
+    }
+
+    if (g.target_markets && g.target_markets.length > 0) {
+        sections.push(`TARGET MARKETS: ${g.target_markets.join(', ')}`)
+    }
+    if (g.target_platforms && g.target_platforms.length > 0) {
+        sections.push(`TARGET PLATFORMS: ${g.target_platforms.join(', ')}`)
+    }
+
+    return sections.join('\n\n')
 }
 
 // ============================================================================

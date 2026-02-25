@@ -23,7 +23,7 @@ export async function POST(_request: Request) {
         }
 
         // Call the Security Definer function
-        const { data, error } = await (supabase as any).rpc('assign_scans_to_user', {
+        const { data, error } = await supabase.rpc('assign_scans_to_user', {
             p_session_id: sessionId,
             p_user_id: user.id
         })

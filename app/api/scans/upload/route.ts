@@ -4,6 +4,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getTenantId, requireAuth } from '@/lib/supabase/auth'
 import { reportScanUsage } from '@/lib/stripe-usage'
 import { createHash } from 'crypto'
+import { checkRateLimit } from '@/lib/ratelimit'
 
 /**
  * POST /api/scans/upload
@@ -18,6 +19,15 @@ export async function POST(request: Request) {
 
         if (!tenantId) {
             return NextResponse.json({ error: 'Unauthorized: No Linked Tenant' }, { status: 401 })
+        }
+
+        // Rate limit: 10 uploads per minute per tenant (burst protection)
+        const rl = await checkRateLimit({ action: 'upload', key: tenantId, maxAttempts: 10, windowSeconds: 60 })
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'Upload rate limit exceeded. Please wait before uploading again.' },
+                { status: 429, headers: { 'Retry-After': String(rl.retryAfter || 10) } }
+            )
         }
 
         const formData = await request.formData()
@@ -129,7 +139,6 @@ export async function POST(request: Request) {
 
         const { data: asset, error: assetError } = await supabase
             .from('assets')
-            // @ts-ignore
             .insert(assetData)
             .select()
             .single()
@@ -163,7 +172,7 @@ export async function POST(request: Request) {
         // Create scan record
         const scanData = {
             tenant_id: tenantId,
-            asset_id: (asset as any).id,
+            asset_id: asset!.id,
             is_video: fileType === 'video',
             status: 'processing', // Must match check constraint: processing, complete, failed
             analyzed_by: user.id,
@@ -172,7 +181,6 @@ export async function POST(request: Request) {
 
         const { data: scan, error: scanError } = await supabase
             .from('scans')
-            // @ts-ignore
             .insert(scanData)
             .select()
             .single()
@@ -187,7 +195,6 @@ export async function POST(request: Request) {
         // 2. Increment Usage — Direct update (increment_scans_used RPC not deployed)
         const { error: usageError } = await supabase
             .from('tenants')
-            // @ts-ignore - scans_used_this_month may not be in generated types
             .update({ scans_used_this_month: used + 1 })
             .eq('id', tenantId)
 
@@ -205,12 +212,12 @@ export async function POST(request: Request) {
         // Trigger background processing
         // Trigger background processing (Direct call, bypass Auth-gated API)
         import('@/lib/ai/scan-processor').then(({ processScan }) => {
-            processScan((scan as any).id).catch(err => console.error('Background analysis failed:', err))
+            processScan(scan!.id).catch(err => console.error('Background analysis failed:', err))
         })
 
         return NextResponse.json({
             success: true,
-            scanId: (scan as any).id,
+            scanId: scan!.id,
             isOverage,
             overageWarning: isOverage ? 'This scan will incur overage charges at your plan rate.' : null
         })

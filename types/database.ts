@@ -29,16 +29,16 @@ export interface BrandGuideline {
   id: string
   tenant_id: string
   name: string
-  industry?: string
-  is_default: boolean
-  prohibitions: string[]
-  requirements: string[]
-  context_modifiers: string[]
-  target_markets: string[]
-  target_platforms: string[]
-  last_used_at?: string
+  industry?: string | null
+  is_default: boolean | null
+  prohibitions: string[] | null
+  requirements: string[] | null
+  context_modifiers: string[] | null
+  target_markets: string[] | null
+  target_platforms: string[] | null
+  last_used_at?: string | null
   created_at: string
-  updated_at: string
+  updated_at: string | null
 }
 
 export interface ExtendedScan {
@@ -85,9 +85,10 @@ export interface ScanWithRelations extends ExtendedScan {
   scan_findings?: ScanFinding[]
   email?: string | null
 
-  // UI Helper Props (Join Results)
+  // UI Helper Props (Join Results / Mapped from fetchScans)
   filename: string
   file_type: string
+  file_size?: number
   image_url?: string | null
   asset_url?: string | null
   risk_profile?: RiskProfile | null

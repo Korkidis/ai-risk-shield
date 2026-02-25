@@ -22,13 +22,11 @@ async function validateTenantAccess(targetTenantId: string, userId: string) {
     const supabase = await createServiceRoleClient();
 
     // 1. Get user's home tenant and role
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('tenant_id, role')
         .eq('id', userId)
         .single();
-
-    const profile = profileData as any;
 
     if (profileError || !profile) {
         throw new Error('User profile not found');
@@ -41,13 +39,11 @@ async function validateTenantAccess(targetTenantId: string, userId: string) {
 
     // Case B: Switching to a child tenant (Must be Admin/Owner of Parent)
     if (['owner', 'admin', 'agency_admin'].includes(profile.role)) {
-        const { data: targetTenantData, error: tenantError } = await supabase
+        const { data: targetTenant, error: tenantError } = await supabase
             .from('tenants')
             .select('parent_tenant_id')
             .eq('id', targetTenantId)
             .single();
-
-        const targetTenant = targetTenantData as any;
 
         if (tenantError || !targetTenant) {
             throw new Error('Target tenant not found');
@@ -68,24 +64,20 @@ export async function getAccessibleTenants(): Promise<Tenant[]> {
     if (authError || !user?.user) return [];
 
     // 1. Get current user's profile to know their home tenant
-    const { data: profileData } = await supabase
+    const { data: profile } = await supabase
         .from('profiles')
         .select('tenant_id, role')
         .eq('id', user.user.id)
         .single();
 
-    const profile = profileData as any;
-
     if (!profile) return [];
 
     // 2. Fetch Home Tenant
-    const { data: homeTenantData } = await supabase
+    const { data: homeTenant } = await supabase
         .from('tenants')
         .select('id, name, plan, parent_tenant_id')
         .eq('id', profile.tenant_id)
         .single();
-
-    const homeTenant = homeTenantData as any;
 
     if (!homeTenant) return [];
 
@@ -96,12 +88,10 @@ export async function getAccessibleTenants(): Promise<Tenant[]> {
     const isAdmin = ['owner', 'admin', 'agency_admin'].includes(profile.role);
 
     if (isAgency && isAdmin) {
-        const { data: childrenData } = await supabase
+        const { data: children } = await supabase
             .from('tenants')
             .select('id, name, plan, parent_tenant_id')
             .eq('parent_tenant_id', homeTenant.id);
-
-        const children = childrenData as any;
 
         if (children) {
             tenants = [...tenants, ...children];
@@ -140,14 +130,12 @@ export async function switchTenant(targetTenantId: string) {
     }
 
     // 3. Log the switch for audit
-    // (Optional: can be added here or via trigger)
-    // Casting to any to avoid strict type checks until DB types are regenerated
-    await adminClient.from('tenant_switch_audit' as any).insert({
+    await adminClient.from('tenant_switch_audit').insert({
         actor_user_id: user.id,
         to_tenant_id: targetTenantId,
         reason: 'User initialized switch',
         metadata: { method: 'server_action' }
-    } as any);
+    });
 
     // 4. Force Revalidation
     revalidatePath('/', 'layout');
@@ -167,13 +155,11 @@ export async function getActiveTenantId(): Promise<string | null> {
     }
 
     // Fallback to home tenant from profile
-    const { data: profileData } = await supabase
+    const { data: profile } = await supabase
         .from('profiles')
         .select('tenant_id')
         .eq('id', user.id)
         .single();
-
-    const profile = profileData as any;
 
     return profile?.tenant_id || null;
 }

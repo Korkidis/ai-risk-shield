@@ -5,6 +5,7 @@ import { stripe } from '@/lib/stripe'
 import { type PlanId } from '@/lib/plans'
 import { getSessionId } from '@/lib/session'
 import { validateStripePrices } from '@/lib/stripe-validate-prices'
+import { checkRateLimit, getRateLimitKey } from '@/lib/ratelimit'
 
 // Price IDs from Stripe Dashboard - map plan + interval to Stripe Price ID
 const PRICE_IDS: Record<string, string | undefined> = {
@@ -73,10 +74,8 @@ export async function POST(request: NextRequest) {
                 .eq('id', user.id)
                 .single()
 
-            const profile = profileData as any
-
-            if (profile?.tenant_id) {
-                tenantId = profile.tenant_id
+            if (profileData?.tenant_id) {
+                tenantId = profileData.tenant_id
             } else {
                 return NextResponse.json({ error: 'Account setup incomplete' }, { status: 400 })
             }
@@ -94,27 +93,33 @@ export async function POST(request: NextRequest) {
                 .eq('id', scanId)
                 .single()
 
-            const scan = scanData as any
-
             if (error || !scanData) {
                 return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
             }
 
-
-
             if (user) {
-                const ownsByUser = scan.user_id === user.id
-                const ownsByTenant = scan.tenant_id === tenantId
-                const ownsBySession = sessionId && scan.session_id === sessionId
+                const ownsByUser = scanData.user_id === user.id
+                const ownsByTenant = scanData.tenant_id === tenantId
+                const ownsBySession = sessionId && scanData.session_id === sessionId
                 if (!ownsByUser && !ownsByTenant && !ownsBySession) {
                     return NextResponse.json({ error: 'Access denied' }, { status: 403 })
                 }
             } else {
                 // If anonymous, scan must belong to the anonymous session
-                if (!sessionId || scan.session_id !== sessionId) {
+                if (!sessionId || scanData.session_id !== sessionId) {
                     return NextResponse.json({ error: 'Access denied' }, { status: 403 })
                 }
             }
+        }
+
+        // Rate limit: 5 checkout sessions per hour per user/IP
+        const rlKey = user ? user.id : await getRateLimitKey()
+        const rl = await checkRateLimit({ action: 'checkout', key: rlKey, maxAttempts: 5, windowSeconds: 3600 })
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'Too many checkout attempts. Please try again later.' },
+                { status: 429, headers: { 'Retry-After': String(rl.retryAfter || 60) } }
+            )
         }
 
         // 3. Determine Price & URLs

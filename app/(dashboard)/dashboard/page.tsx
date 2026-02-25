@@ -28,7 +28,9 @@ interface RiskProfile {
         creator?: string;
         tool?: string;
         timestamp?: string;
-        raw_manifest?: any;
+        issuer?: string;
+        history?: Array<{ action: string; when?: string }>;
+        raw_manifest?: Record<string, unknown>;
     };
 }
 
@@ -51,7 +53,7 @@ export default function DashboardPage() {
 
     // Brand Guidelines
     const [guidelines, setGuidelines] = React.useState<Array<{ id: string, name: string }>>([]);
-    const [selectedGuidelineId, setSelectedGuidelineId] = React.useState<string>('default');
+    const [selectedGuidelineId, setSelectedGuidelineId] = React.useState<string>('none');
 
     // Track whether we've already processed the scan param (prevent double-fetch)
     const processedScanParam = useRef(false);
@@ -77,14 +79,19 @@ export default function DashboardPage() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Fetch brand guidelines for selector
+    // Fetch brand guidelines for selector + auto-select first/default
     useEffect(() => {
         fetch('/api/guidelines')
             .then(r => r.json())
             .then(data => {
-                if (data.guidelines?.length) setGuidelines(data.guidelines)
+                if (data.guidelines?.length) {
+                    setGuidelines(data.guidelines)
+                    // Auto-select: prefer is_default guideline, else first one
+                    const defaultG = data.guidelines.find((g: any) => g.is_default)
+                    setSelectedGuidelineId(defaultG?.id || data.guidelines[0].id)
+                }
             })
-            .catch(() => { }) // Silently fail — selector stays at 'default'
+            .catch(() => { }) // Silently fail — selector stays at 'none'
     }, [])
 
     // ─── VIEWER MODE: Load scan from ?scan=<id> param ────────────────────────
@@ -195,6 +202,25 @@ export default function DashboardPage() {
         }, 2000);
     };
 
+    // ─── Effect: Fetch billing/plan status on mount (always, for all authenticated users) ──
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (!user) {
+                setIsAnonymous(true);
+                return;
+            }
+            getTenantBillingStatus().then(billing => {
+                console.log('[Dashboard] Billing status:', billing?.planId)
+                if (billing?.planId) {
+                    setUserPlan(billing.planId);
+                }
+            }).catch((err) => {
+                console.error('[Dashboard] Billing fetch failed:', err)
+            });
+        });
+    }, []);
+
     // ─── Effect: Load scan from URL param on mount ───────────────────────────
     useEffect(() => {
         if (!scanIdParam || processedScanParam.current) return;
@@ -203,17 +229,6 @@ export default function DashboardPage() {
         // Check auth state
         const supabase = createClient();
         supabase.auth.getUser().then(({ data: { user } }) => {
-            if (!user) {
-                setIsAnonymous(true);
-            } else {
-                // Fetch user's plan for entitlement-based CTA
-                getTenantBillingStatus().then(billing => {
-                    if (billing?.planId && billing.planId !== 'free') {
-                        setUserPlan(billing.planId);
-                    }
-                }).catch(() => { }); // Silent — default stays 'free'
-            }
-
             // Trigger scan assignment if coming from magic link
             // IMPORTANT: Must await assignment before loading scan, otherwise scan
             // may still be session-owned (not yet migrated to tenant) and auth fails
@@ -247,6 +262,15 @@ export default function DashboardPage() {
 
     // ─── SCANNER MODE: File upload (authenticated users) ─────────────────────
     const handleFileProcess = async (file: File) => {
+        // Client-side video gate: block free users before upload
+        const isVideoFile = file.type.startsWith('video/')
+        if (isVideoFile && userPlan === 'free') {
+            setScanStatus('error')
+            setErrorMessage('Video analysis requires a PRO plan. Upgrade to unlock video scanning.')
+            setShowAuditModal(true)
+            return
+        }
+
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
         setScanStatus('scanning');
@@ -330,8 +354,8 @@ export default function DashboardPage() {
         const formatTime = (iso?: string) => iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase() : 'N/A';
         const toolName = report.tool ? report.tool.toUpperCase() : (manifestDetected ? 'UNKNOWN_TOOL' : 'N/A');
         const creatorName = report.creator ? report.creator.toUpperCase() : 'UNKNOWN_ID';
-        const issuerName = (report as any).issuer ? (report as any).issuer.toUpperCase().replace(/\s+/g, '_') : 'UNKNOWN_CA';
-        const historyCount = (report as any).history ? (report as any).history.length : 0;
+        const issuerName = report.issuer ? report.issuer.toUpperCase().replace(/\s+/g, '_') : 'UNKNOWN_CA';
+        const historyCount = report.history ? report.history.length : 0;
         const isAI = toolName.includes('FIREFLY') || toolName.includes('MIDJOURNEY') || toolName.includes('DALLE');
         const aiValue = isAI ? 'CONFIRMED' : 'ANALYZING';
 
@@ -344,7 +368,7 @@ export default function DashboardPage() {
             { id: '0xIDENT', label: 'CREATOR_IDENTITY', value: creatorName, barWidth: report.creator ? 85 : 15, status: report.creator ? 'success' : 'warning' },
             { id: '0xTOOL', label: 'GENERATION_TOOL', value: toolName, barWidth: report.tool ? 90 : 20, status: report.tool ? 'success' : 'warning' },
             { id: '0xMODEL', label: 'MODEL_VERSION', value: manifestDetected ? '1.0.0' : '---', barWidth: manifestDetected ? 100 : 0, status: 'info' },
-            { id: '0xTIME', label: 'TIMESTAMP', value: formatTime((report as any).timestamp), barWidth: (report as any).timestamp ? 100 : 0, status: 'info' },
+            { id: '0xTIME', label: 'TIMESTAMP', value: formatTime(report.timestamp), barWidth: report.timestamp ? 100 : 0, status: 'info' },
             { id: '0xEDIT', label: 'EDIT_HISTORY', value: manifestDetected ? `${historyCount}_ACTIONS` : 'N/A', barWidth: historyCount > 0 ? 70 : 0, status: 'info' },
             { id: '0xAI', label: 'AI_GENERATED', value: aiValue, barWidth: isAI ? 95 : 50, status: isAI ? 'info' : 'warning' },
             { id: '0xTRAIN', label: 'AI_TRAINING_ALLOWED', value: 'NO_CONSENT', barWidth: 100, status: 'info' },
@@ -383,7 +407,7 @@ export default function DashboardPage() {
                             onChange={(e) => setSelectedGuidelineId(e.target.value)}
                             className="flex-1 text-[10px] font-mono font-bold bg-transparent border-none text-rs-signal focus:outline-none cursor-pointer"
                         >
-                            <option value="default">DEFAULT_POLICY</option>
+                            <option value="none">NO_PROTOCOL</option>
                             {guidelines.map(g => (
                                 <option key={g.id} value={g.id}>{g.name.toUpperCase()}</option>
                             ))}
@@ -432,7 +456,11 @@ export default function DashboardPage() {
                                     <p className="text-white/40 font-mono text-xs uppercase tracking-[0.2em] group-hover:text-white transition-colors">
                                         {isError ? 'Scan Failed - Retry?' : 'Drop file here or click to browse'}
                                     </p>
-                                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">Max 50MB • JPG, PNG, MP4, MOV, MKV</p>
+                                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">
+                                        {userPlan === 'free'
+                                            ? <>Max 50MB • JPG, PNG <span className="text-white/10">|</span> <span className="text-rs-accent/60">Video requires PRO plan</span></>
+                                            : 'Max 50MB • JPG, PNG, MP4, MOV, MKV'}
+                                    </p>
                                     {isError && <p className="text-rs-signal font-mono text-[10px] uppercase tracking-widest mt-2">{errorMessage}</p>}
                                 </div>
                                 <input
@@ -455,7 +483,7 @@ export default function DashboardPage() {
                     <RSTelemetryPanel
                         className="w-full"
                         state={isError ? 'error' : isComplete ? 'complete' : (isScanning || isLoading) ? 'scanning' : 'idle'}
-                        logEntries={logs as any}
+                        logEntries={logs}
                         rows={getPreviewTelemetryRows()}
                         onAction={() => setIsDrawerOpen(true)}
                         buttonText="VIEW FULL MANIFEST"
@@ -472,7 +500,7 @@ export default function DashboardPage() {
                     <RSRiskPanel
                         id={isComplete ? (currentScanId?.substring(0, 8).toUpperCase() || "SYS-STD-01") : "--"}
                         score={results.composite}
-                        level={isComplete ? (getRiskTier(results.composite).level as any) : 'low'}
+                        level={isComplete ? getRiskTier(results.composite).level as 'critical' | 'high' | 'medium' | 'low' | 'safe' : 'low'}
                         ipScore={results.ipRisk}
                         safetyScore={results.brandSafety}
                         provenanceScore={results.provenance}
@@ -529,8 +557,14 @@ export default function DashboardPage() {
             <RSProvenanceDrawer
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
-                status={analysisResult?.c2pa_report?.status as any}
-                details={analysisResult?.c2pa_report as any}
+                status={analysisResult?.c2pa_report?.status || 'missing'}
+                details={analysisResult?.c2pa_report ? {
+                    creator: analysisResult.c2pa_report.creator,
+                    tool: analysisResult.c2pa_report.tool,
+                    date: analysisResult.c2pa_report.timestamp,
+                    issuer: analysisResult.c2pa_report.issuer,
+                    history: analysisResult.c2pa_report.history?.map(h => ({ action: h.action, tool: '', date: h.when || '' })),
+                } : undefined}
             />
 
             <AuditModal

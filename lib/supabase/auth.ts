@@ -83,7 +83,7 @@ export const getCurrentProfile = cache(async () => {
  */
 export const getTenantId = cache(async () => {
   const profile = await getCurrentProfile()
-  return (profile as any).tenant_id
+  return profile.tenant_id
 })
 
 /**
@@ -155,7 +155,7 @@ export async function hasRole(
   try {
     const profile = await getCurrentProfile()
     const roles = Array.isArray(role) ? role : [role]
-    return roles.includes((profile as any).role)
+    return roles.includes(profile.role)
   } catch {
     return false
   }

@@ -54,33 +54,23 @@ export async function POST(request: NextRequest) {
         .eq('id', body.scanId)
         .single()
 
-      const scan = scanData as any
-
-      if (scanError || !scan) {
+      if (scanError || !scanData) {
         return NextResponse.json({ success: false, error: 'Scan not found' }, { status: 404 })
       }
 
       // 2. Idempotency Check
-      if (['processing', 'completed', 'valid', 'high', 'critical', 'review', 'safe'].includes(scan.status)) {
-        // Statuses might vary based on enum, but 'processing' is the main one to block.
-        // 'completed' isn't a standard status in some DBs, usually it's the risk verdict.
-        // Let's check if it's NOT 'pending' and NOT 'created' (if that exists).
-        // Actually, simpler: if it's already processing, stop. If it's done, maybe allow re-process?
-        // Plan said "reject if processing or complete".
-        // Let's assume 'pending' is the only state we want to process from, or 'failed'.
-        if (scan.status === 'processing') {
+      if (['processing', 'completed', 'valid', 'high', 'critical', 'review', 'safe'].includes(scanData.status)) {
+        if (scanData.status === 'processing') {
           return NextResponse.json({ success: false, error: 'Scan is already processing' }, { status: 409 })
         }
-        return NextResponse.json({ success: true, message: 'Scan already completed', scanId: scan.id }, { status: 200 })
+        return NextResponse.json({ success: true, message: 'Scan already completed', scanId: scanData.id }, { status: 200 })
       }
 
       // 3. Ownership Check (if not Service Role)
       if (!isServiceRole && user) {
-        // If scan has a user_id, it must match
-        if (scan.user_id && scan.user_id !== user.id) {
+        if (scanData.user_id && scanData.user_id !== user.id) {
           return NextResponse.json({ success: false, error: 'Unauthorized: Scan ownership mismatch' }, { status: 403 })
         }
-        // If scan has tenant_id, user must belong to it (optional, usually user_id is enough for personal ownership)
       }
 
       const result = await processScan(body.scanId)

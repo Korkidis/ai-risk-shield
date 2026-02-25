@@ -387,7 +387,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
         if (tenantId && tenantId !== 'anonymous' && session.customer) {
             await supabase
                 .from('tenants')
-                .update({ stripe_customer_id: session.customer as string } as any)
+                .update({ stripe_customer_id: session.customer as string })
                 .eq('id', tenantId)
         }
     }
@@ -474,8 +474,8 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, supabase: any) {
         }
 
         // Reset the monthly quota counter
-        const { error } = await (supabase
-            .from('tenants') as any)
+        const { error } = await supabase
+            .from('tenants')
             .update({
                 scans_used_this_month: 0,
                 billing_period_start: new Date().toISOString(),

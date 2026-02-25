@@ -62,7 +62,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
         if (!options?.skipRetryRecord) {
             try {
                 const retrySupabase = await createServiceRoleClient()
-                await (retrySupabase.from('failed_usage_reports') as any).insert({
+                await retrySupabase.from('failed_usage_reports').insert({
                     tenant_id: tenantId,
                     quantity,
                     last_error: (error.message || 'Unknown error').substring(0, 500),

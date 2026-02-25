@@ -19,6 +19,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { checkRateLimit, getRateLimitKey } from '@/lib/ratelimit'
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -64,6 +65,13 @@ export async function signUp(_prevState: unknown, formData: FormData) {
 
   const { email, password, fullName, organizationName } = validation.data
 
+  // Rate limit: 5 signups per 15 min per IP
+  const ipKey = await getRateLimitKey()
+  const rl = await checkRateLimit({ action: 'signup', key: ipKey, maxAttempts: 5, windowSeconds: 900 })
+  if (!rl.allowed) {
+    return { error: 'Too many attempts. Please try again later.' }
+  }
+
   const supabase = await createClient()
 
   // Step 1: Create auth user
@@ -95,7 +103,6 @@ export async function signUp(_prevState: unknown, formData: FormData) {
 
   const { data: tenant, error: tenantError } = await supabaseAdmin
     .from('tenants')
-    // @ts-ignore - Supabase types require generation from live schema
     .insert({
       name: organizationName,
       plan: 'free',
@@ -104,7 +111,7 @@ export async function signUp(_prevState: unknown, formData: FormData) {
     .select()
     .single()
 
-  if (tenantError) {
+  if (tenantError || !tenant) {
     // Rollback: Delete the auth user we just created
     await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
     return {
@@ -115,10 +122,9 @@ export async function signUp(_prevState: unknown, formData: FormData) {
   // Step 3: Create profile linking user to tenant
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
-    // @ts-ignore - Supabase types require generation from live schema
     .insert({
       id: authData.user.id,
-      tenant_id: (tenant as any).id,
+      tenant_id: tenant.id,
       email: email,
       full_name: fullName,
       role: 'owner', // First user is always owner
@@ -126,7 +132,7 @@ export async function signUp(_prevState: unknown, formData: FormData) {
 
   if (profileError) {
     // Rollback: Delete tenant and user
-    await supabaseAdmin.from('tenants').delete().eq('id', (tenant as any).id)
+    await supabaseAdmin.from('tenants').delete().eq('id', tenant.id)
     await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
     return {
       error: 'Failed to create user profile',
@@ -162,6 +168,13 @@ export async function login(_prevState: unknown, formData: FormData) {
   }
 
   const { email, password } = validation.data
+
+  // Rate limit: 5 logins per 15 min per IP, block for 1 hour after 10 rapid failures
+  const ipKey = await getRateLimitKey()
+  const rl = await checkRateLimit({ action: 'login', key: ipKey, maxAttempts: 5, windowSeconds: 900, blockSeconds: 3600 })
+  if (!rl.allowed) {
+    return { error: 'Too many login attempts. Please try again later.' }
+  }
 
   const supabase = await createClient()
 
@@ -212,6 +225,13 @@ export async function requestPasswordReset(_prevState: unknown, formData: FormDa
     return {
       error: 'Please enter a valid email address',
     }
+  }
+
+  // Rate limit: 3 reset requests per hour per IP
+  const ipKey = await getRateLimitKey()
+  const rl = await checkRateLimit({ action: 'password_reset', key: ipKey, maxAttempts: 3, windowSeconds: 3600 })
+  if (!rl.allowed) {
+    return { error: 'Too many reset requests. Please try again later.' }
   }
 
   const supabase = await createClient()

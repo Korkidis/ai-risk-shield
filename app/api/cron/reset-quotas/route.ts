@@ -20,8 +20,8 @@ export async function GET(request: Request) {
         const supabase = await createServiceRoleClient()
 
         // Reset only free tenants — paid tenants reset via invoice.paid
-        const { data, error } = await (supabase
-            .from('tenants') as any)
+        const { data, error } = await supabase
+            .from('tenants')
             .update({
                 scans_used_this_month: 0,
                 billing_period_start: new Date().toISOString(),

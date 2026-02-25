@@ -16,7 +16,7 @@ export async function logWebhookEvent(params: {
 }) {
     try {
         const supabase = await createServiceRoleClient()
-        await (supabase.from('audit_log') as any).insert({
+        await supabase.from('audit_log').insert({
             tenant_id: params.tenantId || null,
             user_id: null, // Webhooks have no user context
             action: params.action,

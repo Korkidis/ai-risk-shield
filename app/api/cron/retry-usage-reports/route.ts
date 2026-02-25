@@ -21,15 +21,10 @@ export async function GET(request: Request) {
 
         // Atomically claim rows for processing to prevent concurrent cron runs
         // from double-processing the same reports.
-        // The RPC uses UPDATE...RETURNING to advance next_retry_at as a claim
-        // marker, so rows won't be picked up by another worker even after the
-        // transaction commits.
-        const { data: pending, error } = await (supabase as any)
+        const { data: pending, error } = await supabase
             .rpc('claim_failed_usage_reports', { batch_limit: 50 })
 
         // Fallback: only if the RPC function doesn't exist yet (code 42883).
-        // This allows deployment before the migration runs.
-        // Any other RPC error is a real failure and should surface.
         let rows = pending
         if (error) {
             const isFunctionMissing = error.code === '42883' || error.code === 'PGRST202'
@@ -39,8 +34,8 @@ export async function GET(request: Request) {
             }
 
             console.warn('[Cron] claim_failed_usage_reports RPC not deployed yet, using fallback query')
-            const { data: fallbackRows, error: fallbackError } = await (supabase
-                .from('failed_usage_reports') as any)
+            const { data: fallbackRows, error: fallbackError } = await supabase
+                .from('failed_usage_reports')
                 .select('*')
                 .is('resolved_at', null)
                 .lt('attempts', 5)  // Hardcoded ceiling for pre-migration fallback
@@ -68,7 +63,7 @@ export async function GET(request: Request) {
 
             if (result.success) {
                 // Mark resolved
-                await (supabase.from('failed_usage_reports') as any)
+                await supabase.from('failed_usage_reports')
                     .update({ resolved_at: new Date().toISOString() })
                     .eq('id', report.id)
                 resolved++
@@ -79,7 +74,7 @@ export async function GET(request: Request) {
                 const backoffMinutes = Math.pow(3, report.attempts) * 5
                 const nextRetry = new Date(Date.now() + backoffMinutes * 60 * 1000)
 
-                await (supabase.from('failed_usage_reports') as any)
+                await supabase.from('failed_usage_reports')
                     .update({
                         attempts: newAttempts,
                         last_error: (result.error || 'Unknown error').substring(0, 500),
@@ -113,7 +108,7 @@ export async function GET(request: Request) {
         console.log(`[Cron] Usage retry: ${resolved} resolved, ${retried} retried, ${rows.length} total`)
 
         return NextResponse.json({ resolved, retried, total: rows.length })
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[Cron] Usage retry error:', err)
         return NextResponse.json({ error: 'Internal error' }, { status: 500 })
     }

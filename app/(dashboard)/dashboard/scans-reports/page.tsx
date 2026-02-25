@@ -339,7 +339,7 @@ function ScansReportsContent() {
 
     // Computed entitlement for selected scan
     const canViewFull = selectedScan && userContext
-        ? Entitlements.canViewFullReport(userContext, selectedScan as any)
+        ? Entitlements.canViewFullReport(userContext, selectedScan)
         : false
 
     const handleDownload = (scan: ScanWithRelations) => {
@@ -351,7 +351,7 @@ function ScansReportsContent() {
             }
 
             // Entitlement-gated: sample PDF for free users, full for paid/purchased
-            const isSample = userContext ? !Entitlements.canViewFullReport(userContext, scan as any) : true
+            const isSample = userContext ? !Entitlements.canViewFullReport(userContext, scan) : true
             generateForensicReport(scan, scan.risk_profile, isSample)
         } catch (e) {
             console.error("PDF Generation failed", e)
@@ -595,7 +595,7 @@ function ScansReportsContent() {
                                                     'completed'
                                         }
                                         score={selectedScan?.risk_profile?.composite_score || 0}
-                                        level={(selectedScan?.risk_level as any) || 'low'}
+                                        level={selectedScan?.risk_level === 'review' ? 'medium' : selectedScan?.risk_level === 'caution' ? 'low' : (selectedScan?.risk_level || 'low')}
                                         ipScore={selectedScan?.risk_profile?.ip_report?.score || 0}
                                         safetyScore={selectedScan?.risk_profile?.safety_report?.score || 0}
                                         provenanceScore={selectedScan?.risk_profile?.provenance_report?.score || 0}
@@ -615,7 +615,7 @@ function ScansReportsContent() {
                                                 // FULL ACCESS: Show all findings
                                                 selectedScan?.scan_findings && selectedScan.scan_findings.length > 0 ? (
                                                     <div className="relative border-l border-dashed border-rs-border-primary space-y-8 ml-2">
-                                                        {selectedScan.scan_findings.map((finding: any) => (
+                                                        {selectedScan.scan_findings.map((finding) => (
                                                             <div key={finding.id} className="relative pl-6">
                                                                 <div className={cn(
                                                                     "absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white",
@@ -702,7 +702,7 @@ function ScansReportsContent() {
                                                     creation_timestamp: selectedScan.risk_profile.c2pa_report.timestamp || null,
                                                     raw_manifest: selectedScan.risk_profile.c2pa_report.raw_manifest || null,
                                                     edit_history: selectedScan.risk_profile.c2pa_report.history || null,
-                                                } as any : null)
+                                                } : null)
                                             }
                                             scanStatus={selectedScan?.status || 'complete'}
                                         />
@@ -1021,7 +1021,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage,
                 <div className="mt-[4px] flex items-center gap-2 text-[10px] text-rs-text-tertiary font-mono uppercase tracking-wide">
                     <span>{formatDistanceToNow(new Date(scan.created_at || new Date()))} AGO</span>
                     <span className="w-0.5 h-0.5 rounded-full bg-current" />
-                    <span>{(scan as any).file_size ? formatBytes((scan as any).file_size) : '---'}</span>
+                    <span>{scan.file_size ? formatBytes(scan.file_size) : '---'}</span>
                 </div>
 
                 {/* Spacer to push actions to bottom */}

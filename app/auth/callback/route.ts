@@ -77,8 +77,8 @@ async function ensureProfileExists(user: { id: string; email?: string; user_meta
   const emailDomain = user.email?.split('@')[1] || 'Unknown'
   const orgName = emailDomain.charAt(0).toUpperCase() + emailDomain.slice(1).split('.')[0]
 
-  const { data: tenant, error: tenantError } = await (supabaseAdmin
-    .from('tenants') as any)
+  const { data: tenant, error: tenantError } = await supabaseAdmin
+    .from('tenants')
     .insert({
       name: `${orgName} Workspace`,
       plan: 'free',
@@ -87,25 +87,25 @@ async function ensureProfileExists(user: { id: string; email?: string; user_meta
     .select()
     .single()
 
-  if (tenantError) {
+  if (tenantError || !tenant) {
     console.error('[auth/callback] Failed to create tenant for shadow user:', tenantError)
     return // Don't block the redirect — user can still land, we'll handle gracefully
   }
 
   // Create profile linking user to tenant
-  const { error: profileError } = await (supabaseAdmin
-    .from('profiles') as any)
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
     .insert({
       id: user.id,
-      tenant_id: (tenant as any).id,
-      email: user.email,
-      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      tenant_id: tenant.id,
+      email: user.email || '',
+      full_name: (user.user_metadata?.full_name as string) || user.email?.split('@')[0] || 'User',
       role: 'owner',
     })
 
   if (profileError) {
     // Rollback tenant
-    await supabaseAdmin.from('tenants').delete().eq('id', (tenant as any).id)
+    await supabaseAdmin.from('tenants').delete().eq('id', tenant.id)
     console.error('[auth/callback] Failed to create profile for shadow user:', profileError)
     return
   }
