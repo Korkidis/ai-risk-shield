@@ -119,7 +119,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
     return (
         <div
             className={cn(
-                "rounded-2xl shadow-xl overflow-hidden flex flex-col transition-colors duration-500",
+                "rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l2)] overflow-hidden flex flex-col transition-colors duration-500",
                 RISK_THEME.surface,
                 RISK_THEME.border,
                 "border",

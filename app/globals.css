@@ -41,18 +41,18 @@
     --rs-risk-critical: var(--rs-signal);
     /* 91-100: Vivid Signal */
 
-    /* --- elevation scale (z-logic: surgical precision) --- */
-    --rs-shadow-l1: inset 1px 1px 3px rgba(0, 0, 0, 0.2), inset -1px -1px 2px rgba(255, 255, 255, 0.4);
-    --rs-shadow-l2: 3px 3px 6px rgba(0, 0, 0, 0.12), -2px -2px 5px rgba(255, 255, 255, 0.5);
-    --rs-shadow-l3: 6px 6px 12px rgba(0, 0, 0, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.5);
-    --rs-shadow-pressed: inset 2px 2px 4px rgba(0, 0, 0, 0.25), inset -1px -1px 2px rgba(255, 255, 255, 0.3);
-    --rs-shadow-bevel: 1px 1px 0px rgba(0, 0, 0, 0.1), inset 1px 1px 0px rgba(255, 255, 255, 0.5);
-    --rs-shadow-socket: inset 1px 1px 4px rgba(0, 0, 0, 0.2);
+    /* --- elevation scale (flat, single-direction shadows) --- */
+    --rs-shadow-l1: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --rs-shadow-l2: 0 2px 8px rgba(0, 0, 0, 0.10);
+    --rs-shadow-l3: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --rs-shadow-pressed: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+    --rs-shadow-bevel: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --rs-shadow-socket: inset 0 1px 3px rgba(0, 0, 0, 0.12);
 
-    /* --- geometric nesting (radius) --- */
-    --rs-radius-chassis: 24px;
-    --rs-radius-container: 16px;
-    --rs-radius-element: 8px;
+    /* --- geometric nesting (radius) — flat industrial --- */
+    --rs-radius-chassis: 4px;
+    --rs-radius-container: 2px;
+    --rs-radius-element: 2px;
 
     /* --- kinetic feedback --- */
     --rs-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -61,8 +61,8 @@
     --rs-parting-line: 1px solid rgba(255, 255, 255, 0.3);
     --rs-text-etched: 0px 1px 0px rgba(255, 255, 255, 0.8);
 
-    /* glass & crt effects */
-    --rs-glass-convex: radial-gradient(120% 120% at 50% -10%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 50%), radial-gradient(120% 120% at 50% 110%, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 50%);
+    /* glass & crt effects — disabled for flat design */
+    --rs-glass-convex: none;
     --rs-texture-molded: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
 
     /* typography and spacing */
@@ -108,10 +108,10 @@
     --rs-bg-inverse: #EBE7E0;
     --rs-text-inverse: #121212;
 
-    /* Re-calibrated Physics (Shadows) for Dark Mode */
-    --rs-shadow-l1: inset 2px 2px 6px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.05);
-    --rs-shadow-l2: 4px 4px 10px rgba(0, 0, 0, 0.6), -1px -1px 2px rgba(255, 255, 255, 0.05);
-    --rs-shadow-l3: 10px 10px 20px rgba(0, 0, 0, 0.7), -2px -2px 4px rgba(255, 255, 255, 0.05);
+    /* Flat shadows for dark mode */
+    --rs-shadow-l1: 0 1px 2px rgba(0, 0, 0, 0.20);
+    --rs-shadow-l2: 0 2px 8px rgba(0, 0, 0, 0.30);
+    --rs-shadow-l3: 0 4px 16px rgba(0, 0, 0, 0.40);
 
     --rs-text-shadow-etched: 0px 1px 2px rgba(0, 0, 0, 0.8);
   }
@@ -135,7 +135,7 @@
   }
 }
 
-/* utility: bevels (high-fidelity edges) */
+/* utility: edge definition (flat, uniform borders) */
 @layer utilities {
   .rs-bevel {
     position: relative;
@@ -145,10 +145,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    border-left: 1px solid rgba(255, 255, 255, 0.2);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: inherit;
     pointer-events: none;
     z-index: 10;
@@ -162,10 +159,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    border-left: 1px solid rgba(0, 0, 0, 0.1);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.04);
     border-radius: inherit;
     pointer-events: none;
     z-index: 10;

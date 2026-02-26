@@ -24,8 +24,8 @@ const NEEDLE_THEME = {
     needle: "bg-[#222222]",            // Needle
     pivot: "bg-[#1A1A1A]",             // Pivot
     text: "text-[#1A1A1A]",            // Text
-    shadow: "shadow-[6px_6px_12px_rgba(163,177,198,0.2),-6px_-6px_12px_rgba(255,255,255,0.9),inset_2px_2px_4px_rgba(0,0,0,0.05)]",
-    shadowWell: "shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]"
+    shadow: "shadow-[0_2px_8px_rgba(0,0,0,0.10)]",
+    shadowWell: "shadow-[inset_0_1px_3px_rgba(0,0,0,0.12)]"
 };
 
 export function RSAnalogNeedle({
@@ -169,8 +169,7 @@ export function RSAnalogNeedle({
                             {formattedValue}
                         </div>
 
-                        {/* Convex Lens Reflection */}
-                        <div className="absolute inset-0 rounded-full z-40 pointer-events-none bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.05)_0%,transparent_50%)]" />
+                        {/* Flat surface — no convex lens */}
                     </div>
                 </div>
             </div>

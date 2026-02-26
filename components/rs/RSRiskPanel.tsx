@@ -101,7 +101,7 @@ export function RSRiskPanel({
 
     return (
         <div className={cn(
-            "relative w-full rounded-2xl shadow-xl overflow-hidden flex flex-col transition-colors duration-500",
+            "relative w-full rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l2)] overflow-hidden flex flex-col transition-colors duration-500",
             RISK_THEME.surface,
             RISK_THEME.border,
             "border",
@@ -114,10 +114,10 @@ export function RSRiskPanel({
                 {/* Just the ID and Status Dot. No noise. */}
                 <div className="flex items-center gap-4">
                     <div className={cn(
-                        "w-3 h-3 rounded-full shadow-sm",
+                        "w-3 h-3",
                         status === 'scanning' ? "bg-[var(--rs-text-primary)] animate-pulse" :
                             level === 'critical' ? 'bg-[var(--rs-signal)] animate-pulse' :
-                                RISK_THEME.border.replace('border-', 'bg-') // Reuse border color for inactive dot
+                                RISK_THEME.border.replace('border-', 'bg-')
                     )} />
                     <div>
                         <h2 className={cn("text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1", RISK_THEME.text)}>Risk Analysis Panel</h2>

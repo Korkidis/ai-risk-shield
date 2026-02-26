@@ -123,7 +123,20 @@ CRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaul
         systemInstruction: instruction
     });
 
-    const prompt = `Analyze this visual asset (image or video) for intellectual property infringement risk.
+    const prompt = guidelineRules
+        ? `Analyze this visual asset for IP infringement risk FOR THIS SPECIFIC CLIENT.
+
+IMPORTANT: This client has provided explicit brand guidelines (see system instructions).
+You MUST apply those brand guideline overrides to your scoring. Content that the brand
+has explicitly approved MUST score 0-9 regardless of generic IP defaults.
+
+Respond with ONLY a JSON object in this exact format:
+{
+  "score": <number 0-100>,
+  "teaser": "<one sentence technical summary, considering client guidelines>",
+  "reasoning": "<explain how brand guidelines affected your scoring>"
+}`
+        : `Analyze this visual asset (image or video) for intellectual property infringement risk.
 
 Respond with ONLY a JSON object in this exact format:
 {
@@ -159,9 +172,9 @@ SCORING PROTOCOL:
 - Drug paraphernalia
 - Controversial political content
 
-40-69 POINTS - MODERATE RISK:
+40-69 POINTS - MODERATE RISK (defaults — may be overridden by brand guidelines):
 - Mild suggestiveness
-- Alcohol, gambling references
+- Alcohol, gambling references (default score — brand guidelines may override to 0-9)
 - Polarizing themes
 - Edgy humor that could offend
 
@@ -200,7 +213,21 @@ Brand-specific rules ALWAYS take priority over generic industry defaults.
         systemInstruction: instruction
     });
 
-    const prompt = `Analyze this visual asset (image or video) for brand safety and PR risk.
+    const prompt = guidelineRules
+        ? `Analyze this visual asset for brand safety risk FOR THIS SPECIFIC CLIENT.
+
+IMPORTANT: This client has provided explicit brand guidelines (see system instructions).
+You MUST apply those brand guideline overrides to your scoring. Content that the brand
+has explicitly approved MUST score 0-9 regardless of generic industry defaults.
+Do NOT score for "the general market" — score for THIS brand's specific policies.
+
+Respond with ONLY a JSON object in this exact format:
+{
+  "score": <number 0-100>,
+  "teaser": "<one sentence on brand alignment risk, considering client guidelines>",
+  "reasoning": "<explain how brand guidelines affected your scoring>"
+}`
+        : `Analyze this visual asset (image or video) for brand safety and PR risk.
 
 Respond with ONLY a JSON object in this exact format:
 {
@@ -336,6 +363,15 @@ async function executePrompt(
 function formatGuidelineRules(g: BrandGuideline): string {
     const sections: string[] = []
 
+    // Always include brand identity — strongest contextual signal for Gemini.
+    // Without this, if all rule arrays are empty, the function returns "" (falsy)
+    // and the entire override system is bypassed.
+    sections.push(
+        `BRAND: ${g.name}` +
+        (g.industry ? `\nINDUSTRY: ${g.industry}` : '') +
+        `\nScore all content that is normal and expected for this brand and industry as 0-9 (NO RISK).`
+    )
+
     // Scoring overrides — the key piece that tells Gemini HOW to adjust scores
     if (g.context_modifiers && g.context_modifiers.length > 0) {
         sections.push(
@@ -353,8 +389,10 @@ function formatGuidelineRules(g: BrandGuideline): string {
 
     if (g.requirements && g.requirements.length > 0) {
         sections.push(
-            `BRAND REQUIREMENTS — Missing these items MUST increase score by +20:\n` +
-            g.requirements.map(r => `  \u2022 ${r}`).join('\n')
+            `BRAND POLICY STATEMENTS — Interpret and apply these to your scoring:\n` +
+            g.requirements.map(r =>
+                `  \u2022 "${r}" \u2192 If this states content is acceptable/approved/OK, score that content 0-9. If this is a requirement that should be present, increase score by +20 when absent.`
+            ).join('\n')
         )
     }
 
