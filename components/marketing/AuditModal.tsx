@@ -82,6 +82,9 @@ export function AuditModal({ isOpen, onClose, scanId }: AuditModalProps) {
                                 </div>
 
                                 <OneTimePurchaseButton scanId={scanId} />
+                                <p className="text-[10px] text-[var(--rs-text-tertiary)] mt-3 leading-relaxed text-center">
+                                    One-time purchase for this scan. Includes full IP analysis, provenance verification, and downloadable PDF. No subscription required.
+                                </p>
                             </div>
                         </div>
 
@@ -122,8 +125,8 @@ export function AuditModal({ isOpen, onClose, scanId }: AuditModalProps) {
 
                                 <div className="space-y-3">
                                     <UpgradeButton scanId={scanId} />
-                                    <p className="text-center text-[10px] text-[var(--rs-text-tertiary)] uppercase tracking-wide">
-                                        Cancel anytime
+                                    <p className="text-center text-[10px] text-[var(--rs-text-tertiary)] leading-relaxed">
+                                        Monthly subscription. Cancel anytime. All scans unlocked while active.
                                     </p>
                                 </div>
                             </div>

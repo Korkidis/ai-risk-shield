@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 
 import { SampleReportEmail } from '@/components/email/SampleReportEmail'
+import { PurchaseReceiptEmail } from '@/components/email/PurchaseReceiptEmail'
 import { getRiskTier } from '@/lib/risk/tiers'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -76,6 +77,36 @@ export async function sendMagicLinkEmail(email: string, magicLink: string) {
         return { success: true, data }
     } catch (error) {
         console.error('Failed to send magic link email:', error)
+        return { success: false, error }
+    }
+}
+
+export async function sendPurchaseReceiptEmail(
+    email: string,
+    scanId: string,
+    score: number,
+    filename: string,
+    dashboardUrl: string
+) {
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('RESEND_API_KEY is not set. Skipping receipt email send.')
+        console.log(`[EMAIL MOCK] Receipt to: ${email}, Scan: ${scanId}, Score: ${score}`)
+        return { success: true, mocked: true }
+    }
+
+    try {
+        const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
+
+        const data = await resend.emails.send({
+            from: `AI Risk Shield <${fromAddress}>`,
+            to: email,
+            subject: `Receipt: Full Forensic Report — ${filename}`,
+            react: PurchaseReceiptEmail({ scanId, score, filename, dashboardUrl }) as any,
+        })
+
+        return { success: true, data }
+    } catch (error) {
+        console.error('Failed to send purchase receipt email:', error)
         return { success: false, error }
     }
 }

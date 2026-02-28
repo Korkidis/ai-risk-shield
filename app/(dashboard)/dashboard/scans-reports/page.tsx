@@ -71,6 +71,8 @@ function ScansReportsContent() {
     const [userContext, setUserContext] = useState<{ id: string; tenant_id: string; plan: PlanId } | null>(null)
     const [showAuditModal, setShowAuditModal] = useState(false)
     const [shareToast, setShareToast] = useState<string | null>(null)
+    const [purchaseToast, setPurchaseToast] = useState(false)
+    const [showDownloadBanner, setShowDownloadBanner] = useState(false)
 
     // Upload State
     const [showUploadModal, setShowUploadModal] = useState(false)
@@ -201,10 +203,36 @@ function ScansReportsContent() {
         // 3. Handle Post-Purchase Feedback
         if (isPurchased && highlightId && !processedParams.current.has(`purchase-${highlightId}`)) {
             processedParams.current.add(`purchase-${highlightId}`)
-            // Could show confetti or toast here
-            console.log('💰 Purchase confirmed for:', highlightId)
-            // Force refresh to ensure status/unlocks are correct
-            fetchScans(true)
+            setPurchaseToast(true)
+            setTimeout(() => setPurchaseToast(false), 6000)
+
+            // Refresh scans to get updated purchased status, then auto-download
+            fetchScans(true).then(() => {
+                // Auto-download after a brief delay to let state settle
+                const downloadTimeout = setTimeout(() => {
+                    const purchasedScan = scans.find(s => s.id === highlightId)
+                    if (purchasedScan && purchasedScan.status === 'complete' && purchasedScan.risk_profile) {
+                        try {
+                            generateForensicReport(purchasedScan, purchasedScan.risk_profile, false)
+                        } catch {
+                            // Browser may block auto-download — show fallback banner
+                            setShowDownloadBanner(true)
+                        }
+                    } else {
+                        // Scan data not ready yet — show download banner as fallback
+                        setShowDownloadBanner(true)
+                    }
+                }, 1500)
+                return () => clearTimeout(downloadTimeout)
+            })
+
+            // Clean purchased param from URL to prevent re-triggering
+            const cleanParams = new URLSearchParams(searchParams.toString())
+            cleanParams.delete('purchased')
+            const cleanUrl = cleanParams.toString()
+                ? `${pathname}?${cleanParams.toString()}`
+                : pathname
+            router.replace(cleanUrl, { scroll: false })
         }
 
     }, [searchParams, scans, selectedScanId]) // Re-run when scans load so we can find the highlighted one
@@ -725,6 +753,26 @@ function ScansReportsContent() {
                                     />
                                 </div>
 
+                                {/* Post-Purchase Download Banner */}
+                                {showDownloadBanner && canViewFull && (
+                                    <div className="p-4 bg-[var(--rs-safe)]/10 border border-[var(--rs-safe)]/30 rounded-[2px] flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-[var(--rs-text-primary)] uppercase tracking-wide">Report Ready</p>
+                                            <p className="text-[10px] text-[var(--rs-text-secondary)]">Your full forensic report is ready to download.</p>
+                                        </div>
+                                        <RSButton
+                                            variant="primary"
+                                            className="text-[9px] uppercase tracking-widest font-black shrink-0"
+                                            onClick={() => {
+                                                if (selectedScan) handleDownload(selectedScan)
+                                                setShowDownloadBanner(false)
+                                            }}
+                                        >
+                                            Download
+                                        </RSButton>
+                                    </div>
+                                )}
+
                                 {/* Management Actions */}
                                 <div className="pt-8 flex flex-col gap-2">
                                     <RSButton
@@ -816,6 +864,20 @@ function ScansReportsContent() {
                     onClose={() => setShowAuditModal(false)}
                     scanId={selectedScanId || ''}
                 />
+
+                {/* Purchase Toast */}
+                <AnimatePresence>
+                    {purchaseToast && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] px-6 py-3 bg-[var(--rs-safe)] text-white text-[10px] font-mono font-bold uppercase tracking-widest rounded-[2px] shadow-lg flex items-center gap-2"
+                        >
+                            <span>&#10003;</span> Payment confirmed — your full report is downloading
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Share Toast */}
                 <AnimatePresence>

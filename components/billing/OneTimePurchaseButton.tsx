@@ -8,8 +8,10 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 
 export function OneTimePurchaseButton({ scanId }: { scanId: string }) {
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const handlePurchase = async () => {
+        setError(null)
         trackEvent('checkout_initiated', { scanId, purchase_type: 'one_time' })
         setLoading(true)
         try {
@@ -22,10 +24,10 @@ export function OneTimePurchaseButton({ scanId }: { scanId: string }) {
                 })
             })
 
-            const { sessionId, error } = await response.json()
+            const { sessionId, error: apiError } = await response.json()
 
-            if (error) {
-                alert(error)
+            if (apiError || !sessionId) {
+                setError('Checkout unavailable. Please try again.')
                 setLoading(false)
                 return
             }
@@ -35,24 +37,32 @@ export function OneTimePurchaseButton({ scanId }: { scanId: string }) {
                 const { error: stripeError } = await (stripe as any).redirectToCheckout({ sessionId })
                 if (stripeError) {
                     console.error('Stripe redirect error:', stripeError)
-                    alert('Failed to redirect to checkout')
+                    setError('Unable to open checkout. Please try again.')
                     setLoading(false)
                 }
             }
         } catch (err) {
             console.error('Checkout failed', err)
+            setError('Checkout unavailable. Please try again.')
             setLoading(false)
         }
     }
 
     return (
-        <button
-            onClick={handlePurchase}
-            disabled={loading}
-            type="button"
-            className="w-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-strong)] text-[var(--rs-text-primary)] px-8 py-4 rounded-xl font-bold uppercase tracking-[0.1em] hover:bg-[var(--rs-bg-element)] transition-all disabled:opacity-50"
-        >
-            {loading ? 'Processing...' : 'Buy One-Time Report ($29)'}
-        </button>
+        <div className="w-full">
+            <button
+                onClick={handlePurchase}
+                disabled={loading}
+                type="button"
+                className="w-full bg-[var(--rs-bg-surface)] border border-[var(--rs-border-strong)] text-[var(--rs-text-primary)] px-8 py-4 rounded-xl font-bold uppercase tracking-[0.1em] hover:bg-[var(--rs-bg-element)] transition-all disabled:opacity-50"
+            >
+                {loading ? 'Processing...' : 'Buy One-Time Report ($29)'}
+            </button>
+            {error && (
+                <p className="mt-2 text-[10px] text-[var(--rs-destruct)] text-center font-mono uppercase tracking-wide">
+                    {error}
+                </p>
+            )}
+        </div>
     )
 }

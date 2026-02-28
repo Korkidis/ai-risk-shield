@@ -3,7 +3,7 @@ import { headers } from 'next/headers'
 import { stripe } from '@/lib/stripe'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getPlan, type PlanId } from '@/lib/plans'
-import { sendMagicLinkEmail } from '@/lib/email'
+import { sendMagicLinkEmail, sendPurchaseReceiptEmail } from '@/lib/email'
 import { logWebhookEvent, alertWebhookFailure } from '@/lib/webhook-monitor'
 import Stripe from 'stripe'
 
@@ -381,6 +381,27 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                 errorMessage: error.message,
                 tenantId,
             })
+        }
+
+        // Send purchase receipt email (fire-and-forget)
+        if (!error && customerEmail && scanId) {
+            const { data: scanMeta } = await supabase
+                .from('scans')
+                .select('filename, composite_score')
+                .eq('id', scanId)
+                .single()
+
+            if (scanMeta) {
+                const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://airiskshield.com'
+                const dashboardUrl = `${appUrl}/dashboard/scans-reports?highlight=${scanId}`
+                sendPurchaseReceiptEmail(
+                    customerEmail,
+                    scanId,
+                    scanMeta.composite_score || 0,
+                    scanMeta.filename || 'uploaded-asset',
+                    dashboardUrl
+                ).catch(err => console.error('[Webhook] Receipt email send failed:', err))
+            }
         }
 
         // Also persist Stripe customer ID for one-time purchasers
