@@ -11,23 +11,14 @@ export function LandingClient() {
             <div className="max-w-4xl w-full flex flex-col items-center gap-16 z-20">
                 {/* Hero Text - Forensic Style */}
                 <div className="text-center space-y-8 max-w-4xl mx-auto relative cursor-default">
-                    {/* Top Label - Part Number/Protocol */}
-                    <div className="flex justify-center items-center gap-3 opacity-60">
-                        <div className="h-px w-12 bg-[var(--rs-text-tertiary)]" />
-                        <span className="rs-type-micro text-[var(--rs-text-tertiary)] tracking-[0.2em]">
-                            PROTOCOL: CLEARANCE_V2
-                        </span>
-                        <div className="h-px w-12 bg-[var(--rs-text-tertiary)]" />
-                    </div>
-
                     <h1 className="rs-header-bold-italic text-5xl md:text-7xl leading-[0.9] text-[var(--rs-text-primary)]">
-                        Validation for <br />
-                        <span className="text-[var(--rs-signal)]">Responsible AI.</span>
+                        Know Before <br />
+                        You <span className="text-[var(--rs-signal)]">Publish.</span>
                     </h1>
 
                     <p className="rs-type-body text-lg md:text-xl text-[var(--rs-text-secondary)] max-w-2xl mx-auto">
-                        Forensic-grade IP assessment for AI-generated assets. <br className="hidden md:block" />
-                        <span className="text-[var(--rs-text-primary)] font-medium">Quantify liability. Verify provenance. Unblock workflow.</span>
+                        AI content risk, quantified in 15 seconds. <br className="hidden md:block" />
+                        <span className="text-[var(--rs-text-primary)] font-medium">IP risk score. Provenance verification. Downloadable evidence for legal.</span>
                     </p>
                 </div>
 
@@ -43,9 +34,10 @@ export function LandingClient() {
                         }}
                     />
                     {/* Trust Signals under scanner */}
-                    <div className="flex justify-center gap-8 mt-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                        <div className="h-4 w-24 bg-[var(--rs-text-tertiary)] rounded animate-pulse opacity-20" />
-                        <div className="h-4 w-24 bg-[var(--rs-text-tertiary)] rounded animate-pulse opacity-20" />
+                    <div className="flex justify-center gap-6 mt-8">
+                        <span className="rs-type-micro text-[var(--rs-text-tertiary)] tracking-widest">Powered by Google Gemini</span>
+                        <span className="text-[var(--rs-text-tertiary)]">&middot;</span>
+                        <span className="rs-type-micro text-[var(--rs-text-tertiary)] tracking-widest">C2PA Verified</span>
                     </div>
                 </div>
             </div>

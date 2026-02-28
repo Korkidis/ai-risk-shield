@@ -89,7 +89,7 @@ function LoginContent() {
                 <div className="space-y-6">
                     <hr className="border-t border-[var(--rs-border-primary)]/50" />
                     <div className="space-y-1 group">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block opacity-60 group-focus-within:opacity-100 transition-opacity">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block">
                             EMAIL IDENTITY
                         </label>
                         <RSInput
@@ -105,7 +105,7 @@ function LoginContent() {
                     <hr className="border-t border-[var(--rs-border-primary)]/50" />
                     <div className="space-y-1 group">
                         <div className="flex items-center justify-between mb-1 pl-1">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] opacity-60 group-focus-within:opacity-100 transition-opacity">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)]">
                                 SECURE PASSPHRASE
                             </label>
                         </div>
@@ -118,7 +118,7 @@ function LoginContent() {
                             className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                         />
                         <div className="flex justify-end mt-1">
-                            <a href="/forgot-password" className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-1">
+                            <a href="/forgot-password" className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-1">
                                 <span>+</span> FORGOT PASSPHRASE?
                             </a>
                         </div>
@@ -146,8 +146,8 @@ function LoginContent() {
                 </div>
 
                 {/* Secondary Actions / Clearance */}
-                <div className="flex items-center justify-between pt-4 border-t border-[var(--rs-border-primary)] border-dashed opacity-50">
-                    <a href="/register" className="text-[9px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors cursor-pointer">
+                <div className="flex items-center justify-between pt-4 border-t border-[var(--rs-border-primary)] border-dashed">
+                    <a href="/register" className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors cursor-pointer">
                         Request Access / Sign Up
                     </a>
                 </div>

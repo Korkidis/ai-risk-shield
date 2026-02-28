@@ -25,16 +25,16 @@ export function MarketExposure() {
                     <div className="group">
                         <RSPanel className="h-full bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] hover:border-[var(--rs-text-primary)] transition-colors duration-300">
                             <div className="flex justify-between items-start mb-6">
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-text-primary)] transition-colors">Liability Index</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] group-hover:text-[var(--rs-text-primary)] transition-colors">Liability Index</span>
                                 <TrendingUp className="w-4 h-4 text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors" />
                             </div>
 
                             <div className="rs-type-mono text-4xl md:text-5xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
-                                $680K
+                                $150K
                             </div>
 
                             <p className="text-sm font-medium text-[var(--rs-text-secondary)] leading-relaxed">
-                                Average statutory damages per willful copyright infringement incident in US Federal Court.
+                                Maximum statutory damages per work for copyright infringement under 17 U.S.C. &sect; 504(c). Willful infringement raises the ceiling to $150,000.
                             </p>
                         </RSPanel>
                     </div>
@@ -43,16 +43,16 @@ export function MarketExposure() {
                     <div className="group">
                         <RSPanel className="h-full bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] hover:border-[var(--rs-text-primary)] transition-colors duration-300">
                             <div className="flex justify-between items-start mb-6">
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-text-primary)] transition-colors">System Blockers</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] group-hover:text-[var(--rs-text-primary)] transition-colors">Precedent</span>
                                 <AlertTriangle className="w-4 h-4 text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors" />
                             </div>
 
                             <div className="rs-type-mono text-4xl md:text-5xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
-                                82%
+                                Getty
                             </div>
 
                             <p className="text-sm font-medium text-[var(--rs-text-secondary)] leading-relaxed">
-                                Of enterprise legal teams block AI adoption due to "Unquantifiable IP Risk" (2025 Gartner).
+                                Getty Images v. Stability AI (2023) — landmark lawsuit alleging mass copyright infringement from AI training data. The legal landscape is shifting fast.
                             </p>
                         </RSPanel>
                     </div>
@@ -61,16 +61,16 @@ export function MarketExposure() {
                     <div className="group">
                         <RSPanel className="h-full bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] hover:border-[var(--rs-text-primary)] transition-colors duration-300">
                             <div className="flex justify-between items-start mb-6">
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-text-primary)] transition-colors">Platform Takedowns</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] group-hover:text-[var(--rs-text-primary)] transition-colors">Time to Validate</span>
                                 <FileWarning className="w-4 h-4 text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors" />
                             </div>
 
                             <div className="rs-type-mono text-4xl md:text-5xl font-bold tracking-tighter text-[var(--rs-text-primary)] mb-4">
-                                2.4M
+                                15s
                             </div>
 
                             <p className="text-sm font-medium text-[var(--rs-text-secondary)] leading-relaxed">
-                                AI-generated assets flagged for removal by social platforms in Q4 2025 alone.
+                                Three independent AI checks — IP risk, brand safety, and C2PA provenance verification — in a single scan. One defensible score.
                             </p>
                         </RSPanel>
                     </div>

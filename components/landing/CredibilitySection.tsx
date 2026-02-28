@@ -38,22 +38,22 @@ export function TrustCompliance() {
                             <ListItem
                                 icon={<Lock className="w-4 h-4" />}
                                 title="PRIVACY FIRST"
-                                description="Assets are encrypted in transit and at rest. No training on user data."
+                                description="All data encrypted in transit (TLS 1.3) and at rest. No image data retained after analysis. No training on user data."
                             />
                             <ListItem
                                 icon={<CheckCircle className="w-4 h-4" />}
-                                title="C2PA NATIVE"
-                                description="Founding member of CAI. We verify provenance, we don't guess."
+                                title="C2PA VERIFIED"
+                                description="CAI member. Cryptographic provenance verification using the open C2PA standard — not heuristics."
                             />
                             <ListItem
                                 icon={<Shield className="w-4 h-4" />}
-                                title="COMPLIANCE"
-                                description="SOC 2 Type II certified. ISO 27001 mapping for global legal teams."
+                                title="DATA ISOLATION"
+                                description="Row-level security on every database query. Multi-tenant isolation enforced at the infrastructure level."
                             />
                             <ListItem
                                 icon={<Globe className="w-4 h-4" />}
-                                title="INFRASTRUCTURE"
-                                description="99.99% uptime SLA. Globally distributed forensic nodes."
+                                title="COMPLIANCE ROADMAP"
+                                description="SOC 2 Type II and ISO 27001 certification planned. Built on Supabase + Vercel infrastructure."
                             />
                         </ul>
                     </div>
@@ -61,15 +61,15 @@ export function TrustCompliance() {
                     {/* Badges / Logos Visual */}
                     <div className="flex flex-col justify-center gap-6">
                         <div className="border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] p-8 rounded-lg flex flex-wrap gap-8 items-center justify-center opacity-80 hover:opacity-100 transition-opacity">
-                            <Badge text="SOC2 COMPLIANT" />
+                            <Badge text="C2PA VERIFIED" />
+                            <Badge text="CAI MEMBER" />
+                            <Badge text="GEMINI POWERED" />
                             <Badge text="GDPR READY" />
-                            <Badge text="ISO 27001" />
-                            <Badge text="C2PA MEMBER" />
                         </div>
                         <div className="p-8 border border-[var(--rs-border-primary)] border-dashed rounded-lg bg-[var(--rs-bg-secondary)]/50 text-center">
                             <Component className="w-12 h-12 text-[var(--rs-text-tertiary)] mx-auto mb-4" />
                             <p className="text-xs uppercase tracking-widest text-[var(--rs-text-tertiary)] font-bold">
-                                Secure Enclave Architecture
+                                SOC 2 &middot; ISO 27001 &middot; Planned
                             </p>
                         </div>
                     </div>

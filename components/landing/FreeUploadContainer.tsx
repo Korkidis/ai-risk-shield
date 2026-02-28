@@ -165,7 +165,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
 
           setTimeout(() => {
             onUploadComplete(riskProfile, scanId)
-          }, 1500)
+          }, 300)
 
           return
         } else if (scanStatus.status === 'failed') {

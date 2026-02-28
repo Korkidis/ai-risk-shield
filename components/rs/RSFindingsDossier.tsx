@@ -184,29 +184,37 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
                     <div className="flex items-center gap-3 px-1">
                         <Info size={11} className={RISK_THEME.textMuted} />
                         <div className={cn("font-mono text-[8px] uppercase tracking-widest leading-tight", RISK_THEME.textMuted)}>
-                            Analysis: Gemini 2.5 Flash // Multi-Persona Forensic Pipeline
+                            Powered by Google Gemini 2.5 Flash &middot; C2PA Verified
                         </div>
                     </div>
 
                     {ctaMode === 'free' ? (
-                        <RSButton
-                            variant="danger"
-                            fullWidth
-                            size="lg"
-                            className="font-bold tracking-[0.3em] shadow-lg rounded-[2px]"
-                            onClick={onUpgradeClick}
-                        >
-                            Unlock Full Report
-                        </RSButton>
+                        <div className="flex flex-col gap-2">
+                            <RSButton
+                                variant="danger"
+                                fullWidth
+                                size="lg"
+                                className="font-bold tracking-[0.15em] shadow-lg rounded-[2px]"
+                                onClick={onUpgradeClick}
+                            >
+                                Get Full Report — $29
+                            </RSButton>
+                            <p className={cn("font-mono text-[8px] uppercase tracking-widest text-center", RISK_THEME.textMuted)}>
+                                One-time purchase &middot; Full IP analysis &middot; Downloadable PDF
+                            </p>
+                        </div>
                     ) : (
                         <RSButton
-                            variant="danger"
+                            variant="primary"
                             fullWidth
                             size="lg"
-                            className="font-bold tracking-[0.3em] shadow-lg rounded-[2px] opacity-50 cursor-not-allowed"
-                            disabled
+                            className="font-bold tracking-[0.15em] shadow-lg rounded-[2px]"
+                            onClick={() => {
+                                // Navigate to the canonical scans-reports page for full report access
+                                if (scanId) window.location.href = `/dashboard/scans-reports?scan=${scanId}`;
+                            }}
                         >
-                            Mitigation Report — Coming Soon
+                            View Full Report
                         </RSButton>
                     )}
                 </div>

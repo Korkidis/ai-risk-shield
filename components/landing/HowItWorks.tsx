@@ -17,14 +17,8 @@ export function HowItWorks() {
 
                 <div className="text-center mb-24 relative pl-12 md:pl-0">
                     <div className="inline-block relative">
-                        {/* Status Pill */}
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-full mb-4 shadow-sm">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--rs-signal)] animate-pulse" />
-                            <span className="rs-type-mono text-[10px] tracking-widest text-[var(--rs-text-secondary)]">SYSTEM_PROTOCOL_V3</span>
-                        </div>
-
                         <h2 className="text-4xl md:text-5xl rs-header-bold-italic tracking-tighter text-[var(--rs-text-primary)] block">
-                            TECHNICAL <span className="text-[var(--rs-signal)]">PROTOCOL</span>
+                            HOW IT <span className="text-[var(--rs-signal)]">WORKS</span>
                         </h2>
                     </div>
                 </div>
@@ -41,8 +35,8 @@ export function HowItWorks() {
                     {/* Step 1 */}
                     <StepCard
                         icon={<Scan className="w-6 h-6 text-[var(--rs-text-primary)]" />}
-                        title="FORENSIC SCAN"
-                        description="Proprietary ML models scan for trademark overlap and stylistic similarity."
+                        title="UPLOAD & SCAN"
+                        description="Drop any AI-generated image. Three specialized AI analysts independently score it for IP risk, brand safety, and provenance gaps."
                         step="01"
                         delay={0}
                     />
@@ -50,8 +44,8 @@ export function HowItWorks() {
                     {/* Step 2 */}
                     <StepCard
                         icon={<BrainCircuit className="w-6 h-6 text-[var(--rs-text-primary)]" />}
-                        title="PROVENANCE TRAIL"
-                        description="Cryptographic C2PA verification to document asset origin and edit history."
+                        title="VERIFY PROVENANCE"
+                        description="Cryptographic C2PA verification confirms origin and edit history. No guesswork — mathematically verifiable proof."
                         step="02"
                         delay={100}
                     />
@@ -59,8 +53,8 @@ export function HowItWorks() {
                     {/* Step 3 */}
                     <StepCard
                         icon={<Activity className="w-6 h-6 text-[var(--rs-text-primary)]" />}
-                        title="MITIGATION REPORT"
-                        description="Actionable remediation steps and regeneration prompts for high-risk assets."
+                        title="GET YOUR SCORE"
+                        description="One composite risk score with a downloadable forensic report. Hand it to legal, attach it to the brief, keep it on file."
                         step="03"
                         delay={200}
                     />

@@ -11,12 +11,12 @@ export function Footer() {
                         Stop Publishing In the <span className="text-[var(--rs-signal)]">Dark.</span>
                     </h2>
                     <p className="rs-type-body text-[var(--rs-text-secondary)]">
-                        Join 200+ agencies validating their AI workflow with RiskShield.
+                        Know before you publish. Upload your first image — it takes 15 seconds.
                     </p>
                 </div>
 
                 {/* Disclaimer */}
-                <p className="text-[10px] text-[var(--rs-text-tertiary)] uppercase tracking-widest leading-loose max-w-3xl mx-auto font-medium opacity-60">
+                <p className="text-[10px] text-[var(--rs-text-secondary)] uppercase tracking-widest leading-loose max-w-3xl mx-auto font-medium">
                     DISCLAIMER: RiskShield provides technical risk assessment data. We do not provide legal advice. All final publishing decisions should be made in consultation with qualified legal counsel. Forensic accuracy is subject to the capabilities of current ML models.
                 </p>
 
