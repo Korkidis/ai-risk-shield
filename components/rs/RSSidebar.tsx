@@ -42,7 +42,7 @@ export function RSSidebar({
     return (
         <aside
             className={cn(
-                "h-screen bg-rs-gray-50 border-r border-rs-gray-200 sticky top-0 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] z-[100]",
+                "h-screen bg-rs-gray-50 border-r border-rs-gray-200 sticky top-0 flex flex-col transition-[width,background-color,border-color] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] z-[100]",
                 isCollapsed ? "w-16" : "w-64",
                 className
             )}

@@ -89,20 +89,31 @@
 
   [data-theme='dark'] {
     /* RAMS DARK MODE: "Matte Charcoal" */
+
+    /* Raw gray scale inversion — preserves contrast relationships across all components */
+    --rs-white: #121212;
+    --rs-gray-50: #1A1A1A;
+    --rs-gray-100: #222222;
+    --rs-gray-200: #2D2D2D;
+    --rs-gray-300: #3D3D3D;
+    --rs-gray-400: #666666;
+    --rs-gray-500: #8A8681;
+    --rs-gray-600: #9A9691;
+    --rs-gray-700: #B4B0AB;
+    --rs-gray-800: #CFCBC4;
+    --rs-gray-900: #E5E1DA;
+    --rs-black: #EBE7E0;
+
+    /* Semantic layer */
     --rs-bg-surface: #121212;
-    /* Deepest Matte */
     --rs-bg-well: #1A1A1A;
-    /* Recessed Dark */
     --rs-bg-element: #262626;
-    /* Element L1 */
 
     --rs-text-primary: #EBE7E0;
-    /* Warm White Text */
     --rs-text-secondary: #9A9691;
-    --rs-text-tertiary: #5A5651;
+    --rs-text-tertiary: #666666;
 
-    --rs-border-primary: #333333;
-    /* Subtle Seams */
+    --rs-border-primary: #2D2D2D;
     --rs-border-strong: #EBE7E0;
 
     --rs-bg-inverse: #EBE7E0;
@@ -114,6 +125,8 @@
     --rs-shadow-l3: 0 4px 16px rgba(0, 0, 0, 0.40);
 
     --rs-text-shadow-etched: 0px 1px 2px rgba(0, 0, 0, 0.8);
+    --rs-text-etched: 0px 1px 0px rgba(0, 0, 0, 0.5);
+    --rs-parting-line: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   /* utility: etched label */

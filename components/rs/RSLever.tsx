@@ -88,7 +88,7 @@ export function RSLever({
             </div>
             {label && (
                 <span className={cn(
-                    "text-[10px] font-black uppercase tracking-[0.3em] text-black/30 italic whitespace-nowrap",
+                    "text-[10px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] italic whitespace-nowrap",
                     !isVertical && "mt-1"
                 )}>
                     {label}

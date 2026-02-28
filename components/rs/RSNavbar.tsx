@@ -5,7 +5,9 @@ import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Search, Bell, Settings } from 'lucide-react';
 import { RSAvatar } from './RSAvatar';
+import { RSLever } from './RSLever';
 import { createClient } from '@/lib/supabase/client';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface RSNavbarProps extends React.HTMLAttributes<HTMLDivElement> {
     children?: React.ReactNode; // e.g. Breadcrumbs
@@ -17,6 +19,7 @@ export function RSNavbar({
     ...props
 }: RSNavbarProps) {
     const [userInitials, setUserInitials] = useState<string | undefined>(undefined);
+    const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
         const supabase = createClient();
@@ -40,7 +43,7 @@ export function RSNavbar({
         <header
             className={cn(
                 "h-16 border-b border-rs-gray-200 bg-rs-white/80 backdrop-blur-md sticky top-0 z-40 px-6",
-                "flex items-center justify-between",
+                "flex items-center justify-between transition-colors duration-300",
                 className
             )}
             {...props}
@@ -72,6 +75,14 @@ export function RSNavbar({
                 </div>
 
                 <div className="h-6 w-px bg-rs-gray-200 mx-2" />
+
+                {/* Dark Mode Toggle — Braun TG 1000 RSLever */}
+                <RSLever
+                    orientation="horizontal"
+                    checked={theme === 'dark'}
+                    onCheckedChange={toggleTheme}
+                    className="!gap-0 scale-[0.55] -mx-2"
+                />
 
                 <button className="relative text-rs-gray-500 hover:text-rs-black transition-colors">
                     <Bell className="w-5 h-5" />
