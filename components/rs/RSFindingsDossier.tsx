@@ -13,7 +13,7 @@ const RISK_THEME = {
     border: "border-[#D6D3CD]",   // Subtle border
     text: "text-[#1A1A1A]",       // Primary Ink
     textMuted: "text-[#B4B0AB]",  // Secondary Ink
-    textDim: "text-[#666]"        // Tertiary Ink
+    textDim: "text-[#5A5651]"     // Tertiary Ink (WCAG AA on #EBE9E4)
 };
 
 // Severity → RSRiskBadge level mapping
@@ -132,7 +132,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
             <div className={cn("flex justify-between items-start px-8 py-6 shrink-0", RISK_THEME.header)}>
                 <div className="space-y-1">
                     <div className={cn("text-[10px] font-black uppercase tracking-[0.2em] leading-none", RISK_THEME.text)}>Key Findings</div>
-                    <div className="font-mono text-[10px] text-[#888] uppercase tracking-widest leading-none">Ref_{docRef}</div>
+                    <div className="font-mono text-[10px] text-[#7A7671] uppercase tracking-widest leading-none">Ref_{docRef}</div>
                 </div>
             </div>
 
@@ -172,7 +172,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
                     )) : (
                         <div className="flex flex-col items-center justify-center py-6 gap-2 opacity-20">
                             <Terminal size={18} />
-                            <div className="font-mono text-[9px] font-black uppercase tracking-widest text-center">
+                            <div className="font-mono text-[10px] font-black uppercase tracking-widest text-center">
                                 No_Significant_Deltas_Detected
                             </div>
                         </div>
@@ -183,7 +183,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
                 <div className="mt-4 pt-4 border-t border-[#D6D3CD] flex flex-col gap-3">
                     <div className="flex items-center gap-3 px-1">
                         <Info size={11} className={RISK_THEME.textMuted} />
-                        <div className={cn("font-mono text-[8px] uppercase tracking-widest leading-tight", RISK_THEME.textMuted)}>
+                        <div className={cn("font-mono text-[10px] uppercase tracking-widest leading-tight", RISK_THEME.textMuted)}>
                             Powered by Google Gemini 2.5 Flash &middot; C2PA Verified
                         </div>
                     </div>
@@ -199,7 +199,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
                             >
                                 Get Full Report — $29
                             </RSButton>
-                            <p className={cn("font-mono text-[8px] uppercase tracking-widest text-center", RISK_THEME.textMuted)}>
+                            <p className={cn("font-mono text-[10px] uppercase tracking-widest text-center", RISK_THEME.textMuted)}>
                                 One-time purchase &middot; Full IP analysis &middot; Downloadable PDF
                             </p>
                         </div>

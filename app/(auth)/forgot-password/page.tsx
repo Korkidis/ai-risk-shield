@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
 
             <form className="flex flex-col gap-6">
                 <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block opacity-60">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block">
                         EMAIL IDENTITY
                     </label>
                     <RSInput
@@ -40,8 +40,8 @@ export default function ForgotPasswordPage() {
                     </RSButton>
                 </div>
 
-                <div className="flex items-center justify-center pt-4 border-t border-[var(--rs-border-primary)] border-dashed opacity-50">
-                    <Link href="/login" className="text-[9px] font-mono uppercase tracking-widest text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-2">
+                <div className="flex items-center justify-center pt-4 border-t border-[var(--rs-border-primary)] border-dashed">
+                    <Link href="/login" className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-2">
                         <ArrowLeft className="w-3 h-3" />
                         Return to Login
                     </Link>

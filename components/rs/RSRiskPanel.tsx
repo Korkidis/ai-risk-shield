@@ -23,7 +23,7 @@ const RISK_THEME = {
     border: "border-[#D6D3CD]",   // Subtle border
     text: "text-[#1A1A1A]",       // Primary Ink
     textMuted: "text-[#B4B0AB]",  // Secondary Ink
-    textDim: "text-[#666]"        // Tertiary Ink
+    textDim: "text-[#5A5651]"     // Tertiary Ink (WCAG AA on #EBE9E4)
 };
 
 export function RSRiskPanel({
@@ -93,7 +93,7 @@ export function RSRiskPanel({
                     {isScanning && <div className="absolute inset-0 bg-white/30 animate-pulse" />}
                 </motion.div>
             </div>
-            <div className={cn("flex justify-between mt-2 text-[9px] font-mono", RISK_THEME.textMuted)}>
+            <div className={cn("flex justify-between mt-2 text-[10px] font-mono", RISK_THEME.textMuted)}>
                 <span>0%</span><span>50%</span><span>100%</span>
             </div>
         </div>
@@ -121,13 +121,13 @@ export function RSRiskPanel({
                     )} />
                     <div>
                         <h2 className={cn("text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1", RISK_THEME.text)}>Risk Analysis Panel</h2>
-                        <div className="font-mono text-[10px] text-[#888] uppercase tracking-widest leading-none">ID: {id}</div>
+                        <div className="font-mono text-[10px] text-[#7A7671] uppercase tracking-widest leading-none">ID: {id}</div>
                     </div>
                 </div>
 
                 <div className={cn(
                     "text-[10px] font-black uppercase tracking-[0.2em]",
-                    level === 'critical' && status === 'completed' ? 'text-[var(--rs-signal)]' : 'text-[#888]'
+                    level === 'critical' && status === 'completed' ? 'text-[var(--rs-signal)]' : 'text-[#7A7671]'
                 )}>
                     {headerStatus}
                 </div>

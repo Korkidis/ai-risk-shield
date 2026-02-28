@@ -55,7 +55,7 @@ export default function RegisterPage() {
             <form action={formAction} className="flex flex-col gap-6">
                 <div className="space-y-4">
                     <div className="space-y-1 group">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block opacity-60 group-focus-within:opacity-100 transition-opacity">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block">
                             FULL NAME
                         </label>
                         <RSInput
@@ -66,7 +66,7 @@ export default function RegisterPage() {
                         />
                     </div>
                     <div className="space-y-1 group">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block opacity-60 group-focus-within:opacity-100 transition-opacity">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block">
                             ORGANIZATION
                         </label>
                         <RSInput
@@ -77,7 +77,7 @@ export default function RegisterPage() {
                         />
                     </div>
                     <div className="space-y-1 group">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block opacity-60 group-focus-within:opacity-100 transition-opacity">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block">
                             EMAIL IDENTITY
                         </label>
                         <RSInput
@@ -89,7 +89,7 @@ export default function RegisterPage() {
                         />
                     </div>
                     <div className="space-y-1 group">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block opacity-60 group-focus-within:opacity-100 transition-opacity">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block">
                             SECURE PASSPHRASE
                         </label>
                         <RSInput
@@ -99,7 +99,7 @@ export default function RegisterPage() {
                             fullWidth
                             className="bg-rs-bg-surface-3 border border-rs-border-primary focus:ring-2 focus:ring-rs-action-primary/50 text-rs-text-primary rounded-[var(--rs-radius-element)]"
                         />
-                        <p className="text-[8px] text-[var(--rs-text-tertiary)] uppercase tracking-wider pl-1 pt-1 opacity-70">
+                        <p className="text-[10px] text-[var(--rs-text-secondary)] uppercase tracking-wider pl-1 pt-1">
                             Must contain 12+ chars, uppercase, lowercase, number.
                         </p>
                     </div>
@@ -124,8 +124,8 @@ export default function RegisterPage() {
                     <SubmitButton />
                 </div>
 
-                <div className="flex items-center justify-center pt-4 border-t border-[var(--rs-border-primary)] border-dashed opacity-50">
-                    <Link href="/login" className="text-[9px] font-mono uppercase tracking-widest text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-2">
+                <div className="flex items-center justify-center pt-4 border-t border-[var(--rs-border-primary)] border-dashed">
+                    <Link href="/login" className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-2">
                         <ArrowLeft className="w-3 h-3" />
                         Return to Login
                     </Link>

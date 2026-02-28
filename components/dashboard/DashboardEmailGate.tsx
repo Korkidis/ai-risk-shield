@@ -12,7 +12,7 @@ const RISK_THEME = {
     border: "border-[#D6D3CD]",
     text: "text-[#1A1A1A]",
     textMuted: "text-[#B4B0AB]",
-    textDim: "text-[#666]"
+    textDim: "text-[#5A5651]"
 };
 
 interface DashboardEmailGateProps {
@@ -82,7 +82,7 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
                     <div className={cn("text-[10px] font-black uppercase tracking-[0.2em] leading-none", RISK_THEME.text)}>
                         Unlock Findings
                     </div>
-                    <div className="font-mono text-[10px] text-[#888] uppercase tracking-widest leading-none">
+                    <div className="font-mono text-[10px] text-[#7A7671] uppercase tracking-widest leading-none">
                         Clearance_Required
                     </div>
                 </div>
@@ -109,7 +109,7 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
 
                     {/* Email Input */}
                     <div className="space-y-2">
-                        <label className={cn("block text-[9px] uppercase tracking-[0.2em] font-bold", RISK_THEME.textMuted)}>
+                        <label className={cn("block text-[10px] uppercase tracking-[0.2em] font-bold", RISK_THEME.textMuted)}>
                             Authorized Recipient
                         </label>
                         <div className="flex gap-2">
@@ -163,7 +163,7 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
                             {status === 'sending' ? 'Processing...' : 'Unlock Full Analysis'}
                         </RSButton>
                     )}
-                    <p className={cn("font-mono text-[8px] uppercase tracking-widest text-center leading-tight", RISK_THEME.textMuted)}>
+                    <p className={cn("font-mono text-[10px] uppercase tracking-widest text-center leading-tight", RISK_THEME.textMuted)}>
                         A secure guest account will be created to manage your reports
                     </p>
                 </div>

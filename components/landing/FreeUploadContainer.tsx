@@ -253,7 +253,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
                 <div className="w-12 h-0.5 bg-white/20 rounded-full overflow-hidden">
                   <div className="w-full h-full bg-[var(--rs-signal)] -translate-x-full animate-[shimmer_2s_infinite] motion-reduce:animate-none" />
                 </div>
-                <span className="rs-type-mono text-[10px] text-white/30 tracking-[0.15em] uppercase mt-1">JPG, PNG, WebP • Max 50 MB • 100% Free</span>
+                <span className="rs-type-mono text-[10px] text-white/50 tracking-[0.15em] uppercase mt-1">JPG, PNG, WebP • Max 50 MB • 100% Free</span>
               </div>
 
               <RSFileUpload

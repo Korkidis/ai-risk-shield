@@ -447,18 +447,18 @@ export default function DashboardPage() {
                     >
                         {(!isComplete && !isScanning && !isLoading && !previewUrl && !isAnonymous) && (
                             <label className="flex flex-col items-center justify-center text-center p-12 cursor-pointer group w-full h-full">
-                                <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center text-white/40 group-hover:border-rs-signal group-hover:text-rs-signal transition-all duration-300 group-hover:scale-110 mb-6">
+                                <div className="w-16 h-16 rounded-full border border-white/30 flex items-center justify-center text-white/50 group-hover:border-rs-signal group-hover:text-rs-signal transition-all duration-300 group-hover:scale-110 mb-6">
                                     <div className="w-8 h-8 relative flex items-center justify-center">
                                         {isError ? <div className="text-rs-signal font-bold text-xl">!</div> : <Upload className="w-6 h-6" />}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-white/40 font-mono text-xs uppercase tracking-[0.2em] group-hover:text-white transition-colors">
+                                    <p className="text-white/60 font-mono text-xs uppercase tracking-[0.2em] group-hover:text-white transition-colors">
                                         {isError ? 'Scan Failed - Retry?' : 'Drop file here or click to browse'}
                                     </p>
-                                    <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest">
+                                    <p className="text-white/40 font-mono text-[10px] uppercase tracking-widest">
                                         {userPlan === 'free'
-                                            ? <>Max 50MB • JPG, PNG <span className="text-white/10">|</span> <span className="text-rs-accent/60">Video requires PRO plan</span></>
+                                            ? <>Max 50MB • JPG, PNG <span className="text-white/20">|</span> <span className="text-rs-accent/80">Video requires PRO plan</span></>
                                             : 'Max 50MB • JPG, PNG, MP4, MOV, MKV'}
                                     </p>
                                     {isError && <p className="text-rs-signal font-mono text-[10px] uppercase tracking-widest mt-2">{errorMessage}</p>}
