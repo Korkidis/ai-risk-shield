@@ -85,6 +85,7 @@ export interface ScanWithRelations extends ExtendedScan {
   assets?: Pick<ExtendedAsset, 'filename' | 'file_type' | 'file_size'>
   scan_findings?: ScanFinding[]
   email?: string | null
+  mitigation_reports?: MitigationReport[] | null
 
   // UI Helper Props (Join Results / Mapped from fetchScans)
   filename: string
@@ -112,6 +113,8 @@ export interface ExtendedTenant {
   retention_days?: number
   scans_used_this_month: number
   usage_limit_mitigation: number
+  monthly_mitigation_limit: number
+  mitigations_used_this_month: number
 
   // Overage costs (cents, from PlanConfig)
   scan_overage_cost_cents?: number
@@ -171,7 +174,88 @@ export interface MitigationReport {
   scan_id: string
   tenant_id: string
   advice_content: string
+  status: 'pending' | 'processing' | 'complete' | 'failed'
+  report_content: MitigationReportContent | null
+  report_version: number
+  generator_version: string
+  generation_inputs: Record<string, unknown> | null
+  idempotency_key: string | null
+  created_by: string | null
+  completed_at: string | null
+  error_message: string | null
   created_at: string
+}
+
+/** Structured mitigation report content stored as JSONB in report_content */
+export interface MitigationReportContent {
+  executive_summary: {
+    decision: 'clear' | 'watch' | 'hold' | 'block'
+    confidence: number
+    approver_level: string
+    rationale: string
+  }
+  asset_context: {
+    filename: string
+    type: string
+    size: number
+    declared_origin: string | null
+    c2pa_chain_status: string
+    creator_metadata: Record<string, unknown> | null
+  }
+  ip_analysis: MitigationDomainAnalysis
+  safety_analysis: MitigationDomainAnalysis
+  provenance_analysis: MitigationDomainAnalysis
+  bias_analysis: {
+    applicable: boolean
+    severity: string | null
+    confidence: number | null
+    findings: { type: string; description: string; evidence_ref: string }[]
+    not_applicable_reason: string | null
+  }
+  guideline_mapping: {
+    guideline_name: string | null
+    mappings: { finding_ref: string; guideline_item: string; status: string }[]
+  }
+  compliance_matrix: {
+    jurisdictions: ComplianceEntry[]
+    platforms: ComplianceEntry[]
+  }
+  mitigation_plan: {
+    actions: {
+      priority: number
+      domain: string
+      action: string
+      owner: string
+      effort: string
+      risk_reduction: string
+      verification: string
+    }[]
+  }
+  residual_risk: {
+    remaining_risk: string
+    publish_decision: 'approved' | 'conditional' | 'blocked'
+    conditions: string[]
+    maintenance_checks: string[]
+  }
+}
+
+export interface MitigationDomainAnalysis {
+  severity: string
+  confidence: number
+  exposures: {
+    type: string
+    description: string
+    evidence_ref: string
+    legal_rationale: string
+  }[]
+  remediation_status: 'required' | 'not_required'
+}
+
+export interface ComplianceEntry {
+  name: string
+  source: 'inferred' | 'guideline'
+  status: 'pass' | 'review' | 'fail' | 'not_applicable'
+  rationale: string
 }
 
 export interface ReferralEvent {

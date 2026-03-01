@@ -5,7 +5,6 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
     Search,
-    ChevronRight,
     Loader2,
     AlertOctagon,
     Plus,
@@ -13,20 +12,14 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScanWithRelations } from '@/types/database'
 import { RSBreadcrumb } from '@/components/rs/RSBreadcrumb'
-import { formatDistanceToNow } from 'date-fns'
-import { RSTextarea } from '@/components/rs/RSTextarea'
 import { RSButton } from '@/components/rs/RSButton'
 import { RSBulkActionBar } from '@/components/rs/RSBulkActionBar'
-import { getRiskTier } from '@/lib/risk-utils'
 import { RSBackground } from '@/components/rs/RSBackground'
 import { RSModal } from '@/components/rs/RSModal'
 import { RSFileUpload } from '@/components/rs/RSFileUpload'
-import { ProvenanceTelemetryStream } from '@/components/rs/ProvenanceTelemetryStream'
-import { RSProcessingPanel } from '@/components/rs/RSProcessingPanel'
 import { useRealtimeScans } from '@/hooks/useRealtimeScans'
-import { formatBytes } from '@/lib/utils'
-
-import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
+import { ScanCard } from '@/components/dashboard/ScanCard'
+import { UnifiedScanDrawer } from '@/components/dashboard/UnifiedScanDrawer'
 import { getTenantBillingStatus, BillingStatus } from '@/app/actions/billing'
 import { generateForensicReport } from '@/lib/pdf-generator'
 import { Entitlements } from '@/lib/entitlements'
@@ -366,10 +359,25 @@ function ScansReportsContent() {
         })
     }, [billingStatus, scans])
 
-    // Computed entitlement for selected scan
+    // Computed entitlements for selected scan
     const canViewFull = selectedScan && userContext
         ? Entitlements.canViewFullReport(userContext, selectedScan)
         : false
+
+    // Mitigation entitlement (requires billing data for tenant context)
+    const mitigationEntitlement = useMemo(() => {
+        if (!billingStatus) return { included: 0, used: 0, canGenerate: false, overageCents: 2900 }
+        return Entitlements.getMitigationEntitlement({
+            id: userContext?.tenant_id || '',
+            plan: (billingStatus.planId || 'free') as PlanId,
+            monthly_scan_limit: billingStatus.monthlyScanLimit,
+            monthly_report_limit: billingStatus.monthlyReportLimit ?? 0,
+            seat_limit: billingStatus.seatLimit ?? 1,
+            brand_profile_limit: billingStatus.brandProfileLimit ?? 1,
+            monthly_mitigation_limit: billingStatus.monthlyMitigationLimit ?? 0,
+            mitigations_used_this_month: billingStatus.mitigationsUsedThisMonth ?? 0,
+        })
+    }, [billingStatus, userContext?.tenant_id])
 
     const handleDownload = (scan: ScanWithRelations) => {
         if (!scan) return
@@ -578,232 +586,34 @@ function ScansReportsContent() {
                     </div>
                 </div>
 
-                {/* Braun Diagnostic Detail Drawer */}
+                {/* Unified Scan Workspace Drawer */}
                 <AnimatePresence>
                     {showDetails && selectedScan && (
-                        <motion.div
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
-                            className="fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[var(--rs-bg-surface)] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
-                        >
-                            {/* Drawer Header */}
-                            <div className="h-16 border-b border-rs-border-primary flex items-center justify-between px-6 bg-[var(--rs-bg-element)]/80 backdrop-blur-md">
-                                <div className="space-y-0.5">
-                                    <h2 className="text-[9px] font-black uppercase tracking-[0.3em] text-rs-text-tertiary">Registry_Entry</h2>
-                                    <p className="text-[10px] font-bold text-rs-text-primary uppercase tracking-wider truncate max-w-[280px]">{selectedScan?.filename}</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowDetails(false)}
-                                    className="w-8 h-8 flex items-center justify-center border border-rs-border-primary hover:border-rs-text-primary text-rs-text-tertiary hover:text-rs-text-primary transition-all rounded-[1px] hover:bg-[var(--rs-bg-element)]"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
-
-                            {/* Drawer Content */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                                {/* Visual Asset Proof */}
-                                <div className="relative aspect-video bg-[var(--rs-bg-well)] border border-rs-border-primary p-2 group shadow-inner">
-                                    <div className="w-full h-full relative overflow-hidden border border-rs-border-primary/50 bg-[var(--rs-bg-surface)]">
-                                        <img
-                                            src={selectedScan?.asset_url || '/placeholder.png'}
-                                            alt="Asset_Visual"
-                                            className="w-full h-full object-contain grayscale-[0.2] transition-all group-hover:grayscale-0"
-                                        />
-                                    </div>
-                                    <div className="absolute bottom-4 left-4 px-2 py-1 bg-[var(--rs-bg-surface)]/90 backdrop-blur-sm border border-rs-border-primary text-[8px] font-mono text-rs-text-tertiary uppercase tracking-widest shadow-sm">
-                                        ID: {selectedScan?.id.slice(0, 8).toUpperCase()}
-                                    </div>
-                                </div>
-
-                                {/* Risk Diagnostic Summary */}
-                                <div className="space-y-6">
-                                    <RSRiskPanel
-                                        id={selectedScan?.id?.slice(0, 8).toUpperCase() || "UNKNOWN"}
-                                        status={
-                                            selectedScan?.status === 'processing' || selectedScan?.status === 'pending' ? 'scanning' :
-                                                selectedScan?.status === 'failed' ? 'completed' : // fallback
-                                                    'completed'
-                                        }
-                                        score={selectedScan?.risk_profile?.composite_score || 0}
-                                        level={selectedScan?.risk_level === 'review' ? 'medium' : selectedScan?.risk_level === 'caution' ? 'low' : (selectedScan?.risk_level || 'low')}
-                                        ipScore={selectedScan?.risk_profile?.ip_report?.score || 0}
-                                        safetyScore={selectedScan?.risk_profile?.safety_report?.score || 0}
-                                        provenanceScore={selectedScan?.risk_profile?.provenance_report?.score || 0}
-                                        className="shadow-sm"
-                                    />
-
-                                    {/* Findings List (Timeline Style) — Entitlement-Gated */}
-                                    <div className="border border-rs-border-primary bg-[var(--rs-bg-surface)]">
-                                        <div className="px-5 py-3 border-b border-rs-border-primary bg-[var(--rs-bg-element)]/70 flex items-center justify-between">
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Detected_Anomalies</span>
-                                            <div className="px-2 py-0.5 bg-rs-text-primary text-white text-[9px] font-bold rounded-[1px]">
-                                                {selectedScan?.scan_findings?.length || 0}
-                                            </div>
-                                        </div>
-                                        <div className="p-6">
-                                            {canViewFull ? (
-                                                // FULL ACCESS: Show all findings
-                                                selectedScan?.scan_findings && selectedScan.scan_findings.length > 0 ? (
-                                                    <div className="relative border-l border-dashed border-rs-border-primary space-y-8 ml-2">
-                                                        {selectedScan.scan_findings.map((finding) => (
-                                                            <div key={finding.id} className="relative pl-6">
-                                                                <div className={cn(
-                                                                    "absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-[var(--rs-bg-surface)]",
-                                                                    finding.severity === 'critical' ? 'bg-rs-destruct' :
-                                                                        finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
-                                                                )} />
-                                                                <div className="space-y-1">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <span className="text-[10px] font-bold text-rs-text-primary uppercase tracking-tight">{finding.title}</span>
-                                                                        <span className="text-[9px] font-mono text-rs-text-tertiary">{finding.confidence_score}%_CONF</span>
-                                                                    </div>
-                                                                    <p className="text-[10px] text-rs-text-secondary leading-relaxed bg-[var(--rs-bg-well)] p-3 rounded-[2px] border border-rs-border-primary/50 relative">
-                                                                        <span className="absolute top-2 -left-1 w-2 h-2 bg-[var(--rs-bg-well)] border-t border-l border-rs-border-primary/50 -rotate-45" />
-                                                                        {finding.description}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center py-4">
-                                                        <span className="text-[10px] font-mono text-rs-text-tertiary uppercase tracking-widest opacity-50">No_Anomalies_Recorded</span>
-                                                    </div>
-                                                )
-                                            ) : (
-                                                // LOCKED: Show gated state with unlock CTA
-                                                <div className="text-center py-8 space-y-4">
-                                                    <div className="w-12 h-12 mx-auto rounded-full bg-[var(--rs-bg-element)] flex items-center justify-center">
-                                                        <span className="text-lg">🔒</span>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <p className="text-[10px] font-bold text-rs-text-primary uppercase tracking-widest">
-                                                            {selectedScan?.scan_findings?.length || 0} Findings_Detected
-                                                        </p>
-                                                        <p className="text-[10px] text-rs-text-secondary max-w-xs mx-auto leading-relaxed">
-                                                            Detailed analysis, severity levels, and mitigation strategies are restricted. Unlock the full report to view.
-                                                        </p>
-                                                    </div>
-                                                    <RSButton
-                                                        variant="primary"
-                                                        className="mx-auto text-[9px] uppercase tracking-widest font-black"
-                                                        onClick={() => setShowAuditModal(true)}
-                                                    >
-                                                        Unlock_Full_Report
-                                                    </RSButton>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Score Breakdown (Horizontal Bars) */}
-                                    <div className="border border-rs-border-primary bg-[var(--rs-bg-surface)] divide-y divide-rs-border-primary/40">
-                                        {[
-                                            { label: 'IP_PROVENANCE', score: selectedScan?.risk_profile?.ip_report?.score || 0 },
-                                            { label: 'SAFETY_THRESHOLD', score: selectedScan?.risk_profile?.safety_report?.score || 0 },
-                                            { label: 'PROVENANCE_INTEGRITY', score: selectedScan?.risk_profile?.provenance_report?.score || 0 },
-                                        ].map((metric, i) => (
-                                            <div key={i} className="p-4">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">{metric.label}</span>
-                                                    <span className="text-[10px] font-bold text-rs-text-primary">{metric.score}/100</span>
-                                                </div>
-                                                <div className="w-full h-1 bg-[var(--rs-bg-well)] rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-rs-text-primary"
-                                                        style={{ width: `${metric.score}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* C2PA Forensic Manifest Stream */}
-                                    <div className="pt-2">
-                                        <ProvenanceTelemetryStream
-                                            details={
-                                                // Prefer DB join data, fallback to risk_profile.c2pa_report blob
-                                                selectedScan?.provenance_details ||
-                                                (selectedScan?.risk_profile?.c2pa_report ? {
-                                                    signature_status: selectedScan.risk_profile.c2pa_report.status === 'valid' ? 'valid' :
-                                                        selectedScan.risk_profile.c2pa_report.status === 'caution' ? 'caution' : 'invalid',
-                                                    creator_name: selectedScan.risk_profile.c2pa_report.creator || null,
-                                                    creation_tool: selectedScan.risk_profile.c2pa_report.tool || null,
-                                                    creation_timestamp: selectedScan.risk_profile.c2pa_report.timestamp || null,
-                                                    raw_manifest: selectedScan.risk_profile.c2pa_report.raw_manifest || null,
-                                                    edit_history: selectedScan.risk_profile.c2pa_report.history || null,
-                                                } : null)
-                                            }
-                                            scanStatus={selectedScan?.status || 'complete'}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Internal Annotations */}
-                                <div className="space-y-2 pt-4 border-t border-rs-border-primary/50">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Analyst_Notes</span>
-                                        {updating && <Loader2 className="w-3 h-3 text-rs-text-tertiary animate-spin" />}
-                                    </div>
-                                    <RSTextarea
-                                        placeholder="// START_KEYBOARD_STREAM..."
-                                        rows={4}
-                                        value={notesBuffer}
-                                        onChange={(e) => setNotesBuffer(e.target.value)}
-                                        onBlur={(e) => handleSaveNotes(e.target.value)}
-                                        className="bg-[var(--rs-bg-surface)] border-rs-border-primary text-[10px] font-mono p-3 focus:border-rs-text-primary rounded-[1px] shadow-none resize-none"
-                                    />
-                                </div>
-
-                                {/* Post-Purchase Download Banner */}
-                                {showDownloadBanner && canViewFull && (
-                                    <div className="p-4 bg-[var(--rs-safe)]/10 border border-[var(--rs-safe)]/30 rounded-[2px] flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-[var(--rs-text-primary)] uppercase tracking-wide">Report Ready</p>
-                                            <p className="text-[10px] text-[var(--rs-text-secondary)]">Your full forensic report is ready to download.</p>
-                                        </div>
-                                        <RSButton
-                                            variant="primary"
-                                            className="text-[9px] uppercase tracking-widest font-black shrink-0"
-                                            onClick={() => {
-                                                if (selectedScan) handleDownload(selectedScan)
-                                                setShowDownloadBanner(false)
-                                            }}
-                                        >
-                                            Download
-                                        </RSButton>
-                                    </div>
-                                )}
-
-                                {/* Management Actions */}
-                                <div className="pt-8 flex flex-col gap-2">
-                                    <RSButton
-                                        variant="ghost"
-                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
-                                        onClick={() => selectedScan && handleDownload(selectedScan)}
-                                    >
-                                        {canViewFull ? 'Export_Dossier' : 'Download_Sample'}
-                                    </RSButton>
-                                    <RSButton
-                                        variant="ghost"
-                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
-                                        onClick={() => selectedScan && handleShare(selectedScan.id)}
-                                    >
-                                        {shareToast || 'Share_Link'}
-                                    </RSButton>
-                                    <RSButton
-                                        variant="ghost"
-                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary text-rs-destruct hover:bg-rs-destruct/5 hover:border-rs-destruct transition-all"
-                                        onClick={(e) => handleDelete(e, selectedScan?.id || '')}
-                                    >
-                                        Purge_Archive
-                                    </RSButton>
-                                </div>
-                            </div>
-                        </motion.div>
+                        <UnifiedScanDrawer
+                            scan={selectedScan}
+                            isOpen={showDetails}
+                            onClose={() => setShowDetails(false)}
+                            entitlements={{
+                                canViewFull: !!canViewFull,
+                                canViewTeaser: selectedScan ? Entitlements.canViewTeaser(userContext, selectedScan) : false,
+                                mitigationCredits: mitigationEntitlement,
+                            }}
+                            onGenerateMitigation={(scanId) => {
+                                // TODO: Wire to mitigation API in Sprint 9
+                                console.log('Generate mitigation for:', scanId)
+                            }}
+                            onShare={handleShare}
+                            onDelete={(id) => handleDelete({ stopPropagation: () => {} } as React.MouseEvent, id)}
+                            onNotesUpdate={handleSaveNotes}
+                            onDownload={handleDownload}
+                            onUnlock={() => setShowAuditModal(true)}
+                            notesBuffer={notesBuffer}
+                            onNotesChange={setNotesBuffer}
+                            isUpdatingNotes={updating}
+                            shareToast={shareToast}
+                            showDownloadBanner={showDownloadBanner}
+                            onDismissDownloadBanner={() => setShowDownloadBanner(false)}
+                        />
                     )}
                 </AnimatePresence>
 
@@ -902,217 +712,3 @@ function ScansReportsContent() {
     )
 }
 
-function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage, onBulkToggle, onClick, onDownload, onShare }: {
-    scan: ScanWithRelations;
-    isSelected: boolean;
-    isBulkSelected: boolean;
-    liveProgress?: number;
-    liveMessage?: string;
-    onBulkToggle: (checked: boolean) => void;
-    onClick: () => void;
-    onDownload: () => void;
-    onShare: () => void;
-}) {
-    const score = scan.risk_profile?.composite_score || 0;
-    const thumbnailPath = scan.tenant_id && scan.asset_id ? `${scan.tenant_id}/${scan.asset_id}_thumb.jpg` : null;
-    const thumbnailUrl = thumbnailPath ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${thumbnailPath}` : null;
-    const [imgSrc, setImgSrc] = useState(thumbnailUrl || scan.asset_url || scan.image_url);
-    const [imgError, setImgError] = useState(false);
-
-    const riskTier = getRiskTier(score);
-
-    // Only reset image state when scan ID changes (not on every data update)
-    useEffect(() => {
-        setImgSrc(thumbnailUrl || scan.asset_url || scan.image_url);
-        setImgError(false);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [scan.id]); // Intentionally only depend on ID to prevent flicker
-
-    const handleImgError = () => {
-        // If we were trying to load the thumbnail and failed, try the full asset URL
-        if (imgSrc === thumbnailUrl && scan.asset_url) {
-            setImgSrc(scan.asset_url);
-        } else {
-            setImgError(true);
-        }
-    };
-
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClick}
-            className={cn(
-                "group/card cursor-pointer bg-[var(--rs-bg-surface)] relative transition-all duration-300 overflow-hidden flex flex-col",
-                "h-[325px] w-full", // Fixed height per spec
-                "rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l2)] border border-[var(--rs-border-primary)]/20",
-                "hover:scale-[1.01] hover:shadow-[var(--rs-shadow-l3)]",
-                isSelected ? "ring-2 ring-rs-text-primary z-10" : ""
-            )}
-        >
-            {/* Physics: Parting Line */}
-            <div className="absolute inset-0 rounded-[inherit] border-t border-l border-white/40 pointer-events-none z-20" />
-            <div className="absolute inset-0 rounded-[inherit] border-b border-r border-black/10 pointer-events-none z-20" />
-
-            {/* 1. Thumbnail Area (60%) */}
-            <div className="relative h-[60%] w-full bg-[var(--rs-bg-element)] overflow-hidden p-3 transition-colors group-hover/card:bg-[var(--rs-bg-well)]">
-                {/* Image Container */}
-                <div className="w-full h-full relative group/thumb overflow-hidden bg-[var(--rs-bg-surface)] shadow-sm ring-1 ring-[var(--rs-border-primary)]/50 rounded-[var(--rs-radius-element)]">
-                    {!imgError && imgSrc ? (
-                        scan.file_type === 'video' && (imgError || imgSrc === scan.asset_url) ? (
-                            <video
-                                src={imgSrc}
-                                className="w-full h-full object-cover"
-                                muted
-                                loop
-                                playsInline
-                                onMouseOver={e => e.currentTarget.play()}
-                                onMouseOut={e => e.currentTarget.pause()}
-                            />
-                        ) : (
-                            <img
-                                src={imgSrc}
-                                onError={handleImgError}
-                                className="w-full h-full object-cover transition-all duration-700 grayscale-[0.1] contrast-[1.05] group-hover:grayscale-0"
-                                alt={scan.filename}
-                            />
-                        )
-                    ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden bg-rs-gray-100">
-                            <div
-                                className="absolute inset-0 opacity-20"
-                                style={{
-                                    background: `linear-gradient(135deg, var(--rs-gray-50) 0%, ${riskTier.colorVar} 100%)`
-                                }}
-                            />
-
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 text-[var(--rs-text-primary)] flex flex-col items-center gap-2">
-                                {scan.file_type === 'video' ? (
-                                    <>
-                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" /><line x1="7" y1="2" x2="7" y2="22" /><line x1="17" y1="2" x2="17" y2="22" /><line x1="2" y1="12" x2="22" y2="12" /><line x1="2" y1="7" x2="7" y2="7" /><line x1="2" y1="17" x2="7" y2="17" /><line x1="17" y1="17" x2="22" y2="17" /><line x1="17" y1="7" x2="22" y2="7" /></svg>
-                                        <span className="text-[8px] font-mono uppercase tracking-widest">NO_PREVIEW</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                                        <span className="text-[8px] font-mono uppercase tracking-widest">ASSET_MISSING</span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Live Telemetry Overlay for Processing/Pending */}
-                    {(scan.status === 'processing' || scan.status === 'pending') && (
-                        <div className="absolute inset-0 z-20">
-                            <RSProcessingPanel
-                                filename={scan.filename}
-                                progress={liveProgress || 0}
-                                statusMessage={liveMessage || "INITIALIZING..."}
-                                imageSrc={imgSrc}
-                                isVideo={scan.file_type === 'video'}
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* A. Status Badge (Top-Right) */}
-                <div
-                    className="absolute top-[8px] right-[8px] h-[28px] px-2 flex items-center justify-center rounded-full z-30 shadow-md backdrop-blur-sm"
-                    style={{
-                        backgroundColor:
-                            scan.status === 'processing' || scan.status === 'pending' ? 'var(--rs-text-tertiary)' :
-                                scan.status === 'failed' ? 'var(--rs-destruct)' :
-                                    riskTier.colorVar
-                    }}
-                >
-                    <span className="text-[10px] font-bold text-white uppercase tracking-wider leading-none flex items-center gap-1">
-                        {(scan.status === 'processing' || scan.status === 'pending') && <Loader2 className="w-3 h-3 animate-spin" />}
-                        {scan.status === 'processing' || scan.status === 'pending' ? 'ANALYZING' :
-                            scan.status === 'failed' ? 'FAILED' :
-                                riskTier.label === 'CRITICAL RISK' ? 'CRITICAL' :
-                                    riskTier.label === 'HIGH RISK' ? 'HIGH RISK' :
-                                        riskTier.label === 'REVIEW REQ' ? 'REVIEW' : 'SAFE'}
-                    </span>
-                </div>
-
-                {/* B. Checkbox (Top-Left) */}
-                <div
-                    className="absolute top-[12px] left-[12px] z-40"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="relative w-[24px] h-[24px] bg-[var(--rs-bg-surface)]/80 rounded-full flex items-center justify-center shadow-sm backdrop-blur-sm">
-                        <input
-                            type="checkbox"
-                            checked={isBulkSelected}
-                            onChange={(e) => onBulkToggle(e.target.checked)}
-                            className={cn(
-                                "w-5 h-5 appearance-none border-2 border-rs-border-primary bg-transparent transition-all cursor-pointer rounded-[2px]",
-                                "checked:bg-[var(--rs-info)] checked:border-[var(--rs-info)] relative",
-                                "after:content-[''] after:hidden checked:after:block after:w-2 after:h-2 after:bg-white after:absolute after:top-[3px] after:left-[3px] after:rounded-[1px]"
-                            )}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* 2-5. Metadata & Actions Area */}
-            <div className="flex-1 w-full px-3 pb-3 pt-3 flex flex-col relative z-10">
-                {/* 2. Score Number */}
-                <div className="flex items-baseline gap-1" style={{ color: scan.status === 'complete' ? riskTier.colorVar : 'var(--rs-text-tertiary)' }}>
-                    {scan.status === 'complete' ? (
-                        <>
-                            <span className="text-[32px] font-bold font-mono leading-none tracking-[-0.05em]">{score}</span>
-                            <span className="text-[14px] font-mono opacity-60 leading-none">/100</span>
-                        </>
-                    ) : (
-                        <span className="text-[12px] font-mono font-bold tracking-widest uppercase">
-                            {scan.status === 'failed' ? 'ERROR' : 'PENDING...'}
-                        </span>
-                    )}
-                </div>
-
-                {/* 3. Filename */}
-                <div className="mt-[6px] flex items-center gap-1.5 overflow-hidden">
-                    {scan.file_type === 'video' ?
-                        <svg className="w-4 h-4 text-rs-text-secondary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" /><line x1="7" y1="2" x2="7" y2="22" /><line x1="17" y1="2" x2="17" y2="22" /><line x1="2" y1="12" x2="22" y2="12" /><line x1="2" y1="7" x2="7" y2="7" /><line x1="2" y1="17" x2="7" y2="17" /><line x1="17" y1="17" x2="22" y2="17" /><line x1="17" y1="7" x2="22" y2="7" /></svg> :
-                        <svg className="w-4 h-4 text-rs-text-secondary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
-                    }
-                    <span className="text-[13px] font-medium text-rs-text-primary truncate" title={scan.filename}>
-                        {scan.filename}
-                    </span>
-                </div>
-
-                {/* 4. Metadata */}
-                <div className="mt-[4px] flex items-center gap-2 text-[10px] text-rs-text-tertiary font-mono uppercase tracking-wide">
-                    <span>{formatDistanceToNow(new Date(scan.created_at || new Date()))} AGO</span>
-                    <span className="w-0.5 h-0.5 rounded-full bg-current" />
-                    <span>{scan.file_size ? formatBytes(scan.file_size) : '---'}</span>
-                </div>
-
-                {/* Spacer to push actions to bottom */}
-                <div className="flex-1" />
-
-                {/* 5. Action Buttons (Standard Row) */}
-                <div className="mt-[8px] flex items-center gap-2">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDownload(); }}
-                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-[var(--rs-bg-element)] transition-all group/btn"
-                        title="Download report"
-                    >
-                        <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                    </button>
-
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onShare(); }}
-                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-[var(--rs-bg-element)] transition-all group/btn"
-                        title="Share scan"
-                    >
-                        <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
-                    </button>
-                </div>
-            </div>
-        </motion.div>
-    );
-}

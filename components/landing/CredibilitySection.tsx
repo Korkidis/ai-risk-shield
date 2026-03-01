@@ -42,8 +42,8 @@ export function TrustCompliance() {
                             />
                             <ListItem
                                 icon={<CheckCircle className="w-4 h-4" />}
-                                title="C2PA VERIFIED"
-                                description="Cryptographic provenance verification using the open C2PA standard — not heuristics."
+                                title="C2PA VERIFICATION"
+                                description="Reads and validates C2PA content credentials using the open standard. Verify independently at contentcredentials.org."
                             />
                             <ListItem
                                 icon={<Shield className="w-4 h-4" />}
@@ -61,10 +61,10 @@ export function TrustCompliance() {
                     {/* Badges / Logos Visual */}
                     <div className="flex flex-col justify-center gap-6">
                         <div className="border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] p-8 rounded-lg flex flex-wrap gap-8 items-center justify-center opacity-80 hover:opacity-100 transition-opacity">
-                            <Badge text="C2PA VERIFIED" />
-                            {/* CAI membership: badge removed until verification link is available */}
+                            <Badge text="C2PA VERIFICATION" />
                             <Badge text="GEMINI POWERED" />
-                            <Badge text="GDPR Planned" dimmed />
+                            <Badge text="SOC 2 PLANNED" dimmed />
+                            <Badge text="GDPR PLANNED" dimmed />
                         </div>
                         <div className="p-8 border border-[var(--rs-border-primary)] border-dashed rounded-lg bg-[var(--rs-bg-secondary)]/50 text-center">
                             <Component className="w-12 h-12 text-[var(--rs-text-tertiary)] mx-auto mb-4" />

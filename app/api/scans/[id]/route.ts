@@ -41,6 +41,30 @@ type ScanApiResult = {
         file_size: number | null
         storage_path: string | null
     } | null
+    provenance_details: Array<{
+        id: string
+        signature_status: string
+        creator_name: string | null
+        creation_tool: string | null
+        creation_tool_version: string | null
+        creation_timestamp: string | null
+        certificate_issuer: string | null
+        certificate_serial: string | null
+        hashing_algorithm: string | null
+        edit_history: any[] | null
+        raw_manifest: any | null
+        created_at: string
+    }>
+    mitigation_reports: Array<{
+        id: string
+        status: string
+        report_content: any | null
+        report_version: number
+        generator_version: string
+        completed_at: string | null
+        error_message: string | null
+        created_at: string
+    }>
 }
 
 /**
@@ -76,6 +100,8 @@ export async function GET(
                 file_size,
                 storage_path
             ),
+            provenance_details(*),
+            mitigation_reports(id, status, report_content, report_version, generator_version, completed_at, error_message, created_at),
             share_token,
             share_expires_at,
             status
@@ -243,13 +269,23 @@ export async function GET(
         }
 
         // Strip share_token from response (don't leak to clients)
-        const { share_token: _token, share_expires_at: _expires, scan_findings: _findings, ...scanResponse } = scan
+        const { share_token: _token, share_expires_at: _expires, scan_findings: _findings, provenance_details: _prov, mitigation_reports: _mitigations, ...scanResponse } = scan
+
+        // Normalize provenance_details: array from join → single object (or null)
+        const provenanceDetails = Array.isArray(_prov) && _prov.length > 0 ? _prov[0] : null
+
+        // Sort mitigation_reports by created_at desc, return all for history
+        const mitigationReports = Array.isArray(_mitigations)
+            ? _mitigations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            : []
 
         return NextResponse.json({
             ...scanResponse,
             scan_findings: responseFindingsOverride || _findings || [],
             risk_profile: riskProfile,
             asset_url: assetUrl,
+            provenance_details: provenanceDetails,
+            mitigation_reports: mitigationReports,
         })
     } catch (error) {
         console.error('Failed to fetch scan:', error)

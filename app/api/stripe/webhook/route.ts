@@ -525,11 +525,12 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, supabase: any) {
             return
         }
 
-        // Reset the monthly quota counter
+        // Reset the monthly quota counters (scans + mitigations)
         const { error } = await supabase
             .from('tenants')
             .update({
                 scans_used_this_month: 0,
+                mitigations_used_this_month: 0,
                 billing_period_start: new Date().toISOString(),
             })
             .eq('id', tenantId)
@@ -598,6 +599,8 @@ async function applyPlanToTenant(
             // Overage costs (in cents)
             scan_overage_cost_cents: plan.scanOverageCents,
             report_overage_cost_cents: plan.reportOverageCents,
+            // Mitigation limits
+            monthly_mitigation_limit: plan.monthlyMitigations,
             // Feature flags
             feature_bulk_upload: plan.features.bulkUpload,
             feature_co_branding: plan.features.coBranding,

@@ -24,6 +24,7 @@ export async function GET(request: Request) {
             .from('tenants')
             .update({
                 scans_used_this_month: 0,
+                mitigations_used_this_month: 0,
                 billing_period_start: new Date().toISOString(),
             })
             .eq('plan', 'free')

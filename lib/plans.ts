@@ -23,6 +23,8 @@ export interface PlanConfig {
     scanOverageCents: number; // 0 = blocked
     monthlyReports: number;
     reportOverageCents: number;
+    monthlyMitigations: number;
+    mitigationOverageCents: number; // $29 per mitigation report beyond plan credits
     brandProfiles: number;
     retentionDays: number;
 
@@ -54,6 +56,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         scanOverageCents: 0, // Blocked
         monthlyReports: 0,
         reportOverageCents: 2900, // $29 one-time purchase
+        monthlyMitigations: 0,
+        mitigationOverageCents: 2900, // $29 per mitigation report
         brandProfiles: 0,
         retentionDays: 7,
         features: {
@@ -80,6 +84,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         scanOverageCents: 250, // $2.50 - deliberately punishing
         monthlyReports: 5,
         reportOverageCents: 2900, // $29 — universal overage (PDR §6)
+        monthlyMitigations: 2,
+        mitigationOverageCents: 2900, // $29 per mitigation report
         brandProfiles: 1,
         retentionDays: 30,
         features: {
@@ -106,6 +112,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         scanOverageCents: 100, // $1.00
         monthlyReports: 30,
         reportOverageCents: 2900, // $29 — universal overage (PDR §6)
+        monthlyMitigations: 10,
+        mitigationOverageCents: 2900, // $29 per mitigation report
         brandProfiles: 5,
         retentionDays: 90,
         features: {
@@ -132,6 +140,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         scanOverageCents: 60, // $0.60 - volume discount
         monthlyReports: 100,
         reportOverageCents: 2900, // $29 — universal overage (PDR §6)
+        monthlyMitigations: 50,
+        mitigationOverageCents: 2900, // $29 per mitigation report
         brandProfiles: 20,
         retentionDays: 365,
         features: {
@@ -158,6 +168,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         scanOverageCents: 0, // Negotiated
         monthlyReports: 9999,
         reportOverageCents: 0, // Negotiated
+        monthlyMitigations: 9999,
+        mitigationOverageCents: 0, // Negotiated
         brandProfiles: 999,
         retentionDays: 730, // 2 years
         features: {
