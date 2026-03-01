@@ -26,80 +26,34 @@ export type RateLimitResult = {
 /**
  * Generic sliding-window rate limiter backed by Supabase `rate_limits` table.
  *
+ * Uses atomic PostgreSQL function `check_rate_limit_atomic()` with FOR UPDATE
+ * row locking to prevent concurrent bypass (thundering herd).
+ *
  * Fail-open: returns `{ allowed: true }` on DB errors so rate limiting
  * never blocks legitimate users when Supabase is unavailable.
  */
 export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimitResult> {
     try {
         const supabase = await createServiceRoleClient()
-        const now = new Date()
 
-        // 1. Fetch existing record
-        const { data: existing } = await supabase
-            .from('rate_limits')
-            .select('timestamps, blocked_until')
-            .eq('key', config.key)
-            .eq('action', config.action)
-            .single()
+        const { data, error } = await supabase.rpc('check_rate_limit_atomic', {
+            p_key: config.key,
+            p_action: config.action,
+            p_max_attempts: config.maxAttempts,
+            p_window_seconds: config.windowSeconds,
+            p_block_seconds: config.blockSeconds ?? null,
+        }).single()
 
-        // 2. Check if currently blocked
-        if (existing?.blocked_until) {
-            const blockedUntil = new Date(existing.blocked_until)
-            if (blockedUntil > now) {
-                const retryAfter = Math.ceil((blockedUntil.getTime() - now.getTime()) / 1000)
-                return { allowed: false, remaining: 0, retryAfter }
-            }
+        if (error) {
+            // RPC might not exist yet (migration not applied) — fail open
+            console.error('[RateLimit] RPC error, failing open:', error.message)
+            return { allowed: true, remaining: 1 }
         }
-
-        // 3. Filter timestamps within the sliding window
-        const windowStart = new Date(now.getTime() - config.windowSeconds * 1000)
-        const validTimestamps = (existing?.timestamps || [])
-            .filter((ts: string) => new Date(ts) > windowStart)
-
-        // 4. Check if at limit
-        if (validTimestamps.length >= config.maxAttempts) {
-            // Optionally set a progressive block
-            let blockedUntil: string | null = null
-            if (config.blockSeconds) {
-                blockedUntil = new Date(now.getTime() + config.blockSeconds * 1000).toISOString()
-            }
-
-            // Update the record with the block
-            await supabase
-                .from('rate_limits')
-                .upsert({
-                    key: config.key,
-                    action: config.action,
-                    timestamps: validTimestamps,
-                    blocked_until: blockedUntil,
-                    updated_at: now.toISOString(),
-                }, { onConflict: 'key,action' })
-
-            // Estimate when the oldest timestamp in the window expires
-            const oldestInWindow = new Date(validTimestamps[0])
-            const retryAfter = config.blockSeconds
-                ? config.blockSeconds
-                : Math.ceil((oldestInWindow.getTime() + config.windowSeconds * 1000 - now.getTime()) / 1000)
-
-            return { allowed: false, remaining: 0, retryAfter: Math.max(1, retryAfter) }
-        }
-
-        // 5. Allowed — append current timestamp and upsert
-        const updatedTimestamps = [...validTimestamps, now.toISOString()]
-
-        await supabase
-            .from('rate_limits')
-            .upsert({
-                key: config.key,
-                action: config.action,
-                timestamps: updatedTimestamps,
-                blocked_until: null,  // Clear any expired block
-                updated_at: now.toISOString(),
-            }, { onConflict: 'key,action' })
 
         return {
-            allowed: true,
-            remaining: config.maxAttempts - updatedTimestamps.length,
+            allowed: data.allowed,
+            remaining: data.remaining,
+            retryAfter: data.retry_after > 0 ? data.retry_after : undefined,
         }
     } catch (error) {
         // Fail-open: rate limiting should never block legitimate users if DB is down

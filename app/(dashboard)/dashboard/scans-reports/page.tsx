@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScanWithRelations } from '@/types/database'
+import { RSBreadcrumb } from '@/components/rs/RSBreadcrumb'
 import { formatDistanceToNow } from 'date-fns'
 import { RSTextarea } from '@/components/rs/RSTextarea'
 import { RSButton } from '@/components/rs/RSButton'
@@ -411,11 +412,15 @@ function ScansReportsContent() {
         <RSBackground
             variant="technical"
             showGrid={true}
-            className="bg-[#F9F8F6]"
+            className="bg-[var(--rs-bg-surface)]"
         >
             <div className="flex flex-col h-full w-full overflow-hidden">
+                {/* Breadcrumb Navigation */}
+                <div className="px-6 md:px-12 pt-4 shrink-0">
+                    <RSBreadcrumb items={[{ label: "Scans & Reports" }]} />
+                </div>
                 {/* Header Module - Precision Toolbar */}
-                <header className="w-full border-b border-[var(--rs-border-primary)] bg-white px-6 md:px-12 py-5 z-20 shrink-0">
+                <header className="w-full border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-6 md:px-12 py-5 z-20 shrink-0">
                     <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-6">
                         {/* Title & Quota */}
                         <div className="flex items-center gap-6 shrink-0">

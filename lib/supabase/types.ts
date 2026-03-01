@@ -910,6 +910,20 @@ export interface Database {
         Args: Record<string, never>
         Returns: number
       }
+      check_rate_limit_atomic: {
+        Args: {
+          p_key: string
+          p_action: string
+          p_max_attempts: number
+          p_window_seconds: number
+          p_block_seconds?: number | null
+        }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          retry_after: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

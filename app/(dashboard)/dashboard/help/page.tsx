@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen, Activity, Terminal, Shield, ChevronDown, FileText, Zap } from 'lucide-react'
+import { RSBreadcrumb } from '@/components/rs/RSBreadcrumb'
 
 export default function HelpPage() {
     const quickStart = [
@@ -65,6 +66,8 @@ export default function HelpPage() {
 
     return (
         <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-8">
+            {/* Breadcrumb Navigation */}
+            <RSBreadcrumb items={[{ label: "Help & Documentation" }]} className="mb-6" />
             {/* Header */}
             <div className="border-b border-[var(--rs-border-primary)] pb-6 mb-12">
                 <h1 className="text-2xl font-black tracking-tight text-[var(--rs-text-primary)] uppercase">

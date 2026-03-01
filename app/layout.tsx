@@ -43,6 +43,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "AI Risk Shield",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "description": "AI content risk validation — IP risk scoring, C2PA provenance verification, and forensic reporting in 15 seconds.",
+          "offers": [
+            { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free tier — 3 scans/month" },
+            { "@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "One-time full forensic report" },
+            { "@type": "Offer", "price": "49", "priceCurrency": "USD", "description": "Pro monthly subscription" }
+          ]
+        }) }} />
       </head>
       <body className="font-sans antialiased bg-[var(--rs-bg-surface)] text-[var(--rs-text-primary)] min-h-screen flex flex-col" suppressHydrationWarning>
         <PostHogProvider>

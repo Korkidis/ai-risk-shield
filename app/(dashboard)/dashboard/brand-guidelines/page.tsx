@@ -17,6 +17,7 @@ import { RSSelect } from '@/components/rs/RSSelect'
 import { RSModal } from '@/components/rs/RSModal'
 import { RSTextarea } from '@/components/rs/RSTextarea'
 import { BrandGuideline as DBGuideline } from '@/types/database'
+import { RSBreadcrumb } from '@/components/rs/RSBreadcrumb'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function BrandGuidelinesPage() {
@@ -90,6 +91,10 @@ export default function BrandGuidelinesPage() {
 
     return (
         <>
+            {/* Breadcrumb Navigation */}
+            <div className="absolute top-[88px] left-[120px] z-20">
+                <RSBreadcrumb items={[{ label: "Guidelines & Policies" }]} />
+            </div>
             {/* Rigid Schematic Header - Locked to [120, 120] */}
             <div className="absolute top-[120px] left-[120px] w-[840px] z-20">
                 <div className="flex items-center justify-between border-b border-[var(--rs-border-primary)] pb-6 relative bg-[var(--rs-bg-surface)]">

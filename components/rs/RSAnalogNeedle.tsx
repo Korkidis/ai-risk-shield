@@ -16,14 +16,14 @@ interface RSAnalogNeedleProps {
     fluid?: boolean;
 }
 
-// Theme Enforced by Design Lab
+// Theme — CSS variable tokens (dark mode compatible)
 const NEEDLE_THEME = {
-    surface: "bg-[#EFEEE9]",           // Warm white (Braun)
-    surfaceWell: "bg-[var(--rs-bg-well)]", // Dark well
-    border: "border-[#D1CDC7]",        // Subtle border
-    needle: "bg-[#222222]",            // Needle
-    pivot: "bg-[#1A1A1A]",             // Pivot
-    text: "text-[#1A1A1A]",            // Text
+    surface: "bg-[var(--rs-bg-surface)]",
+    surfaceWell: "bg-[var(--rs-bg-well)]",
+    border: "border-[var(--rs-border-primary)]",
+    needle: "bg-[var(--rs-text-primary)]",
+    pivot: "bg-[var(--rs-text-primary)]",
+    text: "text-[var(--rs-text-primary)]",
     shadow: "shadow-[0_2px_8px_rgba(0,0,0,0.10)]",
     shadowWell: "shadow-[inset_0_1px_3px_rgba(0,0,0,0.12)]"
 };
@@ -161,7 +161,7 @@ export function RSAnalogNeedle({
 
                         {/* Machined Pivot Hub - Larger, matte */}
                         <div className={cn("absolute bottom-1/2 left-1/2 w-8 h-8 -translate-x-1/2 translate-y-1/2 rounded-full shadow-[1px_1px_3px_rgba(0,0,0,0.3)] z-30 flex items-center justify-center", NEEDLE_THEME.pivot)}>
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#111]" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--rs-gray-900)]" />
                         </div>
 
                         {/* Digital Readout */}
