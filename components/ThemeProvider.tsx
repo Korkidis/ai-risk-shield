@@ -2,6 +2,10 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 
+// Dark mode is intentionally global (applies to both dashboard and marketing pages).
+// The forensic instrument aesthetic works well in dark mode across all routes.
+// If dashboard-scoped dark mode is needed later, wrap ThemeProvider conditional
+// on usePathname().startsWith('/dashboard').
 type Theme = 'light' | 'dark'
 
 interface ThemeContextType {
