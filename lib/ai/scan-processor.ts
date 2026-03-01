@@ -150,7 +150,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         provenanceStatus = computeProvenanceStatus(c2paStatus);
       } catch (e) {
         console.error("Video C2PA Check failed:", e);
-        c2paStatus = 'error';
+        c2paStatus = 'invalid' as C2PAStatus; // Map 'error' to 'invalid' for canonical scoring
         provenanceScore = computeProvenanceScore(c2paStatus);
         provenanceStatus = computeProvenanceStatus(c2paStatus);
       }
@@ -331,7 +331,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         })
       }
     } else {
-      // VIDEO or no riskProfile: basic findings
+      // VIDEO or no riskProfile: findings from frame analysis
       if (!c2paResult.hasManifest) {
         findings.push({
           tenant_id: scan.tenant_id,
@@ -342,6 +342,32 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
           description: 'No C2PA manifest found in this asset. Provenance cannot be verified.',
           recommendation: 'Use tools that attach Content Credentials to ensure trust.',
           confidence_score: 100
+        })
+      }
+      // Video IP finding if frame analysis detected risk
+      if (ipResult && ipResult.riskScore > 50) {
+        findings.push({
+          tenant_id: scan.tenant_id,
+          scan_id: scanId,
+          finding_type: 'ip_violation',
+          severity: ipResult.riskScore > 85 ? 'critical' : 'high',
+          title: 'Potential IP Risk Detected in Video Frames',
+          description: `Frame analysis detected intellectual property risk (score: ${ipResult.riskScore}/100). Review flagged frames for potential trademark or copyright issues.`,
+          recommendation: 'Review individual frames and remove or license protected elements.',
+          confidence_score: Math.min(ipResult.riskScore, 95)
+        })
+      }
+      // Video Safety finding if frame analysis detected risk
+      if (brandSafetyResult && brandSafetyResult.riskScore > 50) {
+        findings.push({
+          tenant_id: scan.tenant_id,
+          scan_id: scanId,
+          finding_type: 'safety_violation',
+          severity: brandSafetyResult.riskScore > 85 ? 'critical' : 'high',
+          title: 'Brand Safety Concern in Video Frames',
+          description: `Frame analysis flagged brand safety issues (score: ${brandSafetyResult.riskScore}/100). Content may violate platform guidelines.`,
+          recommendation: 'Review flagged frames. Do not publish without addressing safety flags.',
+          confidence_score: Math.min(brandSafetyResult.riskScore, 95)
         })
       }
     }

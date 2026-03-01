@@ -10,10 +10,8 @@ import Stripe from 'stripe'
 // Must enable raw body for webhook signature verification
 // Next.js 13+ App Router: We just read text() from request
 
-// Idempotency: Track processed event IDs to prevent duplicate handling on Stripe retries.
-// In-memory set covers single-process; for multi-instance, use a DB table.
-const processedEvents = new Set<string>()
-const MAX_PROCESSED_EVENTS = 10000 // Prevent unbounded memory growth
+// Idempotency: Check audit_log for already-processed Stripe event IDs.
+// DB-backed to survive restarts and work across multiple instances.
 
 /**
  * Map Stripe Price IDs to Plan IDs
@@ -55,45 +53,76 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Webhook signature verification failed.' }, { status: 400 })
     }
 
-    // Idempotency check: skip if we've already processed this event
-    if (processedEvents.has(event.id)) {
+    const supabase = await createServiceRoleClient()
+
+    // Idempotency check: skip if we've already processed this event (DB-backed).
+    // Uses metadata->>stripe_event_id (not resource_id) because Stripe event IDs
+    // are strings like "evt_..." which aren't valid UUIDs for the resource_id column.
+    const { data: existingEvent } = await supabase
+        .from('audit_log')
+        .select('id')
+        .eq('action', 'stripe_webhook_processed')
+        .filter('metadata->>stripe_event_id', 'eq', event.id)
+        .limit(1)
+        .maybeSingle()
+
+    if (existingEvent) {
         console.log(`[Webhook] Duplicate event ${event.id}, skipping`)
         return NextResponse.json({ received: true })
     }
 
-    // Evict oldest entries if set is too large
-    if (processedEvents.size >= MAX_PROCESSED_EVENTS) {
-        const first = processedEvents.values().next().value
-        if (first) processedEvents.delete(first)
+    // Handle specific events FIRST, then record success.
+    // If handling fails, Stripe will retry and the event won't be marked as processed.
+    try {
+        switch (event.type) {
+            case 'checkout.session.completed':
+                const session = event.data.object as Stripe.Checkout.Session
+                await handleCheckoutCompleted(session, supabase)
+                break
+
+            case 'customer.subscription.updated':
+                const subscription = event.data.object as Stripe.Subscription
+                await handleSubscriptionUpdated(subscription, supabase)
+                break
+
+            case 'customer.subscription.deleted':
+                const canceledSub = event.data.object as Stripe.Subscription
+                await handleSubscriptionCanceled(canceledSub, supabase)
+                break
+
+            case 'invoice.paid':
+                const paidInvoice = event.data.object as Stripe.Invoice
+                await handleInvoicePaid(paidInvoice, supabase)
+                break
+
+            default:
+            // Unhandled event type — still mark as processed to avoid retries
+        }
+    } catch (handlerError: any) {
+        // Don't mark as processed — let Stripe retry
+        console.error(`[Webhook] Handler failed for ${event.type}:`, handlerError.message)
+        return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
     }
-    processedEvents.add(event.id)
 
-    const supabase = await createServiceRoleClient()
+    // Mark event as processed AFTER successful handling.
+    // resource_id is null because Stripe event IDs aren't UUIDs.
+    const { error: auditError } = await supabase.from('audit_log').insert({
+        tenant_id: null,
+        user_id: null,
+        action: 'stripe_webhook_processed',
+        resource_type: 'stripe_webhook',
+        resource_id: null,
+        metadata: {
+            stripe_event_id: event.id,
+            event_type: event.type,
+            timestamp: new Date().toISOString(),
+        },
+    })
 
-    // Handle specific events
-    switch (event.type) {
-        case 'checkout.session.completed':
-            const session = event.data.object as Stripe.Checkout.Session
-            await handleCheckoutCompleted(session, supabase)
-            break
-
-        case 'customer.subscription.updated':
-            const subscription = event.data.object as Stripe.Subscription
-            await handleSubscriptionUpdated(subscription, supabase)
-            break
-
-        case 'customer.subscription.deleted':
-            const canceledSub = event.data.object as Stripe.Subscription
-            await handleSubscriptionCanceled(canceledSub, supabase)
-            break
-
-        case 'invoice.paid':
-            const paidInvoice = event.data.object as Stripe.Invoice
-            await handleInvoicePaid(paidInvoice, supabase)
-            break
-
-        default:
-        // console.log(`Unhandled event type ${event.type}`)
+    if (auditError) {
+        // Non-fatal: event was processed successfully, audit insert failed.
+        // Worst case: Stripe retries and we process idempotently.
+        console.error(`[Webhook] Failed to record idempotency marker:`, auditError.message)
     }
 
     return NextResponse.json({ received: true })
@@ -364,6 +393,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                 stripe_payment_intent_id: session.payment_intent as string,
                 tenant_id: tenantId,
                 user_id: userId,
+                purchased_by: userId,
             })
             .eq('id', scanId)
 
@@ -399,7 +429,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                     scanId,
                     scanMeta.composite_score || 0,
                     scanMeta.filename || 'uploaded-asset',
-                    dashboardUrl
+                    dashboardUrl,
+                    session.payment_intent as string
                 ).catch(err => console.error('[Webhook] Receipt email send failed:', err))
             }
         }

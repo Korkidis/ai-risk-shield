@@ -156,6 +156,7 @@ export async function POST(request: Request) {
         // Validate brand guideline if provided (tenant-scoped, UUID format check)
         const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
         let validatedGuidelineId: string | null = null
+        let guidelineWarning: string | undefined
         if (guidelineId && guidelineId !== 'default' && UUID_REGEX.test(guidelineId)) {
             const { data: guideline } = await supabase
                 .from('brand_guidelines')
@@ -165,8 +166,10 @@ export async function POST(request: Request) {
                 .single() as unknown as { data: { id: string } | null }
             if (guideline) {
                 validatedGuidelineId = guideline.id
+            } else {
+                guidelineWarning = 'Requested brand guideline not found. Scan processed without custom rules.'
+                console.warn(`[Upload] Brand guideline ${guidelineId} not found for tenant ${tenantId}`)
             }
-            // If not found, silently proceed without guideline (don't block upload)
         }
 
         // Create scan record
@@ -219,7 +222,8 @@ export async function POST(request: Request) {
             success: true,
             scanId: scan!.id,
             isOverage,
-            overageWarning: isOverage ? 'This scan will incur overage charges at your plan rate.' : null
+            overageWarning: isOverage ? 'This scan will incur overage charges at your plan rate.' : null,
+            ...(guidelineWarning && { warning: guidelineWarning })
         })
     } catch (error: any) {
         console.error('Upload error:', error)

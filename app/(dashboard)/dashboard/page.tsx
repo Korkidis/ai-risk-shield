@@ -381,7 +381,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-120px)] p-4 w-full min-h-[600px]">
 
             {/* LEFT PANE: PRIMARY SCANNER (50%) - DARK MODE CHASSIS */}
-            <div className="bg-rs-black rounded-[var(--rs-radius-chassis)] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[4px] border-[var(--rs-bg-surface)] overflow-hidden h-full">
+            <div className="bg-[var(--rs-bg-dark)] rounded-[var(--rs-radius-chassis)] p-8 relative flex flex-col shadow-[var(--rs-shadow-l2)] border-[4px] border-[var(--rs-bg-surface)] overflow-hidden h-full">
 
                 {/* Dark Mode Chassis Overlay */}
                 <div className="absolute inset-0 rounded-[var(--rs-radius-chassis)] pointer-events-none border border-white/5 z-20" />

@@ -99,7 +99,7 @@ export const generateForensicReport = (
     doc.setFontSize(7)
     doc.setTextColor(COLORS.sub)
     doc.text(`REF: ${scan.id.substring(0, 8).toUpperCase()}`, 190, 15, { align: "right" })
-    doc.text(`DATE: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`, 190, 19, { align: "right" })
+    doc.text(`DATE: ${format(new Date(scan.created_at), 'yyyy-MM-dd HH:mm:ss')}`, 190, 19, { align: "right" })
 
     drawLine(25)
 
@@ -371,7 +371,12 @@ export const generateForensicReport = (
             }
 
             doc.setFontSize(9)
-            const descLines = doc.splitTextToSize(f.description || '', 160)
+            // Mask teaser descriptions in sample mode to prevent data leaks
+            const rawDesc = f.description || ''
+            const displayDesc = f._isTeaser
+                ? rawDesc.substring(0, 60) + '... [Unlock full report for details]'
+                : rawDesc
+            const descLines = doc.splitTextToSize(displayDesc, 160)
             doc.text(descLines, 28, y)
             y += (descLines.length * 4) + 3
 
@@ -546,12 +551,12 @@ export const generateForensicReport = (
         doc.setFontSize(6)
         doc.setTextColor(COLORS.sub)
         doc.text(
-            `AI RISK SHIELD  |  ${isSample ? 'SAMPLE' : 'FULL'} REPORT  |  ${format(new Date(), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
+            `AI RISK SHIELD  |  ${isSample ? 'SAMPLE' : 'FULL'} REPORT  |  ${format(new Date(scan.created_at), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
             105, 290, { align: "center" }
         )
     }
 
     // Save
     const prefix = isSample ? 'AIRS_Sample_' : 'AIRS_Report_'
-    doc.save(`${prefix}${scan.filename.substring(0, 10)}_${format(new Date(), 'yyyyMMdd')}.pdf`)
+    doc.save(`${prefix}${scan.filename.substring(0, 10)}_${format(new Date(scan.created_at), 'yyyyMMdd')}.pdf`)
 }

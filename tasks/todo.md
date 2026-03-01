@@ -1,260 +1,339 @@
 # Execution Plan
-*Single source of truth. Updated: 2026-02-16 (Dashboard data wiring, dead code cleanup, docs aligned).*
+*Single source of truth. Updated: 2026-03-01 (Full codebase audit, Sprint 5 complete, ship-ready roadmap).*
 *If it's not in this file, it's not planned. If it's checked here, it's done.*
 
 ## Guiding Principle
 We are not adding features. We are completing the transaction.
-The measure of "done" is: can someone scan an image, feel scared, pay $29, and get a PDF they can hand to legal — without hitting a single dead end?
+The measure of "done" is: can someone scan an image, feel scared, pay $29, and get a PDF they can hand to legal — without hitting a single dead end, fake claim, or silent failure?
 
 ---
 
-## Build Sequence
+## What's Real (Completed Sprints)
 
-Each build is a focused session (30 min–2 hrs with agents). The sequence is a dependency chain — each build makes the next one possible or meaningful. Do them in order.
+### Phases A-R (Jan-Feb 2026) — Infrastructure
+- [x] Pipeline unification (auth + anon → scan-processor.ts)
+- [x] Data handoff (RSFindingsDossier, ProvenanceTelemetryStream → real Gemini data)
+- [x] Entitlements enforcement, share button, AuditModal, dead code
+- [x] C2PA serial fix, brand guidelines wired to Gemini, types drift fix
+- [x] Share token validation, public shared scan page, error pages
+- [x] Soft gate data leak fix, provenance masking
+- [x] 16 phases of security hardening (J through O)
+- [x] Revenue hardening — quota reset, usage retry, webhook alerting
+- [x] Type safety — Supabase types rebuilt, `as any` 107→8, rate limiting on 6 endpoints
 
-- [x] Build 1.1: Fix anonymous purchase flow <!-- id: build-1-1 -->
-    - [x] 1.1.1 Update `create-checkout` API (Anon support, Validation) <!-- id: 1.1.1 -->
-    - [x] 1.1.2 Update `webhook` API (User creation, RPC assignment) <!-- id: 1.1.2 -->
-    - [x] 1.1.3 Update UI Components (Purchase Button) <!-- id: 1.1.3 -->
-    - [x] 1.1.4 Verification (Test script) <!-- id: 1.1.4 -->
+### Sprint 1: Trust + Conversion ✅
+- [x] Remove hallucinated claims, wire $29 CTA, refresh hero copy
 
-**1.2 — Fix AuditModal lies + styling** *(can parallelize with 1.1)*
-**Why:** The upgrade modal promises "Unlimited Scans", "API Access", "Priority Queue" — none exist. Users who pay based on these will churn. The "Upgrade Clearance" button is purple/indigo gradient (`from-indigo-600 via-purple-600`) — legacy styling, not RS design system.
-- [x] Replace Pro feature list with actual benefits from `lib/plans.ts`: "50 Scans/Month", "5 Full Reports/Month", "Video Analysis", "30-Day History"
-- [x] Remove lies: "Unlimited Forensic Scans", "Priority Analysis Queue", "Team Workspace Access", "API Access for Automations"
-- [x] Remove "14-day money back guarantee" claim (zero refund logic exists) — or add disclaimer "contact support"
-- [x] Fix `UpgradeButton.tsx` styling: replace `from-indigo-600 via-purple-600 to-indigo-600` + `shadow-indigo-500/40` with RS design tokens (`var(--rs-signal)` or `var(--rs-text-primary)`)
-- [x] Fix price: `UpgradeModal.tsx` says $49.99, `AuditModal.tsx` says $49, `plans.ts` says $49.00 — align all to $49/mo (plans.ts is source of truth)
-- [x] Left column: change "C2PA Provenance Certificate" → "C2PA Provenance Verification" (we verify, we don't issue certificates)
+### Sprint 2: Legibility + Help Page ✅
+- [x] WCAG AA contrast, honest help content, trust gate
 
-**Files:** `components/marketing/AuditModal.tsx`, `components/billing/UpgradeButton.tsx`, `components/landing/UpgradeModal.tsx`
-**Depends on:** Nothing.
+### Sprint 3: Checkout Compliance ✅
+- [x] FTC consent, receipt email, error states, email capture gate
 
----
+### Sprint 4: Nav + Dark Mode ✅
+- [x] ThemeProvider, gray scale inversion, RSLever toggle
 
-### Build 2: Make the PDF Worth $29
-*The sample PDF is the teaser that justifies payment. It's using watered-down data.*
+### Sprint 5: Craft Polish ✅
+- [x] Hex→CSS vars (RSRiskPanel, RSFindingsDossier, RSAnalogNeedle, DashboardEmailGate, dashboard/page, scans-reports/page)
+- [x] Atomic rate limits (PostgreSQL FOR UPDATE, replaced JS read-then-write)
+- [x] ESLint v9 flat config (eslint.config.mjs, deleted .eslintrc.json)
+- [x] prefers-reduced-motion global CSS
+- [x] RSBreadcrumb wired to 3 dashboard routes
+- [x] JSON-LD structured data (SoftwareApplication schema)
+- [x] Global dark mode documented as intentional (ThemeProvider.tsx)
 
-**2.1 — Enrich sample PDF with stored risk_profile blob (Option A)**
-**Why:** The sample PDF pulled from thin reconstructed data. We now combine real DB findings with profile teasers to make it feel specific without schema changes.
-- [x] Verify `GET /api/scans/[id]` returns `risk_profile` blob for anonymous scans (Phase A claim)
-- [x] `lib/pdf-generator.ts` sample mode: show 1 "Hero" finding from `scan_findings`, then use `risk_profile` teasers for other categories
-- [x] Locked section: show count of additional hidden findings + full‑report CTA
-- [x] Verify sample PDF shows meaningful contrast vs full report (user must see what they're missing)
-
-**Files:** `app/api/scans/[id]/route.ts`, `lib/pdf-generator.ts`
-**Depends on:** Build 1 (purchase must work to verify full flow end-to-end)
-
----
-
-### Build 3: Route to the Product
-*Everyone lands on dead ends. The real product page exists — send people there.*
-
-**3.1 — Route everyone to the dashboard**
-**Why:** Magic links go to `/scan/[id]` (dead end). Post-purchase goes to a bare page. History/Reports stubs say "Offline." The real page (`/dashboard/scans-reports`) works but nobody gets sent there.
-- [x] Magic link email: change redirect from `/scan/[id]` → `/dashboard/scans-reports?highlight=[scanId]`
-- [x] Post-purchase redirect: `/dashboard/scans-reports?highlight=[scanId]&purchased=true`
-- [x] `/dashboard/history` → 301 redirect to `/dashboard/scans-reports`
-- [x] `/dashboard/reports` → 301 redirect to `/dashboard/scans-reports`
-- [x] `scans-reports/page.tsx`: Handle `highlight` param (auto-select scan)
-- [x] `scans-reports/page.tsx`: Handle `verified=true` param (trigger `/api/scans/assign-to-user`)
-
-**Files:** `app/api/scans/capture-email/route.ts`, `app/api/stripe/create-checkout/route.ts`, `app/(dashboard)/dashboard/history/page.tsx`, `app/(dashboard)/dashboard/reports/page.tsx`
-**Depends on:** Build 1 (purchase redirect is set there, email redirect is updated here)
-
-**3.2 — Make email useful** *(can parallelize with 3.1)*
-**Why:** The magic link email currently links to the same dead-end page. It adds zero value.
-- [x] Email CTA links to `/dashboard/scans-reports` (not `/scan/[id]`)
-- [x] Include inline key findings in email body (score, top finding, verdict)
-- [ ] Attach sample PDF to email if < 5MB (Resend supports attachments)
-
-**Files:** `components/email/SampleReportEmail.tsx`, `lib/email.ts`, `app/api/scans/capture-email/route.ts`
-**Depends on:** 3.1 (link target must be correct first)
+### Earlier Builds (todo.md v1) ✅
+- [x] Build 1: Fix anonymous purchase flow + AuditModal lies
+- [x] Build 2: Enrich sample PDF with risk_profile blob
+- [x] Build 3.1: Route everyone to dashboard (magic link, post-purchase, stubs)
+- [x] Build 7.1-7.4: Performance (server/client split, lazy-load, drawer tween)
+- [x] S1-S3: Auth-gate process route, listUsers fix, delete debug-provenance
 
 ---
 
-### Build 7: Performance Optimization
-*Reduce hydration cost and avoid layout thrash on core flows.*
+## Ship-Ready Sprint Plan (4 Sprints Remaining)
 
-**7.1 — Split landing page into server + client**
-- [x] `app/page.tsx`: server component
-- [x] `components/landing/LandingClient.tsx`: contains upload/results state only
+### Sprint 6: Revenue Safety — the money must work
+**Branch:** `feat/sprint-6-revenue-safety`
+**Priority:** CRITICAL — fixes that prevent lost revenue or broken user access
 
-**7.2 — Remove scan card layout thrashing**
-- [x] Remove `layout` from scan card `motion.div` in `scans-reports` grid
-- [x] Keep `AnimatePresence` only for actual enter/exit transitions
+- [ ] **Apply 3 pending migrations to prod DB**
+  - `20260222_failed_usage_reports.sql` (dead-letter queue for Stripe usage retry)
+  - `20260224_rate_limits.sql` (rate_limits table + cleanup RPC)
+  - `20260228_harden_rate_limits.sql` (atomic check + SECURITY DEFINER hardening)
+  - Regenerate `lib/supabase/types.ts` after applying
 
-**7.3 — Lazy-load below-the-fold landing sections**
-- [x] `MarketExposure`, `HowItWorks`, `SubscriptionComparison`, `CredibilitySection`, `Footer` via `next/dynamic`
+- [ ] **Move webhook idempotency to DB** (replace in-memory Set)
+  - Current: `processedEvents = new Set()` resets on every Vercel redeploy
+  - Fix: Check `audit_log` for duplicate `stripe_event_id` before processing
+  - Impact: Prevents double charges and duplicate user creation
 
-**7.4 — Drawer transition cost**
-- [x] Replace spring drawer with tween/ease-out transition
+- [ ] **Require email before anonymous checkout**
+  - `create-checkout/route.ts`: return 400 if `customerEmail` is undefined
+  - Without email: user pays $29, no account created, no magic link, no access
+  - Must reject checkout, not silently create session without email
 
-**7.5 — Reduce motion for accessibility**
-- [ ] Honor `prefers-reduced-motion` in RS animated components
+- [ ] **Track purchased_by user_id on scans**
+  - Add `purchased_by` column to scans (nullable UUID, FK to auth.users)
+  - Webhook sets it when processing one-time purchase
+  - `canViewFullReport()` validates user is purchaser (not just any tenant member)
 
-**Files:** `app/page.tsx`, `components/landing/LandingClient.tsx`, `app/(dashboard)/dashboard/scans-reports/page.tsx`, `components/landing/*`, `components/rs/*`
-**Depends on:** Nothing.
+- [ ] **Fix PDF timestamp** — use `scan.created_at` not `new Date()`
+  - `lib/pdf-generator.ts` line ~102, ~549
+  - Forensic evidence with wrong dates is worse than no evidence
 
----
+- [ ] **Add Stripe payment_intent_id to purchase receipt email**
+  - `PurchaseReceiptEmail.tsx`: add transaction ID row to receipt table
+  - Users need reference numbers for support queries
 
-### Build 4: Show Real Numbers
-*Hardcoded quotas and plan info everywhere. A paying customer who sees fake numbers loses trust.*
+- [ ] **Add email retry** — 3 attempts with exponential backoff
+  - `lib/email.ts`: wrap Resend calls with retry logic
+  - Silent email failure means user pays $29 and never gets receipt or magic link
 
-**4.1 — Wire real quota display**
-- [ ] Sidebar: fetch tenant plan + seat count from server, replace hardcoded "PRO PLAN 4/10"
-- [ ] Scans-reports header: fetch `usage_ledger` for current month, replace hardcoded "15/50_SCANS"
-- [x] Landing `FreeUploadContainer`: use anonymous quota remaining from `/api/scans/anonymous-quota` response, replace hardcoded "3/3"
-
-**Files:** `components/dashboard/RSSidebar.tsx` (or equivalent), `app/(dashboard)/dashboard/scans-reports/page.tsx`, `components/landing/FreeUploadContainer.tsx`
-**Depends on:** Nothing. Can run anytime, but higher value after Builds 1-3 make the product reachable.
-
----
-
-### Build 5: Stop Lying
-*A product that sells trust cannot have fake telemetry.*
-
-**5.1 — Replace scripted telemetry with honest progress**
-**Why:** 14 hardcoded messages like "Detecting latent diffusion artifacts (CNN)..." cycle while the real analysis happens server-side. If a legal team notices, credibility is gone.
-- [x] Dashboard scanner (`page.tsx:79-114`): replace scripted messages with real-time status from Supabase Realtime channel (scan-processor already broadcasts progress)
-- [x] Landing `FreeUploadContainer` (`lines 46-59`): same — use Realtime progress, not scripted timer
-- [ ] Simpler is fine: "Analyzing image... Checking IP risk... Verifying provenance... Complete." (4 real steps > 14 fake ones)
-
-**Files:** `app/(dashboard)/dashboard/page.tsx`, `components/landing/FreeUploadContainer.tsx`, `lib/realtime.ts`
-**Depends on:** Nothing technically. Lower priority than revenue-blocking work.
-
-**5.2 — Wire Download/Share/Export buttons**
-**Why:** The most natural post-analysis actions are `console.log` stubs on the scan cards.
-- [ ] Download: trigger PDF generation + browser download for selected scan
-- [ ] Share: generate `share_token` via PATCH `/api/scans/[id]`, copy shareable URL
-- [ ] Export: CSV export of scan metadata for selected scans
-
-**Files:** `app/(dashboard)/dashboard/scans-reports/page.tsx`
-**Depends on:** Build 2 (PDF must be rich before download is useful)
+**Done when:** Pay $29 → get receipt with order ID → access report → no duplicates across deploys.
 
 ---
 
-### Build 6: Refactor — Clean the House
-*Not a standalone refactor. This is everything that doesn't fit naturally into Builds 1-5 but still needs doing. Dead code, nav lies, hardcoded strings, legacy styles. Do it as one focused sweep after the product works.*
+### Sprint 7: Trust Claims — the words must be true
+**Branch:** `feat/sprint-7-trust-claims`
+**Priority:** CRITICAL — a skeptical lawyer (our buyer) will verify every claim
 
-**6.1 — Delete dead code**
-- [ ] Delete `components/upload/UploadContainer.tsx` (legacy styles, zero imports)
-- [ ] Delete `components/upload/UploadZone.tsx` (same legacy family, zero imports)
-- [ ] Delete `app/(dashboard)/dashboard/design-lab/page.v1.tsx` if it exists (old variant)
+- [ ] **CAI membership: verify or remove**
+  - CLAUDE.md says "confirmed real by founder" but CredibilitySection shows badge with no verification link
+  - If real: add link to c2pa.org member directory or equivalent
+  - If not yet: remove badge entirely (apply when membership is confirmed)
 
-**6.2 — Strip nav to reality**
-**Why:** Users click "History" and get "Under Construction." That's a trust-killer after paying $29.
-- [ ] `RSSidebar.tsx`: Remove or hide nav links for History, Reports, Design Lab, Brand Guidelines
-- [ ] Keep only: Scanner, Scans & Reports, Help (if populated)
-- [ ] `RSNavbar.tsx`: Remove hardcoded "JD" initials — show real user initial or nothing
-- [ ] `RSNavbar.tsx`: Remove hardcoded "online" status indicator
+- [ ] **Data retention copy: honest language**
+  - Current: "No image data retained after analysis" (CredibilitySection)
+  - Reality: 7-day retention (`delete_after` field, upload/route.ts)
+  - Fix: "Data retained for 7 days, then permanently deleted" or "Configurable retention (default: 7 days)"
 
-**6.3 — Fix hardcoded plan/quota strings in nav**
-*(Build 4 wires the real data. This task swaps the hardcoded strings for the wired values.)*
-- [ ] `RSSidebar.tsx`: Replace hardcoded "PRO PLAN" and "4/10 seats" with tenant data (or remove if not wired yet)
+- [ ] **GDPR READY: downgrade or remove**
+  - No data export API, no deletion request handler, no DPA
+  - Options: remove badge, or change to "GDPR Planned" in small text
+  - Add to post-launch roadmap as real work item
 
-**6.4 — RS token migration (low priority, cosmetic)**
-- [ ] `RSAuxiliaryDial.tsx`: Replace inline hex (#1A1A1A, #EAE6D9, #D6CEC1, #333, #555, #666, #888, etc.) with `var(--rs-*)` tokens
-- [ ] `RSProvenanceDrawer.tsx`: Replace mixed inline hex (#1A1A1A, #D6CEC1, #EAE6D9, #A19D92) with RS tokens
-- [ ] `RSStatusIndicator.tsx`: Replace inline hex status colors with RS tokens
+- [ ] **Remove C2PA serial placeholder `b4f2...9a11`**
+  - RSProvenanceDrawer shows hardcoded fake serial as "Cryptographic Evidence"
+  - A lawyer will copy this into their file and it won't match any certificate
+  - Fix: use `details?.serial` (already there for valid status), show "Not available" for others
 
-**Files:** `components/upload/UploadContainer.tsx`, `components/upload/UploadZone.tsx`, `components/rs/RSSidebar.tsx`, `components/rs/RSNavbar.tsx`, `components/rs/RSAuxiliaryDial.tsx`, `components/rs/RSProvenanceDrawer.tsx`, `components/rs/RSStatusIndicator.tsx`
-**Depends on:** Builds 1-5 complete (clean up after the product works, not before). 6.3 depends on Build 4 (quota wiring).
+- [ ] **RSProvenanceDrawer: migrate hardcoded hex to CSS variables**
+  - `#1A1A1A`, `#EAE6D9`, `#D6CEC1`, `#A19D92` → `var(--rs-*)` tokens
+  - Currently breaks in dark mode
 
----
+- [ ] **Remove navbar search input** (or disable with "Coming soon" tooltip)
+  - Accepts text, has no onChange/onSearch handler — pure dead weight
+  - A user typing a case ID and getting nothing back loses confidence
 
-## Security Fixes (Do alongside builds — don't defer)
+- [ ] **Strip nav to reality**
+  - Design Lab link: hide from customer-facing nav (internal only)
+  - Settings/Bell icons: remove if not functional, or add tooltip "Coming soon"
+  - Hardcoded "JD" initials in RSNavbar: show real user initial (already partially fixed per audit)
 
-### S1 — Auth-gate `/api/scans/process`
-**Why:** Anyone who guesses a scan UUID can trigger Gemini reprocessing. DOS vector + burns API credits.
-- [x] Add authentication check OR validate request origin (internal-only header, signed token, etc.)
-- [x] Add idempotency: reject if scan status is already `processing` or `complete`
-
-**Files:** `app/api/scans/process/route.ts`
-
-### S2 — Fix `listUsers()` scalability bomb
-**Why:** `capture-email/route.ts` calls `supabase.auth.admin.listUsers()` to check if email exists. Fetches ALL users. Breaks at 10K.
-- [x] Replace with: try `createUser()`, catch "user already exists" error, fall through to `generateLink()`
-
-**Files:** `app/api/scans/capture-email/route.ts`
-
-### S3 — Remove `/api/debug-provenance`
-**Why:** Completely open endpoint, no auth, reveals database structure.
-- [x] Delete the route file
-
-**Files:** `app/api/debug-provenance/route.ts` — DELETED (Feb 16)
-
-### S4 — Fix `brand_guidelines` RLS
-**Why:** Policies reference `public.users` which doesn't exist (should be `public.profiles`). All brand_guidelines operations silently fail.
-- [ ] Create migration: update RLS policies to use `public.profiles`
-
-**Files:** New migration in `supabase/migrations/`
+**Done when:** Every claim on every customer-facing page withstands due diligence.
 
 ---
 
-## Cleanup (Do when touching related files — not standalone tasks)
+### Sprint 8: Video Pipeline + Guidelines CRUD
+**Branch:** `feat/sprint-8-video-guidelines`
+**Priority:** HIGH — paid users expect video analysis and working guidelines
 
-- [x] **Delete `app/api/auth/verify/route.ts`** (67 lines, queries dropped `magic_links` table) — DELETED (Feb 16). Apply `20260208_cleanup_magic_links.sql` next.
-- [x] **RSC2PAWidget `caution` state** — added `case 'caution'` to switch in `components/rs/RSC2PAWidget.tsx` (Feb 16)
-- [ ] **Regenerate `types.ts`** from live schema — current version is missing ~15 columns, references non-existent ones
-- [ ] **Fix video frame count** — code says 5 (`scan-processor.ts:112`), docs say 10. Pick one, update both.
-- [ ] **Fix C2PA serial** — hardcoded `"C2PA-CERT-884-29-X"` in `lib/c2pa/verify.ts`. Extract from actual cert data.
-- [ ] **Resolve retention policy conflict** — PRD says one thing, Subscription Strategy says another
+- [ ] **Fix video frame extraction race condition**
+  - `lib/video/extract-frames.ts`: `filenames` callback populates array, but `end` event may fire before resolution
+  - Fix: await frame files actually written, verify frame count matches expected
+  - Currently returns empty `FrameResult[]` — video analysis is fully broken
 
----
+- [ ] **Save video IP/Safety findings from frame analysis**
+  - `lib/ai/scan-processor.ts`: video pipeline currently saves only 1 C2PA finding
+  - Frame-by-frame Gemini analysis results are scored but findings are discarded
+  - Users see high risk score with zero evidence explaining why
 
-## Completed (Reference Only)
+- [ ] **Map video C2PA 'error' to 'invalid' in canonical type**
+  - scan-processor sets `c2paStatus = 'error'` which isn't in C2PAStatus type
+  - Crashes downstream scoring in `lib/risk/tiers.ts`
 
-- [x] **Pre-Step 0: Schema Drift** — migrations applied (Feb 11)
-- [x] **Phase A: Pipeline Unification** — both paths through same processor, risk_profile blob stored, C2PA for anon (Feb 11-14)
-- [x] RLS hardening and performance tuning
-- [x] C2PA 5-value fidelity in scoring module
-- [x] Dynamic email content (risk score + verdict)
-- [x] Scanner UI unification ("machined aluminum" aesthetic)
-- [x] Stripe billing (5-tier + metered overage)
-- [x] Multi-tenancy + hierarchical agencies
-- [x] Supabase Realtime (replaced polling, fixed 139GB egress)
-- [x] Documentation alignment (Feb 14)
-- [x] NORTH_STAR Technical Constraints filled
-- [x] Dashboard data wiring — RSFindingsDossier, ProvenanceTelemetryStream, notes save, RSC2PAWidget caution (Feb 16)
-- [x] Dead code cleanup — deleted `/api/analyze`, `/api/auth/verify`, `/api/debug-provenance`, `lib/c2pa/index.ts` (Feb 16)
+- [ ] **Wire MagicLinkEmail.tsx React template**
+  - Professional React Email template exists but `sendMagicLinkEmail()` sends raw HTML
+  - Replace raw HTML in `lib/email.ts` with the React component render
 
----
+- [ ] **Brand guidelines: wire edit + delete + view detail**
+  - `brand-guidelines/page.tsx`: GuidelineCard `onClick={() => {}}` — does nothing
+  - Add: click to view/edit, delete with confirmation, API endpoint for DELETE
+  - Without this: feature looks polished but is a dead end for paying users
 
-## Not Now (Backlog — revisit after first paying customer)
+- [ ] **Fix brand_guidelines RLS**
+  - S4 from original todo: policies reference `public.users` (doesn't exist), should be `public.profiles`
+  - Create migration to fix
 
-These are real features that matter, but building them before the core transaction works is infrastructure theater.
-
-- Brand Guidelines wiring to analysis (UI works, analysis ignores them)
-- Deep Mitigation Reports (AI remediation guidance)
-- Insurance referral integration (partner API, quote generation)
-- API access for CMS/DAM integrations
-- Bulk upload / batch scan
-- White-label reports for agencies
-- Enterprise SSO (SAML/OIDC)
-- Email sequences (welcome, nurture, upgrade)
-- Help & Docs section
-- Error monitoring (Sentry)
-- Customer support system (Intercom)
+**Done when:** Video upload → frame analysis → meaningful findings. Guidelines CRUD works end-to-end.
 
 ---
 
-## Build 7: Performance <!-- id: build-7 -->
-*High-impact, low-risk optimizations to fix sluggishness.*
+### Sprint 9: Pre-Launch QA + Polish
+**Branch:** `feat/sprint-9-prelaunch`
+**Priority:** HIGH — final pass before real users
 
-**7.1 — Split Landing Page (Server + Client)**
-**Why:** `page.tsx` is fully client-side, causing massive hydration cost.
-- [x] Convert `app/page.tsx` to Server Component
-- [x] Move upload/results state to `components/landing/LandingClient.tsx`
-- [x] Keep static sections (Hero text, MarketExposure, Footer, etc.) server-side
+- [ ] **Fix sample PDF finding description leak**
+  - Sample mode shows full text of non-hero findings (only hero is truly gated)
+  - Mask: show title + severity but blur/truncate descriptions for non-purchased scans
 
-**7.2 — Optimize Scans/Reports Page**
-**Why:** Unnecessary Layout Thrashing on every interaction.
-- [x] Remove `layout` prop from `ScanCard` motion divs
-- [x] Review `AnimatePresence` usage to minimize reflows
+- [ ] **Scan ownership check in create-checkout**
+  - Same-tenant users can buy each other's scans
+  - Fix: validate `user.id === scan.user_id` for private scans
 
-**7.3 — Further Optimizations**
-- [x] Lazy-load below-the-fold landing sections (`MarketExposure`, `HowItWorks`, etc.)
-- [x] Replace spring physics with tween/ease-out in drawer
-- [x] Add `@next/bundle-analyzer` to `next.config.js`
-- [ ] Add `prefers-reduced-motion` support to key animations
+- [ ] **Stripe price cache TTL** — expire after 24h
+  - `lib/stripe/stripe-validate-prices.ts`: cache never expires
+  - If Stripe price is deleted, stale cache causes checkout success → webhook failure
+
+- [ ] **Guideline validation: warn if not found**
+  - Upload route silently proceeds without guideline if UUID doesn't match
+  - User thinks brand rules are being applied when they aren't
+
+- [ ] **Wire real quota display**
+  - Sidebar: fetch tenant plan + seat count, replace any remaining hardcoded values
+  - Scans-reports header: fetch usage_ledger for current month
+
+- [ ] **Attach sample PDF to magic link email** (if < 5MB)
+  - Build 3.2 unchecked item: Resend supports attachments
+  - Higher conversion: user sees value before clicking through
+
+- [ ] **ESLint cleanup**
+  - Add eslint ignore for `scripts/` and `supabase/functions/`
+  - Fix ~10 remaining app-code lint violations
+
+- [ ] **End-to-end smoke tests** (manual or scripted)
+  - Free flow: scan → email gate → magic link → dashboard → view results
+  - Purchase flow: scan → $29 checkout → webhook → receipt email → PDF download
+  - Pro flow: signup → subscribe $49 → upload → findings → share link → recipient views
+  - Video flow: paid user → video upload → frame analysis → findings → report
+  - Brand flow: create guideline → scan with guideline → verify guideline mentioned in findings
+
+**Done when:** Every user journey works without dead ends, fake data, or silent failures.
+
+---
+
+## Post-Launch Roadmap (After First Paying Customer)
+
+### Wave 1: Observability (Month 1)
+- [ ] PostHog analytics dashboard (events already wired)
+- [ ] Conversion funnel: scan → email → checkout → PDF download
+- [ ] Error alerting: Gemini API outages, Stripe failures, upload errors
+- [ ] Customer support: manual receipt resend, scan status lookup
+
+### Wave 2: Batch + Queue (Month 2-3)
+- [ ] `scan_batches` + `scan_jobs` tables with `batch_id` on scans
+- [ ] Queue workers with `FOR UPDATE SKIP LOCKED` (idempotent claim/process/update)
+- [ ] Batch upload UI (drag multiple files, campaign-level reporting)
+- [ ] Plan gates: batch features for Team/Agency only
+
+### Wave 3: Collaboration + Reporting (Month 3-4)
+- [ ] Annotations/comments on assets
+- [ ] Review states (pending → approved → flagged → remediated)
+- [ ] Campaign preflight reports (batch risk summary)
+- [ ] Legal evidence bundle exports (PDF/CSV/JSON)
+- [ ] Artifact/hallucination findings as structured finding types
+
+### Wave 4: SSO + Enterprise Auth (Month 3-4)
+- [ ] Okta SAML/OIDC SSO integration (Enterprise tier requirement)
+  - Supabase supports SAML via `supabase.auth.signInWithSSO()` (configured per org)
+  - Map Okta groups → tenant roles (owner/admin/member)
+  - JIT provisioning: first SSO login auto-creates profile + assigns tenant
+- [ ] API keys for programmatic access (CI/CD pipeline integration)
+
+### Wave 5: SOC 2 Alignment (Month 4-6)
+**Strategy:** Build SOC 2 Type II readiness into every sprint, not as a one-time project.
+The audit trail (`audit_log` table) already exists. What's needed:
+
+**Security (Trust Services Criteria — CC6/CC7/CC8):**
+- [ ] Access control evidence: log all role changes, permission grants, login events (partially done)
+- [ ] Change management: git commit history + PR reviews as evidence (already happening)
+- [ ] Logical access: RLS policies + middleware auth as documented controls (already built)
+- [ ] Encryption: TLS 1.3 in transit (Supabase/Vercel default), brand profile encryption at rest (schema ready, wire it)
+- [ ] Incident response: webhook alerting (Phase P) + defined escalation procedure (document)
+
+**Availability (Trust Services Criteria — A1):**
+- [ ] Uptime monitoring: external health check endpoint + Vercel status integration
+- [ ] Disaster recovery: Supabase Point-in-Time Recovery enabled (verify plan supports it)
+- [ ] Capacity planning: Stripe usage metrics → projected infrastructure needs
+
+**Automated Evidence Generation (for Type II audit window):**
+- [ ] `/api/admin/soc2-evidence` endpoint that exports:
+  - Active RLS policies per table (query `pg_policies`)
+  - Rate limit configuration + enforcement stats
+  - Audit log summary (events by type, time range)
+  - Active user sessions + role distribution
+  - Encryption status per table/column
+- [ ] Scheduled evidence snapshots (weekly Vercel Cron → archive to Supabase Storage)
+- [ ] Evidence attestation: hash each snapshot for tamper detection
+
+**What we already have that counts as SOC 2 evidence:**
+- Append-only `audit_log` table (no update/delete policies) ✅
+- RLS on all 18 tables (60+ policies) ✅
+- Rate limiting on 6 sensitive endpoints ✅
+- Timing-safe auth comparison ✅
+- Input validation + error message sanitization ✅
+- Webhook failure alerting ✅
+- Session cookie expiry (7 days) ✅
+- Open redirect prevention ✅
+
+### Wave 6: Integrations + Scale (Month 6+)
+- [ ] Slack/Teams notifications on scan completion
+- [ ] DAM/MRM connectors (Bynder, Brandfolder)
+- [ ] GDPR data subject request API (export, delete, portability)
+- [ ] Data residency options (EU region)
+- [ ] Brand profile encryption wired (schema ready)
+- [ ] Partition audit_log and video_frames at scale
+
+---
+
+## Do Not Build (Scope Guard)
+
+- More security phases (16 is thorough, marginal returns)
+- Tax/VAT collection (not until meaningful revenue)
+- UI redesign (forensic aesthetic is validated + differentiated)
+- Audio pipeline (no customer demand yet)
+- Full DAM/MRM rollout (post-launch, customer-driven)
+- Analytics before fixing the funnel (fix first, measure second)
+- Monitoring/alerting infrastructure beyond email (Sentry etc. — solo founder, keep simple)
+
+---
+
+## Unapplied Migrations Tracker
+
+| Migration | Purpose | Depends On | Applied? |
+|-----------|---------|------------|----------|
+| `20260211_add_tenant_invites_metadata.sql` | Invite extensibility | Nothing | ❌ |
+| `20260211_add_tenant_switch_audit_created_at_index.sql` | Audit query perf (CONCURRENTLY) | Nothing | ❌ |
+| `20260222_failed_usage_reports.sql` | Dead-letter queue for Stripe usage retry | Nothing | ❌ |
+| `20260224_rate_limits.sql` | Rate limiting table + cleanup RPC | Nothing | ❌ |
+| `20260228_harden_rate_limits.sql` | Atomic rate limit + SECURITY DEFINER | `20260224_rate_limits.sql` | ❌ |
+
+**Apply in Sprint 6.** Run in order. `20260211_*_index.sql` uses CONCURRENTLY — must run outside transaction.
+
+---
+
+## Reference: Completed Builds (v1 todo.md)
+
+- [x] Build 1.1: Fix anonymous purchase flow
+- [x] Build 1.2: Fix AuditModal lies + styling
+- [x] Build 2.1: Enrich sample PDF with risk_profile blob
+- [x] Build 3.1: Route everyone to dashboard
+- [x] Build 7.1-7.4: Performance optimization
+- [x] S1: Auth-gate /api/scans/process
+- [x] S2: Fix listUsers() scalability bomb
+- [x] S3: Delete /api/debug-provenance
+
+### Still Unchecked from v1 (Absorbed into Sprints 6-9)
+
+| Original Item | Now In |
+|---------------|--------|
+| Build 3.2: Attach sample PDF to email | Sprint 9 |
+| Build 4.1: Wire real quota display (sidebar + scans header) | Sprint 9 |
+| Build 5.2: Wire Download/Share/Export buttons | Already done (Phase D) |
+| Build 6.1: Delete dead code (UploadContainer, UploadZone) | Sprint 7 (nav cleanup) |
+| Build 6.2: Strip nav to reality | Sprint 7 |
+| Build 6.4: RS token migration (RSProvenanceDrawer, etc.) | Sprint 7 |
+| S4: Fix brand_guidelines RLS | Sprint 8 |
+| Build 7.5: prefers-reduced-motion | Done (Sprint 5) |
+| Regenerate types.ts from live schema | Sprint 6 (after migration apply) |

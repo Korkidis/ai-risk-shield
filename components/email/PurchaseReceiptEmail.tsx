@@ -6,12 +6,14 @@ interface PurchaseReceiptEmailProps {
     score: number
     filename: string
     dashboardUrl: string
+    transactionId?: string
 }
 
 export const PurchaseReceiptEmail: React.FC<PurchaseReceiptEmailProps> = ({
     score,
     filename,
     dashboardUrl,
+    transactionId,
 }) => {
     const colors = {
         bg: '#EBE7E0',
@@ -73,6 +75,16 @@ export const PurchaseReceiptEmail: React.FC<PurchaseReceiptEmailProps> = ({
                                         $29.00
                                     </td>
                                 </tr>
+                                {transactionId && (
+                                    <tr>
+                                        <td style={{ padding: '8px 0', fontSize: '11px', color: colors.grey, borderBottom: `1px solid ${colors.lightGrey}` }}>
+                                            Transaction ID
+                                        </td>
+                                        <td style={{ padding: '8px 0', fontSize: '11px', color: colors.grey, textAlign: 'right', fontFamily: 'monospace', borderBottom: `1px solid ${colors.lightGrey}` }}>
+                                            {transactionId.substring(0, 27)}
+                                        </td>
+                                    </tr>
+                                )}
                                 <tr>
                                     <td style={{ padding: '8px 0', fontSize: '11px', color: colors.grey }}>
                                         File: {filename}

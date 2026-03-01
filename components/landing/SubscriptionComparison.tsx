@@ -64,10 +64,10 @@ function DesktopSpecSheet() {
             <div className="absolute inset-0 bg-gradient-to-b from-[var(--rs-signal)]/5 to-transparent blur-3xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
             <RSPanel
-                className="overflow-hidden border border-[var(--rs-border-primary)] shadow-2xl bg-white/40 backdrop-blur-xl p-0 relative rounded-2xl"
+                className="overflow-hidden border border-[var(--rs-border-primary)] shadow-2xl bg-[var(--rs-bg-well)]/80 backdrop-blur-xl p-0 relative rounded-2xl"
             >
                 {/* High-Tech Header */}
-                <div className="grid grid-cols-4 border-b border-[var(--rs-border-primary)] bg-white/50">
+                <div className="grid grid-cols-4 border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-element)]/80">
                     <div className="p-8 flex flex-col justify-end">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-2 h-2 rounded-full bg-[var(--rs-signal)] animate-pulse" />
@@ -91,7 +91,7 @@ function DesktopSpecSheet() {
                 </div>
 
                 {/* Footer Action Bar */}
-                <div className="grid grid-cols-4 bg-white/30 backdrop-blur-sm border-t border-[var(--rs-border-primary)]">
+                <div className="grid grid-cols-4 bg-[var(--rs-bg-element)]/60 backdrop-blur-sm border-t border-[var(--rs-border-primary)]">
                     <div className="p-4" />
                     <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth>INITIALIZE</RSButton></div>
                     <div className="p-4 flex justify-center relative">
@@ -203,7 +203,7 @@ function TierHeader({ title, code, price, description, recommended }: { title: s
     return (
         <div className={cn(
             "p-6 flex flex-col items-center justify-between gap-4 relative transition-all duration-300",
-            recommended ? "bg-[var(--rs-bg-surface)] shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-10 scale-[1.02] border-x border-[var(--rs-border-primary)] -mx-[1px]" : "hover:bg-white/5",
+            recommended ? "bg-[var(--rs-bg-surface)] shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-10 scale-[1.02] border-x border-[var(--rs-border-primary)] -mx-[1px]" : "hover:bg-[var(--rs-bg-element)]/40",
         )}>
             {recommended && (
                 <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--rs-signal)]" />

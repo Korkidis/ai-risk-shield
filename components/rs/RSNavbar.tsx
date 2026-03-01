@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
-import { Search, Bell, Settings } from 'lucide-react';
 import { RSAvatar } from './RSAvatar';
 import { RSLever } from './RSLever';
 import { createClient } from '@/lib/supabase/client';
@@ -64,15 +63,8 @@ export function RSNavbar({
 
             {/* Right: Controls & User */}
             <div className="flex items-center gap-4">
-                {/* Search Trigger */}
-                <div className="relative hidden md:block group">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-rs-gray-500 group-hover:text-rs-black transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Search case ID..."
-                        className="pl-9 pr-4 py-1.5 bg-rs-gray-100 border border-rs-gray-200 rounded-[4px] text-sm focus:outline-none focus:ring-1 focus:ring-rs-black focus:bg-rs-white transition-all w-64 text-rs-black placeholder:text-rs-gray-400"
-                    />
-                </div>
+                {/* Branding label (replaces dead search input) */}
+                <div className="text-[9px] font-mono uppercase tracking-widest text-rs-gray-400 hidden md:block">AI_RISK_SHIELD</div>
 
                 <div className="h-6 w-px bg-rs-gray-200 mx-2" />
 
@@ -83,15 +75,6 @@ export function RSNavbar({
                     onCheckedChange={toggleTheme}
                     className="!gap-0 scale-[0.55] -mx-2"
                 />
-
-                <button className="relative text-rs-gray-500 hover:text-rs-black transition-colors">
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-0 right-[-2px] w-2 h-2 bg-rs-signal rounded-full border border-rs-white" />
-                </button>
-
-                <button className="text-rs-gray-500 hover:text-rs-black transition-colors">
-                    <Settings className="w-5 h-5" />
-                </button>
 
                 <div className="pl-2">
                     <RSAvatar initials={userInitials} className="cursor-pointer hover:ring-2 hover:ring-rs-black/10 transition-all" />

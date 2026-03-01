@@ -38,12 +38,12 @@ export function TrustCompliance() {
                             <ListItem
                                 icon={<Lock className="w-4 h-4" />}
                                 title="PRIVACY FIRST"
-                                description="All data encrypted in transit (TLS 1.3) and at rest. No image data retained after analysis. No training on user data."
+                                description="All data encrypted in transit (TLS 1.3) and at rest. Data deleted after 7-day retention period. No training on user data."
                             />
                             <ListItem
                                 icon={<CheckCircle className="w-4 h-4" />}
                                 title="C2PA VERIFIED"
-                                description="CAI member. Cryptographic provenance verification using the open C2PA standard — not heuristics."
+                                description="Cryptographic provenance verification using the open C2PA standard — not heuristics."
                             />
                             <ListItem
                                 icon={<Shield className="w-4 h-4" />}
@@ -62,9 +62,9 @@ export function TrustCompliance() {
                     <div className="flex flex-col justify-center gap-6">
                         <div className="border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] p-8 rounded-lg flex flex-wrap gap-8 items-center justify-center opacity-80 hover:opacity-100 transition-opacity">
                             <Badge text="C2PA VERIFIED" />
-                            <Badge text="CAI MEMBER" />
+                            {/* CAI membership: badge removed until verification link is available */}
                             <Badge text="GEMINI POWERED" />
-                            <Badge text="GDPR READY" />
+                            <Badge text="GDPR Planned" dimmed />
                         </div>
                         <div className="p-8 border border-[var(--rs-border-primary)] border-dashed rounded-lg bg-[var(--rs-bg-secondary)]/50 text-center">
                             <Component className="w-12 h-12 text-[var(--rs-text-tertiary)] mx-auto mb-4" />
@@ -93,9 +93,9 @@ function ListItem({ icon, title, description }: { icon: React.ReactNode, title: 
     )
 }
 
-function Badge({ text }: { text: string }) {
+function Badge({ text, dimmed }: { text: string; dimmed?: boolean }) {
     return (
-        <div className="px-3 py-1.5 border border-[var(--rs-border-primary)] rounded bg-[var(--rs-bg-element)] text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest">
+        <div className={`px-3 py-1.5 border border-[var(--rs-border-primary)] rounded bg-[var(--rs-bg-element)] text-[10px] font-bold uppercase tracking-widest ${dimmed ? 'text-[var(--rs-text-tertiary)] opacity-60' : 'text-[var(--rs-text-secondary)]'}`}>
             {text}
         </div>
     )

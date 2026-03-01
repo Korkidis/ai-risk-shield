@@ -101,39 +101,39 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
                     <section className="space-y-6 pt-4">
                         <div className="flex justify-between items-center">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary pl-1">Provenance Timeline</h3>
-                            <span className="text-[9px] font-mono text-[#1A1A1A]/40">C2PA_VER_1.3</span>
+                            <span className="text-[9px] font-mono text-[var(--rs-text-primary)]/40">C2PA_VER_1.3</span>
                         </div>
 
-                        <div className="relative pl-8 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-px before:bg-[#D6CEC1]">
+                        <div className="relative pl-8 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-px before:bg-[var(--rs-border-secondary)]">
                             {details?.history?.map((entry, idx) => (
                                 <div key={idx} className="relative group">
-                                    <div className="absolute -left-[25px] top-1.5 w-[14px] h-[14px] rounded-full bg-[#EAE6D9] border-2 border-[#1A1A1A] z-10" />
+                                    <div className="absolute -left-[25px] top-1.5 w-[14px] h-[14px] rounded-full bg-[var(--rs-bg-element)] border-2 border-[var(--rs-text-primary)] z-10" />
                                     <div className="space-y-1">
                                         <div className="text-[10px] font-black uppercase tracking-widest text-rs-signal">{entry.action}</div>
-                                        <div className="text-sm font-bold text-[#1A1A1A]">{entry.tool}</div>
+                                        <div className="text-sm font-bold text-[var(--rs-text-primary)]">{entry.tool}</div>
                                         <div className="text-[10px] font-mono opacity-40">{entry.date}</div>
                                     </div>
                                 </div>
                             )) || (
-                                    <div className="text-sm text-[#1A1A1A]/40 italic py-4">No historical assertions available for this manifest.</div>
+                                    <div className="text-sm text-[var(--rs-text-primary)]/40 italic py-4">No historical assertions available for this manifest.</div>
                                 )}
                         </div>
                     </section>
 
                     {/* Cryptographic specifics */}
                     <section className="space-y-4 pt-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1A1A1A]/40 pl-1">Cryptographic Evidence</h3>
-                        <div className="bg-[#1A1A1A] rounded-2xl p-6 font-mono text-[10px] text-[#A19D92] space-y-2 overflow-x-auto shadow-inner">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--rs-text-primary)]/40 pl-1">Cryptographic Evidence</h3>
+                        <div className="bg-[var(--rs-bg-dark)] rounded-2xl p-6 font-mono text-[10px] text-[var(--rs-text-secondary)] space-y-2 overflow-x-auto shadow-inner">
                             <div className="flex justify-between">
-                                <span className="text-[#666]">Hash Algorithm:</span>
+                                <span className="text-[var(--rs-gray-500)]">Hash Algorithm:</span>
                                 <span>SHA-256</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-[#666]">Signer Serial:</span>
+                                <span className="text-[var(--rs-gray-500)]">Signer Serial:</span>
                                 <span>{details?.serial || '---'}</span>
                             </div>
                             <div className="mt-4 border-t border-white/5 pt-4 opacity-50 text-[9px] leading-relaxed">
-                                RAW_MANIFEST_EXTRACT_ID: {status === 'valid' ? 'b4f2...9a11' : 'NULL'}
+                                RAW_MANIFEST_EXTRACT_ID: {status === 'valid' ? (details?.serial || '---') : 'NULL'}
                                 <br />
                                 VERIFICATION_GATEWAY: CLOUD_C2PA_NODE_04
                             </div>
@@ -142,7 +142,7 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 border-t border-[#D6CEC1] bg-[#E2DDCF] flex gap-4">
+                <div className="p-8 border-t border-[var(--rs-border-secondary)] bg-[var(--rs-bg-element)] flex gap-4">
                     <RSButton
                         variant="primary"
                         fullWidth
@@ -165,13 +165,13 @@ export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProve
 
 function FactRow({ label, value, icon }: { label: string, value: string, icon: React.ReactNode }) {
     return (
-        <div className="flex items-center gap-4 p-4 group hover:bg-[#1A1A1A]/5 transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-[#EAE6D9] border border-[#D6CEC1] flex items-center justify-center text-[#1A1A1A]/40 group-hover:bg-white transition-all">
+        <div className="flex items-center gap-4 p-4 group hover:bg-[var(--rs-text-primary)]/5 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-[var(--rs-bg-element)] border border-[var(--rs-border-secondary)] flex items-center justify-center text-[var(--rs-text-primary)]/40 group-hover:bg-white transition-all">
                 {icon}
             </div>
             <div className="flex-1">
-                <div className="text-[9px] font-black uppercase tracking-widest text-[#1A1A1A]/40 mb-0.5">{label}</div>
-                <div className="text-sm font-bold text-[#1A1A1A]">{value}</div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-[var(--rs-text-primary)]/40 mb-0.5">{label}</div>
+                <div className="text-sm font-bold text-[var(--rs-text-primary)]">{value}</div>
             </div>
         </div>
     );

@@ -1,12 +1,13 @@
 import { stripe } from '@/lib/stripe'
 
-let validated = false
-let validationErrors: string[] = []
+// Cache with TTL — expires after 24 hours to catch deleted/changed prices
+let validationCache: { timestamp: number; valid: boolean; errors: string[] } | null = null
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
 /**
- * Validates all configured Stripe price IDs once.
+ * Validates all configured Stripe price IDs.
  * Called lazily on first checkout request, not at module load.
- * Caches result so subsequent requests are instant.
+ * Caches result for 24 hours so subsequent requests are instant.
  *
  * Logs errors but does NOT block checkout — the per-request
  * check in create-checkout/route.ts handles missing prices
@@ -16,8 +17,8 @@ export async function validateStripePrices(): Promise<{
     valid: boolean
     errors: string[]
 }> {
-    if (validated) {
-        return { valid: validationErrors.length === 0, errors: validationErrors }
+    if (validationCache && Date.now() - validationCache.timestamp < CACHE_TTL_MS) {
+        return { valid: validationCache.valid, errors: validationCache.errors }
     }
 
     const priceEnvVars: Record<string, string | undefined> = {
@@ -54,8 +55,7 @@ export async function validateStripePrices(): Promise<{
         }
     }
 
-    validationErrors = errors
-    validated = true
+    validationCache = { timestamp: Date.now(), valid: errors.length === 0, errors }
 
     if (errors.length > 0) {
         console.error('[Stripe] Price validation errors:', errors)

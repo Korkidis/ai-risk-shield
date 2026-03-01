@@ -60,6 +60,7 @@ export interface ExtendedScan {
   purchase_type?: string | null
   stripe_payment_intent_id?: string | null
   user_id?: string | null  // Set by webhook for purchased scans (parallel to analyzed_by)
+  purchased_by?: string | null  // User who paid for one-time purchase
   created_at: string
   updated_at: string
   notes?: string

@@ -35,6 +35,7 @@ type ScanContext = Partial<ExtendedScan> & {
     session_id?: string | null
     purchased?: boolean | null
     purchase_type?: string | null
+    purchased_by?: string | null
 }
 
 export const Entitlements = {
@@ -42,9 +43,14 @@ export const Entitlements = {
      * Can the user view the FULL report (sensitive data, full findings)?
      */
     canViewFullReport: (user: UserContext | null, scan: ScanContext, _anonSessionId?: string) => {
-        // 1. One-time purchased scan (Anonymous or Auth)
+        // 1. One-time purchased scan — only the purchaser (or legacy fallback)
         if (scan.purchased && scan.purchase_type === 'one_time') {
-            if (user && scan.purchased) return true;
+            if (user) {
+                // Strict: only the user who purchased can view
+                if (scan.purchased_by && user.id === scan.purchased_by) return true
+                // Legacy fallback: scans without purchased_by (pre-Sprint 6) — allow same tenant
+                if (!scan.purchased_by && scan.tenant_id === user.tenant_id) return true
+            }
         }
 
         // 2. Subscription access (Tenant match + paid plan)

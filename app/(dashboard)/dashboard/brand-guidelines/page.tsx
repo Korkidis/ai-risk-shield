@@ -6,7 +6,8 @@ import {
     Plus,
     Search,
     Shield,
-    Download,
+    Pencil,
+    Trash2,
     AlertOctagon,
     Loader2
 } from 'lucide-react'
@@ -20,24 +21,30 @@ import { BrandGuideline as DBGuideline } from '@/types/database'
 import { RSBreadcrumb } from '@/components/rs/RSBreadcrumb'
 import { formatDistanceToNow } from 'date-fns'
 
+const EMPTY_FORM = {
+    name: '',
+    industry: 'General',
+    is_default: false,
+    prohibitions: '',
+    requirements: '',
+    context_modifiers: ''
+}
+
 export default function BrandGuidelinesPage() {
     const [guidelines, setGuidelines] = useState<DBGuideline[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [isEditOpen, setIsEditOpen] = useState(false)
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+    const [selectedGuideline, setSelectedGuideline] = useState<DBGuideline | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterCategory, setFilterCategory] = useState('all')
+    const [deleteError, setDeleteError] = useState<string | null>(null)
 
     // Form State
-    const [formData, setFormData] = useState({
-        name: '',
-        industry: 'General',
-        is_default: false,
-        prohibitions: '',
-        requirements: '',
-        context_modifiers: ''
-    })
+    const [formData, setFormData] = useState(EMPTY_FORM)
 
     const fetchGuidelines = async () => {
         setIsLoading(true)
@@ -75,12 +82,79 @@ export default function BrandGuidelinesPage() {
 
             await fetchGuidelines()
             setIsCreateOpen(false)
-            setFormData({ name: '', industry: 'General', is_default: false, prohibitions: '', requirements: '', context_modifiers: '' })
+            setFormData(EMPTY_FORM)
         } catch (err: any) {
             alert(err.message)
         } finally {
             setIsSubmitting(false)
         }
+    }
+
+    const handleEdit = async () => {
+        if (!selectedGuideline) return
+        setIsSubmitting(true)
+        try {
+            const response = await fetch(`/api/guidelines/${selectedGuideline.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    prohibitions: formData.prohibitions.split('\n').filter(Boolean),
+                    requirements: formData.requirements.split('\n').filter(Boolean),
+                    context_modifiers: formData.context_modifiers.split('\n').filter(Boolean)
+                })
+            })
+            if (!response.ok) throw new Error('Protocol update failed')
+
+            await fetchGuidelines()
+            setIsEditOpen(false)
+            setSelectedGuideline(null)
+            setFormData(EMPTY_FORM)
+        } catch (err: any) {
+            alert(err.message)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!selectedGuideline) return
+        setIsSubmitting(true)
+        setDeleteError(null)
+        try {
+            const res = await fetch(`/api/guidelines/${selectedGuideline.id}`, { method: 'DELETE' })
+            if (res.ok) {
+                setGuidelines(prev => prev.filter(g => g.id !== selectedGuideline.id))
+                setIsDeleteConfirmOpen(false)
+                setSelectedGuideline(null)
+            } else {
+                const data = await res.json()
+                setDeleteError(data.error || 'Failed to delete guideline')
+            }
+        } catch (err: any) {
+            setDeleteError(err.message)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const openEditModal = (g: DBGuideline) => {
+        setSelectedGuideline(g)
+        setFormData({
+            name: g.name,
+            industry: g.industry || 'General',
+            is_default: g.is_default || false,
+            prohibitions: Array.isArray(g.prohibitions) ? g.prohibitions.join('\n') : '',
+            requirements: Array.isArray(g.requirements) ? g.requirements.join('\n') : '',
+            context_modifiers: Array.isArray(g.context_modifiers) ? g.context_modifiers.join('\n') : ''
+        })
+        setIsEditOpen(true)
+    }
+
+    const openDeleteConfirm = (g: DBGuideline) => {
+        setSelectedGuideline(g)
+        setDeleteError(null)
+        setIsDeleteConfirmOpen(true)
     }
 
     const filteredGuidelines = guidelines.filter(g => {
@@ -103,7 +177,7 @@ export default function BrandGuidelinesPage() {
                         <h1 className="text-[var(--rs-text-primary)] text-xl font-black tracking-tighter uppercase rs-type-section">POLICY_CONTROL_MODULE</h1>
                         <p className="text-[9px] font-mono text-rs-text-tertiary mt-2 uppercase tracking-[0.3em] pl-6 rs-type-micro">// ACTIVE_PROTOCOLS: {guidelines.length.toString().padStart(3, '0')} // STATUS: NOMINAL</p>
                     </div>
-                    <RSButton variant="primary" icon={<Plus size={14} />} onClick={() => setIsCreateOpen(true)} className="h-[42px] px-8 text-xs font-black shadow-[var(--rs-shadow-l2)]">
+                    <RSButton variant="primary" icon={<Plus size={14} />} onClick={() => { setFormData(EMPTY_FORM); setIsCreateOpen(true) }} className="h-[42px] px-8 text-xs font-black shadow-[var(--rs-shadow-l2)]">
                         INITIALIZE_PROTOCOL
                     </RSButton>
                 </div>
@@ -159,7 +233,8 @@ export default function BrandGuidelinesPage() {
                                 <GuidelineCard
                                     key={g.id}
                                     guideline={g}
-                                    onClick={() => { }}
+                                    onEdit={() => openEditModal(g)}
+                                    onDelete={() => openDeleteConfirm(g)}
                                 />
                             ))}
                         </AnimatePresence>
@@ -176,73 +251,44 @@ export default function BrandGuidelinesPage() {
 
             {/* Create Modal */}
             <RSModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="INITIALIZE_NEW_PROTOCOL">
-                <div className="space-y-6">
-                    <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Protocol_Name</label>
-                        <RSInput
-                            placeholder="ENTER_NAME..."
-                            autoFocus
-                            value={formData.name}
-                            onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Industry_Context</label>
-                            <RSSelect
-                                value={formData.industry}
-                                onChange={val => setFormData(prev => ({ ...prev, industry: val }))}
-                                options={[
-                                    { value: 'General', label: 'GENERAL' },
-                                    { value: 'E-commerce', label: 'E-COMMERCE' },
-                                    { value: 'Healthcare', label: 'HEALTHCARE' },
-                                    { value: 'Finance', label: 'FINANCE' }
-                                ]}
-                            />
-                        </div>
-                        <div className="flex flex-col justify-end pb-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.is_default}
-                                    onChange={e => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
-                                    className="accent-rs-signal"
-                                />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary">Set as Global Default</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Prohibitions (One per line)</label>
-                        <RSTextarea
-                            placeholder="// DEFINE_STRICT_PROHIBITIONS..."
-                            value={formData.prohibitions}
-                            onChange={e => setFormData(prev => ({ ...prev, prohibitions: e.target.value }))}
-                        />
-                    </div>
-                    <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Requirements (One per line)</label>
-                        <RSTextarea
-                            placeholder="// DEFINE_STRICT_REQUIREMENTS..."
-                            value={formData.requirements}
-                            onChange={e => setFormData(prev => ({ ...prev, requirements: e.target.value }))}
-                        />
-                    </div>
-                    <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Approved Exceptions (One per line)</label>
-                        <p className="text-[8px] font-mono text-rs-text-tertiary mb-2 leading-relaxed">
-                            Items normally flagged as risky but acceptable for your brand. These override default scoring.
-                        </p>
-                        <RSTextarea
-                            placeholder={"Alcohol imagery is approved\nCannabis products are part of our brand\nFirearms shown in sporting context are acceptable"}
-                            value={formData.context_modifiers}
-                            onChange={e => setFormData(prev => ({ ...prev, context_modifiers: e.target.value }))}
-                        />
-                    </div>
+                <GuidelineForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    onSubmit={handleCreate}
+                    onCancel={() => setIsCreateOpen(false)}
+                    isSubmitting={isSubmitting}
+                    submitLabel="INITIALIZE"
+                />
+            </RSModal>
+
+            {/* Edit Modal */}
+            <RSModal isOpen={isEditOpen} onClose={() => { setIsEditOpen(false); setSelectedGuideline(null) }} title="MODIFY_PROTOCOL">
+                <GuidelineForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    onSubmit={handleEdit}
+                    onCancel={() => { setIsEditOpen(false); setSelectedGuideline(null) }}
+                    isSubmitting={isSubmitting}
+                    submitLabel="UPDATE"
+                />
+            </RSModal>
+
+            {/* Delete Confirmation Modal */}
+            <RSModal isOpen={isDeleteConfirmOpen} onClose={() => { setIsDeleteConfirmOpen(false); setSelectedGuideline(null) }} title="CONFIRM_DELETION">
+                <div className="space-y-4">
+                    <p className="text-sm text-rs-text-secondary">
+                        Delete protocol <strong className="text-rs-text-primary">&quot;{selectedGuideline?.name}&quot;</strong>?
+                    </p>
+                    <p className="text-[9px] font-mono text-rs-text-tertiary leading-relaxed">
+                        This action cannot be undone. Guidelines linked to existing scans cannot be deleted.
+                    </p>
+                    {deleteError && (
+                        <p className="text-xs text-rs-destruct font-bold">{deleteError}</p>
+                    )}
                     <div className="flex justify-end gap-3 pt-4 border-t border-rs-border-primary">
-                        <RSButton variant="ghost" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>CANCEL</RSButton>
-                        <RSButton variant="primary" onClick={handleCreate} disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'INITIALIZE'}
+                        <RSButton variant="ghost" onClick={() => { setIsDeleteConfirmOpen(false); setSelectedGuideline(null) }} disabled={isSubmitting}>CANCEL</RSButton>
+                        <RSButton variant="primary" onClick={handleDelete} disabled={isSubmitting} className="!bg-rs-destruct hover:!bg-rs-destruct/90">
+                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'DELETE'}
                         </RSButton>
                     </div>
                 </div>
@@ -251,14 +297,102 @@ export default function BrandGuidelinesPage() {
     )
 }
 
-function GuidelineCard({ guideline, onClick }: { guideline: DBGuideline, onClick: () => void }) {
+function GuidelineForm({
+    formData,
+    setFormData,
+    onSubmit,
+    onCancel,
+    isSubmitting,
+    submitLabel
+}: {
+    formData: typeof EMPTY_FORM
+    setFormData: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>
+    onSubmit: () => void
+    onCancel: () => void
+    isSubmitting: boolean
+    submitLabel: string
+}) {
+    return (
+        <div className="space-y-6">
+            <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Protocol_Name</label>
+                <RSInput
+                    placeholder="ENTER_NAME..."
+                    autoFocus
+                    value={formData.name}
+                    onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Industry_Context</label>
+                    <RSSelect
+                        value={formData.industry}
+                        onChange={val => setFormData(prev => ({ ...prev, industry: val }))}
+                        options={[
+                            { value: 'General', label: 'GENERAL' },
+                            { value: 'E-commerce', label: 'E-COMMERCE' },
+                            { value: 'Healthcare', label: 'HEALTHCARE' },
+                            { value: 'Finance', label: 'FINANCE' }
+                        ]}
+                    />
+                </div>
+                <div className="flex flex-col justify-end pb-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={formData.is_default}
+                            onChange={e => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
+                            className="accent-rs-signal"
+                        />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary">Set as Global Default</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Prohibitions (One per line)</label>
+                <RSTextarea
+                    placeholder="// DEFINE_STRICT_PROHIBITIONS..."
+                    value={formData.prohibitions}
+                    onChange={e => setFormData(prev => ({ ...prev, prohibitions: e.target.value }))}
+                />
+            </div>
+            <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Requirements (One per line)</label>
+                <RSTextarea
+                    placeholder="// DEFINE_STRICT_REQUIREMENTS..."
+                    value={formData.requirements}
+                    onChange={e => setFormData(prev => ({ ...prev, requirements: e.target.value }))}
+                />
+            </div>
+            <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-rs-text-secondary mb-1 block">Approved Exceptions (One per line)</label>
+                <p className="text-[8px] font-mono text-rs-text-tertiary mb-2 leading-relaxed">
+                    Items normally flagged as risky but acceptable for your brand. These override default scoring.
+                </p>
+                <RSTextarea
+                    placeholder={"Alcohol imagery is approved\nCannabis products are part of our brand\nFirearms shown in sporting context are acceptable"}
+                    value={formData.context_modifiers}
+                    onChange={e => setFormData(prev => ({ ...prev, context_modifiers: e.target.value }))}
+                />
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-rs-border-primary">
+                <RSButton variant="ghost" onClick={onCancel} disabled={isSubmitting}>CANCEL</RSButton>
+                <RSButton variant="primary" onClick={onSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : submitLabel}
+                </RSButton>
+            </div>
+        </div>
+    )
+}
+
+function GuidelineCard({ guideline, onEdit, onDelete }: { guideline: DBGuideline, onEdit: () => void, onDelete: () => void }) {
     return (
         <motion.div
             layout
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClick}
             className={cn(
                 "w-full bg-rs-white border border-[var(--rs-border-primary)] relative group cursor-pointer transition-all p-6 overflow-hidden",
                 "hover:bg-[var(--rs-gray-50)]"
@@ -299,8 +433,21 @@ function GuidelineCard({ guideline, onClick }: { guideline: DBGuideline, onClick
                         ENFORCED: {formatDistanceToNow(new Date(guideline.created_at)).toUpperCase()}
                     </span>
                 </div>
-                <div className="p-1.5 border border-[var(--rs-border-primary)] bg-[var(--rs-gray-50)] group-hover:bg-rs-black group-hover:text-rs-white transition-all">
-                    <Download size={12} />
+                <div className="flex gap-1">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onEdit() }}
+                        className="p-1.5 border border-[var(--rs-border-primary)] bg-[var(--rs-gray-50)] hover:bg-rs-black hover:text-rs-white transition-all"
+                        title="Edit guideline"
+                    >
+                        <Pencil size={12} />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete() }}
+                        className="p-1.5 border border-[var(--rs-border-primary)] bg-[var(--rs-gray-50)] hover:bg-rs-destruct/10 hover:text-rs-destruct hover:border-rs-destruct/30 transition-all"
+                        title="Delete guideline"
+                    >
+                        <Trash2 size={12} />
+                    </button>
                 </div>
             </div>
         </motion.div>

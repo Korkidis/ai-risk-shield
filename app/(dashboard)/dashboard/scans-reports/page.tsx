@@ -505,7 +505,7 @@ function ScansReportsContent() {
                 <div className="flex-1 overflow-y-auto custom-scrollbar relative flex flex-col">
                     <div className="max-w-[1800px] w-full mx-auto px-6 md:px-12 py-12 flex-1 z-10">
                         {isLoading ? (
-                            <div className="w-full aspect-[2/1] min-h-[400px] flex flex-col items-center justify-center border border-rs-border-primary/20 border-dashed bg-white">
+                            <div className="w-full aspect-[2/1] min-h-[400px] flex flex-col items-center justify-center border border-rs-border-primary/20 border-dashed bg-[var(--rs-bg-well)]">
                                 <Loader2 className="w-8 h-8 text-rs-text-primary/10 animate-spin mb-6" />
                                 <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-rs-text-tertiary">Accessing_Dossier_Archive...</span>
                             </div>
@@ -516,7 +516,7 @@ function ScansReportsContent() {
                                 <RSButton variant="ghost" onClick={() => fetchScans()} className="mt-10 uppercase tracking-widest text-xs">Re-Establish_Link</RSButton>
                             </div>
                         ) : scans.length === 0 ? (
-                            <div className="w-full aspect-[2/1] min-h-[400px] flex flex-col items-center justify-center border border-rs-border-primary border-dashed bg-white/50">
+                            <div className="w-full aspect-[2/1] min-h-[400px] flex flex-col items-center justify-center border border-rs-border-primary border-dashed bg-[var(--rs-bg-well)]/60">
                                 <div className="w-16 h-16 rounded-full bg-rs-gray-100 flex items-center justify-center mb-6">
                                     <div className="w-1.5 h-1.5 bg-rs-text-tertiary rounded-full" />
                                 </div>
@@ -567,7 +567,7 @@ function ScansReportsContent() {
                                         <RSButton
                                             variant="ghost"
                                             onClick={() => setPage(p => p + 1)}
-                                            className="px-16 py-6 text-[10px] font-mono font-black border border-dashed border-rs-border-primary hover:border-rs-text-primary hover:bg-white transition-all uppercase tracking-[0.3em]"
+                                            className="px-16 py-6 text-[10px] font-mono font-black border border-dashed border-rs-border-primary hover:border-rs-text-primary hover:bg-[var(--rs-bg-element)] transition-all uppercase tracking-[0.3em]"
                                         >
                                             Load_Next_Batch
                                         </RSButton>
@@ -589,14 +589,14 @@ function ScansReportsContent() {
                             className="fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[var(--rs-bg-surface)] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
                         >
                             {/* Drawer Header */}
-                            <div className="h-16 border-b border-rs-border-primary flex items-center justify-between px-6 bg-white/50 backdrop-blur-md">
+                            <div className="h-16 border-b border-rs-border-primary flex items-center justify-between px-6 bg-[var(--rs-bg-element)]/80 backdrop-blur-md">
                                 <div className="space-y-0.5">
                                     <h2 className="text-[9px] font-black uppercase tracking-[0.3em] text-rs-text-tertiary">Registry_Entry</h2>
                                     <p className="text-[10px] font-bold text-rs-text-primary uppercase tracking-wider truncate max-w-[280px]">{selectedScan?.filename}</p>
                                 </div>
                                 <button
                                     onClick={() => setShowDetails(false)}
-                                    className="w-8 h-8 flex items-center justify-center border border-rs-border-primary hover:border-rs-text-primary text-rs-text-tertiary hover:text-rs-text-primary transition-all rounded-[1px] hover:bg-white"
+                                    className="w-8 h-8 flex items-center justify-center border border-rs-border-primary hover:border-rs-text-primary text-rs-text-tertiary hover:text-rs-text-primary transition-all rounded-[1px] hover:bg-[var(--rs-bg-element)]"
                                 >
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
@@ -606,14 +606,14 @@ function ScansReportsContent() {
                             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                                 {/* Visual Asset Proof */}
                                 <div className="relative aspect-video bg-[var(--rs-bg-well)] border border-rs-border-primary p-2 group shadow-inner">
-                                    <div className="w-full h-full relative overflow-hidden border border-rs-border-primary/50 bg-white">
+                                    <div className="w-full h-full relative overflow-hidden border border-rs-border-primary/50 bg-[var(--rs-bg-surface)]">
                                         <img
                                             src={selectedScan?.asset_url || '/placeholder.png'}
                                             alt="Asset_Visual"
                                             className="w-full h-full object-contain grayscale-[0.2] transition-all group-hover:grayscale-0"
                                         />
                                     </div>
-                                    <div className="absolute bottom-4 left-4 px-2 py-1 bg-white/90 backdrop-blur-sm border border-rs-border-primary text-[8px] font-mono text-rs-text-tertiary uppercase tracking-widest shadow-sm">
+                                    <div className="absolute bottom-4 left-4 px-2 py-1 bg-[var(--rs-bg-surface)]/90 backdrop-blur-sm border border-rs-border-primary text-[8px] font-mono text-rs-text-tertiary uppercase tracking-widest shadow-sm">
                                         ID: {selectedScan?.id.slice(0, 8).toUpperCase()}
                                     </div>
                                 </div>
@@ -636,8 +636,8 @@ function ScansReportsContent() {
                                     />
 
                                     {/* Findings List (Timeline Style) — Entitlement-Gated */}
-                                    <div className="border border-rs-border-primary bg-white">
-                                        <div className="px-5 py-3 border-b border-rs-border-primary bg-rs-gray-50/50 flex items-center justify-between">
+                                    <div className="border border-rs-border-primary bg-[var(--rs-bg-surface)]">
+                                        <div className="px-5 py-3 border-b border-rs-border-primary bg-[var(--rs-bg-element)]/70 flex items-center justify-between">
                                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Detected_Anomalies</span>
                                             <div className="px-2 py-0.5 bg-rs-text-primary text-white text-[9px] font-bold rounded-[1px]">
                                                 {selectedScan?.scan_findings?.length || 0}
@@ -651,7 +651,7 @@ function ScansReportsContent() {
                                                         {selectedScan.scan_findings.map((finding) => (
                                                             <div key={finding.id} className="relative pl-6">
                                                                 <div className={cn(
-                                                                    "absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-white",
+                                                                    "absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-[var(--rs-bg-surface)]",
                                                                     finding.severity === 'critical' ? 'bg-rs-destruct' :
                                                                         finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
                                                                 )} />
@@ -660,8 +660,8 @@ function ScansReportsContent() {
                                                                         <span className="text-[10px] font-bold text-rs-text-primary uppercase tracking-tight">{finding.title}</span>
                                                                         <span className="text-[9px] font-mono text-rs-text-tertiary">{finding.confidence_score}%_CONF</span>
                                                                     </div>
-                                                                    <p className="text-[10px] text-rs-text-secondary leading-relaxed bg-rs-gray-50 p-3 rounded-[2px] border border-rs-border-primary/50 relative">
-                                                                        <span className="absolute top-2 -left-1 w-2 h-2 bg-rs-gray-50 border-t border-l border-rs-border-primary/50 -rotate-45" />
+                                                                    <p className="text-[10px] text-rs-text-secondary leading-relaxed bg-[var(--rs-bg-well)] p-3 rounded-[2px] border border-rs-border-primary/50 relative">
+                                                                        <span className="absolute top-2 -left-1 w-2 h-2 bg-[var(--rs-bg-well)] border-t border-l border-rs-border-primary/50 -rotate-45" />
                                                                         {finding.description}
                                                                     </p>
                                                                 </div>
@@ -676,7 +676,7 @@ function ScansReportsContent() {
                                             ) : (
                                                 // LOCKED: Show gated state with unlock CTA
                                                 <div className="text-center py-8 space-y-4">
-                                                    <div className="w-12 h-12 mx-auto rounded-full bg-rs-gray-100 flex items-center justify-center">
+                                                    <div className="w-12 h-12 mx-auto rounded-full bg-[var(--rs-bg-element)] flex items-center justify-center">
                                                         <span className="text-lg">🔒</span>
                                                     </div>
                                                     <div className="space-y-1">
@@ -700,7 +700,7 @@ function ScansReportsContent() {
                                     </div>
 
                                     {/* Score Breakdown (Horizontal Bars) */}
-                                    <div className="border border-rs-border-primary bg-white divide-y divide-rs-border-primary/40">
+                                    <div className="border border-rs-border-primary bg-[var(--rs-bg-surface)] divide-y divide-rs-border-primary/40">
                                         {[
                                             { label: 'IP_PROVENANCE', score: selectedScan?.risk_profile?.ip_report?.score || 0 },
                                             { label: 'SAFETY_THRESHOLD', score: selectedScan?.risk_profile?.safety_report?.score || 0 },
@@ -711,7 +711,7 @@ function ScansReportsContent() {
                                                     <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">{metric.label}</span>
                                                     <span className="text-[10px] font-bold text-rs-text-primary">{metric.score}/100</span>
                                                 </div>
-                                                <div className="w-full h-1 bg-rs-gray-100 rounded-full overflow-hidden">
+                                                <div className="w-full h-1 bg-[var(--rs-bg-well)] rounded-full overflow-hidden">
                                                     <div
                                                         className="h-full bg-rs-text-primary"
                                                         style={{ width: `${metric.score}%` }}
@@ -754,7 +754,7 @@ function ScansReportsContent() {
                                         value={notesBuffer}
                                         onChange={(e) => setNotesBuffer(e.target.value)}
                                         onBlur={(e) => handleSaveNotes(e.target.value)}
-                                        className="bg-white border-rs-border-primary text-[10px] font-mono p-3 focus:border-rs-text-primary rounded-[1px] shadow-none resize-none"
+                                        className="bg-[var(--rs-bg-surface)] border-rs-border-primary text-[10px] font-mono p-3 focus:border-rs-text-primary rounded-[1px] shadow-none resize-none"
                                     />
                                 </div>
 
@@ -782,14 +782,14 @@ function ScansReportsContent() {
                                 <div className="pt-8 flex flex-col gap-2">
                                     <RSButton
                                         variant="ghost"
-                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-rs-gray-50 hover:border-rs-text-primary transition-all"
+                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
                                         onClick={() => selectedScan && handleDownload(selectedScan)}
                                     >
                                         {canViewFull ? 'Export_Dossier' : 'Download_Sample'}
                                     </RSButton>
                                     <RSButton
                                         variant="ghost"
-                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-rs-gray-50 hover:border-rs-text-primary transition-all"
+                                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
                                         onClick={() => selectedScan && handleShare(selectedScan.id)}
                                     >
                                         {shareToast || 'Share_Link'}
@@ -837,7 +837,7 @@ function ScansReportsContent() {
                     title="NEW_FORENSIC_VALIDATION"
                 >
                     <div className="space-y-4">
-                        <div className="p-4 bg-rs-gray-50 border border-rs-border-primary/50 text-[11px] text-rs-text-secondary leading-relaxed">
+                        <div className="p-4 bg-[var(--rs-bg-well)] border border-rs-border-primary/50 text-[11px] text-rs-text-secondary leading-relaxed">
                             Upload media assets for forensic analysis. Supported formats: JPG, PNG, MP4, MOV, AVI, MKV.
                             Analysis includes AI-driven IP detection, brand safety checks, and C2PA provenance verification.
                         </div>
@@ -856,7 +856,7 @@ function ScansReportsContent() {
                         )}
 
                         {uploadError && (
-                            <div className="p-3 bg-red-50 border border-rs-destruct/20 text-rs-destruct text-xs font-mono">
+                            <div className="p-3 bg-[var(--rs-destruct)]/10 border border-rs-destruct/20 text-rs-destruct text-xs font-mono">
                                 ERROR: {uploadError}
                             </div>
                         )}
@@ -958,7 +958,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage,
             {/* 1. Thumbnail Area (60%) */}
             <div className="relative h-[60%] w-full bg-[var(--rs-bg-element)] overflow-hidden p-3 transition-colors group-hover/card:bg-[var(--rs-bg-well)]">
                 {/* Image Container */}
-                <div className="w-full h-full relative group/thumb overflow-hidden bg-white shadow-sm ring-1 ring-black/5 rounded-[var(--rs-radius-element)]">
+                <div className="w-full h-full relative group/thumb overflow-hidden bg-[var(--rs-bg-surface)] shadow-sm ring-1 ring-[var(--rs-border-primary)]/50 rounded-[var(--rs-radius-element)]">
                     {!imgError && imgSrc ? (
                         scan.file_type === 'video' && (imgError || imgSrc === scan.asset_url) ? (
                             <video
@@ -1042,7 +1042,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage,
                     className="absolute top-[12px] left-[12px] z-40"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="relative w-[24px] h-[24px] bg-white/80 rounded-full flex items-center justify-center shadow-sm backdrop-blur-sm">
+                    <div className="relative w-[24px] h-[24px] bg-[var(--rs-bg-surface)]/80 rounded-full flex items-center justify-center shadow-sm backdrop-blur-sm">
                         <input
                             type="checkbox"
                             checked={isBulkSelected}
@@ -1098,7 +1098,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage,
                 <div className="mt-[8px] flex items-center gap-2">
                     <button
                         onClick={(e) => { e.stopPropagation(); onDownload(); }}
-                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-rs-gray-50 transition-all group/btn"
+                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-[var(--rs-bg-element)] transition-all group/btn"
                         title="Download report"
                     >
                         <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
@@ -1106,7 +1106,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage,
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onShare(); }}
-                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-rs-gray-50 transition-all group/btn"
+                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[4px] text-rs-text-secondary hover:text-rs-text-primary hover:bg-[var(--rs-bg-element)] transition-all group/btn"
                         title="Share scan"
                     >
                         <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>

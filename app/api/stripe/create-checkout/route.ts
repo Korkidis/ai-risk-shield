@@ -84,6 +84,14 @@ export async function POST(request: NextRequest) {
             customerEmail = magicEmail
         }
 
+        // 1b. Require email for anonymous checkout (strict: no empty strings)
+        if (!user && (!customerEmail || customerEmail.trim().length === 0)) {
+            return NextResponse.json(
+                { error: 'Email required before checkout. Please provide your email first.' },
+                { status: 400 }
+            )
+        }
+
         // 2. Validate Scan Ownership (CRITICAL)
         // Ensure the user (or anonymous session) actually owns the scan they're trying to buy
         if (scanId) {

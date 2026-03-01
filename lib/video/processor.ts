@@ -14,7 +14,11 @@ export type FrameResult = {
 
 /**
  * Extracts frames from a video buffer.
- * Strategy: Save to temp, extract 1 frame every 2 seconds (0.5 fps) to save cost/time.
+ * Strategy: Save to temp, extract evenly-spaced screenshots to save cost/time.
+ *
+ * Race condition fix (Sprint 8): The `filenames` event fires before files are
+ * written to disk. We now verify files exist with fs.access() before resolving,
+ * with a brief retry if needed.
  */
 export async function extractFrames(videoBuffer: Buffer, limit = 10): Promise<FrameResult[]> {
     const tempDir = os.tmpdir()
@@ -29,23 +33,27 @@ export async function extractFrames(videoBuffer: Buffer, limit = 10): Promise<Fr
 
         ffmpeg(videoPath)
             .on('end', async () => {
-                // Find generated files
                 try {
-                    // In a real generic impl, we'd list dir. 
-                    // But here we know the pattern.
-                    // Note: fluent-ffmpeg screenshot filenames are a bit tricky.
-                    // Using strict screenshot/thumbnails method.
-
-                    // Cleanup video
+                    // Cleanup video source
                     await fs.unlink(videoPath).catch(() => { })
 
-                    // Return list of frames found (we need to scan directory or use known timestamps)
-                    // Simplified: resolving empty for now if not using exact filenames
-                    // Let's use screenshots method instead, it gives predictable filenames
-                } catch (e) {
-                    // ignore cleanup errors
+                    // Verify frame files actually exist on disk before resolving.
+                    // The 'filenames' event fires with expected names, but files
+                    // may still be writing when 'end' fires.
+                    const validFrames = await verifyFrames(frames)
+
+                    if (validFrames.length === 0 && frames.length > 0) {
+                        // filenames fired but files aren't on disk yet — wait and retry
+                        await new Promise(r => setTimeout(r, 500))
+                        const retryFrames = await verifyFrames(frames)
+                        resolve(retryFrames.length > 0 ? retryFrames : frames)
+                    } else {
+                        resolve(validFrames.length > 0 ? validFrames : frames)
+                    }
+                } catch {
+                    // Resolve with whatever we have rather than crashing
+                    resolve(frames)
                 }
-                resolve(frames)
             })
             .on('error', (err) => {
                 reject(err)
@@ -66,6 +74,23 @@ export async function extractFrames(videoBuffer: Buffer, limit = 10): Promise<Fr
                 })
             })
     })
+}
+
+/**
+ * Verify that frame files exist on disk.
+ * Returns only frames whose files are accessible.
+ */
+async function verifyFrames(frames: FrameResult[]): Promise<FrameResult[]> {
+    const valid: FrameResult[] = []
+    for (const frame of frames) {
+        try {
+            await fs.access(frame.filePath)
+            valid.push(frame)
+        } catch {
+            // File not written yet or missing
+        }
+    }
+    return valid
 }
 
 export async function cleanupFrames(frames: FrameResult[]) {

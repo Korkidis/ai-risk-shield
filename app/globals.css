@@ -73,16 +73,34 @@
     --rs-bg-surface: var(--rs-white);
     --rs-bg-well: var(--rs-gray-50);
     --rs-bg-element: var(--rs-gray-100);
+    --rs-bg-secondary: var(--rs-gray-50);
+    --rs-bg-base: var(--rs-white);
+    --rs-bg-root: var(--rs-white);
 
     --rs-text-primary: var(--rs-black);
     --rs-text-secondary: var(--rs-gray-600);
     --rs-text-tertiary: var(--rs-gray-400);
 
     --rs-border-primary: var(--rs-gray-100);
+    --rs-border-secondary: #D6CEC1;
     --rs-border-strong: var(--rs-black);
+    --rs-border-focus: var(--rs-signal);
 
     --rs-bg-inverse: var(--rs-black);
+    --rs-bg-dark: #1A1A1A;
     --rs-text-inverse: var(--rs-white);
+
+    --rs-warning: var(--rs-risk-caution);
+    --rs-alert: var(--rs-risk-high);
+    --rs-destruct: #DC2626;
+    --rs-action-primary: var(--rs-signal);
+    --rs-action-secondary: var(--rs-black);
+    --rs-accent: var(--rs-signal);
+
+    --rs-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --rs-shadow-track: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+    --rs-shadow-hull: 0 8px 20px rgba(0, 0, 0, 0.2);
+    --rs-radius-small: 2px;
 
     --rs-text-shadow-etched: 0px 1px 0px rgba(255, 255, 255, 0.8);
   }
@@ -108,21 +126,38 @@
     --rs-bg-surface: #121212;
     --rs-bg-well: #1A1A1A;
     --rs-bg-element: #262626;
+    --rs-bg-secondary: #1A1A1A;
+    --rs-bg-base: #0D0D0D;
+    --rs-bg-root: #0D0D0D;
 
     --rs-text-primary: #EBE7E0;
     --rs-text-secondary: #9A9691;
     --rs-text-tertiary: #666666;
 
     --rs-border-primary: #2D2D2D;
+    --rs-border-secondary: #333333;
     --rs-border-strong: #EBE7E0;
+    --rs-border-focus: var(--rs-signal);
 
     --rs-bg-inverse: #EBE7E0;
+    --rs-bg-dark: #0D0D0D;
     --rs-text-inverse: #121212;
+
+    --rs-warning: var(--rs-risk-caution);
+    --rs-alert: #FB923C;
+    --rs-destruct: #F87171;
+    --rs-action-primary: var(--rs-signal);
+    --rs-action-secondary: #2D2D2D;
+    --rs-accent: #FF6B2C;
 
     /* Flat shadows for dark mode */
     --rs-shadow-l1: 0 1px 2px rgba(0, 0, 0, 0.20);
     --rs-shadow-l2: 0 2px 8px rgba(0, 0, 0, 0.30);
     --rs-shadow-l3: 0 4px 16px rgba(0, 0, 0, 0.40);
+    --rs-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22);
+    --rs-shadow-track: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+    --rs-shadow-hull: 0 10px 28px rgba(0, 0, 0, 0.45);
+    --rs-radius-small: 2px;
 
     --rs-text-shadow-etched: 0px 1px 2px rgba(0, 0, 0, 0.8);
     --rs-text-etched: 0px 1px 0px rgba(0, 0, 0, 0.5);
@@ -212,8 +247,33 @@ html {
   --color-rs-signal: var(--rs-signal);
   --color-rs-safe: var(--rs-safe);
   --color-rs-info: var(--rs-info);
+  --color-rs-warning: var(--rs-warning);
+  --color-rs-alert: var(--rs-alert);
+  --color-rs-destruct: var(--rs-destruct);
+  --color-rs-accent: var(--rs-accent);
+  --color-rs-action-primary: var(--rs-action-primary);
+  --color-rs-action-secondary: var(--rs-action-secondary);
   --color-rs-indicator: var(--rs-indicator);
   --color-rs-function: var(--rs-function);
+
+  --color-rs-bg-surface: var(--rs-bg-surface);
+  --color-rs-bg-well: var(--rs-bg-well);
+  --color-rs-bg-element: var(--rs-bg-element);
+  --color-rs-bg-secondary: var(--rs-bg-secondary);
+  --color-rs-bg-base: var(--rs-bg-base);
+  --color-rs-bg-root: var(--rs-bg-root);
+  --color-rs-bg-inverse: var(--rs-bg-inverse);
+  --color-rs-bg-dark: var(--rs-bg-dark);
+
+  --color-rs-text-primary: var(--rs-text-primary);
+  --color-rs-text-secondary: var(--rs-text-secondary);
+  --color-rs-text-tertiary: var(--rs-text-tertiary);
+  --color-rs-text-inverse: var(--rs-text-inverse);
+
+  --color-rs-border-primary: var(--rs-border-primary);
+  --color-rs-border-secondary: var(--rs-border-secondary);
+  --color-rs-border-strong: var(--rs-border-strong);
+  --color-rs-border-focus: var(--rs-border-focus);
 
   /* 5-Tier Risk Scale System */
   --color-rs-risk-safe: var(--rs-risk-safe);
