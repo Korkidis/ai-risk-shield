@@ -712,9 +712,44 @@ function ScansReportsContent() {
                                 canViewTeaser: selectedScan ? Entitlements.canViewTeaser(userContext, selectedScan) : false,
                                 mitigationCredits: mitigationEntitlement,
                             }}
-                            onGenerateMitigation={() => {
-                                setShareToast('Mitigation reports launch in Sprint 9')
-                                setTimeout(() => setShareToast(null), 3000)
+                            onGenerateMitigation={async () => {
+                                if (!selectedScanId) return
+                                // Optimistic: mark as processing immediately
+                                setScans(prev => prev.map(s => {
+                                    if (s.id !== selectedScanId) return s
+                                    return { ...s, mitigation_reports: [{ id: 'temp', scan_id: s.id, tenant_id: s.tenant_id || '', advice_content: '', status: 'processing' as const, report_content: null, report_version: 0, generator_version: '1.0.0', generation_inputs: null, idempotency_key: null, created_by: null, completed_at: null, error_message: null, created_at: new Date().toISOString() }] }
+                                }))
+                                try {
+                                    const res = await fetch(`/api/scans/${selectedScanId}/mitigation`, { method: 'POST' })
+                                    const data = await res.json()
+
+                                    if (res.ok && data.report) {
+                                        // Merge completed report into scan state
+                                        setScans(prev => prev.map(s => {
+                                            if (s.id !== selectedScanId) return s
+                                            return { ...s, mitigation_reports: [data.report] }
+                                        }))
+                                        setShareToast('Mitigation report generated')
+                                        setTimeout(() => setShareToast(null), 3000)
+                                    } else if (res.status === 202) {
+                                        setShareToast('Report already generating...')
+                                        setTimeout(() => setShareToast(null), 3000)
+                                    } else if (res.status === 402) {
+                                        setShareToast('Credits exhausted — purchase required')
+                                        setTimeout(() => setShareToast(null), 4000)
+                                    } else {
+                                        throw new Error(data.message || 'Generation failed')
+                                    }
+                                } catch (err) {
+                                    console.error('Mitigation generation error:', err)
+                                    setShareToast('Failed to generate report')
+                                    setTimeout(() => setShareToast(null), 3000)
+                                    // Revert optimistic update
+                                    setScans(prev => prev.map(s => {
+                                        if (s.id !== selectedScanId) return s
+                                        return { ...s, mitigation_reports: [] }
+                                    }))
+                                }
                             }}
                             onShare={handleShare}
                             onDelete={handleDrawerDelete}

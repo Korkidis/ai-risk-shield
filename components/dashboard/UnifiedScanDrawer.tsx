@@ -447,6 +447,101 @@ export function UnifiedScanDrawer({
                     </div>
                 </section>
 
+                {/* ── Section 4.5: Mitigation Report ── */}
+                {latestMitigation?.status === 'complete' && latestMitigation.report_content && (() => {
+                    const rc = latestMitigation.report_content
+                    const decisionColors: Record<string, string> = {
+                        clear: 'text-[var(--rs-safe)] border-[var(--rs-safe)]/40',
+                        watch: 'text-[var(--rs-info)] border-[var(--rs-info)]/40',
+                        hold: 'text-[var(--rs-warn)] border-[var(--rs-warn)]/40',
+                        block: 'text-rs-destruct border-rs-destruct/40',
+                    }
+                    return (
+                        <section className="space-y-3 pt-4 border-t border-rs-border-primary/50">
+                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Mitigation_Report</span>
+
+                            {/* Executive Summary */}
+                            <div className="p-3 bg-[var(--rs-bg-well)] rounded-[2px] space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border rounded-[1px] ${decisionColors[rc.executive_summary.decision] || 'text-rs-text-secondary border-rs-border-primary'}`}>
+                                        {rc.executive_summary.decision}
+                                    </span>
+                                    <span className="text-[8px] text-rs-text-tertiary">
+                                        Confidence: {rc.executive_summary.confidence}% · Approver: {rc.executive_summary.approver_level}
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-rs-text-secondary leading-relaxed">{rc.executive_summary.rationale}</p>
+                            </div>
+
+                            {/* Domain Analyses */}
+                            {[
+                                { label: 'IP_Analysis', data: rc.ip_analysis },
+                                { label: 'Safety_Analysis', data: rc.safety_analysis },
+                                { label: 'Provenance_Analysis', data: rc.provenance_analysis },
+                            ].map(({ label, data }) => data && (
+                                <div key={label} className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[8px] font-bold uppercase tracking-widest text-rs-text-tertiary">{label}</span>
+                                        <span className={`text-[8px] font-bold uppercase ${data.severity === 'critical' || data.severity === 'high' ? 'text-rs-destruct' : data.severity === 'medium' ? 'text-[var(--rs-warn)]' : 'text-[var(--rs-safe)]'}`}>
+                                            {data.severity}
+                                        </span>
+                                        <span className="text-[8px] text-rs-text-tertiary">
+                                            {data.remediation_status === 'required' ? '⚠ Remediation Required' : '✓ No Remediation Needed'}
+                                        </span>
+                                    </div>
+                                    {data.exposures?.length > 0 && (
+                                        <div className="pl-2 space-y-1">
+                                            {data.exposures.map((e: { type: string; description: string }, i: number) => (
+                                                <div key={i} className="text-[9px] text-rs-text-secondary">
+                                                    <span className="text-rs-text-primary font-medium">{e.type}:</span> {e.description}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+
+                            {/* Mitigation Actions */}
+                            {rc.mitigation_plan?.actions?.length > 0 && (
+                                <div className="space-y-1">
+                                    <span className="text-[8px] font-bold uppercase tracking-widest text-rs-text-tertiary">Action_Plan</span>
+                                    <div className="space-y-2">
+                                        {rc.mitigation_plan.actions.map((a: { priority: number; domain: string; action: string; owner: string; effort: string; verification: string }, i: number) => (
+                                            <div key={i} className="p-2 bg-[var(--rs-bg-surface)] border border-rs-border-primary rounded-[2px]">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[8px] font-black text-rs-text-primary">#{a.priority}</span>
+                                                    <span className="text-[8px] font-bold uppercase tracking-wider text-[var(--rs-info)]">{a.domain}</span>
+                                                    <span className="text-[8px] text-rs-text-tertiary ml-auto">{a.effort}</span>
+                                                </div>
+                                                <p className="text-[9px] text-rs-text-primary font-medium">{a.action}</p>
+                                                <p className="text-[8px] text-rs-text-tertiary mt-0.5">Owner: {a.owner} · Verify: {a.verification}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Residual Risk */}
+                            {rc.residual_risk && (
+                                <div className="p-2 bg-[var(--rs-bg-well)] rounded-[2px] space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[8px] font-bold uppercase tracking-widest text-rs-text-tertiary">Residual_Risk</span>
+                                        <span className={`text-[8px] font-black uppercase ${rc.residual_risk.publish_decision === 'approved' ? 'text-[var(--rs-safe)]' : rc.residual_risk.publish_decision === 'conditional' ? 'text-[var(--rs-warn)]' : 'text-rs-destruct'}`}>
+                                            {rc.residual_risk.publish_decision}
+                                        </span>
+                                    </div>
+                                    <p className="text-[9px] text-rs-text-secondary">{rc.residual_risk.remaining_risk}</p>
+                                    {rc.residual_risk.conditions?.length > 0 && (
+                                        <div className="text-[8px] text-rs-text-tertiary">
+                                            Conditions: {rc.residual_risk.conditions.join(' · ')}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </section>
+                    )
+                })()}
+
                 {/* ── Section 5: Collaboration (Notes) ── */}
                 <section className="space-y-2 pt-4 border-t border-rs-border-primary/50">
                     <div className="flex items-center justify-between">
