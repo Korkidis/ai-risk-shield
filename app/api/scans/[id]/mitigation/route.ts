@@ -5,27 +5,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-// Pre-migration types — columns exist at runtime but not in generated types.
-// These will be replaced by proper Supabase types after running migrations + type regen.
-interface MitigationRow {
-    id: string
-    scan_id: string
-    tenant_id: string
-    status: 'pending' | 'processing' | 'complete' | 'failed'
-    report_content: Record<string, unknown> | null
-    report_version: number
-    created_at: string
-    completed_at: string | null
-    error_message: string | null
-}
-
-interface TenantMitigationFields {
-    id: string
-    plan: string
-    monthly_mitigation_limit: number | null
-    mitigations_used_this_month: number | null
-}
-
 /**
  * POST /api/scans/[id]/mitigation
  *
@@ -82,15 +61,13 @@ export async function POST(
         }
 
         // NOTE: Types are now perfectly synced
-        const { data: rawExisting } = await supabase
+        const { data: existingReport } = await supabase
             .from('mitigation_reports')
             .select('id, status, report_content, report_version, created_at, completed_at, error_message')
             .eq('scan_id', scanId)
             .order('created_at', { ascending: false })
             .limit(1)
             .single()
-
-        const existingReport = rawExisting as MitigationRow | null
 
         if (existingReport) {
             if (existingReport.status === 'complete') {
@@ -112,13 +89,11 @@ export async function POST(
         }
 
         // 4. Credit check
-        const { data: rawTenant } = await supabase
+        const { data: tenant } = await supabase
             .from('tenants')
             .select('id, plan, monthly_mitigation_limit, mitigations_used_this_month')
             .eq('id', tenantId)
             .single()
-
-        const tenant = rawTenant as unknown as TenantMitigationFields | null
 
         if (!tenant) {
             return NextResponse.json({ code: 'not_found', message: 'Tenant not found' }, { status: 404 })
@@ -323,7 +298,7 @@ Rules:
         // 8. Return completed report
         const { data: rawCompleted } = await supabase
             .from('mitigation_reports')
-            .select('id, status, report_content, report_version, created_at, completed_at' as '*')
+            .select('id, status, report_content, report_version, created_at, completed_at')
             .eq('id', reportId)
             .single()
 
