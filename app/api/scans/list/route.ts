@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
         *,
         assets(filename, file_type, storage_path, mime_type, file_size),
         scan_findings(*),
-        provenance_details(*)
+        provenance_details(*),
+        mitigation_reports(*)
       `)
       .eq('tenant_id', tenantId)
 

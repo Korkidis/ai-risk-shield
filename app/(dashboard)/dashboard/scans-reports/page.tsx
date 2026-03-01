@@ -100,7 +100,7 @@ function ScansReportsContent() {
             if (!response.ok) throw new Error('Failed to fetch records')
             const data = await response.json()
 
-            const mappedScans: ScanWithRelations[] = data.scans.map((s: any) => ({
+            const mappedScans: ScanWithRelations[] = data.scans.map((s: Record<string, unknown> & { assets?: Record<string, unknown>; scan_findings?: unknown[]; provenance_details?: unknown; mitigation_reports?: unknown[]; risk_profile?: Record<string, unknown>; risk_level?: string; composite_score?: number; ip_risk_score?: number; safety_risk_score?: number; provenance_risk_score?: number; provenance_status?: string; status?: string }) => ({
                 ...s,
                 status: s.status,
                 filename: s.assets?.filename || 'Unnamed Asset',
@@ -109,6 +109,7 @@ function ScansReportsContent() {
                 scan_findings: s.scan_findings || [],
                 // Provenance Details mapping (handle array from join)
                 provenance_details: Array.isArray(s.provenance_details) ? s.provenance_details[0] : s.provenance_details,
+                mitigation_reports: s.mitigation_reports || [],
                 risk_profile: s.risk_profile || {
                     verdict: s.risk_level === 'critical' ? 'Critical Risk' :
                         s.risk_level === 'high' ? 'High Risk' :
@@ -122,8 +123,8 @@ function ScansReportsContent() {
             }))
 
             setScans(mappedScans)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to fetch records')
         } finally {
             setIsLoading(false)
         }
@@ -242,10 +243,35 @@ function ScansReportsContent() {
         }
     }
 
+    // Fetch full detail from /api/scans/[id] when drawer opens
+    // This consumes Sprint 7.4 joins: normalized provenance_details + sorted mitigation_reports
+    useEffect(() => {
+        if (!showDetails || !selectedScanId) return
+        let cancelled = false
+        fetch(`/api/scans/${selectedScanId}`)
+            .then(res => res.ok ? res.json() : null)
+            .then(detail => {
+                if (cancelled || !detail) return
+                setScans(prev => prev.map(s => {
+                    if (s.id !== selectedScanId) return s
+                    return {
+                        ...s,
+                        // Merge enriched fields from detail endpoint
+                        provenance_details: detail.provenance_details ?? s.provenance_details,
+                        mitigation_reports: detail.mitigation_reports ?? s.mitigation_reports,
+                        risk_profile: detail.risk_profile ?? s.risk_profile,
+                        scan_findings: detail.scan_findings ?? s.scan_findings,
+                        asset_url: detail.asset_url ?? s.asset_url,
+                    }
+                }))
+            })
+            .catch(err => console.error('Detail fetch failed:', err))
+        return () => { cancelled = true }
+    }, [showDetails, selectedScanId])
+
     // Polling removed - now using useRealtimeScans hook above
 
-    const handleDelete = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation()
+    const handleDrawerDelete = (id: string) => {
         if (confirm('Are you sure you want to purge this record from the archive?')) {
             setScans(prev => prev.filter(s => s.id !== id))
             setSelectedIds(prev => prev.filter(v => v !== id))
@@ -310,8 +336,8 @@ function ScansReportsContent() {
             // Success
             setShowUploadModal(false)
             fetchScans() // Refresh list
-        } catch (err: any) {
-            setUploadError(err.message)
+        } catch (err: unknown) {
+            setUploadError(err instanceof Error ? err.message : 'Upload failed')
         } finally {
             setIsUploading(false)
         }
@@ -598,13 +624,13 @@ function ScansReportsContent() {
                                 canViewTeaser: selectedScan ? Entitlements.canViewTeaser(userContext, selectedScan) : false,
                                 mitigationCredits: mitigationEntitlement,
                             }}
-                            onGenerateMitigation={(scanId) => {
-                                // TODO: Wire to mitigation API in Sprint 9
-                                console.log('Generate mitigation for:', scanId)
+                            onGenerateMitigation={() => {
+                                setShareToast('Mitigation reports launch in Sprint 9')
+                                setTimeout(() => setShareToast(null), 3000)
                             }}
                             onShare={handleShare}
-                            onDelete={(id) => handleDelete({ stopPropagation: () => {} } as React.MouseEvent, id)}
-                            onNotesUpdate={handleSaveNotes}
+                            onDelete={handleDrawerDelete}
+                            onNotesUpdate={(_scanId, notes) => handleSaveNotes(notes)}
                             onDownload={handleDownload}
                             onUnlock={() => setShowAuditModal(true)}
                             notesBuffer={notesBuffer}

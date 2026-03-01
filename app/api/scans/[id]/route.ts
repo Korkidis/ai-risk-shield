@@ -57,12 +57,13 @@ type ScanApiResult = {
     }>
     mitigation_reports: Array<{
         id: string
-        status: string
-        report_content: any | null
-        report_version: number
-        generator_version: string
-        completed_at: string | null
-        error_message: string | null
+        advice_content?: string
+        status?: string
+        report_content?: any | null
+        report_version?: number
+        generator_version?: string
+        completed_at?: string | null
+        error_message?: string | null
         created_at: string
     }>
 }
@@ -101,7 +102,7 @@ export async function GET(
                 storage_path
             ),
             provenance_details(*),
-            mitigation_reports(id, status, report_content, report_version, generator_version, completed_at, error_message, created_at),
+            mitigation_reports(*),
             share_token,
             share_expires_at,
             status
@@ -137,8 +138,12 @@ export async function GET(
 
         let isAuthorized = false
 
-        if (error || !data) {
+        if (error) {
             console.error('Database error fetching scan:', error)
+            return NextResponse.json({ error: 'Failed to load scan data' }, { status: 500 })
+        }
+
+        if (!data) {
             return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
         }
 

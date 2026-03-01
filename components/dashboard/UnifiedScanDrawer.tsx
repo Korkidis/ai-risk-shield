@@ -7,8 +7,10 @@ import { ScanWithRelations, ProvenanceDetails, MitigationReport } from '@/types/
 import { RSTextarea } from '@/components/rs/RSTextarea'
 import { RSButton } from '@/components/rs/RSButton'
 import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
+import { type RiskLevel } from '@/components/rs/RSRiskScore'
 import { format } from 'date-fns'
 import { formatBytes } from '@/lib/utils'
+import Image from 'next/image'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -66,19 +68,22 @@ function getProvenanceData(scan: ScanWithRelations): Partial<ProvenanceDetails> 
     return null
 }
 
-function parseAiDeclaration(rawManifest: any): { declared: boolean; tool: string | null } {
+function parseAiDeclaration(rawManifest: unknown): { declared: boolean; tool: string | null } {
     if (!rawManifest) return { declared: false, tool: null }
     try {
-        const manifestStr = typeof rawManifest === 'string' ? rawManifest : JSON.stringify(rawManifest)
+        const manifest = rawManifest as Record<string, unknown>
         // Look for AI generation assertions in C2PA manifest
+        const manifestStr = typeof rawManifest === 'string' ? rawManifest : JSON.stringify(rawManifest)
         const aiPatterns = ['c2pa.ai_generated', 'c2pa.ai_training', 'ai_generative', 'generativeAI']
         const hasAiAssertion = aiPatterns.some(p => manifestStr.toLowerCase().includes(p.toLowerCase()))
         // Try to extract the tool name from assertions
-        if (hasAiAssertion && typeof rawManifest === 'object') {
-            const assertions = rawManifest.assertions || rawManifest.claim?.assertions || []
+        if (hasAiAssertion && typeof rawManifest === 'object' && rawManifest !== null) {
+            const assertions = (manifest.assertions || (manifest.claim as Record<string, unknown>)?.assertions || []) as Array<Record<string, unknown>>
             for (const a of assertions) {
-                if (a?.data?.['dc:title'] || a?.label?.includes('ai')) {
-                    return { declared: true, tool: a.data?.['dc:title'] || 'AI Tool' }
+                const data = a?.data as Record<string, unknown> | undefined
+                const label = a?.label as string | undefined
+                if (data?.['dc:title'] || label?.includes('ai')) {
+                    return { declared: true, tool: (data?.['dc:title'] as string) || 'AI Tool' }
                 }
             }
         }
@@ -175,10 +180,12 @@ export function UnifiedScanDrawer({
                                     playsInline
                                 />
                             ) : (
-                                <img
+                                <Image
                                     src={scan.asset_url || '/placeholder.png'}
                                     alt="Asset"
-                                    className="w-full h-full object-contain grayscale-[0.2] transition-all group-hover:grayscale-0"
+                                    fill
+                                    className="object-contain grayscale-[0.2] transition-all group-hover:grayscale-0"
+                                    unoptimized
                                 />
                             )}
                         </div>
@@ -216,7 +223,7 @@ export function UnifiedScanDrawer({
                         level={
                             scan.risk_level === 'review' ? 'medium' :
                                 scan.risk_level === 'caution' ? 'low' :
-                                    (scan.risk_level || 'low') as any
+                                    (scan.risk_level || 'low') as RiskLevel
                         }
                         ipScore={scan.risk_profile?.ip_report?.score || 0}
                         safetyScore={scan.risk_profile?.safety_report?.score || 0}
@@ -377,7 +384,7 @@ export function UnifiedScanDrawer({
                                             Chain of Custody
                                         </span>
                                         <div className="space-y-1.5 max-h-[120px] overflow-y-auto custom-scrollbar">
-                                            {provenance!.edit_history!.map((entry: any, i: number) => (
+                                            {provenance!.edit_history!.map((entry: { action?: string; label?: string; tool?: string; timestamp?: string }, i: number) => (
                                                 <div key={i} className="flex items-center gap-3 text-[9px] py-1 px-2 bg-[var(--rs-bg-surface)] rounded border border-[var(--rs-border-primary)]/30">
                                                     <span className="w-4 text-[var(--rs-text-tertiary)] font-bold">{i + 1}</span>
                                                     <span className="text-[var(--rs-text-primary)] font-medium flex-1 truncate">

@@ -26,6 +26,11 @@ interface RSProvenanceDrawerProps {
     };
 }
 
+/**
+ * @deprecated Replaced by Section 4 (Provenance & Creation) in UnifiedScanDrawer.
+ * Retained only for dashboard/page.tsx main scan view. Will be removed when
+ * dashboard/page.tsx migrates to the unified drawer pattern.
+ */
 export function RSProvenanceDrawer({ isOpen, onClose, status, details }: RSProvenanceDrawerProps) {
     if (!isOpen) return null;
 

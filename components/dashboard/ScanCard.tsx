@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { getRiskTier } from '@/lib/risk-utils'
 import { RSProcessingPanel } from '@/components/rs/RSProcessingPanel'
 import { formatBytes } from '@/lib/utils'
+import Image from 'next/image'
 
 export interface ScanCardProps {
     scan: ScanWithRelations
@@ -81,11 +82,13 @@ export function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveM
                                 onMouseOut={e => e.currentTarget.pause()}
                             />
                         ) : (
-                            <img
+                            <Image
                                 src={imgSrc}
                                 onError={handleImgError}
                                 className="w-full h-full object-cover transition-all duration-700 grayscale-[0.1] contrast-[1.05] group-hover:grayscale-0"
                                 alt={scan.filename}
+                                fill
+                                unoptimized
                             />
                         )
                     ) : (

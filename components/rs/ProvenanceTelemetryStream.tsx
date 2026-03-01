@@ -19,6 +19,10 @@ interface ProvenanceTelemetryStreamProps {
     onDetailsClick?: () => void;
 }
 
+/**
+ * Keep for processing states only (animated scanning aesthetic during loading).
+ * Completed scan views use Section 4 (Provenance & Creation) in UnifiedScanDrawer.
+ */
 export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onDetailsClick }: ProvenanceTelemetryStreamProps) {
     const [rows, setRows] = useState<TelemetryRow[]>([]);
 
