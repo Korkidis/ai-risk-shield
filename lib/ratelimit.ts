@@ -41,7 +41,7 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimit
             p_action: config.action,
             p_max_attempts: config.maxAttempts,
             p_window_seconds: config.windowSeconds,
-            p_block_seconds: config.blockSeconds ?? null,
+            p_block_seconds: config.blockSeconds ?? undefined,
         }).single()
 
         if (error) {

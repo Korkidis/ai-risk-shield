@@ -15,14 +15,15 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import type { Database, Json } from '@/lib/supabase/types'
 import { computeCompositeScore, computeRiskLevel, computeProvenanceScore, computeProvenanceStatus, type C2PAStatus } from '@/lib/risk/scoring'
-import { analyzeIP } from './ip-detection'
-import { analyzeBrandSafety } from './brand-safety'
+import { analyzeIP } from '@/lib/ai/ip-detection'
+import { analyzeBrandSafety } from '@/lib/ai/brand-safety'
+import { broadcastScanProgress } from '@/lib/realtime'
+import type { BrandGuideline } from '@/types/database'
 import { extractFrames, cleanupFrames } from '@/lib/video/processor'
 import { promises as fs } from 'fs'
 import path from 'path'
 import os from 'os'
 import { verifyContentCredentials } from '@/lib/c2pa'
-import { broadcastScanProgress } from '@/lib/realtime'
 
 export type ProcessScanResult = {
   success: boolean
@@ -252,7 +253,12 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // IMAGE PIPELINE - Use full enterprise analysis
       await broadcastScanProgress(scanId, 30, "Analyzing visual spectrum and IP databases...")
       const { analyzeImageMultiPersona } = await import('@/lib/gemini')
-      riskProfile = await analyzeImageMultiPersona(fileBuffer, mimeType, asset.filename, brandGuideline || undefined)
+      riskProfile = await analyzeImageMultiPersona(
+        fileBuffer,
+        mimeType,
+        asset.filename,
+        brandGuideline ? { ...brandGuideline, created_at: brandGuideline.created_at || new Date().toISOString() } as BrandGuideline : undefined
+      )
 
       // Extract scores from risk profile
       ipResult = {
@@ -413,7 +419,12 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     // Insert findings
     if (findings.length > 0) {
-      await supabase.from('scan_findings').insert(findings)
+      // Supabase generated types don't allow undefined for recommendation even if it's optional in the DB type
+      type FindingInsert = Database['public']['Tables']['scan_findings']['Insert']
+      const sanitizedFindings: FindingInsert[] = findings.map(f => {
+        return { ...f, recommendation: (f.recommendation || null) as any } as FindingInsert
+      })
+      await supabase.from('scan_findings').insert(sanitizedFindings)
     }
 
     // Insert video frames if applicable

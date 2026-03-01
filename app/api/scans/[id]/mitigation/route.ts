@@ -81,17 +81,16 @@ export async function POST(
             return NextResponse.json({ code: 'scan_incomplete', message: 'Scan must be complete before generating mitigation report' }, { status: 400 })
         }
 
-        // 3. Idempotency — return existing complete or in-flight report
-        // NOTE: Uses raw select string because generated types don't have Sprint 6 columns yet
+        // NOTE: Types are now perfectly synced
         const { data: rawExisting } = await supabase
             .from('mitigation_reports')
-            .select('id, status, report_content, report_version, created_at, completed_at, error_message' as '*')
+            .select('id, status, report_content, report_version, created_at, completed_at, error_message')
             .eq('scan_id', scanId)
             .order('created_at', { ascending: false })
             .limit(1)
             .single()
 
-        const existingReport = rawExisting as unknown as MitigationRow | null
+        const existingReport = rawExisting as MitigationRow | null
 
         if (existingReport) {
             if (existingReport.status === 'complete') {
@@ -115,7 +114,7 @@ export async function POST(
         // 4. Credit check
         const { data: rawTenant } = await supabase
             .from('tenants')
-            .select('id, plan, monthly_mitigation_limit, mitigations_used_this_month' as '*')
+            .select('id, plan, monthly_mitigation_limit, mitigations_used_this_month')
             .eq('id', tenantId)
             .single()
 
@@ -146,8 +145,8 @@ export async function POST(
             console.warn('[Mitigation] RPC fallback, using direct update:', rpcError.message)
             await supabase
                 .from('tenants')
-                .update({ mitigations_used_this_month: used + 1 } as Record<string, unknown>)
-                .eq('id', tenantId)
+                .update({ mitigations_used_this_month: used + 1 })
+                .eq('id', tenant.id)
         }
 
         // 5. Create or reuse report row
@@ -157,7 +156,7 @@ export async function POST(
             // Reuse failed row for retry
             await supabase
                 .from('mitigation_reports')
-                .update({ status: 'processing', error_message: null } as Record<string, unknown>)
+                .update({ status: 'processing', error_message: null })
                 .eq('id', existingReport.id)
             reportId = existingReport.id
         } else {
@@ -175,11 +174,11 @@ export async function POST(
                     risk_level: scan.risk_level,
                     findings_count: Array.isArray(scan.scan_findings) ? scan.scan_findings.length : 0,
                 },
-            } as Record<string, unknown>
+            }
 
             const { data: newRow, error: insertError } = await supabase
                 .from('mitigation_reports')
-                .insert(insertPayload as { scan_id: string; tenant_id: string; advice_content: string })
+                .insert(insertPayload)
                 .select('id')
                 .single()
 
@@ -303,7 +302,7 @@ Rules:
             console.error('[Mitigation] Gemini generation failed:', genError)
             await supabase
                 .from('mitigation_reports')
-                .update({ status: 'failed', error_message: String((genError as Error).message || 'Generation failed') } as Record<string, unknown>)
+                .update({ status: 'failed', error_message: String((genError as Error).message || 'Generation failed') })
                 .eq('id', reportId)
 
             return NextResponse.json({ code: 'generation_failed', message: 'Report generation failed' }, { status: 500 })
@@ -318,7 +317,7 @@ Rules:
                 advice_content: (reportContent as { executive_summary?: { rationale?: string } })?.executive_summary?.rationale || 'Mitigation report generated',
                 report_content: { ...reportContent, generated_at: now },
                 completed_at: now,
-            } as Record<string, unknown>)
+            })
             .eq('id', reportId)
 
         // 8. Return completed report
