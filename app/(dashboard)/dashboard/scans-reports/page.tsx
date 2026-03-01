@@ -112,7 +112,10 @@ function ScansReportsContent() {
             params.set('sort_order', sortConfig.sort_order)
 
             const response = await fetch(`/api/scans/list?${params.toString()}`, { cache: 'no-store' })
-            if (!response.ok) throw new Error('Failed to fetch records')
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ error: null }))
+                throw new Error(err.error || `Failed to fetch records (HTTP ${response.status})`)
+            }
             const data = await response.json()
 
             const mappedScans: ScanWithRelations[] = data.scans.map((s: Record<string, unknown> & { assets?: Record<string, unknown>; scan_findings?: unknown[]; provenance_details?: unknown; mitigation_reports?: unknown[]; risk_profile?: Record<string, unknown>; risk_level?: string; composite_score?: number; ip_risk_score?: number; safety_risk_score?: number; provenance_risk_score?: number; provenance_status?: string; status?: string }) => ({
@@ -822,4 +825,3 @@ function ScansReportsContent() {
         </RSBackground>
     )
 }
-
