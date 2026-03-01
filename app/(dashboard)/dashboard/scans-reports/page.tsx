@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScanWithRelations } from '@/types/database'
+import { RSBreadcrumb } from '@/components/rs/RSBreadcrumb'
 import { formatDistanceToNow } from 'date-fns'
 import { RSTextarea } from '@/components/rs/RSTextarea'
 import { RSButton } from '@/components/rs/RSButton'
@@ -411,11 +412,15 @@ function ScansReportsContent() {
         <RSBackground
             variant="technical"
             showGrid={true}
-            className="bg-[#F9F8F6]"
+            className="bg-[var(--rs-bg-surface)]"
         >
             <div className="flex flex-col h-full w-full overflow-hidden">
+                {/* Breadcrumb Navigation */}
+                <div className="px-6 md:px-12 pt-4 shrink-0">
+                    <RSBreadcrumb items={[{ label: "Scans & Reports" }]} />
+                </div>
                 {/* Header Module - Precision Toolbar */}
-                <header className="w-full border-b border-[var(--rs-border-primary)] bg-white px-6 md:px-12 py-5 z-20 shrink-0">
+                <header className="w-full border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-6 md:px-12 py-5 z-20 shrink-0">
                     <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-6">
                         {/* Title & Quota */}
                         <div className="flex items-center gap-6 shrink-0">
@@ -581,7 +586,7 @@ function ScansReportsContent() {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
-                            className="fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[#FDFDFC] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
+                            className="fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[var(--rs-bg-surface)] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
                         >
                             {/* Drawer Header */}
                             <div className="h-16 border-b border-rs-border-primary flex items-center justify-between px-6 bg-white/50 backdrop-blur-md">
@@ -600,7 +605,7 @@ function ScansReportsContent() {
                             {/* Drawer Content */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                                 {/* Visual Asset Proof */}
-                                <div className="relative aspect-video bg-[#F2F2F0] border border-rs-border-primary p-2 group shadow-inner">
+                                <div className="relative aspect-video bg-[var(--rs-bg-well)] border border-rs-border-primary p-2 group shadow-inner">
                                     <div className="w-full h-full relative overflow-hidden border border-rs-border-primary/50 bg-white">
                                         <img
                                             src={selectedScan?.asset_url || '/placeholder.png'}
@@ -951,7 +956,7 @@ function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage,
             <div className="absolute inset-0 rounded-[inherit] border-b border-r border-black/10 pointer-events-none z-20" />
 
             {/* 1. Thumbnail Area (60%) */}
-            <div className="relative h-[60%] w-full bg-[#FAFAF9] overflow-hidden p-3 transition-colors group-hover/card:bg-[#F2F2F0]">
+            <div className="relative h-[60%] w-full bg-[var(--rs-bg-element)] overflow-hidden p-3 transition-colors group-hover/card:bg-[var(--rs-bg-well)]">
                 {/* Image Container */}
                 <div className="w-full h-full relative group/thumb overflow-hidden bg-white shadow-sm ring-1 ring-black/5 rounded-[var(--rs-radius-element)]">
                     {!imgError && imgSrc ? (

@@ -510,7 +510,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* 2. EMAIL GATE (Anonymous users only) or FINDINGS DOSSIER */}
-                <div className="flex-1 w-full min-h-0 relative bg-[#EBE9E4] rounded-2xl shadow-xl border border-[#D6D3CD] overflow-hidden">
+                <div className="flex-1 w-full min-h-0 relative bg-[var(--rs-bg-surface)] rounded-2xl shadow-xl border border-[var(--rs-border-primary)] overflow-hidden">
                     {/* Anonymous email gate — shown above fold when scan is complete */}
                     {isComplete && isAnonymous && !emailCaptured && currentScanId && (
                         <div className="absolute inset-0 z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">

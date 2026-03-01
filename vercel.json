@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/retry-usage-reports",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-rate-limits",
+      "schedule": "0 3 * * *"
     }
   ]
 }

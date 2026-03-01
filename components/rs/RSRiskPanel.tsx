@@ -16,14 +16,14 @@ interface RSRiskPanelProps {
     className?: string;
 }
 
-// Theme Enforced by Design Lab
+// Theme — CSS variable tokens (dark mode compatible)
 const RISK_THEME = {
-    surface: "bg-[#EBE9E4]",      // Warm white (Braun)
-    header: "bg-[#F5F4F1]",       // Header contrast
-    border: "border-[#D6D3CD]",   // Subtle border
-    text: "text-[#1A1A1A]",       // Primary Ink
-    textMuted: "text-[#B4B0AB]",  // Secondary Ink
-    textDim: "text-[#5A5651]"     // Tertiary Ink (WCAG AA on #EBE9E4)
+    surface: "bg-[var(--rs-bg-surface)]",
+    header: "bg-[var(--rs-bg-element)]",
+    border: "border-[var(--rs-border-primary)]",
+    text: "text-[var(--rs-text-primary)]",
+    textMuted: "text-[var(--rs-gray-300)]",
+    textDim: "text-[var(--rs-text-secondary)]"
 };
 
 export function RSRiskPanel({
@@ -77,7 +77,7 @@ export function RSRiskPanel({
                     <span className={cn("text-[10px] font-bold uppercase tracking-[0.2em]", RISK_THEME.textMuted)}>Likelihood Probability</span>
                 </div>
             )}
-            <div className={cn("h-4 md:h-6 rounded-sm relative overflow-hidden shadow-inner border border-black/5", RISK_THEME.surface.replace('bg-[#EBE9E4]', 'bg-[#E5E1DA]'))}>
+            <div className={cn("h-4 md:h-6 rounded-sm relative overflow-hidden shadow-inner border border-black/5", "bg-[var(--rs-bg-well)]")}>
                 <div className="absolute inset-0 flex justify-between px-0.5">
                     {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(tick => (
                         <div key={tick} className={cn("h-full w-[1px]", tick % 50 === 0 ? "bg-black/10 h-full" : "bg-black/5 h-2 mt-auto")} />
@@ -117,17 +117,17 @@ export function RSRiskPanel({
                         "w-3 h-3",
                         status === 'scanning' ? "bg-[var(--rs-text-primary)] animate-pulse" :
                             level === 'critical' ? 'bg-[var(--rs-signal)] animate-pulse' :
-                                RISK_THEME.border.replace('border-', 'bg-')
+                                "bg-[var(--rs-border-primary)]"
                     )} />
                     <div>
                         <h2 className={cn("text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1", RISK_THEME.text)}>Risk Analysis Panel</h2>
-                        <div className="font-mono text-[10px] text-[#7A7671] uppercase tracking-widest leading-none">ID: {id}</div>
+                        <div className="font-mono text-[10px] text-[var(--rs-gray-500)] uppercase tracking-widest leading-none">ID: {id}</div>
                     </div>
                 </div>
 
                 <div className={cn(
                     "text-[10px] font-black uppercase tracking-[0.2em]",
-                    level === 'critical' && status === 'completed' ? 'text-[var(--rs-signal)]' : 'text-[#7A7671]'
+                    level === 'critical' && status === 'completed' ? 'text-[var(--rs-signal)]' : 'text-[var(--rs-gray-500)]'
                 )}>
                     {headerStatus}
                 </div>
@@ -174,7 +174,7 @@ export function RSRiskPanel({
                                 </h3>
                                 <div className={cn(
                                     "h-1 w-8 mt-3", // Smaller bar
-                                    level === 'critical' ? "bg-[var(--rs-signal)]" : RISK_THEME.text.replace('text-', 'bg-')
+                                    level === 'critical' ? "bg-[var(--rs-signal)]" : "bg-[var(--rs-text-primary)]"
                                 )} />
                             </div>
                         </div>

@@ -6,13 +6,14 @@ import { RSButton } from '@/components/rs/RSButton';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 
+// Theme — CSS variable tokens (dark mode compatible, matches RSRiskPanel)
 const RISK_THEME = {
-    surface: "bg-[#EBE9E4]",
-    header: "bg-[#F5F4F1]",
-    border: "border-[#D6D3CD]",
-    text: "text-[#1A1A1A]",
-    textMuted: "text-[#B4B0AB]",
-    textDim: "text-[#5A5651]"
+    surface: "bg-[var(--rs-bg-surface)]",
+    header: "bg-[var(--rs-bg-element)]",
+    border: "border-[var(--rs-border-primary)]",
+    text: "text-[var(--rs-text-primary)]",
+    textMuted: "text-[var(--rs-gray-300)]",
+    textDim: "text-[var(--rs-text-secondary)]"
 };
 
 interface DashboardEmailGateProps {
@@ -82,7 +83,7 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
                     <div className={cn("text-[10px] font-black uppercase tracking-[0.2em] leading-none", RISK_THEME.text)}>
                         Unlock Findings
                     </div>
-                    <div className="font-mono text-[10px] text-[#7A7671] uppercase tracking-widest leading-none">
+                    <div className="font-mono text-[10px] text-[var(--rs-gray-500)] uppercase tracking-widest leading-none">
                         Clearance_Required
                     </div>
                 </div>
@@ -94,8 +95,8 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
                 <div className="flex-1 flex flex-col justify-center space-y-5 pt-4">
                     {/* Lock Message */}
                     <div className="flex items-start gap-4">
-                        <div className="p-2 rounded border border-[#D6D3CD] bg-[#F5F4F1] shrink-0 mt-0.5">
-                            <Lock size={14} className="text-[#1A1A1A]" />
+                        <div className="p-2 rounded border border-[var(--rs-border-primary)] bg-[var(--rs-bg-element)] shrink-0 mt-0.5">
+                            <Lock size={14} className="text-[var(--rs-text-primary)]" />
                         </div>
                         <div>
                             <p className={cn("font-mono text-[11px] font-bold uppercase tracking-wider leading-snug", RISK_THEME.text)}>
@@ -114,7 +115,7 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
                         </label>
                         <div className="flex gap-2">
                             <div className="relative flex-1">
-                                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#B4B0AB]" />
+                                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--rs-gray-300)]" />
                                 <input
                                     type="email"
                                     value={email}
@@ -128,9 +129,9 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
                                     onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                                     placeholder="officer@company.com"
                                     className={cn(
-                                        "w-full bg-white border text-sm pl-9 pr-3 py-2.5 rounded-[4px] outline-none transition-colors font-mono text-[11px]",
-                                        "placeholder:text-[#B4B0AB] text-[#1A1A1A]",
-                                        status === 'error' ? "border-[var(--rs-signal)]" : "border-[#D6D3CD] focus:border-[#1A1A1A]"
+                                        "w-full bg-[var(--rs-bg-surface)] border text-sm pl-9 pr-3 py-2.5 rounded-[4px] outline-none transition-colors font-mono text-[11px]",
+                                        "placeholder:text-[var(--rs-gray-300)] text-[var(--rs-text-primary)]",
+                                        status === 'error' ? "border-[var(--rs-signal)]" : "border-[var(--rs-border-primary)] focus:border-[var(--rs-text-primary)]"
                                     )}
                                     disabled={status === 'sending' || status === 'sent'}
                                 />
@@ -143,7 +144,7 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
                 </div>
 
                 {/* Action Button */}
-                <div className="mt-4 pt-4 border-t border-[#D6D3CD] space-y-2">
+                <div className="mt-4 pt-4 border-t border-[var(--rs-border-primary)] space-y-2">
                     {status === 'sent' ? (
                         <div className="flex items-center gap-2 justify-center py-3">
                             <CheckCircle size={14} className="text-[var(--rs-safe)]" />

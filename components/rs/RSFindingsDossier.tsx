@@ -6,14 +6,14 @@ import { cn } from '@/lib/utils';
 import { RSRiskBadge } from './RSRiskBadge';
 import { RSButton } from './RSButton';
 
-// Theme Enforced by Design Lab (Matching RSRiskPanel)
+// Theme — CSS variable tokens (dark mode compatible, matches RSRiskPanel)
 const RISK_THEME = {
-    surface: "bg-[#EBE9E4]",      // Warm white (Braun)
-    header: "bg-[#F5F4F1]",       // Header contrast
-    border: "border-[#D6D3CD]",   // Subtle border
-    text: "text-[#1A1A1A]",       // Primary Ink
-    textMuted: "text-[#B4B0AB]",  // Secondary Ink
-    textDim: "text-[#5A5651]"     // Tertiary Ink (WCAG AA on #EBE9E4)
+    surface: "bg-[var(--rs-bg-surface)]",
+    header: "bg-[var(--rs-bg-element)]",
+    border: "border-[var(--rs-border-primary)]",
+    text: "text-[var(--rs-text-primary)]",
+    textMuted: "text-[var(--rs-gray-300)]",
+    textDim: "text-[var(--rs-text-secondary)]"
 };
 
 // Severity → RSRiskBadge level mapping
@@ -132,7 +132,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
             <div className={cn("flex justify-between items-start px-8 py-6 shrink-0", RISK_THEME.header)}>
                 <div className="space-y-1">
                     <div className={cn("text-[10px] font-black uppercase tracking-[0.2em] leading-none", RISK_THEME.text)}>Key Findings</div>
-                    <div className="font-mono text-[10px] text-[#7A7671] uppercase tracking-widest leading-none">Ref_{docRef}</div>
+                    <div className="font-mono text-[10px] text-[var(--rs-gray-500)] uppercase tracking-widest leading-none">Ref_{docRef}</div>
                 </div>
             </div>
 
@@ -142,10 +142,10 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
                 {/* Scrollable Findings */}
                 <div className="flex-1 overflow-y-auto space-y-3 pt-6 pr-2 scrollbar-thin scrollbar-thumb-black/10 scrollbar-track-transparent">
                     {displayFindings.length > 0 ? displayFindings.map((f) => (
-                        <div key={f.id} className="group relative pl-6 border-l border-[#D6D3CD] py-0.5">
+                        <div key={f.id} className="group relative pl-6 border-l border-[var(--rs-border-primary)] py-0.5">
                             {/* Marker */}
                             <div className={cn(
-                                "absolute left-[-5px] top-2.5 w-[9px] h-[9px] rounded-full border border-[#D6D3CD] flex items-center justify-center",
+                                "absolute left-[-5px] top-2.5 w-[9px] h-[9px] rounded-full border border-[var(--rs-border-primary)] flex items-center justify-center",
                                 RISK_THEME.surface
                             )}>
                                 <div className={cn(
@@ -156,7 +156,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
 
                             <div className="flex justify-between items-center mb-1">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1A1A1A]">{f.title}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-primary)]">{f.title}</span>
                                     <RSRiskBadge
                                         level={severityToLevel(f.severity)}
                                         size="sm"
@@ -180,7 +180,7 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
                 </div>
 
                 {/* Action Area */}
-                <div className="mt-4 pt-4 border-t border-[#D6D3CD] flex flex-col gap-3">
+                <div className="mt-4 pt-4 border-t border-[var(--rs-border-primary)] flex flex-col gap-3">
                     <div className="flex items-center gap-3 px-1">
                         <Info size={11} className={RISK_THEME.textMuted} />
                         <div className={cn("font-mono text-[10px] uppercase tracking-widest leading-tight", RISK_THEME.textMuted)}>
