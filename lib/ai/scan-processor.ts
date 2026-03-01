@@ -111,9 +111,10 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     const c2paResult = { hasManifest: false, valid: false }
 
     // 4. Content Analysis
-    let ipResult, brandSafetyResult, videoFramesData: Record<string, unknown>[] = []
+    let ipResult, brandSafetyResult; const videoFramesData: Record<string, unknown>[] = []
     let compositeRisk: { score: number; level: 'safe' | 'caution' | 'review' | 'high' | 'critical' }
     let provenanceScore = 0
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let riskProfile: Record<string, any> | null = null // Hoisted so findings section can access it
     // Canonical C2PA status (default to missing until verified)
     let c2paStatus: C2PAStatus = 'missing'
@@ -208,6 +209,44 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         level: computeRiskLevel(videoCompositeScore),
       }
 
+      // Build risk_profile for video scans (matches image structure for drawer parity)
+      const riskLabel = compositeRisk.level === 'critical' ? 'Critical Risk' :
+        compositeRisk.level === 'high' ? 'High Risk' :
+          compositeRisk.level === 'review' ? 'Review Recommended' :
+            compositeRisk.level === 'caution' ? 'Low Risk' : 'Low Risk'
+
+      riskProfile = {
+        composite_score: videoCompositeScore,
+        verdict: riskLabel,
+        ip_report: {
+          score: maxIpScore,
+          teaser: maxIpScore > 50 ? 'Potential IP risk detected in video frames' : 'No significant IP concerns detected',
+          reasoning: `Frame-by-frame analysis across ${frames.length} keyframes.`,
+        },
+        safety_report: {
+          score: maxSafetyScore,
+          teaser: maxSafetyScore > 50 ? 'Brand safety concerns detected in video frames' : 'No brand safety issues detected',
+          reasoning: `Safety analysis across ${frames.length} extracted keyframes.`,
+        },
+        provenance_report: {
+          score: provenanceScore,
+          teaser: c2paStatus === 'valid' ? 'Valid C2PA credentials detected' :
+            c2paStatus === 'caution' ? 'Partial credentials detected' : 'No content credentials found',
+          reasoning: 'C2PA digital signature verification on source video file.',
+        },
+        c2pa_report: { status: c2paStatus },
+        chief_officer_strategy: maxIpScore > 50 || maxSafetyScore > 50
+          ? 'Video contains frames with elevated risk. Review flagged frames before publication.'
+          : 'Video analysis indicates acceptable risk levels for publication.',
+        is_video: true,
+        frames_analyzed: frames.length,
+      }
+
+      // Save risk_profile for video scans (image path does this separately)
+      await supabase
+        .from('scans')
+        .update({ risk_profile: riskProfile })
+        .eq('id', scanId)
 
     } else {
       // IMAGE PIPELINE - Use full enterprise analysis

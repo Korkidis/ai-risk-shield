@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'react'
+import React, { useState, useMemo, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
@@ -46,10 +46,11 @@ function ScansReportsContent() {
     const pathname = usePathname()
 
     const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '')
-    const [sortBy] = useState(searchParams.get('sort') || 'date_desc')
+    const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'date_desc')
     const [filterRisk, setFilterRisk] = useState(searchParams.get('risk') || 'all')
     const [page, setPage] = useState(1)
     const itemsPerPage = 20
+    const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const [scans, setScans] = useState<ScanWithRelations[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -91,12 +92,26 @@ function ScansReportsContent() {
         return () => clearTimeout(timer)
     }, [updateUrl])
 
-    // Data Fetching
+    // Data Fetching — passes search/sort/filter to server
     const fetchScans = async (isBackground = false) => {
         if (!isBackground) setIsLoading(true)
         setError(null)
         try {
-            const response = await fetch('/api/scans/list', { cache: 'no-store' })
+            const params = new URLSearchParams()
+            if (searchTerm.trim()) params.set('search', searchTerm.trim())
+            if (filterRisk !== 'all') params.set('risk_level', filterRisk)
+            // Map UI sort values to API params
+            const sortMap: Record<string, { sort_by: string; sort_order: string }> = {
+                date_desc: { sort_by: 'created_at', sort_order: 'desc' },
+                date_asc: { sort_by: 'created_at', sort_order: 'asc' },
+                score_desc: { sort_by: 'composite_score', sort_order: 'desc' },
+                score_asc: { sort_by: 'composite_score', sort_order: 'asc' },
+            }
+            const sortConfig = sortMap[sortBy] || sortMap.date_desc
+            params.set('sort_by', sortConfig.sort_by)
+            params.set('sort_order', sortConfig.sort_order)
+
+            const response = await fetch(`/api/scans/list?${params.toString()}`, { cache: 'no-store' })
             if (!response.ok) throw new Error('Failed to fetch records')
             const data = await response.json()
 
@@ -107,7 +122,6 @@ function ScansReportsContent() {
                 file_type: s.assets?.file_type || 'image',
                 file_size: s.assets?.file_size || 0,
                 scan_findings: s.scan_findings || [],
-                // Provenance Details mapping (handle array from join)
                 provenance_details: Array.isArray(s.provenance_details) ? s.provenance_details[0] : s.provenance_details,
                 mitigation_reports: s.mitigation_reports || [],
                 risk_profile: s.risk_profile || {
@@ -134,11 +148,48 @@ function ScansReportsContent() {
         fetchScans()
     }, [])
 
+    // Re-fetch when sort or filter changes (debounced for search)
+    useEffect(() => {
+        setPage(1)
+        fetchScans()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sortBy, filterRisk])
+
+    // Debounced search — re-fetches from server after 300ms
+    useEffect(() => {
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+        searchTimerRef.current = setTimeout(() => {
+            setPage(1)
+            fetchScans()
+        }, 300)
+        return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current) }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm])
+
     // Realtime subscription for processing scans (replaces polling)
     const handleScanUpdate = useCallback((updated: Partial<ScanWithRelations> & { id: string }) => {
         setScans(prev => prev.map(s =>
             s.id === updated.id ? { ...s, ...updated } : s
         ))
+        // Full data refetch on completion — gets findings, risk_profile, provenance
+        if (updated.status === 'complete') {
+            fetch(`/api/scans/${updated.id}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(detail => {
+                    if (!detail) return
+                    setScans(prev => prev.map(s => {
+                        if (s.id !== updated.id) return s
+                        return {
+                            ...s,
+                            ...detail,
+                            filename: s.filename, // Keep the mapped filename
+                            file_type: s.file_type,
+                            file_size: s.file_size,
+                        }
+                    }))
+                })
+                .catch(err => console.error('Detail refetch failed:', err))
+        }
     }, [])
 
     const { ephemeralState } = useRealtimeScans({
@@ -273,6 +324,9 @@ function ScansReportsContent() {
 
     const handleDrawerDelete = (id: string) => {
         if (confirm('Are you sure you want to purge this record from the archive?')) {
+            // Optimistic UI + real API delete
+            fetch(`/api/scans/${id}`, { method: 'DELETE' })
+                .catch(err => console.error('Delete API failed:', err))
             setScans(prev => prev.filter(s => s.id !== id))
             setSelectedIds(prev => prev.filter(v => v !== id))
             if (selectedScanId === id) {
@@ -343,20 +397,8 @@ function ScansReportsContent() {
         }
     }
 
-    const filteredScans = useMemo(() => {
-        return scans
-            .filter(s => {
-                const matchesSearch = s.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    s.id.toLowerCase().includes(searchTerm.toLowerCase())
-                const matchesRisk = filterRisk === 'all' || s.risk_profile?.verdict.toLowerCase().includes(filterRisk.toLowerCase())
-                return matchesSearch && matchesRisk
-            })
-            .sort((a, b) => {
-                const dateA = new Date(a.created_at).getTime()
-                const dateB = new Date(b.created_at).getTime()
-                return sortBy === 'date_desc' ? dateB - dateA : dateA - dateB
-            })
-    }, [scans, searchTerm, filterRisk, sortBy])
+    // Server handles search/sort/filter — just pass through scans for display
+    const filteredScans = scans
 
     const visibleScans = useMemo(() => {
         return filteredScans.slice(0, page * itemsPerPage)
@@ -501,6 +543,21 @@ function ScansReportsContent() {
                                 ))}
                             </div>
 
+                            {/* Sort Select */}
+                            <div className="relative h-10">
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="h-10 pl-3 pr-8 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] text-[9px] font-bold font-mono uppercase tracking-widest text-[var(--rs-text-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--rs-text-primary)] transition-all"
+                                >
+                                    <option value="date_desc">NEWEST</option>
+                                    <option value="date_asc">OLDEST</option>
+                                    <option value="score_desc">RISK ↓</option>
+                                    <option value="score_asc">RISK ↑</option>
+                                </select>
+                                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-rs-text-tertiary pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                            </div>
+
                             {/* View Toggle */}
                             <div className="flex items-center p-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] h-10">
                                 {(['grid', 'list'] as const).map((mode) => (
@@ -567,34 +624,62 @@ function ScansReportsContent() {
                             </div>
                         ) : (
                             <>
-                                <div className={cn(
-                                    "grid gap-8",
-                                    viewMode === 'grid'
-                                        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" // Max 4 cols
-                                        : "grid-cols-1"
-                                )}>
-                                    <AnimatePresence>
-                                        {visibleScans.map(scan => (
-                                            <ScanCard
-                                                key={scan.id}
-                                                scan={scan}
-                                                isSelected={selectedScanId === scan.id}
-                                                isBulkSelected={selectedIds.includes(scan.id)}
-                                                liveProgress={ephemeralState[scan.id]?.progress}
-                                                liveMessage={ephemeralState[scan.id]?.message}
-                                                onBulkToggle={(checked) => {
-                                                    setSelectedIds(prev => checked
-                                                        ? [...prev, scan.id]
-                                                        : prev.filter(id => id !== scan.id)
-                                                    )
-                                                }}
-                                                onClick={() => handleScanClick(scan.id)}
-                                                onDownload={() => handleDownload(scan)}
-                                                onShare={() => handleShare(scan.id)}
-                                            />
-                                        ))}
-                                    </AnimatePresence>
-                                </div>
+                                {visibleScans.length === 0 ? (
+                                    <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
+                                        {scans.length === 0 ? (
+                                            <>
+                                                <div className="w-16 h-16 mb-4 rounded-full bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] flex items-center justify-center">
+                                                    <svg className="w-8 h-8 text-rs-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                                                </div>
+                                                <h3 className="text-lg font-bold text-rs-text-primary mb-1">No Scans Yet</h3>
+                                                <p className="text-sm text-rs-text-secondary mb-4 max-w-sm">Upload an image or video to start your first forensic analysis.</p>
+                                                <RSButton variant="primary" onClick={() => setShowUploadModal(true)}>
+                                                    Upload_Asset
+                                                </RSButton>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-16 h-16 mb-4 rounded-full bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] flex items-center justify-center">
+                                                    <svg className="w-8 h-8 text-rs-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                                                </div>
+                                                <h3 className="text-lg font-bold text-rs-text-primary mb-1">No Results Found</h3>
+                                                <p className="text-sm text-rs-text-secondary mb-4">No scans match your current search or filters.</p>
+                                                <RSButton variant="secondary" onClick={() => { setSearchTerm(''); setFilterRisk('all') }}>
+                                                    Clear_Filters
+                                                </RSButton>
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className={cn(
+                                        "grid gap-8",
+                                        viewMode === 'grid'
+                                            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" // Max 4 cols
+                                            : "grid-cols-1"
+                                    )}>
+                                        <AnimatePresence>
+                                            {visibleScans.map(scan => (
+                                                <ScanCard
+                                                    key={scan.id}
+                                                    scan={scan}
+                                                    isSelected={selectedScanId === scan.id}
+                                                    isBulkSelected={selectedIds.includes(scan.id)}
+                                                    liveProgress={ephemeralState[scan.id]?.progress}
+                                                    liveMessage={ephemeralState[scan.id]?.message}
+                                                    onBulkToggle={(checked) => {
+                                                        setSelectedIds(prev => checked
+                                                            ? [...prev, scan.id]
+                                                            : prev.filter(id => id !== scan.id)
+                                                        )
+                                                    }}
+                                                    onClick={() => handleScanClick(scan.id)}
+                                                    onDownload={() => handleDownload(scan)}
+                                                    onShare={() => handleShare(scan.id)}
+                                                />
+                                            ))}
+                                        </AnimatePresence>
+                                    </div>
+                                )}
 
                                 {filteredScans.length > visibleScans.length && (
                                     <div className="mt-24 flex justify-center pb-12">

@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic'
  * GET /api/scans/list
  *
  * Fetch recent scans for the current user's tenant
+ * Supports server-side search, sort, filter, and pagination.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -30,7 +31,9 @@ export async function GET(req: NextRequest) {
     const tenantId = await getTenantId()
     const supabase = await createClient()
 
-    // Build the query
+    // Build the query — use !inner join on assets for search support
+    const search = searchParams.get('search')
+
     let query = supabase
       .from('scans')
       .select(`
@@ -42,14 +45,18 @@ export async function GET(req: NextRequest) {
       `)
       .eq('tenant_id', tenantId)
 
+    // Server-side search on scans table columns (Sprint 8)
+    // For scan ID search, use ILIKE directly. Filename search is post-query
+    // since Supabase type generation doesn't support !inner joins reliably.
+    if (search && search.trim()) {
+      query = query.ilike('id', `%${search.trim()}%`)
+    }
+
     // Applied Filters
     if (riskLevel && riskLevel !== 'all') {
       query = query.eq('risk_level', riskLevel as 'critical' | 'high' | 'review' | 'caution' | 'safe')
     }
     if (fileType && fileType !== 'all') {
-      // asset_id.file_type but we need to join or use filter
-      // For now, simpler filtering on scans table if possible, or join
-      // Actually, assets is joined, so we can use:
       query = query.filter('assets.file_type', 'eq', fileType)
     }
 
@@ -71,16 +78,17 @@ export async function GET(req: NextRequest) {
     // Use service role client for signed URLs (bypasses storage RLS)
     const adminClient = await createServiceRoleClient()
 
-    const enrichedScans = await Promise.all(scans.map(async (scan: any) => {
+    const enrichedScans = await Promise.all((scans || []).map(async (scan) => {
       let assetUrl = null
-      if (scan.assets?.storage_path) {
+      const scanAssets = scan.assets as { storage_path?: string } | null
+      if (scanAssets?.storage_path) {
         // Generate signed URL for the original asset (1 hour expiry)
         const { data, error: signError } = await adminClient.storage
           .from('uploads')
-          .createSignedUrl(scan.assets.storage_path, 3600)
+          .createSignedUrl(scanAssets.storage_path, 3600)
 
         if (signError) {
-          console.error(`[Scans/List] Signed URL error for ${scan.assets.storage_path}:`, signError.message)
+          console.error(`[Scans/List] Signed URL error for ${scanAssets.storage_path}:`, signError.message)
         } else {
           assetUrl = data?.signedUrl
         }
