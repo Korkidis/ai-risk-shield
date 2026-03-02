@@ -59,10 +59,22 @@ interface RSFindingsDossierProps {
     scanId?: string;
     ctaMode?: 'free' | 'paid';
     onUpgradeClick?: () => void;
+    onOpenReport?: () => void;
+    reportButtonLabel?: string;
     className?: string;
 }
 
-export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, ctaMode = 'paid', onUpgradeClick, className }: RSFindingsDossierProps) {
+export function RSFindingsDossier({
+    isComplete,
+    findings,
+    riskProfile,
+    scanId,
+    ctaMode = 'paid',
+    onUpgradeClick,
+    onOpenReport,
+    reportButtonLabel,
+    className
+}: RSFindingsDossierProps) {
     if (!isComplete) return null;
 
     // Build display findings from best available source
@@ -210,11 +222,14 @@ export function RSFindingsDossier({ isComplete, findings, riskProfile, scanId, c
                             size="lg"
                             className="font-bold tracking-[0.15em] shadow-lg rounded-[2px]"
                             onClick={() => {
-                                // Navigate to the canonical scans-reports page for full report access
-                                if (scanId) window.location.href = `/dashboard/scans-reports?scan=${scanId}`;
+                                if (onOpenReport) {
+                                    onOpenReport();
+                                    return;
+                                }
+                                if (scanId) window.location.href = `/dashboard?scan=${scanId}`;
                             }}
                         >
-                            View Full Report
+                            {reportButtonLabel || 'View Full Report'}
                         </RSButton>
                     )}
                 </div>

@@ -298,7 +298,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                     type: 'magiclink',
                     email: customerEmail,
                     options: {
-                        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans-reports?highlight=${scanId}`
+                        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?scan=${scanId}`
                     }
                 })
 
@@ -423,7 +423,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
 
             if (scanMeta) {
                 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://airiskshield.com'
-                const dashboardUrl = `${appUrl}/dashboard/scans-reports?highlight=${scanId}`
+                const dashboardUrl = `${appUrl}/dashboard?scan=${scanId}`
                 sendPurchaseReceiptEmail(
                     customerEmail,
                     scanId,

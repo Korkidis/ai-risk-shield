@@ -8,9 +8,9 @@ export default function ScanRedirectClient({ id }: { id: string }) {
 
     useEffect(() => {
         if (id) {
-            router.replace(`/dashboard/scans-reports?highlight=${id}`)
+            router.replace(`/dashboard?scan=${id}`)
         } else {
-            router.replace('/dashboard/scans-reports')
+            router.replace('/dashboard')
         }
     }, [id, router])
 

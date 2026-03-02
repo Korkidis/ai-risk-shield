@@ -47,12 +47,18 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protected routes - redirect to login if not authenticated
-  // Exception: /dashboard?scan=<id> is allowed for anonymous users (scan viewer mode)
-  const hasScanParam = request.nextUrl.pathname === '/dashboard' && request.nextUrl.searchParams.has('scan')
+  // Exception: /dashboard (workspace) is allowed for anonymous users.
+  // This route powers the free scan flow before account creation.
+  // Normalize trailing slash so /dashboard/ and /dashboard behave the same.
+  const normalizedPath =
+    request.nextUrl.pathname !== '/' && request.nextUrl.pathname.endsWith('/')
+      ? request.nextUrl.pathname.slice(0, -1)
+      : request.nextUrl.pathname
+  const isAnonymousDashboardWorkspace = normalizedPath === '/dashboard'
 
   if (
     !user &&
-    !hasScanParam &&
+    !isAnonymousDashboardWorkspace &&
     (request.nextUrl.pathname.startsWith('/dashboard') ||
       request.nextUrl.pathname.startsWith('/scans'))
   ) {

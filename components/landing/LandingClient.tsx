@@ -29,8 +29,10 @@ export function LandingClient() {
                             // Optional: Scroll to top or prepare UI
                         }}
                         onUploadComplete={(_profile, scanId) => {
-                            // Sprint 10.1: Canonical workspace redirect
-                            router.push(`/dashboard/scans-reports?highlight=${scanId}`)
+                            // Anonymous-safe scan workspace redirect.
+                            // Middleware currently allows unauthenticated access for
+                            // /dashboard?scan=<id> (session-owned scan viewer mode).
+                            router.push(`/dashboard?scan=${scanId}`)
                         }}
                     />
                     {/* Trust Signals under scanner */}

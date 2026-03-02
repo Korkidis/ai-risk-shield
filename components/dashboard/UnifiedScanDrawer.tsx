@@ -1,7 +1,8 @@
 "use client"
 
+import { useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { ChevronRight, Loader2, ExternalLink, Shield, FileText, Clock, Hash } from 'lucide-react'
+import { X, Loader2, ExternalLink, Shield, FileText, Clock, Hash } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { ScanWithRelations, ProvenanceDetails, MitigationReport } from '@/types/database'
 import { RSTextarea } from '@/components/rs/RSTextarea'
@@ -140,17 +141,38 @@ export function UnifiedScanDrawer({
     // Post-email free (canViewTeaser): full provenance assertions
     // Paid (canViewFull): everything including findings
     const canViewProvenance = entitlements.canViewTeaser || entitlements.canViewFull
+    const canViewBaselineReport = entitlements.canViewTeaser || entitlements.canViewFull
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null
 
     return (
-        <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
-            className="fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[var(--rs-bg-surface)] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
-        >
+        <>
+            <motion.button
+                type="button"
+                aria-label="Close scan report"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={onClose}
+                className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[1px]"
+            />
+            <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+                className="fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[var(--rs-bg-surface)] border-l border-rs-border-strong shadow-[-40px_0_100px_rgba(0,0,0,0.1)] flex flex-col z-50 overflow-hidden"
+            >
             {/* ═══════════════ HEADER ═══════════════ */}
             <div className="h-16 border-b border-rs-border-primary flex items-center justify-between px-6 bg-[var(--rs-bg-element)]/80 backdrop-blur-md shrink-0">
                 <div className="space-y-0.5">
@@ -159,9 +181,10 @@ export function UnifiedScanDrawer({
                 </div>
                 <button
                     onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center border border-rs-border-primary hover:border-rs-text-primary text-rs-text-tertiary hover:text-rs-text-primary transition-all rounded-[1px] hover:bg-[var(--rs-bg-element)]"
+                    className="h-8 px-3 flex items-center gap-1.5 justify-center border border-rs-border-primary hover:border-rs-text-primary text-rs-text-tertiary hover:text-rs-text-primary transition-all rounded-[1px] hover:bg-[var(--rs-bg-element)] text-[9px] font-black uppercase tracking-wider"
                 >
-                    <ChevronRight className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5" />
+                    Close
                 </button>
             </div>
 
@@ -243,7 +266,7 @@ export function UnifiedScanDrawer({
                         </div>
                     </div>
                     <div className="p-6">
-                        {entitlements.canViewFull ? (
+                        {canViewBaselineReport ? (
                             // Full access: all findings visible
                             scan.scan_findings && scan.scan_findings.length > 0 ? (
                                 <div className="relative border-l border-dashed border-rs-border-primary space-y-8 ml-2">
@@ -600,13 +623,13 @@ export function UnifiedScanDrawer({
                 {/* ── Section 6: Actions ── */}
                 <section className="pt-8 flex flex-col gap-2">
                     {/* Download Scan Report */}
-                    <RSButton
-                        variant="ghost"
-                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
-                        onClick={() => onDownload(scan)}
-                    >
-                        {entitlements.canViewFull ? 'Export_Dossier' : 'Download_Sample'}
-                    </RSButton>
+                            <RSButton
+                                variant="ghost"
+                                className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
+                                onClick={() => onDownload(scan)}
+                            >
+                                {canViewBaselineReport ? 'Export_Dossier' : 'Download_Sample'}
+                            </RSButton>
 
                     {/* Share */}
                     <RSButton
@@ -636,7 +659,8 @@ export function UnifiedScanDrawer({
                     </RSButton>
                 </section>
             </div>
-        </motion.div>
+            </motion.div>
+        </>
     )
 }
 

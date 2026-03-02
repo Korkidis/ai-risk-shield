@@ -70,6 +70,8 @@ export function RSTelemetryPanel({
         state === 'scanning' ? 'ACQUIRING_SIGNAL' :
             state === 'complete' ? 'TELEMETRY_ACTIVE' : 'STANDBY'
     );
+    const resolvedButtonText = buttonText || 'View Manifest'
+    const isNewScanButton = resolvedButtonText.toUpperCase() === 'NEW_SCAN'
 
     return (
         <div className={cn(
@@ -86,7 +88,7 @@ export function RSTelemetryPanel({
                 <div className="absolute inset-0 z-40 pointer-events-none shadow-[inset_0_0_80px_rgba(0,0,0,0.8)]" />
 
                 {/* 2. Top Header (Status Line) */}
-                <div className="relative z-30 h-10 border-b border-white/10 bg-black/40 backdrop-blur-md flex items-center justify-between px-4">
+                <div className="relative z-30 h-10 border-b border-white/10 bg-black/75 backdrop-blur-md flex items-center justify-between px-4">
                     <div className="flex items-center gap-2">
                         <div className={cn(
                             "w-2 h-2 rounded-full",
@@ -220,12 +222,20 @@ export function RSTelemetryPanel({
                                     {!hideButton && onAction && (
                                         <button
                                             onClick={onAction}
-                                            className="group flex items-center gap-3 pl-6 pr-4 py-2 bg-rs-black border border-white/10 hover:border-rs-signal/50 rounded text-white/60 hover:text-rs-signal transition-all"
+                                            className={cn(
+                                                "group flex items-center gap-3 pl-6 pr-4 py-2 rounded transition-all",
+                                                isNewScanButton
+                                                    ? "bg-rs-black border border-white/15 text-white/70 hover:bg-white/[0.04] hover:text-white hover:border-white/35"
+                                                    : "bg-rs-black border border-white/10 hover:border-rs-signal/50 text-white/60 hover:text-rs-signal"
+                                            )}
                                         >
                                             <span className="text-[10px] font-bold tracking-[0.2em] uppercase">
-                                                {buttonText || 'View Manifest'}
+                                                {resolvedButtonText}
                                             </span>
-                                            <div className="w-4 h-4 flex items-center justify-center border border-white/10 rounded-full group-hover:border-rs-signal transition-colors">
+                                            <div className={cn(
+                                                "w-4 h-4 flex items-center justify-center rounded-full transition-colors",
+                                                isNewScanButton ? "border border-white/20 group-hover:border-white/45" : "border border-white/10 group-hover:border-rs-signal"
+                                            )}>
                                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                     <path d="M5 12h14M12 5l7 7-7 7" />
                                                 </svg>

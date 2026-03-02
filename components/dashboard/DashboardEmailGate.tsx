@@ -154,7 +154,7 @@ export function DashboardEmailGate({ scanId, onEmailCaptured, className }: Dashb
                         </div>
                     ) : (
                         <RSButton
-                            variant="danger"
+                            variant="primary"
                             fullWidth
                             size="lg"
                             className="font-bold tracking-[0.3em] shadow-lg rounded-[2px]"

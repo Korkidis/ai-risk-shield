@@ -164,8 +164,8 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24, // 24 hours (minimize exposure window)
     })
 
-    // 3. Generate Magic Link (Auth Token) — Sprint 10.1: canonical workspace
-    const nextUrl = `/dashboard/scans-reports?highlight=${scanId}&verified=true`
+    // 3. Generate Magic Link (Auth Token) — return to dashboard scan workspace
+    const nextUrl = `/dashboard?scan=${scanId}&verified=true`
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email,

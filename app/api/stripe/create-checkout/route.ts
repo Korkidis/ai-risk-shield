@@ -149,14 +149,14 @@ export async function POST(request: NextRequest) {
             mode = 'payment'
 
             if (user) {
-                successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans-reports?highlight=${scanId}&purchased=true`
+                successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?scan=${scanId}&purchased=true`
             } else {
                 // Anonymous Success: Send to Login with magic link flag
                 // Webhook will create user and send magic link email
                 successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login?magic_link_sent=true`
             }
 
-            cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans-reports?highlight=${scanId}&canceled=true`
+            cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?scan=${scanId}&canceled=true`
 
         } else if (purchaseType === 'subscription' && planId) {
             // Subscription purchase — only allow purchasable plans
