@@ -62,3 +62,16 @@ UnifiedScanDrawer, ScanCard extraction, trust claims, detail fetch, lint clean.
 - Refactored `useRealtimeScans.ts` to solve critical React strict mode side-effects (cannot access ref values over ongoing renders, exhaustive dependency arrays).
 - Refactored `RSTelemetryPanel.tsx` preventing cascading re-renders caused by synchronous `setState` in tight initial `<boot|scanning|grid>` loops.
 - `tsc --noEmit` clears fully. Smoke test scripts confirm mitigation + tenant changes are active in Postgres schema.
+
+## Sprint 10 — Quota Coherence + Flow Hardening
+
+### 10.x Follow-up Fixes (Applied)
+- **Atomic scan usage:** moved completion-time increment to `increment_tenant_scan_usage` RPC in `lib/ai/scan-processor.ts` and anonymous merge path in `app/api/scans/assign-to-user/route.ts`.
+- **Anonymous quota correctness:** `checkAnonymousQuota` now derives both session/IP counts from `scans` rows (`session_id` + `ip_hash`) and excludes `status='failed'` for both checks.
+- **Bulk share robustness:** bulk share now uses `Promise.allSettled`, copies real tokenized share URLs, and reports success/failure counts accurately.
+- **Mitigation PDF integrity label:** checksum label now matches implementation (`FNV1A64`) instead of `SHA-256`.
+
+### Migration
+- Added migration: `supabase/migrations/20260302_atomic_quota_and_anon_ip_hash.sql`
+  - Adds `scans.ip_hash`
+  - Adds `increment_tenant_scan_usage(uuid, integer)` SECURITY DEFINER function

@@ -2,6 +2,17 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getActiveTenantId } from './tenant';
+import { getSessionId } from '@/lib/session';
+
+/**
+ * Sprint 10.5: Get anonymous session ID for entitlement checks.
+ * Returns the httpOnly session cookie value (not accessible from client JS).
+ * Used to pass anonSessionId to Entitlements.canViewTeaser() for race-condition
+ * handling when scan assignment hasn't completed yet.
+ */
+export async function getAnonSessionId(): Promise<string | null> {
+    return getSessionId();
+}
 
 export type BillingStatus = {
     planId: string;

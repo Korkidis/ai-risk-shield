@@ -44,6 +44,7 @@ export interface BrandGuideline {
 export interface ExtendedScan {
   id: string
   session_id?: string | null // For anonymous scans
+  ip_hash?: string | null
   tenant_id: string | null
   analyzed_by?: string | null // User ID who analyzed
   asset_id: string

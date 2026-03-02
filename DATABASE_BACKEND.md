@@ -36,6 +36,7 @@ The existing Supabase schema provides a **solid, enterprise-grade foundation**. 
     *   ✅ Stores all risk scores (IP, Safety, Provenance).
     *   ✅ `risk_level` enum matches standards.
     *   ✅ `session_id` + `analyzed_by` (nullable) supports hybrid flow.
+    *   ✅ `ip_hash` supports anonymous quota enforcement by IP without storing raw IPs.
 *   **`scan_findings`**:
     *   ✅ Flexible JSONB for evidence.
     *   ✅ Severity levels match standards (`critical`, `high`, etc.).
@@ -43,7 +44,9 @@ The existing Supabase schema provides a **solid, enterprise-grade foundation**. 
 ### Security & Compliance (SOC 2)
 *   **`audit_log`**: exists and tracks `action`, `resource`, `user`, `ip`.
 *   **`brand_profiles`**: Columns for `encrypted_guidelines` (AES-256) exist. Excellent.
-*   **Quota Management**: `consume_quota()` Postgres function exists for atomic enforcement.
+*   **Quota Management**:
+    *   `increment_tenant_scan_usage()` provides atomic completion-time scan charging.
+    *   `consume_quota()` remains available for quota-style atomic increments (used by mitigation credits flow).
 
 ---
 
@@ -62,10 +65,10 @@ Code analysis reveals two "invisible" storage layers:
 2.  **Google Cloud**: Large video assets are uploaded to `GoogleAIFileManager` for Gemini analysis. (Explicitly deleted after analysis).
 
 ### Async Architecture
-The system uses a **Self-Referential HTTP Pattern** for background processing:
-*   `anonymous-upload` endpoint triggers `fetch('${APP_URL}/api/scans/process')`.
-*   **Risk**: If the serverless function times out, the `fetch` might fail silently or the process might be killed.
-*   **Recommendation**: Monitor this closely. If reliability drops, move to Supabase Edge Functions with Queues.
+The system uses a **direct fire-and-forget in-process trigger** for background processing:
+*   Upload routes dynamically import `lib/ai/scan-processor` and call `processScan(scanId)`.
+*   **Risk**: If the serverless worker is terminated early, processing can be interrupted.
+*   **Recommendation**: Monitor completion reliability. If needed, move processing to a durable queue/worker pattern (e.g., Supabase Edge Functions + queue).
 
 ### External Services
 *   **Email**: Resend (`RESEND_API_KEY`).
@@ -131,11 +134,16 @@ The following core backend features have been implemented and verified as of `20
 
 ### A. Quota Enforcement
 **Status:** ✅ Live & Enforced
-*   **Mechanism**: A strict check is performed in `app/api/scans/upload/route.ts` before processing begins.
+*   **Mechanism**: Two-stage enforcement across upload and completion.
 *   **Logic**:
-    1.  Fetches `tenants.monthly_scan_limit` and `tenants.scans_used_this_month`.
-    2.  If `used >= limit`, returns `403 Forbidden` ("Monthly scan limit reached").
-    3.  On success, calls `rpc('increment_scans_used')` to atomiaclly update the counter.
+    1.  Upload route fetches `tenants.monthly_scan_limit` and `tenants.scans_used_this_month`.
+    2.  FREE plan users with `used >= limit` are blocked at upload (`403 Forbidden`).
+    3.  Upload route creates the scan but does **not** increment usage at upload time.
+    4.  On successful completion, `lib/ai/scan-processor.ts` calls `rpc('increment_tenant_scan_usage')` atomically.
+    5.  Stripe metered usage reporting is sent at completion, aligned with charged scans only.
+*   **Anonymous quota**:
+    1.  `checkAnonymousQuota()` derives counts from `scans` by `session_id` and `ip_hash`.
+    2.  Failed scans are excluded from both session and IP limits.
 *   **Admin Override**: Limits can be adjusted manually in the `tenants` table.
 
 ### B. Data Retention Policy

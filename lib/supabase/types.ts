@@ -613,6 +613,7 @@ export type Database = {
           guideline_id: string | null
           highest_risk_frame: number | null
           id: string
+          ip_hash: string | null
           ip_risk_score: number | null
           is_video: boolean
           notes: string | null
@@ -650,6 +651,7 @@ export type Database = {
           guideline_id?: string | null
           highest_risk_frame?: number | null
           id?: string
+          ip_hash?: string | null
           ip_risk_score?: number | null
           is_video?: boolean
           notes?: string | null
@@ -687,6 +689,7 @@ export type Database = {
           guideline_id?: string | null
           highest_risk_frame?: number | null
           id?: string
+          ip_hash?: string | null
           ip_risk_score?: number | null
           is_video?: boolean
           notes?: string | null
@@ -1159,6 +1162,10 @@ export type Database = {
         }[]
       }
       current_session_id: { Args: never; Returns: string }
+      increment_tenant_scan_usage: {
+        Args: { p_amount?: number; p_tenant_id: string }
+        Returns: number
+      }
       get_active_tenant: { Args: never; Returns: string }
       get_user_tenant_id: { Args: { p_user: string }; Returns: string }
       is_agency_admin: { Args: never; Returns: boolean }

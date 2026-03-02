@@ -10,6 +10,8 @@ import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
 import { type RiskLevel } from '@/components/rs/RSRiskScore'
 import { format } from 'date-fns'
 import { formatBytes } from '@/lib/utils'
+import { generateMitigationPDF } from '@/lib/pdf-generator'
+import { Download } from 'lucide-react'
 import Image from 'next/image'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -538,6 +540,23 @@ export function UnifiedScanDrawer({
                                     )}
                                 </div>
                             )}
+
+                            {/* Download Mitigation PDF (Sprint 10.10) */}
+                            <RSButton
+                                variant="ghost"
+                                className="w-full h-8 text-[8px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all mt-3"
+                                onClick={() => {
+                                    generateMitigationPDF(
+                                        rc,
+                                        scan,
+                                        latestMitigation.id,
+                                        latestMitigation.completed_at || undefined,
+                                    )
+                                }}
+                            >
+                                <Download className="w-3 h-3 mr-1.5" />
+                                Export_Mitigation_PDF
+                            </RSButton>
                         </section>
                     )
                 })()}

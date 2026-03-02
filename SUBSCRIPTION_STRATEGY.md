@@ -1,12 +1,12 @@
 ---
 Status: Active
-Last Updated: Feb 1, 2026
+Last Updated: Mar 2, 2026
 Owner: Product Lead
 Context: The canonical reference for all pricing, limits, and entitlements. Drives `lib/plans.ts` and Stripe logic.
 ---
 
 # Subscription Strategy & Pricing Model
-**Version:** 1.0 | **Status:** Source of Truth | **Last Updated:** February 1, 2026
+**Version:** 1.2 | **Status:** Source of Truth | **Last Updated:** March 2, 2026
 
 > [!IMPORTANT]
 > This document is the **canonical reference** for all pricing, limits, and entitlements.
@@ -144,8 +144,11 @@ The feature table above defines **entitlements**, not necessarily shipped UI or 
 - **Implementation**:
     1.  Checkout Session includes `price_metered_xxx` (Usage Type: Metered).
     2.  Webhook stores `stripe_metered_item_id` in `tenants`.
-    3.  `reportScanUsage()` calls Stripe API `usage_records.create({ action: 'increment' })` on every scan.
+    3.  `reportScanUsage()` calls Stripe API `usage_records.create({ action: 'increment' })` on every **completed** scan.
     4.  Stripe automatically calculates overage at end of billing cycle based on tiers.
+
+> [!NOTE]
+> Scan usage is charged at **completion**, not upload. The atomic counter is `increment_tenant_scan_usage()`; failed scans are not charged.
 
 ```typescript
 // lib/stripe-usage.ts
@@ -193,7 +196,7 @@ overage_reports INTEGER NOT NULL DEFAULT 0
 - [x] Update `app/api/stripe/webhook/route.ts` to apply limits on upgrade
 - [x] Update `lib/entitlements.ts` to read from `plans.ts`
 - [x] Add feature flag columns to `tenants` table (migration)
-- [x] Update `consume_quota()` to allow overages for paid plans
+- [x] Charge scans at completion via atomic `increment_tenant_scan_usage()` RPC
 - [x] Build pricing page UI reflecting these tiers
 - [x] Implement annual billing option in Stripe checkout
 - [x] Implement Stripe Metered Billing (usage reporting)
@@ -204,6 +207,7 @@ overage_reports INTEGER NOT NULL DEFAULT 0
 
 | Date | Version | Author | Changes |
 | :--- | :--- | :--- | :--- |
+| 2026-03-02 | 1.2 | AI + Product | Clarified completion-time scan charging and atomic usage RPC (`increment_tenant_scan_usage`) |
 | 2026-02-01 | 1.1 | AI + Product | Implemented Metered Billing, Annual Discounts, and Pricing Page |
 | 2026-02-01 | 1.0 | AI + Product | Initial spec: 5 tiers, annual discount, overage pricing |
 

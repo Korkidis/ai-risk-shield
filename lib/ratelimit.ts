@@ -106,10 +106,13 @@ export async function checkAnonymousQuota(sessionId: string): Promise<QuotaResul
     windowStart.setDate(windowStart.getDate() - WINDOW_DAYS)
 
     // 1. Check Session Limits (Cookie based)
+    // Exclude failed scans from quota count (Sprint 10.4):
+    // Failed scans are free — only count processing + completed scans.
     const { count: sessionCount, error: sessionError } = await supabase
         .from('scans')
         .select('*', { count: 'exact', head: true })
         .eq('session_id', sessionId)
+        .neq('status', 'failed')
         .gte('created_at', windowStart.toISOString())
 
     if (sessionError) {
@@ -122,22 +125,21 @@ export async function checkAnonymousQuota(sessionId: string): Promise<QuotaResul
         return { allowed: false, remaining: 0, reason: 'session_limit', limit: MAX_SCANS }
     }
 
-    // 2. Check IP Limits (Hash based)
-    const { data: ipData } = await supabase
-        .from('ips')
-        .select('scan_timestamps')
+    // 2. Check IP Limits (Hash based) from scan outcomes.
+    // This ensures failed scans are excluded for IP limits too.
+    const { count: ipCount, error: ipError } = await supabase
+        .from('scans')
+        .select('*', { count: 'exact', head: true })
         .eq('ip_hash', ipHash)
-        .single()
+        .neq('status', 'failed')
+        .gte('created_at', windowStart.toISOString())
 
-    // If no record, they are new
-    let currentIpCount = 0
-    const timestamps = ipData?.scan_timestamps
-    if (timestamps) {
-        const validTimestamps = timestamps.filter((ts: string) =>
-            new Date(ts) > windowStart
-        )
-        currentIpCount = validTimestamps.length
+    if (ipError) {
+        console.error('Quota check error (ip):', ipError)
+        return { allowed: false, remaining: 0, reason: 'ip_limit', limit: MAX_SCANS }
     }
+
+    const currentIpCount = ipCount || 0
 
     if (currentIpCount >= MAX_SCANS) {
         return { allowed: false, remaining: 0, reason: 'ip_limit', limit: MAX_SCANS }
@@ -155,42 +157,8 @@ export async function checkAnonymousQuota(sessionId: string): Promise<QuotaResul
 }
 
 export async function recordAnonymousScan() {
-    const supabase = await createServiceRoleClient()
-    const ip = await getClientIp()
-    const ipHash = await hashIp(ip)
-
-    // 1. Session count is handled by the INSERT into 'scans' naturally
-    // We just need to ensure the caller does that Insert.
-
-    // 2. Update IP count
-    const now = new Date().toISOString()
-
-    const { data: existing } = await supabase
-        .from('ips')
-        .select('scan_timestamps')
-        .eq('ip_hash', ipHash)
-        .single()
-
-    const windowStart = new Date()
-    windowStart.setDate(windowStart.getDate() - WINDOW_DAYS)
-
-    let newTimestamps = [now]
-    const existingTimestamps = existing?.scan_timestamps
-    if (existingTimestamps) {
-        const validOldTimestamps = existingTimestamps.filter((ts: string) =>
-            new Date(ts) > windowStart
-        )
-        newTimestamps = [...validOldTimestamps, now]
-    }
-
-    const { error: upsertError } = await supabase
-        .from('ips')
-        .upsert({
-            ip_hash: ipHash,
-            scan_timestamps: newTimestamps,
-        }, { onConflict: 'ip_hash' })
-
-    if (upsertError) {
-        console.error('Failed to record IP scan:', upsertError)
-    }
+    // Deprecated in Sprint 10 follow-up.
+    // Anonymous quota is now derived directly from `scans` rows (session_id/ip_hash)
+    // with failed scans excluded, so no separate IP timestamp ledger is needed.
+    await Promise.resolve()
 }

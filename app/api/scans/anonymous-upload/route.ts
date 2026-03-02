@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getOrCreateSessionId } from '@/lib/session'
+import { getClientIp, hashIp } from '@/lib/ratelimit'
 import { createHash } from 'crypto'
 import type { Database } from '@/lib/supabase/types'
 
@@ -127,8 +128,11 @@ export async function POST(request: Request) {
 
 
     // Create scan record
+    const clientIp = await getClientIp()
+    const ipHash = await hashIp(clientIp)
     const scanData: Database['public']['Tables']['scans']['Insert'] = {
       session_id: sessionId,
+      ip_hash: ipHash,
       tenant_id: null,
       analyzed_by: null,
       asset_id: asset!.id,
@@ -152,13 +156,9 @@ export async function POST(request: Request) {
       processScan(newScan.id).catch(err => console.error('Background analysis failed:', err))
     })
 
-    // 5. Record scan for quota tracking (only in production)
+    // 5. Consume one unit from the pre-check result (production only).
+    // Quota is derived from scans table rows, so no separate IP ledger write.
     if (!isDev) {
-      const { recordAnonymousScan } = await import('@/lib/ratelimit')
-      await recordAnonymousScan().catch(err =>
-        console.error('Failed to record anonymous scan:', err)
-      )
-      // Decrement remaining since we just consumed a scan
       quotaRemaining = Math.max(0, quotaRemaining - 1)
     }
 
@@ -172,4 +172,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }
-

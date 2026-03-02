@@ -20,7 +20,7 @@ import { RSFileUpload } from '@/components/rs/RSFileUpload'
 import { useRealtimeScans } from '@/hooks/useRealtimeScans'
 import { ScanCard } from '@/components/dashboard/ScanCard'
 import { UnifiedScanDrawer } from '@/components/dashboard/UnifiedScanDrawer'
-import { getTenantBillingStatus, BillingStatus } from '@/app/actions/billing'
+import { getTenantBillingStatus, BillingStatus, getAnonSessionId } from '@/app/actions/billing'
 import { generateForensicReport } from '@/lib/pdf-generator'
 import { Entitlements } from '@/lib/entitlements'
 import { type PlanId } from '@/lib/plans'
@@ -64,6 +64,7 @@ function ScansReportsContent() {
 
     // Entitlements State
     const [userContext, setUserContext] = useState<{ id: string; tenant_id: string; plan: PlanId } | null>(null)
+    const [anonSessionId, setAnonSessionId] = useState<string | null>(null)
     const [showAuditModal, setShowAuditModal] = useState(false)
     const [shareToast, setShareToast] = useState<string | null>(null)
     const [purchaseToast, setPurchaseToast] = useState(false)
@@ -418,6 +419,12 @@ function ScansReportsContent() {
         fetchBilling()
     }, [scans]) // Refresh quota when scans list updates
 
+    // Sprint 10.5: Fetch anonymous session ID for entitlement checks
+    // Handles race condition where scan assignment hasn't completed yet
+    useEffect(() => {
+        getAnonSessionId().then(setAnonSessionId).catch(() => { /* non-critical */ })
+    }, [])
+
     // Build user context for entitlement checks
     useEffect(() => {
         if (!billingStatus || scans.length === 0) return
@@ -467,7 +474,13 @@ function ScansReportsContent() {
         }
     }
 
-    const handleShare = async (scanId: string) => {
+    const handleShare = async (
+        scanId: string,
+        options?: { copyToClipboard?: boolean; showToast?: boolean }
+    ) => {
+        const copyToClipboard = options?.copyToClipboard ?? true
+        const showToast = options?.showToast ?? true
+
         try {
             const res = await fetch(`/api/scans/${scanId}`, {
                 method: 'PATCH',
@@ -477,13 +490,25 @@ function ScansReportsContent() {
             if (!res.ok) throw new Error('Failed to generate share link')
             const data = await res.json()
             const shareUrl = `${window.location.origin}/scan/${scanId}?token=${data.scan.share_token}`
-            await navigator.clipboard.writeText(shareUrl)
-            setShareToast('Link_Copied')
-            setTimeout(() => setShareToast(null), 2500)
+
+            if (copyToClipboard) {
+                await navigator.clipboard.writeText(shareUrl)
+            }
+
+            if (showToast) {
+                setShareToast('Link_Copied')
+                setTimeout(() => setShareToast(null), 2500)
+            }
+
+            return shareUrl
         } catch (err) {
             console.error('Share failed:', err)
-            setShareToast('Share_Failed')
-            setTimeout(() => setShareToast(null), 2500)
+            if (showToast) {
+                setShareToast('Share_Failed')
+                setTimeout(() => setShareToast(null), 2500)
+                return ''
+            }
+            throw err
         }
     }
 
@@ -613,6 +638,32 @@ function ScansReportsContent() {
                     </div>
                 </div>
 
+                {/* Sprint 10.6: Quota Exhaustion Banner */}
+                {billingStatus && billingStatus.scansUsed >= billingStatus.monthlyScanLimit && (
+                    <div className="px-6 md:px-12 py-3 bg-[var(--rs-signal)]/10 border-b border-[var(--rs-signal)]/20 shrink-0">
+                        <div className="max-w-[1800px] mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <AlertOctagon className="w-4 h-4 text-[var(--rs-signal)]" />
+                                <span className="text-xs font-mono font-bold text-[var(--rs-signal)] uppercase tracking-wider">
+                                    {billingStatus.planId === 'free'
+                                        ? 'Monthly scan limit reached. Upgrade to continue scanning.'
+                                        : `Overage scans will be billed at your plan rate.`
+                                    }
+                                </span>
+                            </div>
+                            {billingStatus.planId === 'free' && (
+                                <RSButton
+                                    variant="ghost"
+                                    onClick={() => setShowAuditModal(true)}
+                                    className="text-[var(--rs-signal)] border-[var(--rs-signal)]/30 hover:bg-[var(--rs-signal)]/10 text-xs uppercase tracking-wider"
+                                >
+                                    Upgrade_Plan
+                                </RSButton>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Forensic Field Substrate */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar relative flex flex-col">
                     <div className="max-w-[1800px] w-full mx-auto px-6 md:px-12 py-12 flex-1 z-10">
@@ -727,7 +778,7 @@ function ScansReportsContent() {
                             onClose={() => setShowDetails(false)}
                             entitlements={{
                                 canViewFull: !!canViewFull,
-                                canViewTeaser: selectedScan ? Entitlements.canViewTeaser(userContext, selectedScan) : false,
+                                canViewTeaser: selectedScan ? Entitlements.canViewTeaser(userContext, selectedScan, anonSessionId || undefined) : false,
                                 mitigationCredits: mitigationEntitlement,
                             }}
                             onGenerateMitigation={async () => {
@@ -794,14 +845,58 @@ function ScansReportsContent() {
                             if (scan && scan.status === 'complete') handleDownload(scan)
                         })
                     }}
-                    onShare={() => {
-                        // Share the first selected scan (batch share needs dedicated API)
-                        if (selectedIds.length > 0) handleShare(selectedIds[0])
+                    onShare={async () => {
+                        const results = await Promise.allSettled(
+                            selectedIds.map(id =>
+                                handleShare(id, { copyToClipboard: false, showToast: false })
+                            )
+                        )
+
+                        const successfulLinks = results
+                            .filter((result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled')
+                            .map(result => result.value)
+                        const failedCount = results.length - successfulLinks.length
+
+                        if (successfulLinks.length > 0) {
+                            try {
+                                await navigator.clipboard.writeText(successfulLinks.join('\n'))
+                                setShareToast(`${successfulLinks.length} share link${successfulLinks.length > 1 ? 's' : ''} copied`)
+                            } catch {
+                                setShareToast(`${successfulLinks.length} share link${successfulLinks.length > 1 ? 's' : ''} generated`)
+                            }
+                            setTimeout(() => setShareToast(null), 3000)
+                        }
+
+                        if (failedCount > 0) {
+                            const msg = `${failedCount} share${failedCount > 1 ? 's' : ''} failed`
+                            setShareToast(successfulLinks.length > 0 ? `${successfulLinks.length} success, ${msg}` : msg)
+                            setTimeout(() => setShareToast(null), 3000)
+                        }
                     }}
-                    onDelete={() => {
-                        if (confirm(`Purge ${selectedIds.length} records from the archive?`)) {
-                            setScans(prev => prev.filter(s => !selectedIds.includes(s.id)))
-                            setSelectedIds([])
+                    onDelete={async () => {
+                        // Sprint 10.7: Wire bulk delete to real API
+                        if (!confirm(`Purge ${selectedIds.length} records from the archive? This cannot be undone.`)) return
+                        const idsToDelete = [...selectedIds]
+                        // Optimistic removal
+                        setScans(prev => prev.filter(s => !idsToDelete.includes(s.id)))
+                        setSelectedIds([])
+
+                        const results = await Promise.allSettled(
+                            idsToDelete.map(id =>
+                                fetch(`/api/scans/${id}`, { method: 'DELETE' })
+                                    .then(res => {
+                                        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                                        return id
+                                    })
+                            )
+                        )
+                        const failed = results.filter(r => r.status === 'rejected')
+                        if (failed.length > 0) {
+                            // Revert failed deletes by re-fetching
+                            console.error(`${failed.length} of ${idsToDelete.length} deletes failed`)
+                            setShareToast(`${failed.length} delete${failed.length > 1 ? 's' : ''} failed`)
+                            setTimeout(() => setShareToast(null), 3000)
+                            fetchScans(true) // Re-fetch to restore accurate state
                         }
                     }}
                 />

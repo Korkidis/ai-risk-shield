@@ -459,6 +459,31 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       throw new Error('Failed to update scan: ' + updateError.message)
     }
 
+    // 8. Charge quota at COMPLETION (Sprint 10.1)
+    // Failed scans never reach here — quota is only consumed for successful analysis.
+    if (scan.tenant_id) {
+      // Authenticated scan: atomically increment tenant counter.
+      const { error: usageError } = await supabase.rpc('increment_tenant_scan_usage', {
+        p_tenant_id: scan.tenant_id,
+        p_amount: 1,
+      })
+
+      if (usageError) {
+        console.error(`Failed to increment scan usage for tenant ${scan.tenant_id}:`, usageError)
+        // Non-blocking — scan completed successfully, usage is best-effort
+      }
+
+      // Report usage to Stripe for metered billing (fire-and-forget)
+      import('@/lib/stripe-usage').then(({ reportScanUsage }) => {
+        reportScanUsage(scan.tenant_id!).catch(err =>
+          console.error('Failed to report usage to Stripe:', err)
+        )
+      })
+    }
+    // Anonymous scans: session-based count is derived from scan records in the
+    // scans table (checkAnonymousQuota counts rows). IP tracking is recorded at
+    // upload time (requires request context). Failed scans excluded in 10.4.
+
     console.log(`Scan ${scanId} completed in ${analysisTime}ms`)
 
     await broadcastScanProgress(scanId, 100, "Analysis complete.")
@@ -481,6 +506,13 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
           error_message: (error as Error).message
         })
         .eq('id', scanId)
+
+      // Defensive refund (Sprint 10.2): Since quota is charged at completion,
+      // failures should never have been charged. But if a race condition caused
+      // a double-charge, log it for observability. No decrement needed because
+      // the quota increment above only fires after status='complete' succeeds.
+      // If the status update to 'complete' succeeded but a later step threw,
+      // the scan IS complete and the charge is correct.
     } catch (updateError) {
       console.error('Failed to mark scan as failed:', updateError)
     }

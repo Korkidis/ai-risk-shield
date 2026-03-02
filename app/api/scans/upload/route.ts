@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getTenantId, requireAuth } from '@/lib/supabase/auth'
-import { reportScanUsage } from '@/lib/stripe-usage'
 import { createHash } from 'crypto'
 import { checkRateLimit } from '@/lib/ratelimit'
 
@@ -195,24 +194,10 @@ export async function POST(request: Request) {
             }, { status: 500 })
         }
 
-        // 2. Increment Usage — Direct update (increment_scans_used RPC not deployed)
-        const { error: usageError } = await supabase
-            .from('tenants')
-            .update({ scans_used_this_month: used + 1 })
-            .eq('id', tenantId)
+        // NOTE: Quota increment moved to scan-processor.ts (Sprint 10.1)
+        // Usage is charged at scan COMPLETION, not at upload.
+        // Failed scans are free. Stripe usage is also reported at completion.
 
-        if (usageError) {
-            console.error('Failed to increment scan usage:', usageError)
-            // Non-blocking — scan was created successfully, usage is best-effort
-        }
-
-        // 3. Report usage to Stripe for metered billing (fire-and-forget)
-        // This enables automatic overage billing at period end
-        reportScanUsage(tenantId).catch(err =>
-            console.error('Failed to report usage to Stripe:', err)
-        )
-
-        // Trigger background processing
         // Trigger background processing (Direct call, bypass Auth-gated API)
         import('@/lib/ai/scan-processor').then(({ processScan }) => {
             processScan(scan!.id).catch(err => console.error('Background analysis failed:', err))

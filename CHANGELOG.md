@@ -14,6 +14,10 @@
 - **Upgrade UX Truth**: Audit and Upgrade modals now match plan limits and pricing ($49).
 - **Dead-end Navigation**: History/Reports pages redirect to Scans & Reports.
 - **Performance Hotspots**: Landing page split into server/client; scan card layout thrash removed.
+- **Quota Race Condition**: Tenant scan counters now increment atomically at scan completion.
+- **Anonymous Quota Drift**: IP/session limits now derive from `scans` rows and exclude failed scans in both paths.
+- **Bulk Share Reliability**: Batch sharing now returns/copies tokenized links and reports partial failures correctly.
+- **Mitigation PDF Integrity Labeling**: Integrity footer now matches implemented checksum algorithm (`FNV1A64`).
 
 ## [2026-02-11] - Risk Model Unification & Report Rehab
 ### Added
