@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getSessionId } from '@/lib/session'
 import { checkRateLimit, getRateLimitKey } from '@/lib/ratelimit'
+import type { RiskProfile } from '@/lib/gemini-types'
+import type { ExtendedScan } from '@/types/database'
+import type { Database } from '@/lib/supabase/types'
+
+type ScanFindingRow = Database['public']['Tables']['scan_findings']['Row']
+type AssetRow = Pick<Database['public']['Tables']['assets']['Row'], 'filename' | 'file_type' | 'file_size'>
 
 /**
  * POST /api/scans/capture-email
@@ -81,10 +87,40 @@ export async function POST(request: Request) {
       // If duplicate, we just proceed to generate link for the existing email
     }
 
-    // Fetch scan score
+    // Fetch scan score and full data for PDF generation
+    const baseSelect = `
+      id,
+      created_at,
+      tenant_id,
+      asset_id,
+      analyzed_by,
+      session_id,
+      email,
+      composite_score,
+      ip_risk_score,
+      safety_risk_score,
+      provenance_risk_score,
+      risk_level,
+      provenance_status,
+      provenance_data,
+      scan_findings(*),
+      assets (
+          filename,
+          file_type,
+          mime_type,
+          file_size,
+          storage_path
+      ),
+      provenance_details(*),
+      mitigation_reports(*),
+      share_token,
+      share_expires_at,
+      status
+    `
+
     const { data: scanData } = await supabase
       .from('scans')
-      .select('composite_score')
+      .select(`${baseSelect}, risk_profile`)
       .eq('id', scanId)
       .single()
 
@@ -143,13 +179,63 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Auth generation failed' }, { status: 500 })
     }
 
+    // 4. Generate Sample PDF Buffer
+    let pdfBuffer: Buffer | undefined = undefined
+    if (scanData && scanData.risk_profile) {
+      try {
+        const { generateForensicReport } = await import('@/lib/pdf-generator')
+
+        const primaryAsset = (
+          Array.isArray(scanData.assets) ? scanData.assets[0] : scanData.assets
+        ) as AssetRow | null
+        const scanFindings = (
+          Array.isArray(scanData.scan_findings) ? scanData.scan_findings : []
+        ) as ScanFindingRow[]
+
+        // Build the minimal scan shape expected by generateForensicReport.
+        const mappedScan: ExtendedScan & {
+          filename: string
+          scan_findings: Array<{ title: string; severity: string; finding_type: string; description: string }>
+        } = {
+          id: scanData.id,
+          tenant_id: scanData.tenant_id,
+          asset_id: scanData.asset_id,
+          status: scanData.status as ExtendedScan['status'],
+          created_at: scanData.created_at,
+          updated_at: scanData.created_at,
+          filename: primaryAsset?.filename ?? 'document',
+          scan_findings: scanFindings.map((f) => ({
+            title: f.title,
+            severity: f.severity,
+            finding_type: f.finding_type,
+            description: f.description,
+          })),
+        }
+
+        const doc = generateForensicReport(mappedScan, scanData.risk_profile as unknown as RiskProfile, true)
+        const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer
+        const buffer = Buffer.from(arrayBuffer)
+
+        // Only attach if < 5MB (5 * 1024 * 1024 bytes)
+        if (buffer.length < 5 * 1024 * 1024) {
+          pdfBuffer = buffer
+          console.log(`[Email] Generated sample PDF for ${scanId}, size: ${Math.round(buffer.length / 1024)}KB`)
+        } else {
+          console.log(`[Email] Sample PDF for ${scanId} too large (${Math.round(buffer.length / 1024)}KB), skipping attachment`)
+        }
+      } catch (err) {
+        console.error('[Email Capture] Failed to generate PDF attachment:', err)
+        // Non-fatal, just send email without attachment
+      }
+    }
+
     // Send magic link email
     // linkData.properties.action_link contains the valid auth token
     const magicLink = linkData.properties.action_link
     const { sendSampleReportEmail } = await import('@/lib/email')
 
     // We don't await the email to keep UI snappy, but we catch errors
-    sendSampleReportEmail(email, scanId, score, count, magicLink, topFinding).catch(err =>
+    sendSampleReportEmail(email, scanId, score, count, magicLink, topFinding, pdfBuffer).catch(err =>
       console.error('Background email send failed:', err)
     )
 

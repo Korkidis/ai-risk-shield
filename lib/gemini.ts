@@ -488,7 +488,7 @@ export async function analyzeImageMultiPersona(
 
         // 5-8. Composite Score (Firefly Rule + weights + multiplier + critical override)
         // All logic is now in the canonical scoring module
-        let composite = computeCompositeScore({
+        const composite = computeCompositeScore({
             ipScore: ip.score,
             safetyScore: safety.score,
             c2paStatus: c2paReport.status as any,

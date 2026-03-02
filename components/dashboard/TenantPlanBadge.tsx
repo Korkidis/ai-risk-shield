@@ -33,6 +33,10 @@ export function TenantPlanBadge() {
                 <span>Seats Used:</span>
                 <span className="font-mono font-medium text-rs-black">{status.seatsUsed}/{status.seatLimit}</span>
             </div>
+            <div className="flex justify-between items-center mt-1">
+                <span>Scans Used:</span>
+                <span className="font-mono font-medium text-rs-black">{status.scansUsed}/{status.monthlyScanLimit}</span>
+            </div>
         </div>
     );
 }

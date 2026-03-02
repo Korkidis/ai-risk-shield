@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getActiveTenantId } from './tenant';
-import { startOfMonth, endOfMonth } from 'date-fns';
 
 export type BillingStatus = {
     planId: string;
@@ -31,7 +30,7 @@ export async function getTenantBillingStatus(tenantId?: string): Promise<Billing
     // 1. Fetch Tenant Details
     const { data: tenantData, error: tenantError } = await supabase
         .from('tenants')
-        .select('plan, monthly_scan_limit, seat_limit, subscription_status, monthly_report_limit, brand_profile_limit, monthly_mitigation_limit, mitigations_used_this_month')
+        .select('plan, monthly_scan_limit, seat_limit, subscription_status, monthly_report_limit, brand_profile_limit, monthly_mitigation_limit, mitigations_used_this_month, scans_used_this_month')
         .eq('id', targetTenantId)
         .single();
 
@@ -44,24 +43,16 @@ export async function getTenantBillingStatus(tenantId?: string): Promise<Billing
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', targetTenantId);
 
-    // 3. Count Scans (This Month)
-    const now = new Date();
-    const start = startOfMonth(now).toISOString();
-    const end = endOfMonth(now).toISOString();
-
-    const { count: scansUsed } = await supabase
-        .from('scans')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', targetTenantId)
-        .gte('created_at', start)
-        .lte('created_at', end);
+    // 3. Get Scans Used (This Month) directly from the tenant ledger
+    // This is much faster and more accurate than counting rows, and respects atomic increments
+    const scansUsed = tenant.scans_used_this_month || 0;
 
     return {
         planId: tenant.plan || 'free',
         seatLimit: tenant.seat_limit || 1,
         seatsUsed: seatsUsed || 0,
-        monthlyScanLimit: tenant.monthly_scan_limit || 3,
-        scansUsed: scansUsed || 0,
+        monthlyScanLimit: tenant.monthly_scan_limit || 0,
+        scansUsed: scansUsed,
         subscriptionStatus: tenant.subscription_status ?? null,
         monthlyReportLimit: tenant.monthly_report_limit ?? 0,
         brandProfileLimit: tenant.brand_profile_limit ?? 1,

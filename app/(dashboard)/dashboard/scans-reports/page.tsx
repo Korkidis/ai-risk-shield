@@ -499,101 +499,119 @@ function ScansReportsContent() {
                     <RSBreadcrumb items={[{ label: "Scans & Reports" }]} />
                 </div>
                 {/* Header Module - Precision Toolbar */}
-                <header className="w-full border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-6 md:px-12 py-5 z-20 shrink-0">
+                <header className="sticky top-0 z-30 bg-[var(--rs-bg-master)]/95 backdrop-blur-xl border-b border-[var(--rs-border-primary)] pt-8 pb-4 transition-colors duration-500 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+                    <div className="px-6 md:px-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-3xl font-black tracking-tight uppercase">Scans & Reports</h1>
+                            {billingStatus && (
+                                <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-rs-gray-200/50 rounded-full border border-rs-gray-200 text-xs font-mono shadow-sm">
+                                    <span className="text-rs-gray-500 uppercase">Quota:</span>
+                                    <span className={cn(
+                                        "font-bold",
+                                        billingStatus.scansUsed >= billingStatus.monthlyScanLimit ? "text-rs-signal" : "text-rs-black"
+                                    )}>
+                                        {billingStatus.scansUsed} / {billingStatus.monthlyScanLimit}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </header>
+
+                <div className="w-full border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-6 md:px-12 py-5 z-20 shrink-0">
                     <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-6">
-                        {/* Title & Quota */}
                         <div className="flex items-center gap-6 shrink-0">
                             <h1 className="text-xl rs-header-bold-italic tracking-tight text-rs-text-primary whitespace-nowrap rs-etched">
                                 VALIDATION_ARCHIVE
                             </h1>
-                            <div className="hidden lg:flex items-center gap-3 px-3 py-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l1)] rounded-[var(--rs-radius-element)]">
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] rs-etched opacity-60">Usage_Quota</span>
-                                <span className="text-[10px] font-mono font-bold text-rs-text-primary">
-                                    {billingStatus ? `${billingStatus.scansUsed}/${billingStatus.monthlyScanLimit}_SCANS` : '..._SCANS'}
-                                </span>
-                            </div>
                         </div>
-
-                        {/* Horizontal Control Bay */}
-                        <div className="flex-1 flex items-center justify-center gap-3 max-w-4xl">
-                            {/* Search Registry */}
-                            <div className="relative w-full max-w-[320px]">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--rs-text-tertiary)]" />
-                                <input
-                                    type="text"
-                                    placeholder="QUERY_ARCHIVE..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full h-10 pl-10 pr-4 bg-[var(--rs-bg-well)] border-none text-[10px] font-bold font-mono uppercase text-[var(--rs-text-primary)] rounded-[var(--rs-radius-element)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-[var(--rs-text-primary)] transition-all placeholder:text-[var(--rs-text-tertiary)]"
-                                />
-                            </div>
-
-                            {/* Filter Segmented Control */}
-                            <div className="flex items-center p-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] h-10">
-                                {(['all', 'high', 'critical'] as const).map((risk) => (
-                                    <button
-                                        key={risk}
-                                        onClick={() => setFilterRisk(risk)}
-                                        className={cn(
-                                            "h-8 px-4 text-[9px] font-bold uppercase tracking-widest transition-all rounded-[var(--rs-radius-element)] flex items-center",
-                                            filterRisk === risk
-                                                ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)]"
-                                                : "text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] hover:bg-[var(--rs-bg-element)]/50"
-                                        )}
-                                    >
-                                        <span className={filterRisk === risk ? "rs-etched" : ""}>{risk === 'all' ? 'All' : risk}</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Sort Select */}
-                            <div className="relative h-10">
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                    className="h-10 pl-3 pr-8 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] text-[9px] font-bold font-mono uppercase tracking-widest text-[var(--rs-text-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--rs-text-primary)] transition-all"
-                                >
-                                    <option value="date_desc">NEWEST</option>
-                                    <option value="date_asc">OLDEST</option>
-                                    <option value="score_desc">RISK ↓</option>
-                                    <option value="score_asc">RISK ↑</option>
-                                </select>
-                                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-rs-text-tertiary pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
-                            </div>
-
-                            {/* View Toggle */}
-                            <div className="flex items-center p-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] h-10">
-                                {(['grid', 'list'] as const).map((mode) => (
-                                    <button
-                                        key={mode}
-                                        onClick={() => setViewMode(mode)}
-                                        className={cn(
-                                            "w-8 h-8 flex items-center justify-center transition-all rounded-[var(--rs-radius-element)]",
-                                            viewMode === mode
-                                                ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)]"
-                                                : "text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)]"
-                                        )}
-                                    >
-                                        {mode === 'grid'
-                                            ? <div className="w-3 h-3 border-2 border-current rounded-[1px]" />
-                                            : <div className="w-3 h-[2px] bg-current rounded-[1px]" />}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Primary Action */}
-                        <div className="flex items-center gap-4 shrink-0">
-                            <RSButton
-                                icon={<Plus size={16} />}
-                                className="bg-[var(--rs-risk-high)] text-white shadow-[var(--rs-shadow-l2)] hover:brightness-110"
-                                onClick={() => router.push('/dashboard')}
-                            >
-                                NEW_VALIDATION
-                            </RSButton>
+                        <div className="hidden lg:flex items-center gap-3 px-3 py-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l1)] rounded-[var(--rs-radius-element)]">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-secondary)] rs-etched opacity-60">Usage_Quota</span>
+                            <span className="text-[10px] font-mono font-bold text-rs-text-primary">
+                                {billingStatus ? `${billingStatus.scansUsed}/${billingStatus.monthlyScanLimit}_SCANS` : '..._SCANS'}
+                            </span>
                         </div>
                     </div>
-                </header>
+
+                    {/* Horizontal Control Bay */}
+                    <div className="flex flex-1 items-center justify-center gap-3 max-w-4xl mt-4">
+                        {/* Search Registry */}
+                        <div className="relative w-full max-w-[320px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--rs-text-tertiary)]" />
+                            <input
+                                type="text"
+                                placeholder="QUERY_ARCHIVE..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full h-10 pl-10 pr-4 bg-[var(--rs-bg-well)] border-none text-[10px] font-bold font-mono uppercase text-[var(--rs-text-primary)] rounded-[var(--rs-radius-element)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-[var(--rs-text-primary)] transition-all placeholder:text-[var(--rs-text-tertiary)]"
+                            />
+                        </div>
+
+                        {/* Filter Segmented Control */}
+                        <div className="flex items-center p-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] h-10">
+                            {(['all', 'high', 'critical'] as const).map((risk) => (
+                                <button
+                                    key={risk}
+                                    onClick={() => setFilterRisk(risk)}
+                                    className={cn(
+                                        "h-8 px-4 text-[9px] font-bold uppercase tracking-widest transition-all rounded-[var(--rs-radius-element)] flex items-center",
+                                        filterRisk === risk
+                                            ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)]"
+                                            : "text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] hover:bg-[var(--rs-bg-element)]/50"
+                                    )}
+                                >
+                                    <span className={filterRisk === risk ? "rs-etched" : ""}>{risk === 'all' ? 'All' : risk}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Sort Select */}
+                        <div className="relative h-10">
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="h-10 pl-3 pr-8 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] text-[9px] font-bold font-mono uppercase tracking-widest text-[var(--rs-text-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--rs-text-primary)] transition-all"
+                            >
+                                <option value="date_desc">NEWEST</option>
+                                <option value="date_asc">OLDEST</option>
+                                <option value="score_desc">RISK ↓</option>
+                                <option value="score_asc">RISK ↑</option>
+                            </select>
+                            <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-rs-text-tertiary pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+
+                        {/* View Toggle */}
+                        <div className="flex items-center p-1 bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)] h-10">
+                            {(['grid', 'list'] as const).map((mode) => (
+                                <button
+                                    key={mode}
+                                    onClick={() => setViewMode(mode)}
+                                    className={cn(
+                                        "w-8 h-8 flex items-center justify-center transition-all rounded-[var(--rs-radius-element)]",
+                                        viewMode === mode
+                                            ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)]"
+                                            : "text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)]"
+                                    )}
+                                >
+                                    {mode === 'grid'
+                                        ? <div className="w-3 h-3 border-2 border-current rounded-[1px]" />
+                                        : <div className="w-3 h-[2px] bg-current rounded-[1px]" />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Primary Action */}
+                    <div className="flex items-center gap-4 shrink-0 mt-4">
+                        <RSButton
+                            icon={<Plus size={16} />}
+                            className="bg-[var(--rs-risk-high)] text-white shadow-[var(--rs-shadow-l2)] hover:brightness-110"
+                            onClick={() => router.push('/dashboard')}
+                        >
+                            NEW_VALIDATION
+                        </RSButton>
+                    </div>
+                </div>
 
                 {/* Forensic Field Substrate */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar relative flex flex-col">
@@ -704,7 +722,7 @@ function ScansReportsContent() {
                 <AnimatePresence>
                     {showDetails && selectedScan && (
                         <UnifiedScanDrawer
-                            scan={selectedScan}
+                            scan={selectedScan!}
                             isOpen={showDetails}
                             onClose={() => setShowDetails(false)}
                             entitlements={{

@@ -1,84 +1,64 @@
-# Session Walkthrough
-*Last updated: 2026-02-15*
+# Sprint 7-9 Walkthrough
 
-## What We're Selling
-Peace of mind you can hand to a lawyer. A PDF that says "I checked this AI image before publishing it" with enough technical authority that a legal team accepts it as due diligence. One sentence. Everything else is implementation detail.
+## Sprint 7 — UI Coherence (`4950eb1`)
+UnifiedScanDrawer, ScanCard extraction, trust claims, detail fetch, lint clean.
 
-## The Buyer
-A marketing manager or agency creative director who just used Midjourney and is thinking: "Is this going to get us sued?" They saw a headline. Legal is nervous. They need a number — any defensible number — to put in front of legal. The emotional trigger is career anxiety dressed as diligence.
+## Sprint 8 — Scans Page Fixes (`79e1d44` + `665526c`)
+| Item | Implementation |
+|------|---------------|
+| Real delete | `handleDrawerDelete` → `DELETE /api/scans/${id}` + optimistic UI |
+| Server search | List route: UUID → `eq`, filename → post-query filter |
+| Server sort/filter | `sort_by`/`sort_order`/`risk_level` params, sort dropdown |
+| Realtime refetch | `handleScanUpdate` fetches detail on `status === 'complete'` |
+| Video risk_profile | Structured blob matching image schema, saved to DB |
+| Empty states | Upload CTA (zero scans) + Clear Filters (no results) |
+| Stabilization | Lightweight list query (removed heavy joins), better error visibility |
 
-Secondary: a freelance designer whose client asked "is this safe?" and they have no answer. They need a PDF to attach. They need to look professional.
+## Sprint 9 — Mitigation Report Pipeline
 
----
+### 9.1 API Route
+[mitigation/route.ts](file:///Users/lastknowngood/Documents/Projects/ai-risk-sheild/app/api/scans/[id]/mitigation/route.ts)
 
-## Current State
-**Revenue loop unblocked.** Anonymous purchase, magic links, and dashboard routing now work end‑to‑end. Performance work has started (landing is server‑rendered; scan card layout thrash removed). Remaining gaps are trust/quality improvements (quota truth, honest telemetry, and real post‑scan actions), plus the security fixes listed below.
+`POST /api/scans/[id]/mitigation` with 5 guardrails:
+1. **Idempotency** — returns existing `complete` (200) or `processing` (202) report
+2. **Failure handling** — always sets `status='failed'` on Gemini errors
+3. **Atomic credits** — `consume_quota` RPC with direct-update fallback
+4. **Schema alignment** — Gemini prompt produces `MitigationReportContent` schema
+5. **API contract** — `{ code, message, report?, cached?, creditsRemaining? }`
 
-## Execution Plan
-**The single source of truth is [`tasks/todo.md`](../tasks/todo.md).** That file contains sprint-level tasks with dependencies, file references, and "why" for every item. Do not plan work from this walkthrough — plan from `todo.md`.
+### 9.2 Drawer CTA Wiring
+[page.tsx](file:///Users/lastknowngood/Documents/Projects/ai-risk-sheild/app/(dashboard)/dashboard/scans-reports/page.tsx#L715-L753) — Optimistic UI: immediately shows `processing` state, merges completed report, handles 202/402/errors with toast feedback.
 
-This file exists to orient new sessions on *what's real, what's broken, and what the product feels like*. `todo.md` says what to do about it.
+### 9.3 Report Display
+[UnifiedScanDrawer.tsx](file:///Users/lastknowngood/Documents/Projects/ai-risk-sheild/components/dashboard/UnifiedScanDrawer.tsx#L449-L548) — Renders when `latestMitigation.status === 'complete'`:
+- Executive summary with decision badge (clear/watch/hold/block)
+- Domain analyses (IP, Safety, Provenance) with severity + exposures
+- Mitigation action plan (priority, domain, owner, effort, verification)
+- Residual risk with publish decision + conditions
 
----
+## Verification
 
-## What's Real and Working
-
-| Component | Status | Where |
-|:---|:---|:---|
-| Anonymous upload (no signup) | Working | `FreeUploadContainer.tsx` → `/api/scans/anonymous-upload` |
-| Gemini multi-persona analysis (3-prompt, aggressive scoring) | Working — **this is the moat** | `lib/gemini.ts` |
-| C2PA provenance verification (real cryptographic) | Working (both paths) | `c2pa-node`, `lib/c2pa/verify.ts` |
-| PDF report generation (branded, Rams tokens) | Working | `lib/pdf-generator.ts` |
-| Stripe billing (subscriptions + one-time + metered overage) | Working (backend) | `lib/plans.ts`, webhook route |
-| Design system (62 RS* components, "forensic instrument") | Distinctive | `components/rs/*` |
-| Email gate + magic link | Working | `auth.admin.generateLink` → `/auth/callback` + Resend |
-| Canonical scoring module (5-value C2PA fidelity) | Working, tested (40 unit tests) | `lib/risk/scoring.ts`, `lib/risk/tiers.ts` |
-| RLS + multi-tenancy + hierarchical agencies | Working | Supabase, 85+ migrations |
-| `risk_profile` JSONB blob storage | Working | `scans.risk_profile` column |
-| Supabase Realtime (scan status updates) | Working (broadcast events + db updates) | `hooks/useRealtimeScans.ts` |
-| Scans & Reports dashboard page | Working (the canonical product page) | `app/(dashboard)/dashboard/scans-reports/` |
-| RSFindingsDossier (real Gemini data) | Working (wired to risk_profile + scan_findings) | `components/rs/RSFindingsDossier.tsx` |
-| ProvenanceTelemetryStream (C2PA data) | Working (fallback to risk_profile.c2pa_report) | `components/rs/ProvenanceTelemetryStream.tsx` |
-| Notes save (persisted to DB) | Working (PATCH /api/scans/[id]) | `scans-reports/page.tsx` |
-| RSC2PAWidget (all 5 C2PA states) | Working (valid/missing/invalid/error/caution) | `components/rs/RSC2PAWidget.tsx` |
-| PDF Download / Export | Working (client-side generation) | `scans-reports/page.tsx` → `lib/pdf-generator.ts` |
-| Quota Displays (Anonymous & Tenant) | Working (real limits from DB/API) | `FreeUploadContainer.tsx`, `RSSidebar.tsx` |
-
-## What's Broken or Theater
-
-| Issue | Impact | Sprint |
-|:---|:---|:---|
-| **Sample PDF not attached to email** | CTA is good, but attachment would increase conversion. | Build 3 |
-
-## Security Issues (Fix Alongside Sprints)
-
-| Issue | Severity | Fix |
-|:---|:---|:---|
-| ~~`/api/scans/process` has no auth~~ | ~~CRITICAL~~ | S1 — FIXED (auth + idempotency added) |
-| ~~`listUsers()` fetches ALL users on email capture~~ | ~~HIGH~~ | S2 — FIXED (createUser + catch) |
-| ~~`/api/debug-provenance` completely open~~ | ~~HIGH~~ | S3 — FIXED (route deleted) |
-| `brand_guidelines` RLS references nonexistent table | MEDIUM | S4 in todo.md — do alongside builds |
-
-## Cleanup (Do When Touching Related Files)
-
-- ~~Delete `/api/auth/verify/route.ts`~~ — DONE (deleted Feb 16)
-- ~~RSC2PAWidget missing `caution` case~~ — DONE (added Feb 16)
-- ~~Delete `/api/analyze/route.ts`~~ — DONE (deleted Feb 16, zero callers)
-- ~~Delete `lib/c2pa/index.ts`~~ — DONE (deleted Feb 16, mock module)
-- Regenerate `types.ts` (massively outdated)
-- Fix video frame count (5 in code, 10 in docs)
-- Fix hardcoded C2PA serial `"C2PA-CERT-884-29-X"`
+| Check | S7 | S8 | S9 |
+|-------|----|----|-----|
+| `tsc --noEmit` | ✅ | ✅ | ✅ |
+| ESLint errors | 0 | 0 | 0 (Excluding legacy `any` types) |
 
 ---
 
-## Document Map
+## Sprint 9 — Pre-Launch QA + Polish
+*(Follow-on to Mitigation Report Pipeline)*
 
-| Doc | Purpose | Authority |
-|:---|:---|:---|
-| **`tasks/todo.md`** | What to build, in what order, with dependencies | **Execution source of truth** |
-| **`brain/walkthrough.md`** (this file) | What's real, what's broken, how the product feels | Session orientation |
-| **`NORTH_STAR.md`** | Vision, personas, jobs-to-be-done, design philosophy | Product strategy |
-| **`tasks/lessons.md`** | Anti-patterns and mistakes to avoid | Self-correction log |
-| **`tasks/rules.md`** | Workflow rules (spec before build, proof of work) | Operating contract |
-| **`tasks/decisions.md`** | Architecture decisions with reasoning | Decision log |
-| **`roadmap.md`** | **DEPRECATED** — redirects to `todo.md` | — |
+### 9.4 Bug Fixes & Enforcements
+- **PDF Finding Leak Fix:** Masked non-hero sample finding descriptions in `lib/pdf-generator.ts` to prevent data leaks for anonymous users.
+- **Scan Ownership Check:** Added strict `session_id` ownership checks in `api/stripe/create-checkout/route.ts` to prevent cross-tenant/cross-user purchase exploitation.
+- **Stripe Cache TTL:** Verified and tuned standard price caching logic.
+- **Guideline Validation:** Ensured `api/scans/upload/route.ts` warns or handles unresolvable UUID guidelines appropriately.
+
+### 9.5 Quota & Notification Wiring
+- **UI Quota Sync:** Exposed real-time `scansUsed / monthlyScanLimit` inside the `TenantPlanBadge` (sidebar) and Scans & Reports header utilizing existing `billing.ts` action and updated DB schema columns.
+- **Sample PDF Magic Link Attachment:** Upgraded `api/scans/capture-email/route.ts` to generate the PDF buffer `< 5MB` and pass it to Resend in `sendSampleReportEmail` along with the authentication link.
+
+### 9.6 ESLint & Stability
+- Refactored `useRealtimeScans.ts` to solve critical React strict mode side-effects (cannot access ref values over ongoing renders, exhaustive dependency arrays).
+- Refactored `RSTelemetryPanel.tsx` preventing cascading re-renders caused by synchronous `setState` in tight initial `<boot|scanning|grid>` loops.
+- `tsc --noEmit` clears fully. Smoke test scripts confirm mitigation + tenant changes are active in Postgres schema.

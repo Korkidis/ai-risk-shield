@@ -6,6 +6,7 @@ import { type PlanId } from '@/lib/plans'
 import { getSessionId } from '@/lib/session'
 import { validateStripePrices } from '@/lib/stripe-validate-prices'
 import { checkRateLimit, getRateLimitKey } from '@/lib/ratelimit'
+import type Stripe from 'stripe'
 
 // Price IDs from Stripe Dashboard - map plan + interval to Stripe Price ID
 const PRICE_IDS: Record<string, string | undefined> = {
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
         // 1. Prepare Customer Info
         let customerEmail = user?.email
         let tenantId = 'anonymous'
-        let userId = user?.id || 'anonymous'
+        const userId = user?.id || 'anonymous'
 
         if (user) {
             const { data: profileData } = await supabase
@@ -106,11 +107,17 @@ export async function POST(request: NextRequest) {
             }
 
             if (user) {
-                const ownsByUser = scanData.user_id === user.id
-                const ownsByTenant = scanData.tenant_id === tenantId
-                const ownsBySession = sessionId && scanData.session_id === sessionId
-                if (!ownsByUser && !ownsByTenant && !ownsBySession) {
-                    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+                // Strict user check: Only the actual user who created the scan can buy it.
+                // We do NOT allow cross-tenant buying (a different user in the same tenant).
+                if (scanData.user_id) {
+                    if (scanData.user_id !== user.id) {
+                        return NextResponse.json({ error: 'Access denied. You can only purchase reports for your own scans.' }, { status: 403 })
+                    }
+                } else {
+                    // Anonymous scan logic for a logged-in user
+                    if (!sessionId || scanData.session_id !== sessionId) {
+                        return NextResponse.json({ error: 'Access denied. You can only purchase reports for your own scans.' }, { status: 403 })
+                    }
                 }
             } else {
                 // If anonymous, scan must belong to the anonymous session
@@ -184,7 +191,7 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const sessionConfig: any = {
+        const sessionConfig: Stripe.Checkout.SessionCreateParams = {
             customer_email: customerEmail, // Optional, Stripe handles if missing
             line_items: lineItems,
             mode: mode,
@@ -193,7 +200,7 @@ export async function POST(request: NextRequest) {
             metadata: {
                 userId,     // 'anonymous' if not logged in
                 tenantId,   // 'anonymous' if not logged in
-                purchaseType,
+                purchaseType: String(purchaseType ?? ''),
                 planId: planId || 'one_time',
                 interval,
                 scanId: scanId || '',
@@ -206,7 +213,7 @@ export async function POST(request: NextRequest) {
             sessionConfig.subscription_data = {
                 metadata: {
                     tenantId,
-                    planId,
+                    planId: planId || '',
                 }
             }
         }
@@ -218,7 +225,7 @@ export async function POST(request: NextRequest) {
             url: session.url
         })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Stripe Checkout Error:', error)
         return NextResponse.json({ error: 'Checkout failed. Please try again.' }, { status: 500 })
     }

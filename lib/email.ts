@@ -48,7 +48,8 @@ export async function sendSampleReportEmail(
     score: number,
     findingsCount: number,
     magicLink: string,
-    topFinding?: { title: string; severity: string }
+    topFinding?: { title: string; severity: string },
+    pdfBuffer?: Buffer
 ) {
     // Graceful fallback for dev if no key
     if (!process.env.RESEND_API_KEY) {
@@ -64,11 +65,17 @@ export async function sendSampleReportEmail(
         // We assume the user has set this up or is testing with their own email.
         const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
 
+        const attachments = pdfBuffer ? [{
+            filename: `Sample_Report_${scanId.slice(0, 8)}.pdf`,
+            content: pdfBuffer
+        }] : []
+
         const result = await withRetry(() => resend.emails.send({
             from: `AI Risk Shield <${fromAddress}>`,
             to: email,
             subject: `🔒 Forensic Analysis Complete • Risk Score: ${score}`,
             react: SampleReportEmail({ scanId, score, riskLevel, findingsCount, magicLink, topFinding }) as any,
+            attachments
         }))
 
         if (result.error) {

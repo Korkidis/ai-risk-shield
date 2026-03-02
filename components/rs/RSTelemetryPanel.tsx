@@ -37,21 +37,24 @@ export function RSTelemetryPanel({
     onAction
 }: RSTelemetryPanelProps) {
     const [displayState, setDisplayState] = useState<'boot' | 'scanning' | 'grid'>('boot');
-
-    // Manage internal state transitions
+    // Manage internal state transitions with purely delayed/async execution
     useEffect(() => {
+        let timer: NodeJS.Timeout
+
         if (state === 'scanning') {
-            setDisplayState('scanning');
+            timer = setTimeout(() => setDisplayState('scanning'), 0)
         } else if (state === 'complete') {
-            // Artificial delay for "processing" feel before showing grid
-            const timer = setTimeout(() => setDisplayState('grid'), 800);
-            return () => clearTimeout(timer);
-        } else if (state === 'idle') {
-            setDisplayState('boot');
+            timer = setTimeout(() => setDisplayState('grid'), 800)
         } else if (state === 'error') {
-            setDisplayState('grid');
+            timer = setTimeout(() => setDisplayState('grid'), 0)
+        } else {
+            timer = setTimeout(() => setDisplayState('boot'), 0)
         }
-    }, [state]);
+
+        return () => {
+            if (timer) clearTimeout(timer)
+        }
+    }, [state])
 
     const getStatusColor = (status: TelemetryRow['status']) => {
         switch (status) {

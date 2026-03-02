@@ -80,7 +80,7 @@ export async function verifyContentCredentials(filePath: string): Promise<C2PARe
         // Extract Assertions for History & Identity
         let creator = 'Unknown Creator';
         let tool = 'Unknown Tool';
-        let toolVersion = '---';
+        const toolVersion = '---';
         const history: Array<{ action: string, tool: string, date: string }> = [];
 
         activeManifest.assertions?.forEach((assertion: any) => {

@@ -211,7 +211,7 @@ export const generateForensicReport = (
 
     // Build findings list: DB findings first, then synthesized from profile
     // scan_findings comes from the joined query on ScanWithRelations
-    let findings = [...((scan as ExtendedScan & { scan_findings?: Array<{ title: string; severity: string; finding_type: string; description: string; _teaser?: string }> }).scan_findings || [])]
+    const findings = [...((scan as ExtendedScan & { scan_findings?: Array<{ title: string; severity: string; finding_type: string; description: string; _teaser?: string }> }).scan_findings || [])]
 
     if (findings.length === 0 && profile.composite_score > 25) {
         if (profile.ip_report.score > 25) {
@@ -254,7 +254,7 @@ export const generateForensicReport = (
         // Determine which findings to show in sample mode
         let shownFindings: any[] = []
         let hiddenFindings: any[] = []
-        let lockedList: string[] = []
+        const lockedList: string[] = []
 
         if (isSample) {
             // 1. Pick Hero Finding (Highest Severity)
@@ -371,9 +371,10 @@ export const generateForensicReport = (
             }
 
             doc.setFontSize(9)
-            // Mask teaser descriptions in sample mode to prevent data leaks
+            // Mask all finding descriptions in sample mode to prevent data leaks
             const rawDesc = f.description || ''
-            const displayDesc = f._isTeaser
+            // In sample mode, even the 'hero' finding (which isn't marked _isTeaser) must be masked
+            const displayDesc = (isSample || f._isTeaser)
                 ? rawDesc.substring(0, 60) + '... [Unlock full report for details]'
                 : rawDesc
             const descLines = doc.splitTextToSize(displayDesc, 160)
@@ -381,9 +382,9 @@ export const generateForensicReport = (
             y += (descLines.length * 4) + 3
 
             // Mitigation hint (teaser-aligned, one line)
-            // For teasers, we hide the mitigation to encourage unlock
+            // For teasers or sample mode, we hide the mitigation to encourage unlock
             const teaser = f._teaser || f.description || ''
-            if (!f._isTeaser && teaser && teaser !== "No significant risks detected.") {
+            if (!isSample && !f._isTeaser && teaser && teaser !== "No significant risks detected.") {
                 y = checkPageBreak(y, 8)
                 doc.setFont(FONT.mono, "normal")
                 doc.setFontSize(7)
@@ -393,8 +394,8 @@ export const generateForensicReport = (
                 const hintText = teaser.length > 80 ? teaser.substring(0, 77) + '...' : teaser
                 doc.text(`MITIGATION: ${hintText}`, 28, y)
                 y += 6
-            } else if (f._isTeaser) {
-                // For teasers, explicitly say "Unlock for details"
+            } else if (isSample || f._isTeaser) {
+                // Explicitly say "Unlock for details"
                 y = checkPageBreak(y, 8)
                 doc.setFont(FONT.mono, "bold")
                 doc.setFontSize(7)
@@ -556,7 +557,11 @@ export const generateForensicReport = (
         )
     }
 
-    // Save
-    const prefix = isSample ? 'AIRS_Sample_' : 'AIRS_Report_'
-    doc.save(`${prefix}${scan.filename.substring(0, 10)}_${format(new Date(scan.created_at), 'yyyyMMdd')}.pdf`)
+    // Save or Return
+    if (typeof window !== 'undefined') {
+        const prefix = isSample ? 'AIRS_Sample_' : 'AIRS_Report_'
+        doc.save(`${prefix}${scan.filename.substring(0, 10)}_${format(new Date(scan.created_at), 'yyyyMMdd')}.pdf`)
+    }
+
+    return doc
 }

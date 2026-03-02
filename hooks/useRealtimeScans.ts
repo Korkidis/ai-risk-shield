@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ScanWithRelations } from '@/types/database'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -35,29 +35,36 @@ export function useRealtimeScans({
     enabled = true
 }: UseRealtimeScansOptions) {
     const channelRef = useRef<RealtimeChannel | null>(null)
-    // Keep track of individual scan channels
     const scanChannelsRef = useRef<Record<string, RealtimeChannel>>({})
-
-    // Store ephemeral state (progress/message) for processing scans
     const [ephemeralState, setEphemeralState] = useState<Record<string, { progress: number, message: string }>>({})
 
-    // Check if any scans are currently processing
-    const processingIds = scans
+    // Explicitly track subscription state for the global channel
+    const [isSubscribed, setIsSubscribed] = useState(false)
+
+    // Use stable primitive key to memoize the array, avoiding effect churn on every render
+    const processingIdsKey = scans
         .filter(s => s.status === 'pending' || s.status === 'processing')
         .map(s => s.id)
+        .sort()
+        .join(',')
+
+    const processingIds = useMemo(() => processingIdsKey ? processingIdsKey.split(',') : [], [processingIdsKey])
 
     const hasProcessingScans = processingIds.length > 0
 
     // Stable callback ref
     const onUpdateRef = useRef(onScanUpdate)
-    onUpdateRef.current = onScanUpdate
+    useEffect(() => {
+        onUpdateRef.current = onScanUpdate
+    }, [onScanUpdate])
 
-    // 1. Global Table Subscription (Status & Scores)
+    // 1. Global Table Subscription
     useEffect(() => {
         const cleanup = () => {
             if (channelRef.current) {
                 supabase.removeChannel(channelRef.current)
                 channelRef.current = null
+                setIsSubscribed(false)
             }
         }
 
@@ -76,7 +83,6 @@ export function useRealtimeScans({
                     table: 'scans'
                 },
                 (payload) => {
-                    // Realtime postgres_changes payload shape for scan updates
                     type RealtimeScanPayload = {
                         id: string; status: string; composite_score: number | null;
                         ip_risk_score: number | null; safety_risk_score: number | null;
@@ -85,12 +91,10 @@ export function useRealtimeScans({
                     }
                     const newRecord = payload.new as RealtimeScanPayload
 
-                    // Only process currently tracked scans
                     if (!processingIds.includes(newRecord?.id)) return
 
                     const newStatus = newRecord?.status
 
-                    // If complete, clear ephemeral state for this ID
                     if (newStatus === 'complete' || newStatus === 'failed') {
                         setEphemeralState(prev => {
                             const next = { ...prev }
@@ -111,15 +115,18 @@ export function useRealtimeScans({
                     })
                 }
             )
-            .subscribe()
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    setIsSubscribed(true)
+                }
+            })
 
         channelRef.current = channel
         return cleanup
-    }, [enabled, hasProcessingScans, processingIds.join(',')])
+    }, [enabled, hasProcessingScans, processingIdsKey, processingIds])
 
-    // 2. Individual Broadcast Subscriptions (Ephemeral Progress)
+    // 2. Individual Broadcast Subscriptions
     useEffect(() => {
-        // Subscribe to new IDs
         processingIds.forEach(id => {
             if (!scanChannelsRef.current[id]) {
                 const channel = supabase.channel(`scan-${id}`)
@@ -140,13 +147,11 @@ export function useRealtimeScans({
             }
         })
 
-        // Cleanup stale IDs
         Object.keys(scanChannelsRef.current).forEach(id => {
             if (!processingIds.includes(id)) {
                 supabase.removeChannel(scanChannelsRef.current[id])
                 delete scanChannelsRef.current[id]
 
-                // Also clear state
                 setEphemeralState(prev => {
                     const next = { ...prev }
                     delete next[id]
@@ -156,14 +161,13 @@ export function useRealtimeScans({
         })
 
         return () => {
-            // Cleanup all on unmount
             Object.values(scanChannelsRef.current).forEach(ch => supabase.removeChannel(ch))
             scanChannelsRef.current = {}
         }
-    }, [processingIds.join(',')])
+    }, [processingIdsKey, processingIds])
 
     return {
-        isSubscribed: !!channelRef.current,
+        isSubscribed,
         processingCount: processingIds.length,
         ephemeralState,
     }

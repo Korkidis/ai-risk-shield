@@ -17,7 +17,7 @@ export async function validateStripePrices(): Promise<{
     valid: boolean
     errors: string[]
 }> {
-    if (validationCache && Date.now() - validationCache.timestamp < CACHE_TTL_MS) {
+    if (validationCache && (Date.now() - validationCache.timestamp < CACHE_TTL_MS)) {
         return { valid: validationCache.valid, errors: validationCache.errors }
     }
 
