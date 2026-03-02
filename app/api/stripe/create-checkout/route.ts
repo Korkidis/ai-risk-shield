@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         // 3. Determine Price & URLs
         let priceId: string | null = null
         let mode: 'payment' | 'subscription' = 'subscription'
-        let successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgrade=success`
+        let successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans-reports?upgrade=success`
         let cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`
 
         if (purchaseType === 'one_time' && scanId) {

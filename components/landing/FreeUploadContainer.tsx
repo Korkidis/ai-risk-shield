@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { RiskProfile } from '@/lib/gemini-types'
 import { RSFileUpload } from '../rs/RSFileUpload'
 import { RSProcessingPanel } from '../rs/RSProcessingPanel'
@@ -24,12 +23,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   const [scansRemaining, setScansRemaining] = useState(3)
   const [limit, setLimit] = useState(3)
 
-  // Email capture gate state
-  const [showEmailGate, setShowEmailGate] = useState(false)
-  const [emailInput, setEmailInput] = useState('')
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
-  const [emailError, setEmailError] = useState('')
-  const [pendingCallback, setPendingCallback] = useState<{ profile: RiskProfile; scanId: string } | null>(null)
+  // Sprint 10.1: Email capture gate removed — handled by Scans Workspace
 
   useEffect(() => {
     // Fetch real quota — must handle all failure modes for incognito/blocked contexts
@@ -74,8 +68,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       const formData = new FormData()
       formData.append('file', file)
 
-      // 0. Init Realtime Client
-      const supabase = createClient()
+      // Sprint 10.1: Realtime subscription removed — workspace handles processing state
 
       // 1. Upload
       const uploadRes = await fetch('/api/scans/anonymous-upload', {
@@ -99,150 +92,39 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       const { scanId, remaining } = await uploadRes.json()
       if (remaining !== undefined) setScansRemaining(remaining)
 
-      // 1.5. Subscribe to Realtime Progress
-      const channel = supabase.channel(`scan-${scanId}`)
-      channel
-        .on('broadcast', { event: 'progress' }, (payload) => {
-          if (payload.payload && payload.payload.progress) {
-            setProgress(payload.payload.progress)
-          }
-          if (payload.payload && payload.payload.message) {
-            setStatusMessage(payload.payload.message)
-          }
-        })
-        .subscribe()
+      // Sprint 10.1: Immediate redirect to canonical workspace.
+      // Processing, realtime progress, email capture, and findings gating
+      // are all handled natively within the Scans Workspace.
+      setProgress(30)
+      setStatusMessage("Scan record created. Redirecting to workspace...")
 
-      // 2. Poll (Reduced frequency, checks for completion)
-      let attempts = 0
-      const maxAttempts = 60
+      // Brief visual feedback before redirect (500ms)
+      await new Promise(resolve => setTimeout(resolve, 500))
 
-      const cleanupRealtime = () => {
-        supabase.removeChannel(channel)
-      }
+      // Redirect immediately — workspace will show processing state + realtime updates
+      onUploadComplete(
+        { composite_score: 0, verdict: 'Low Risk', ip_report: { score: 0, teaser: '', reasoning: '' }, safety_report: { score: 0, teaser: '', reasoning: '' }, provenance_report: { score: 0, teaser: '', reasoning: '' }, c2pa_report: { status: 'missing' } } as RiskProfile,
+        scanId
+      )
 
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 2000)) // Poll slower, rely on realtime for visuals
-
-        const statusRes = await fetch(`/api/scans/${scanId}/status`)
-        if (!statusRes.ok) {
-          cleanupRealtime()
-          throw new Error('Failed to check scan status')
-        }
-
-        let scanStatus
-        try {
-          scanStatus = await statusRes.json()
-        } catch {
-          cleanupRealtime()
-          throw new Error('Invalid response from status endpoint')
-        }
-
-        if (scanStatus.status === 'complete') {
-          cleanupRealtime()
-          setProgress(100)
-          setStatusMessage("Analysis complete. Compiling dossier.")
-
-          // Use real Gemini risk_profile when available, fallback for legacy scans
-          const riskProfile: RiskProfile = scanStatus.risk_profile || {
-            composite_score: scanStatus.composite_score || 0,
-            verdict: scanStatus.risk_level === 'critical' ? 'Critical Risk' :
-              scanStatus.risk_level === 'high' ? 'High Risk' :
-                scanStatus.risk_level === 'review' ? 'Medium Risk' : 'Low Risk',
-            ip_report: {
-              score: scanStatus.ip_risk_score || 0,
-              teaser: 'IP risk analysis complete',
-              reasoning: 'Analysis complete.'
-            },
-            safety_report: {
-              score: scanStatus.safety_risk_score || 0,
-              teaser: 'Brand safety analysis complete',
-              reasoning: 'Analysis complete.'
-            },
-            provenance_report: {
-              score: scanStatus.provenance_risk_score || 0,
-              teaser: 'Provenance analysis complete',
-              reasoning: 'Analysis complete.'
-            },
-            c2pa_report: {
-              status: 'missing'
-            },
-            chief_officer_strategy: 'Free scan completed.'
-          }
-
-          // Show email capture gate before redirect
-          setPendingCallback({ profile: riskProfile, scanId })
-          setShowEmailGate(true)
-
-          return
-        } else if (scanStatus.status === 'failed') {
-          cleanupRealtime()
-          throw new Error(scanStatus.error_message || 'Analysis failed')
-        }
-
-        attempts++
-      }
-
-      cleanupRealtime()
-      throw new Error('Analysis timed out. Please try again.')
-
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err)
       console.error('Upload error details:', err)
 
-      // DEV MODE FALLBACK: REMOVED to force real telemetry testing.
-      // if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') { ... }
-
       let errorMessage = 'Analysis failed. Please try again.'
-      if (err.message.includes('Scan limit reached')) errorMessage = 'Limit reached: 3 free scans per month.'
-      else if (err.message.includes('Upload failed')) errorMessage = 'Upload connection failed.'
-      else if (err.message.includes('Video analysis requires')) errorMessage = 'Video scanning requires a paid plan.'
-      else if (err.message.includes('Invalid file type')) errorMessage = 'Invalid format. Use JPG, PNG, or WebP.'
+      if (errMsg.includes('Scan limit reached')) errorMessage = 'Limit reached: 3 free scans per month.'
+      else if (errMsg.includes('Upload failed')) errorMessage = 'Upload connection failed.'
+      else if (errMsg.includes('Video analysis requires')) errorMessage = 'Video scanning requires a paid plan.'
+      else if (errMsg.includes('Invalid file type')) errorMessage = 'Invalid format. Use JPG, PNG, or WebP.'
 
-      alert(`${errorMessage}\n\nTechnical Details: ${err.message || JSON.stringify(err)}`)
+      alert(`${errorMessage}\n\nTechnical Details: ${errMsg}`)
       setIsProcessing(false)
       setCurrentFile(null)
     }
   }
 
-  const handleEmailSubmit = async () => {
-    if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
-      setEmailError('Please enter a valid email.')
-      setEmailStatus('error')
-      return
-    }
-    if (!pendingCallback) return
-
-    setEmailStatus('sending')
-    try {
-      const res = await fetch('/api/scans/capture-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scanId: pendingCallback.scanId, email: emailInput })
-      })
-      if (res.ok) {
-        setEmailStatus('sent')
-        // Proceed to dashboard after brief confirmation
-        setTimeout(() => {
-          onUploadComplete(pendingCallback.profile, pendingCallback.scanId)
-        }, 800)
-      } else {
-        // Non-blocking: proceed even if email capture fails
-        setEmailStatus('error')
-        setEmailError('Could not save email. Continuing to your results.')
-        setTimeout(() => {
-          onUploadComplete(pendingCallback.profile, pendingCallback.scanId)
-        }, 1500)
-      }
-    } catch {
-      // Non-blocking failure — proceed anyway
-      onUploadComplete(pendingCallback.profile, pendingCallback.scanId)
-    }
-  }
-
-  const handleEmailSkip = () => {
-    if (pendingCallback) {
-      onUploadComplete(pendingCallback.profile, pendingCallback.scanId)
-    }
-  }
+  // Sprint 10.1: handleEmailSubmit and handleEmailSkip removed
+  // Email capture is now handled by the Scans Workspace after redirect
 
   return (
     <div className="w-full relative group perspective-1000">
@@ -311,65 +193,6 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
                 accept="image/*"
                 className="absolute inset-0 opacity-0 cursor-pointer z-50"
               />
-            </div>
-          ) : showEmailGate ? (
-            <div className="relative w-full h-full z-40 flex flex-col items-center justify-center p-8 text-center">
-              {/* Score flash */}
-              {pendingCallback && (
-                <div className="mb-6">
-                  <div className="text-5xl font-black text-[var(--rs-signal)] mb-1">
-                    {pendingCallback.profile.composite_score}
-                  </div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-mono">
-                    {pendingCallback.profile.verdict}
-                  </div>
-                </div>
-              )}
-
-              <p className="text-white text-sm font-medium mb-1">
-                Save your scan results
-              </p>
-              <p className="text-white/50 text-[10px] mb-5 max-w-xs">
-                Enter your email to access your full results on the dashboard. We&apos;ll send a secure link.
-              </p>
-
-              <div className="w-full max-w-xs space-y-3">
-                <input
-                  type="email"
-                  value={emailInput}
-                  onChange={(e) => { setEmailInput(e.target.value); setEmailStatus('idle'); setEmailError('') }}
-                  placeholder="you@company.com"
-                  disabled={emailStatus === 'sending' || emailStatus === 'sent'}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[var(--rs-signal)] transition-colors disabled:opacity-50"
-                />
-
-                {emailStatus === 'error' && emailError && (
-                  <p className="text-[10px] text-[var(--rs-destruct)] font-mono">{emailError}</p>
-                )}
-
-                {emailStatus === 'sent' ? (
-                  <div className="flex items-center justify-center gap-2 text-[var(--rs-safe)] text-sm font-medium">
-                    <span>&#10003;</span> Saved — redirecting to your results
-                  </div>
-                ) : (
-                  <>
-                    <RSButton
-                      variant="primary"
-                      fullWidth
-                      onClick={handleEmailSubmit}
-                      disabled={emailStatus === 'sending'}
-                    >
-                      {emailStatus === 'sending' ? 'Saving...' : 'Save & View Results'}
-                    </RSButton>
-                    <button
-                      onClick={handleEmailSkip}
-                      className="w-full text-[10px] text-white/40 hover:text-white/60 transition-colors uppercase tracking-widest font-mono py-2"
-                    >
-                      Skip — view results now
-                    </button>
-                  </>
-                )}
-              </div>
             </div>
           ) : (
             <div className="relative w-full h-full z-40">

@@ -29,8 +29,8 @@ export function LandingClient() {
                             // Optional: Scroll to top or prepare UI
                         }}
                         onUploadComplete={(_profile, scanId) => {
-                            // Redirect to dashboard scan viewer — the real product experience
-                            router.push(`/dashboard?scan=${scanId}`)
+                            // Sprint 10.1: Canonical workspace redirect
+                            router.push(`/dashboard/scans-reports?highlight=${scanId}`)
                         }}
                     />
                     {/* Trust Signals under scanner */}
