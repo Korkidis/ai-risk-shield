@@ -403,10 +403,7 @@ export default function DashboardPage() {
     const isError = scanStatus === 'error';
     const isEmailLocked = isComplete && isAnonymous && !emailCaptured;
     const canViewFull = scanRecord && userContext
-        ? Entitlements.canViewFullReport(userContext, scanRecord, anonSessionId || undefined)
-        : false;
-    const canViewTeaser = scanRecord
-        ? Entitlements.canViewTeaser(userContext, scanRecord, anonSessionId || undefined)
+        ? Entitlements.canViewScanReport(userContext, scanRecord, anonSessionId || undefined)
         : false;
     const mitigationEntitlement = billingStatus
         ? Entitlements.getMitigationEntitlement({
@@ -459,8 +456,9 @@ export default function DashboardPage() {
 
     const handleDownload = (scan: ScanWithRelations) => {
         if (scan.status !== 'complete' || !scan.risk_profile) return;
-        const isSample = !canViewFull;
-        generateForensicReport(scan, scan.risk_profile, isSample);
+        // Scan reports are always full for in-app downloads (scan report = free baseline)
+        // isSample=true is only used for the sample PDF emailed during capture-email
+        generateForensicReport(scan, scan.risk_profile, false);
     };
 
     const handleShare = async (scanId: string) => {
@@ -836,8 +834,7 @@ export default function DashboardPage() {
                     isOpen={isUnifiedDrawerOpen}
                     onClose={() => setIsUnifiedDrawerOpen(false)}
                     entitlements={{
-                        canViewFull: !!canViewFull,
-                        canViewTeaser: !!canViewTeaser,
+                        canViewScanReport: !!canViewFull,
                         mitigationCredits: mitigationEntitlement,
                     }}
                     onGenerateMitigation={handleGenerateMitigation}
@@ -859,6 +856,8 @@ export default function DashboardPage() {
                 isOpen={showAuditModal}
                 onClose={() => setShowAuditModal(false)}
                 scanId={currentScanId || ''}
+                compositeScore={analysisResult?.composite_score}
+                findingCount={scanRecord?.scan_findings?.length}
             />
 
             {shareToast && (

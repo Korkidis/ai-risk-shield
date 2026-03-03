@@ -59,6 +59,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
     }
 
+    // Persist email on scan record — this is the server-side unlock signal.
+    // /api/scans/[id] checks scan.email to decide full vs masked response.
+    const { error: emailUpdateError } = await supabase
+      .from('scans')
+      .update({ email })
+      .eq('id', scanId)
+
+    if (emailUpdateError) {
+      console.error('Failed to persist email on scan:', emailUpdateError.message)
+      // Non-fatal — continue with shadow user creation + magic link
+    }
+
     // 1. Optimistic User Creation (Scalability Fix: Don't list all users)
     // We try to create. If it fails because "already registered", we proceed.
     // This avoids fetching 10k+ users just to check one.

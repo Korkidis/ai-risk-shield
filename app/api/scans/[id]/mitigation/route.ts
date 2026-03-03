@@ -108,18 +108,14 @@ export async function POST(
             }, { status: 402 })
         }
 
-        // Atomic credit increment — use existing consume_quota RPC or direct update
-        const { error: rpcError } = await supabase.rpc('consume_quota', {
+        // Atomic credit decrement via dedicated RPC (prevents race conditions)
+        const { error: rpcError } = await supabase.rpc('increment_tenant_mitigation_usage', {
             p_tenant_id: tenantId,
             p_amount: 1,
         })
         if (rpcError) {
-            // Fallback: direct update if RPC doesn't handle mitigation column
-            console.warn('[Mitigation] RPC fallback, using direct update:', rpcError.message)
-            await supabase
-                .from('tenants')
-                .update({ mitigations_used_this_month: used + 1 })
-                .eq('id', tenant.id)
+            console.error('[Mitigation] Failed to decrement credits:', rpcError.message)
+            return NextResponse.json({ error: 'Failed to process credits' }, { status: 500 })
         }
 
         // 5. Create or reuse report row

@@ -70,7 +70,7 @@ export default async function ReportPage(props: { params: Promise<{ id: string }
 
     // 4. Entitlement Check
     const extScan = toExtendedScan(typedScan)
-    const canView = Entitlements.canViewFullReport(
+    const canView = Entitlements.canViewScanReport(
         userProfile ? {
             id: userProfile.id,
             tenant_id: userProfile.tenant_id,

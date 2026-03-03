@@ -18,8 +18,12 @@ import Image from 'next/image'
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface DrawerEntitlements {
-    canViewFull: boolean
-    canViewTeaser: boolean
+    /** Can the user view the full scan report (findings, provenance, etc.)? Always true for authenticated users. */
+    canViewScanReport: boolean
+    /** @deprecated Use canViewScanReport. Kept for backward compat. */
+    canViewFull?: boolean
+    /** @deprecated No longer needed — if drawer is open, user can see findings. */
+    canViewTeaser?: boolean
     mitigationCredits: {
         included: number
         used: number
@@ -136,12 +140,11 @@ export function UnifiedScanDrawer({
     const hasEditHistory = Array.isArray(provenance?.edit_history) && provenance.edit_history.length > 0
     const latestMitigation: MitigationReport | null = scan.mitigation_reports?.[0] || null
 
-    // Provenance gating tiers:
-    // Pre-email (teaser): top-level status + creator name only
-    // Post-email free (canViewTeaser): full provenance assertions
-    // Paid (canViewFull): everything including findings
-    const canViewProvenance = entitlements.canViewTeaser || entitlements.canViewFull
-    const canViewBaselineReport = entitlements.canViewTeaser || entitlements.canViewFull
+    // Scan report access: always true when drawer is open (scan report = free baseline).
+    // The drawer is only opened for authenticated or post-email users.
+    const canViewScanReport = entitlements.canViewScanReport || entitlements.canViewFull || false
+    const canViewProvenance = canViewScanReport
+    const canViewBaselineReport = canViewScanReport
 
     useEffect(() => {
         if (!isOpen) return;
@@ -601,7 +604,7 @@ export function UnifiedScanDrawer({
                 </section>
 
                 {/* Post-Purchase Download Banner */}
-                {showDownloadBanner && entitlements.canViewFull && (
+                {showDownloadBanner && canViewScanReport && (
                     <div className="p-4 bg-[var(--rs-safe)]/10 border border-[var(--rs-safe)]/30 rounded-[2px] flex items-center justify-between">
                         <div>
                             <p className="text-[10px] font-bold text-[var(--rs-text-primary)] uppercase tracking-wide">Report Ready</p>
@@ -628,7 +631,7 @@ export function UnifiedScanDrawer({
                                 className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
                                 onClick={() => onDownload(scan)}
                             >
-                                {canViewBaselineReport ? 'Export_Dossier' : 'Download_Sample'}
+                                Export_Dossier
                             </RSButton>
 
                     {/* Share */}

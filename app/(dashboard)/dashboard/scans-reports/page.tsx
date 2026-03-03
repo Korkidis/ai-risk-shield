@@ -20,7 +20,7 @@ import { RSFileUpload } from '@/components/rs/RSFileUpload'
 import { useRealtimeScans } from '@/hooks/useRealtimeScans'
 import { ScanCard } from '@/components/dashboard/ScanCard'
 import { UnifiedScanDrawer } from '@/components/dashboard/UnifiedScanDrawer'
-import { getTenantBillingStatus, BillingStatus, getAnonSessionId } from '@/app/actions/billing'
+import { getTenantBillingStatus, BillingStatus } from '@/app/actions/billing'
 import { generateForensicReport } from '@/lib/pdf-generator'
 import { Entitlements } from '@/lib/entitlements'
 import { type PlanId } from '@/lib/plans'
@@ -64,7 +64,6 @@ function ScansReportsContent() {
 
     // Entitlements State
     const [userContext, setUserContext] = useState<{ id: string; tenant_id: string; plan: PlanId } | null>(null)
-    const [anonSessionId, setAnonSessionId] = useState<string | null>(null)
     const [showAuditModal, setShowAuditModal] = useState(false)
     const [shareToast, setShareToast] = useState<string | null>(null)
     const [purchaseToast, setPurchaseToast] = useState(false)
@@ -419,12 +418,6 @@ function ScansReportsContent() {
         fetchBilling()
     }, [scans]) // Refresh quota when scans list updates
 
-    // Sprint 10.5: Fetch anonymous session ID for entitlement checks
-    // Handles race condition where scan assignment hasn't completed yet
-    useEffect(() => {
-        getAnonSessionId().then(setAnonSessionId).catch(() => { /* non-critical */ })
-    }, [])
-
     // Build user context for entitlement checks
     useEffect(() => {
         if (!billingStatus || scans.length === 0) return
@@ -439,7 +432,7 @@ function ScansReportsContent() {
 
     // Computed entitlements for selected scan
     const canViewFull = selectedScan && userContext
-        ? Entitlements.canViewFullReport(userContext, selectedScan)
+        ? Entitlements.canViewScanReport(userContext, selectedScan)
         : false
 
     // Mitigation entitlement (requires billing data for tenant context)
@@ -465,9 +458,9 @@ function ScansReportsContent() {
                 return
             }
 
-            // Entitlement-gated: sample PDF for free users, full for paid/purchased
-            const isSample = userContext ? !Entitlements.canViewFullReport(userContext, scan) : true
-            generateForensicReport(scan, scan.risk_profile, isSample)
+            // Scan reports are always full for in-app downloads (scan report = free baseline)
+            // isSample=true is only used for the sample PDF emailed during capture-email
+            generateForensicReport(scan, scan.risk_profile, false)
         } catch (e) {
             console.error("PDF Generation failed", e)
             alert("Failed to generate PDF report. Please contact support.")
@@ -777,8 +770,7 @@ function ScansReportsContent() {
                             isOpen={showDetails}
                             onClose={() => setShowDetails(false)}
                             entitlements={{
-                                canViewFull: !!canViewFull,
-                                canViewTeaser: selectedScan ? Entitlements.canViewTeaser(userContext, selectedScan, anonSessionId || undefined) : false,
+                                canViewScanReport: !!canViewFull,
                                 mitigationCredits: mitigationEntitlement,
                             }}
                             onGenerateMitigation={async () => {
@@ -935,11 +927,13 @@ function ScansReportsContent() {
                     </div>
                 </RSModal>
 
-                {/* Audit Modal — Unlock Full Report CTA */}
+                {/* Audit Modal — Mitigation Report Purchase CTA */}
                 <AuditModal
                     isOpen={showAuditModal}
                     onClose={() => setShowAuditModal(false)}
                     scanId={selectedScanId || ''}
+                    compositeScore={selectedScan?.composite_score ?? undefined}
+                    findingCount={selectedScan?.scan_findings?.length}
                 />
 
                 {/* Purchase Toast */}

@@ -1162,6 +1162,10 @@ export type Database = {
         }[]
       }
       current_session_id: { Args: never; Returns: string }
+      increment_tenant_mitigation_usage: {
+        Args: { p_amount?: number; p_tenant_id: string }
+        Returns: undefined
+      }
       increment_tenant_scan_usage: {
         Args: { p_amount?: number; p_tenant_id: string }
         Returns: number

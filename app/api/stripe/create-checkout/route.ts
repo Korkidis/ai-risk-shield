@@ -144,15 +144,27 @@ export async function POST(request: NextRequest) {
         let cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`
 
         if (purchaseType === 'one_time' && scanId) {
-            // One-time report purchase
+            // Legacy: One-time scan report purchase (kept for backward compat)
             priceId = PRICE_IDS.one_time || null
             mode = 'payment'
 
             if (user) {
                 successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?scan=${scanId}&purchased=true`
             } else {
-                // Anonymous Success: Send to Login with magic link flag
-                // Webhook will create user and send magic link email
+                successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login?magic_link_sent=true`
+            }
+
+            cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?scan=${scanId}&canceled=true`
+
+        } else if (purchaseType === 'mitigation' && scanId) {
+            // Mitigation report purchase ($29) — the premium product
+            // Uses same price point as one_time, or a dedicated STRIPE_PRICE_MITIGATION if configured
+            priceId = process.env.STRIPE_PRICE_MITIGATION || PRICE_IDS.one_time || null
+            mode = 'payment'
+
+            if (user) {
+                successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/scans-reports?highlight=${scanId}&mitigation_purchased=true`
+            } else {
                 successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login?magic_link_sent=true`
             }
 

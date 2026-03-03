@@ -444,6 +444,53 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
         }
     }
 
+    // 3b. Mitigation Report Purchase ($29)
+    if (purchaseType === 'mitigation' && scanId && userId && userId !== 'anonymous') {
+        if (!tenantId) {
+            const { data: p } = await supabase.from('profiles').select('tenant_id').eq('id', userId).single()
+            tenantId = p?.tenant_id
+        }
+
+        console.log(`[Webhook] Fulfilling mitigation purchase for scan ${scanId}`)
+
+        // Create mitigation_reports row with status='pending' to trigger async generation
+        const { error: mitigationError } = await supabase
+            .from('mitigation_reports')
+            .insert({
+                scan_id: scanId,
+                tenant_id: tenantId,
+                status: 'pending',
+                created_by: userId,
+                idempotency_key: `purchase_${session.payment_intent}`,
+                report_version: 1,
+                generator_version: '1.0.0',
+            })
+
+        if (mitigationError) {
+            // Check if idempotency key collision (duplicate webhook delivery)
+            if (mitigationError.code === '23505') {
+                console.log(`[Webhook] Mitigation report already created for payment ${session.payment_intent}`)
+            } else {
+                console.error('Failed to create mitigation report:', mitigationError)
+                await logWebhookEvent({
+                    action: 'mitigation_purchase_failed',
+                    resourceType: 'stripe_webhook',
+                    tenantId: tenantId || null,
+                    severity: 'critical',
+                    metadata: { scanId, error: mitigationError.message },
+                })
+            }
+        }
+
+        // Persist Stripe customer ID
+        if (tenantId && tenantId !== 'anonymous' && session.customer) {
+            await supabase
+                .from('tenants')
+                .update({ stripe_customer_id: session.customer as string })
+                .eq('id', tenantId)
+        }
+    }
+
     // 4. Subscription fulfillment
     if (purchaseType === 'subscription' && tenantId && session.subscription) {
         console.log(`[Webhook] Fulfilling subscription for tenant ${tenantId}`)

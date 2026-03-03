@@ -42,32 +42,45 @@ type ScanContext = Partial<ExtendedScan> & {
 
 export const Entitlements = {
     /**
-     * Can the user view the FULL report (sensitive data, full findings)?
+     * Can the user view the full scan report (findings, provenance, risk scores)?
+     *
+     * Scan reports are FREE for all authenticated users and post-email anonymous users.
+     * The $29 product is the mitigation report, not the scan report.
+     *
+     * Returns true if:
+     * - Authenticated user in same tenant (any plan, including free)
+     * - Anonymous user with matching session (post-email capture)
+     * - Legacy: one-time purchased scan by this user (backward compat)
      */
-    canViewFullReport: (user: UserContext | null, scan: ScanContext, _anonSessionId?: string) => {
-        // 1. One-time purchased scan — only the purchaser (or legacy fallback)
+    canViewScanReport: (user: UserContext | null, scan: ScanContext, _anonSessionId?: string) => {
+        // 1. Any authenticated user in the same tenant can view scan reports (free or paid)
+        if (user && scan.tenant_id === user.tenant_id) return true
+
+        // 2. Legacy: one-time purchased scan (pre-model-change backward compat)
         if (scan.purchased && scan.purchase_type === 'one_time') {
             if (user) {
-                // Strict: only the user who purchased can view
                 if (scan.purchased_by && user.id === scan.purchased_by) return true
-                // Legacy fallback: scans without purchased_by (pre-Sprint 6) — allow same tenant
                 if (!scan.purchased_by && scan.tenant_id === user.tenant_id) return true
             }
         }
 
-        // 2. Subscription access (Tenant match + paid plan)
-        if (user && scan.tenant_id === user.tenant_id) {
-            const plan = user.plan || 'free'
-            // Free users only see teaser unless they purchased
-            if (plan === 'free') return false
-            return hasFeature(plan, 'fullReportAccess')
-        }
+        // 3. Anonymous user with matching session (post-email capture, pre-auth)
+        if (_anonSessionId && scan.session_id === _anonSessionId) return true
 
         return false
     },
 
     /**
+     * @deprecated Use canViewScanReport instead. Kept as alias for backward compat during migration.
+     */
+    canViewFullReport: (user: UserContext | null, scan: ScanContext, _anonSessionId?: string) => {
+        return Entitlements.canViewScanReport(user, scan, _anonSessionId)
+    },
+
+    /**
      * Can the user view the TEASER (score, top findings generic)?
+     * Note: With the new model, teaser = pre-email anonymous state.
+     * Post-email users get full scan report via canViewScanReport.
      */
     canViewTeaser: (user: UserContext | null, scan: ScanContext, anonSessionId?: string) => {
         if (scan.session_id && scan.session_id === anonSessionId) return true
