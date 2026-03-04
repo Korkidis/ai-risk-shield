@@ -366,9 +366,22 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
   - `create-checkout`: 5/1hr per user (or IP if anonymous) → 429 with `Retry-After`
 - **Migration**: `20260224_rate_limits.sql` — `rate_limits` table with unique `(key, action)` index, RLS enabled (service role only), `cleanup_stale_rate_limits()` RPC for pruning
 
-### Pending Schema Drift (Updated Feb 24)
-Migration created but NOT applied to live DB:
+### Sprint 10 + 10.5 Complete (Mar 3, 2026)
+- **Entitlement model corrected**: Scan reports are FREE (email-gated for anonymous, open for authenticated). $29 buys MITIGATION reports (remediation plan, bias audit, compliance matrix). `canViewFullReport()` renamed to `canViewScanReport()` — returns true for any authenticated same-tenant user or anonymous with matching session.
+- **Mitigation purchase path created**: `MitigationPurchaseButton` → Stripe checkout with `purchaseType: 'mitigation'` → webhook creates `mitigation_reports` row → generation route picks up `pending` row and generates
+- **AuditModal redesigned**: Sells mitigation reports ($29 one-time or Pro subscription credits), not scan reports
+- **Server-side unlock fixed**: `capture-email` persists email to scan record; `/api/scans/[id]` masking lifts when `scan.email` present. Email persistence failure is fatal (500).
+- **Atomic mitigation credits**: `consume_mitigation_quota()` RPC with `FOR UPDATE` lock + check + increment in single PG transaction. Replaces TOCTOU-prone separate read + increment.
+- **CAS enforcement on status transitions**: Both `pending→processing` and `failed→processing` transitions use `.select('id')` + zero-row check to prevent double-generation from concurrent requests
+- **Mitigation generator extracted**: `lib/ai/mitigation-generator.ts` with `generateMitigationReport()` and `generateMitigationPdf()`
+- **PDF gating corrected**: In-app scan report downloads are always full (`isSample = false`). Sample PDFs only in pre-account email.
+- **Quota boundary hardened**: `v_new_used + p_amount > limit` (correct for bulk amounts)
+
+### Pending Schema Drift (Updated Mar 3)
+Migrations created but NOT applied to live DB:
 - `20260224_rate_limits.sql` — rate_limits table + cleanup function
+- `20260302_atomic_mitigation_usage.sql` — `increment_tenant_mitigation_usage()` hardened RPC
+- `20260303_atomic_mitigation_quota.sql` — `consume_mitigation_quota()` atomic check+increment RPC
 
 ## Lessons Learned (Updated as we build)
 
