@@ -402,7 +402,7 @@ export default function DashboardPage() {
     const isComplete = scanStatus === 'complete';
     const isError = scanStatus === 'error';
     const isEmailLocked = isComplete && isAnonymous && !emailCaptured;
-    const canViewFull = scanRecord && userContext
+    const canViewFull = scanRecord
         ? Entitlements.canViewScanReport(userContext, scanRecord, anonSessionId || undefined)
         : false;
     const mitigationEntitlement = billingStatus

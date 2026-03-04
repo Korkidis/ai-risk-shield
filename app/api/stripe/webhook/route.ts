@@ -137,7 +137,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
 
     // Validate metadata inputs
     const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    const VALID_PURCHASE_TYPES = ['one_time', 'subscription']
+    const VALID_PURCHASE_TYPES = ['one_time', 'subscription', 'mitigation']
     if (purchaseType && !VALID_PURCHASE_TYPES.includes(purchaseType)) {
         console.error(`[Webhook] Invalid purchaseType in metadata: ${purchaseType}`)
         return
@@ -460,6 +460,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                 scan_id: scanId,
                 tenant_id: tenantId,
                 status: 'pending',
+                advice_content: '', // Required by schema; populated during generation
                 created_by: userId,
                 idempotency_key: `purchase_${session.payment_intent}`,
                 report_version: 1,

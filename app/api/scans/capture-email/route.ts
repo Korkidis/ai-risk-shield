@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
     if (emailUpdateError) {
       console.error('Failed to persist email on scan:', emailUpdateError.message)
-      // Non-fatal — continue with shadow user creation + magic link
+      return NextResponse.json({ error: 'Failed to unlock scan. Please try again.' }, { status: 500 })
     }
 
     // 1. Optimistic User Creation (Scalability Fix: Don't list all users)

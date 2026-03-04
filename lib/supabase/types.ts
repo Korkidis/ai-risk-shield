@@ -1151,6 +1151,15 @@ export type Database = {
         Args: { days_old: number }
         Returns: number
       }
+      consume_mitigation_quota: {
+        Args: { p_amount?: number; p_tenant_id: string }
+        Returns: {
+          allowed: boolean
+          current_usage: number
+          monthly_limit: number
+          remaining: number
+        }[]
+      }
       consume_quota: {
         Args: { p_amount?: number; p_tenant_id: string }
         Returns: {
@@ -1164,7 +1173,7 @@ export type Database = {
       current_session_id: { Args: never; Returns: string }
       increment_tenant_mitigation_usage: {
         Args: { p_amount?: number; p_tenant_id: string }
-        Returns: undefined
+        Returns: number
       }
       increment_tenant_scan_usage: {
         Args: { p_amount?: number; p_tenant_id: string }

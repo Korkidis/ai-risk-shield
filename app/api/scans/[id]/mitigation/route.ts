@@ -67,6 +67,11 @@ export async function POST(
             .limit(1)
             .single()
 
+        // Track whether credit was already consumed (purchased via Stripe)
+        let creditAlreadyConsumed = false
+        let reportId: string | null = null
+        const findings = Array.isArray(scan.scan_findings) ? scan.scan_findings : []
+
         if (existingReport) {
             if (existingReport.status === 'complete') {
                 return NextResponse.json({
@@ -76,64 +81,93 @@ export async function POST(
                     cached: true,
                 })
             }
-            if (existingReport.status === 'processing' || existingReport.status === 'pending') {
+            if (existingReport.status === 'processing') {
+                // Actively generating — don't double-generate
                 return NextResponse.json({
                     code: 'processing',
                     message: 'Mitigation report is already being generated',
                     report: existingReport,
                 }, { status: 202 })
             }
-            // If failed, allow retry — fall through
+            if (existingReport.status === 'pending') {
+                // Pending from webhook purchase — proceed with generation.
+                // CAS: only transition if still pending. Loser gets 0 rows back.
+                const { data: casResult } = await supabase
+                    .from('mitigation_reports')
+                    .update({ status: 'processing' })
+                    .eq('id', existingReport.id)
+                    .eq('status', 'pending')
+                    .select('id')
+
+                if (!casResult || casResult.length === 0) {
+                    // Another request already claimed this pending report
+                    return NextResponse.json({
+                        code: 'processing',
+                        message: 'Mitigation report is already being generated',
+                        report: existingReport,
+                    }, { status: 202 })
+                }
+
+                reportId = existingReport.id
+                creditAlreadyConsumed = true // Paid via Stripe, skip credit check
+            }
+            if (existingReport.status === 'failed') {
+                // CAS: only transition if still failed. Loser gets 0 rows back.
+                const { data: failedCas } = await supabase
+                    .from('mitigation_reports')
+                    .update({ status: 'processing', error_message: null })
+                    .eq('id', existingReport.id)
+                    .eq('status', 'failed')
+                    .select('id')
+
+                if (!failedCas || failedCas.length === 0) {
+                    // Another retry already claimed this failed report
+                    return NextResponse.json({
+                        code: 'processing',
+                        message: 'Mitigation report is already being generated',
+                        report: existingReport,
+                    }, { status: 202 })
+                }
+
+                reportId = existingReport.id
+                // Failed retries still need credit check below
+            }
         }
 
-        // 4. Credit check
-        const { data: tenant } = await supabase
-            .from('tenants')
-            .select('id, plan, monthly_mitigation_limit, mitigations_used_this_month')
-            .eq('id', tenantId)
-            .single()
+        // 4. Credit check (skip if already paid via Stripe purchase)
+        // Uses atomic consume_mitigation_quota() RPC — FOR UPDATE lock + check + increment
+        // in a single transaction to prevent TOCTOU race conditions.
+        let creditsRemaining = 0
 
-        if (!tenant) {
-            return NextResponse.json({ code: 'not_found', message: 'Tenant not found' }, { status: 404 })
+        if (!creditAlreadyConsumed) {
+            const { data: quotaResult, error: quotaError } = await supabase.rpc(
+                'consume_mitigation_quota',
+                { p_tenant_id: tenantId, p_amount: 1 }
+            )
+
+            if (quotaError) {
+                console.error('[Mitigation] Quota check failed:', quotaError.message)
+                return NextResponse.json({ code: 'server_error', message: 'Failed to process credits' }, { status: 500 })
+            }
+
+            const quota = quotaResult?.[0]
+            if (!quota?.allowed) {
+                return NextResponse.json({
+                    code: 'purchase_required',
+                    message: 'Mitigation credits exhausted',
+                    creditsRemaining: 0,
+                }, { status: 402 })
+            }
+
+            creditsRemaining = quota.remaining
         }
 
-        const limit = tenant.monthly_mitigation_limit ?? 0
-        const used = tenant.mitigations_used_this_month ?? 0
-
-        if (used >= limit) {
-            return NextResponse.json({
-                code: 'purchase_required',
-                message: 'Mitigation credits exhausted',
-                creditsRemaining: 0,
-            }, { status: 402 })
-        }
-
-        // Atomic credit decrement via dedicated RPC (prevents race conditions)
-        const { error: rpcError } = await supabase.rpc('increment_tenant_mitigation_usage', {
-            p_tenant_id: tenantId,
-            p_amount: 1,
-        })
-        if (rpcError) {
-            console.error('[Mitigation] Failed to decrement credits:', rpcError.message)
-            return NextResponse.json({ error: 'Failed to process credits' }, { status: 500 })
-        }
-
-        // 5. Create or reuse report row
-        let reportId: string
-        const findings = Array.isArray(scan.scan_findings) ? scan.scan_findings : []
-
-        if (existingReport && existingReport.status === 'failed') {
-            // Reuse failed row for retry
-            await supabase
-                .from('mitigation_reports')
-                .update({ status: 'processing', error_message: null })
-                .eq('id', existingReport.id)
-            reportId = existingReport.id
-        } else {
+        // 5. Create report row if not already set (from pending/failed reuse above)
+        if (!reportId) {
             const insertPayload = {
                 scan_id: scanId,
                 tenant_id: tenantId,
-                advice_content: '', // Required by current schema, will contain report summary
+                advice_content: '', // Required by schema; populated on completion
                 status: 'processing',
                 created_by: user.id,
                 report_version: 1,
@@ -228,7 +262,7 @@ export async function POST(
             message: 'Mitigation report generated',
             report: rawCompleted,
             cached: false,
-            creditsRemaining: Math.max(0, limit - used - 1),
+            creditsRemaining,
         })
 
     } catch (error) {
