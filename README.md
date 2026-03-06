@@ -36,7 +36,7 @@ This project is driven by a set of "Hyper-Critical" documents that serve as the 
 *   **Scans & Reports (Canonical Home)**: Dashboard is the primary product surface.
 *   **Design Lab**: Internal component sandbox for the "Forensic Instrument" UI system.
 *   **Hierarchical Teams**: Agency admins can manage sub-tenant accounts.
-*   **Deep Mitigation**: Planned — not yet delivered as a user‑facing feature.
+*   **Deep Mitigation**: Live mitigation purchase and generation flow with Stripe return-path handling.
 
 ## 🚀 Getting Started
 

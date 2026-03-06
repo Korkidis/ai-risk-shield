@@ -5,10 +5,18 @@
 
 - **Workflow Orchestration**: New rules engine (`tasks/rules.md`) and startup protocols.
 - **Structural Documentation**: Roadmap, Architecture, and Decision logs.
+- **Sprint 10 Documentation Reconciliation**: `tasks/todo.md` now includes an explicit Sprint 10 status section (`DONE`/`PARTIAL`/`VERIFY-IN-PROD`) and roadmap summary alignment.
+- **Sprint 10.5 Verification Matrix**: Documentation now tracks completed vs remaining 10.5 items (including mitigation purchase return-flow gap) and includes dependency-ordered next tasks.
+- **Mitigation Return-Path Automation**: `mitigation_purchased=true` is now handled in `scans-reports` with auto-generation trigger and URL cleanup.
+- **Mitigation Return Retry Logic**: Added bounded exponential backoff on transient `402` responses to handle webhook lag without losing the return-path trigger.
+- **Production ACL Verification**: Explicit function privilege posture verified and hardened for mitigation quota/usage RPCs (`authenticated` + `service_role` execute, `anon` denied).
+- **Production Typegen Sync**: Supabase types regenerated from linked production schema.
 - **Anonymous Purchase Flow**: Checkout supports anon users with session ownership validation.
 - **Dashboard Routing**: Magic links route to `/dashboard/scans-reports` with highlight + auto-assign.
 - **Email Upgrade**: Sample report emails now include a top detected risk.
 - **Sample PDF Enrichment**: Hero finding from DB + profile teasers for sample mode.
+- **Mitigation Purchase Flow**: Drawer-integrated mitigation purchase path with entitlement updates.
+- **Canonical Workspace Consolidation**: Dashboard workspace/routing unification and legacy flow cleanup.
 
 ### Fixed
 - **Upgrade UX Truth**: Audit and Upgrade modals now match plan limits and pricing ($49).
@@ -18,6 +26,9 @@
 - **Anonymous Quota Drift**: IP/session limits now derive from `scans` rows and exclude failed scans in both paths.
 - **Bulk Share Reliability**: Batch sharing now returns/copies tokenized links and reports partial failures correctly.
 - **Mitigation PDF Integrity Labeling**: Integrity footer now matches implemented checksum algorithm (`FNV1A64`).
+- **Mitigation Concurrency Hardening**: Atomic mitigation credit usage path and post-review edge-case fixes.
+- **Webhook Pending-Row Handling**: Mitigation CAS transitions now stamp generation tracking fields when claiming `pending`/`failed` rows.
+- **Paid Retry Quota Guard**: Failed retries for Stripe purchase-origin mitigation rows no longer consume additional quota.
 
 ## [2026-02-11] - Risk Model Unification & Report Rehab
 ### Added

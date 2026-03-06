@@ -1,21 +1,25 @@
 # Database & Backend Audit Report
-**Date:** 2026-02-11 | **Status:** PASS (with known product wiring gaps)
+**Date:** 2026-03-06 | **Status:** PASS (launch-critical DB checks verified)
 
 ## 1. Executive Summary
 The existing Supabase schema provides a **solid, enterprise-grade foundation**. It correctly implements multi-tenancy, RLS isolation, and SOC 2-ready audit logging. The recent "Freemium" migration successfully adapts this strict schema for anonymous access without breaking security.
 
-**Verdict:** ✅ **Schema is solid; product wiring is incomplete.**
-(No major refactoring required. Focus on data handoff + canonical dashboard flow.)
+**Verdict:** ✅ **Schema is solid and launch-critical mitigation wiring is verified.**
+(No major refactoring required. Focus now on launch QA, lint threshold, and remaining UX polish.)
 
 ---
 
-## Reality Update (Feb 11, 2026)
+## Reality Update (Mar 6, 2026)
 **What’s true now (live DB + repo):**
 - **Schema drift detected and addressed:** `tenant_invites.metadata` exists in live DB; repo migration added.  
-- **Missing index:** `idx_tenant_switch_audit_created_at` absent in live DB; repo migration added (CONCURRENTLY).
+- **Tenant switch audit index verified:** `idx_tenant_switch_audit_created_at` exists in production.
 - **Canonical product home:** Dashboard **Scans & Reports** is the product; landing is the bridge.
 - **C2PA fidelity:** 5‑value status in scoring module is canonical; UI widgets still catching up.
 - **Magic links cleanup is incomplete:** legacy `/api/auth/verify` still queries `magic_links`.
+- **Mitigation quota RPCs verified in production:** `consume_mitigation_quota` and `increment_tenant_mitigation_usage` exist with `SECURITY DEFINER` + `search_path` hardening.
+- **Mitigation RPC ACLs hardened in production:** `authenticated` + `service_role` can execute; `anon` is denied.
+- **`brand_guidelines` and `mitigation_reports` RLS policies verified active in production.**
+- **`scans.purchased_by` and mitigation v2 columns verified present in production.**
 
 ---
 
@@ -46,7 +50,7 @@ The existing Supabase schema provides a **solid, enterprise-grade foundation**. 
 *   **`brand_profiles`**: Columns for `encrypted_guidelines` (AES-256) exist. Excellent.
 *   **Quota Management**:
     *   `increment_tenant_scan_usage()` provides atomic completion-time scan charging.
-    *   `consume_quota()` remains available for quota-style atomic increments (used by mitigation credits flow).
+    *   `consume_mitigation_quota()` and `increment_tenant_mitigation_usage()` cover atomic mitigation credit usage paths.
 
 ---
 
@@ -84,17 +88,13 @@ The system uses a **direct fire-and-forget in-process trigger** for background p
 ---
 
 ## 4. Identified Gaps (To Build)
-**STATUS UPDATE (Feb 11, 2026): schema exists; product wiring incomplete.**
+**STATUS UPDATE (Mar 6, 2026): launch-critical mitigation/data wiring is delivered; remaining gaps are non-blocking launch follow-ons.**
 
-### A. Mitigation Reports (Schema Only)
-*   **Schema**: `mitigation_reports` table exists.
-*   **Status**: UI/flow not delivered; treat as planned.
-
-### B. Insurance Referrals (Schema Only)
+### A. Insurance Referrals (Schema Only)
 *   **Schema**: `referral_events` table exists.
 *   **Status**: CTA + workflow not delivered.
 
-### C. Team Invites (Schema + RLS)
+### B. Team Invites (Schema + RLS)
 *   **Schema**: `tenant_invites` exists with token + role constraints.
 *   **Status**: Member acceptance flow still pending.
 

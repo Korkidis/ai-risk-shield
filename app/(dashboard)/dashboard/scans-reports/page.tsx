@@ -209,6 +209,7 @@ function ScansReportsContent() {
         const highlightId = searchParams.get('highlight')
         const isVerified = searchParams.get('verified') === 'true'
         const isPurchased = searchParams.get('purchased') === 'true'
+        const isMitigationPurchased = searchParams.get('mitigation_purchased') === 'true'
 
         // 1. Handle Highlight (Auto-Select)
         if (highlightId && !selectedScanId && scans.length > 0) {
@@ -284,7 +285,116 @@ function ScansReportsContent() {
             router.replace(cleanUrl, { scroll: false })
         }
 
-    }, [searchParams, scans, selectedScanId]) // Re-run when scans load so we can find the highlighted one
+        // 4. Handle Post-Mitigation Purchase Generation
+        if (isMitigationPurchased && highlightId && !processedParams.current.has(`mitigation-${highlightId}`)) {
+            processedParams.current.add(`mitigation-${highlightId}`)
+
+            // Optimistically update local scan state to show processing if drawer is open
+            setScans(prev => prev.map(s => {
+                if (s.id !== highlightId) return s
+                return {
+                    ...s,
+                    // If no mitigation exists, append a temporary one so drawer can react.
+                    // If one does, let the server fetch update it on response.
+                    mitigation_reports: s.mitigation_reports?.length
+                        ? s.mitigation_reports
+                        : [{
+                            id: 'temp-webhook',
+                            scan_id: highlightId,
+                            tenant_id: s.tenant_id || '',
+                            advice_content: '',
+                            status: 'processing' as const,
+                            report_content: null,
+                            report_version: 0,
+                            generator_version: '1.0.0',
+                            generation_inputs: null,
+                            idempotency_key: null,
+                            created_by: null,
+                            completed_at: null,
+                            error_message: null,
+                            created_at: new Date().toISOString()
+                        }]
+                }
+            }))
+
+            setShareToast('Generating mitigation report...')
+
+            let attempts = 0;
+            const maxAttempts = 5;
+            const backoffMs = [500, 1000, 2000, 3000, 4000]; // Total wait ~10.5s max
+
+            const pollMitigation = async () => {
+                try {
+                    const res = await fetch(`/api/scans/${highlightId}/mitigation`, { method: 'POST' });
+                    const data = await res.json();
+
+                    if (res.ok && data.report) {
+                        setScans(prev => prev.map(s => s.id === highlightId ? { ...s, mitigation_reports: [data.report] } : s));
+                        setShareToast('Mitigation report generated');
+                        cleanupUrl();
+                        return;
+                    } else if (res.status === 202) {
+                        setShareToast('Report already generating...');
+                        // Trigger a targeted refresh of the scan so the UI gets the canonical processing row
+                        fetch(`/api/scans/${highlightId}`)
+                            .then(r => r.ok ? r.json() : null)
+                            .then(detail => {
+                                if (detail) {
+                                    setScans(prev => prev.map(s => s.id === highlightId ? { ...s, mitigation_reports: detail.mitigation_reports || s.mitigation_reports } : s));
+                                }
+                            })
+                            .catch(err => console.error('Detail refetch failed for 202:', err));
+                        cleanupUrl();
+                        return;
+                    } else if (res.status === 402 && attempts < maxAttempts) {
+                        // 402 means credits exhausted, which implies the Stripe webhook hasn't finished yet.
+                        // Wait and retry.
+                        const waitTime = backoffMs[attempts] || 4000;
+                        attempts++;
+                        console.log(`[Mitigation Poll] Webhook pending (402), retrying in ${waitTime}ms... (Attempt ${attempts}/${maxAttempts})`);
+                        setTimeout(pollMitigation, waitTime);
+                        return;
+                    } else {
+                        // Exhausted retries or hard failure (400, 500)
+                        setShareToast('Failed to start generation. Please check your credits.');
+                        console.error('Mitigation API failed:', data);
+                        cleanupUrl();
+
+                        // Revert optimistic state
+                        setScans(prev => prev.map(s => {
+                            if (s.id !== highlightId) return s;
+                            return { ...s, mitigation_reports: s.mitigation_reports?.filter(m => m.id !== 'temp-webhook') || [] };
+                        }));
+                    }
+                } catch (err) {
+                    console.error('Mitigation fetch failed:', err);
+                    setShareToast('Failed to start generation');
+                    cleanupUrl();
+
+                    // Revert optimistic state
+                    setScans(prev => prev.map(s => {
+                        if (s.id !== highlightId) return s;
+                        return { ...s, mitigation_reports: s.mitigation_reports?.filter(m => m.id !== 'temp-webhook') || [] };
+                    }));
+                } finally {
+                    setTimeout(() => setShareToast(null), 4000);
+                }
+            };
+
+            const cleanupUrl = () => {
+                const cleanParams = new URLSearchParams(searchParams.toString());
+                cleanParams.delete('mitigation_purchased');
+                const cleanUrl = cleanParams.toString()
+                    ? `${pathname}?${cleanParams.toString()}`
+                    : pathname;
+                router.replace(cleanUrl, { scroll: false });
+            };
+
+            // Start polling
+            pollMitigation();
+        }
+
+    }, [searchParams, scans, selectedScanId, pathname, router]) // Re-run when scans load so we can find the highlighted one
 
     const selectedScan = scans.find(s => s.id === selectedScanId)
 

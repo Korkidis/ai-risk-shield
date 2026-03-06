@@ -1171,6 +1171,8 @@ export type Database = {
         }[]
       }
       current_session_id: { Args: never; Returns: string }
+      get_active_tenant: { Args: never; Returns: string }
+      get_user_tenant_id: { Args: { p_user: string }; Returns: string }
       increment_tenant_mitigation_usage: {
         Args: { p_amount?: number; p_tenant_id: string }
         Returns: number
@@ -1179,8 +1181,6 @@ export type Database = {
         Args: { p_amount?: number; p_tenant_id: string }
         Returns: number
       }
-      get_active_tenant: { Args: never; Returns: string }
-      get_user_tenant_id: { Args: { p_user: string }; Returns: string }
       is_agency_admin: { Args: never; Returns: boolean }
       user_role: { Args: never; Returns: string }
       user_tenant_id: { Args: never; Returns: string }

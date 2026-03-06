@@ -61,7 +61,7 @@ export async function POST(
         // 3. Check for existing report (idempotency)
         const { data: existingReport } = await supabase
             .from('mitigation_reports')
-            .select('id, status, report_content, report_version, created_at, completed_at, error_message')
+            .select('id, status, report_content, report_version, created_at, completed_at, error_message, idempotency_key')
             .eq('scan_id', scanId)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -94,7 +94,18 @@ export async function POST(
                 // CAS: only transition if still pending. Loser gets 0 rows back.
                 const { data: casResult } = await supabase
                     .from('mitigation_reports')
-                    .update({ status: 'processing' })
+                    .update({
+                        status: 'processing',
+                        created_by: user.id,
+                        report_version: 1,
+                        generator_version: getGeneratorVersion(),
+                        generation_inputs: {
+                            scan_id: scanId,
+                            composite_score: scan.composite_score,
+                            risk_level: scan.risk_level,
+                            findings_count: findings.length,
+                        }
+                    })
                     .eq('id', existingReport.id)
                     .eq('status', 'pending')
                     .select('id')
@@ -115,7 +126,19 @@ export async function POST(
                 // CAS: only transition if still failed. Loser gets 0 rows back.
                 const { data: failedCas } = await supabase
                     .from('mitigation_reports')
-                    .update({ status: 'processing', error_message: null })
+                    .update({
+                        status: 'processing',
+                        error_message: null,
+                        created_by: user.id,
+                        report_version: 1,
+                        generator_version: getGeneratorVersion(),
+                        generation_inputs: {
+                            scan_id: scanId,
+                            composite_score: scan.composite_score,
+                            risk_level: scan.risk_level,
+                            findings_count: findings.length,
+                        }
+                    })
                     .eq('id', existingReport.id)
                     .eq('status', 'failed')
                     .select('id')
@@ -130,7 +153,10 @@ export async function POST(
                 }
 
                 reportId = existingReport.id
-                // Failed retries still need credit check below
+                // Failed retries skip quota if they originated from a Stripe purchase webhook
+                if (existingReport.idempotency_key?.startsWith('purchase_')) {
+                    creditAlreadyConsumed = true
+                }
             }
         }
 

@@ -160,7 +160,10 @@ export function RSRiskPanel({
                                 </div>
 
                                 {/* Mobile-only Likelihood Bar (Right of numbers) */}
-                                <LikelihoodBar className="block xl:hidden w-[160px] md:w-[240px] pt-4" hideLabel />
+                                <LikelihoodBar
+                                    className="block xl:hidden w-[160px] md:w-[240px] pt-4"
+                                    hideLabel
+                                />
                             </div>
 
                             {/* Action Statement: Smaller, contained, no interference */}
@@ -184,7 +187,9 @@ export function RSRiskPanel({
                     <div className="flex-[1.5] flex flex-col min-w-0 pt-1 gap-6">
 
                         {/* 1. Likelihood Bar (Desktop Only) - TIGHTER SPACING */}
-                        <LikelihoodBar className="hidden xl:block w-full" />
+                        <LikelihoodBar
+                            className="hidden xl:block w-full"
+                        />
 
                         {/* 2. AUXILIARY DIALS (Directly on panel, no card) - TIGHTER GRID */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-1 mt-2 md:mt-auto">
