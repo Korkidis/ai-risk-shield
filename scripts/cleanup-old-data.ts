@@ -46,10 +46,10 @@ async function cleanupOldData(daysOld: number = 7): Promise<CleanupStats> {
     console.log(`🧹 Cleaning up data older than ${daysOld} days (before ${cutoffDate.toISOString()})...\n`)
 
     try {
-        // 1. Find old scans
+        // 1. Find old scans (include tenant_id for frame cleanup paths)
         const { data: oldScans, error: scanError } = await supabase
             .from('scans')
-            .select('id')
+            .select('id, tenant_id, is_video')
             .lt('created_at', cutoffDate.toISOString())
 
         if (scanError) {
@@ -61,7 +61,43 @@ async function cleanupOldData(daysOld: number = 7): Promise<CleanupStats> {
             const scanIds = oldScans.map(s => s.id)
             console.log(`📋 Found ${scanIds.length} old scans`)
 
-            // 2. Delete scan findings first (FK constraint)
+            // 2a. Delete video frame storage files for video scans
+            const videoScans = oldScans.filter(s => s.is_video && s.tenant_id)
+            if (videoScans.length > 0) {
+                let frameFilesDeleted = 0
+                for (const vs of videoScans) {
+                    const framePath = `${vs.tenant_id}/frames/${vs.id}`
+                    try {
+                        const { data: frameFiles } = await supabase.storage
+                            .from('uploads')
+                            .list(framePath)
+                        if (frameFiles && frameFiles.length > 0) {
+                            const paths = frameFiles.map(f => `${framePath}/${f.name}`)
+                            await supabase.storage.from('uploads').remove(paths)
+                            frameFilesDeleted += paths.length
+                        }
+                    } catch (err) {
+                        console.warn(`⚠️  Failed to cleanup frames for scan ${vs.id}:`, err)
+                    }
+                }
+                if (frameFilesDeleted > 0) {
+                    console.log(`✅ Deleted ${frameFilesDeleted} video frame files from storage`)
+                }
+            }
+
+            // 2b. Delete video_frames records (FK constraint)
+            const { error: vfError, count: vfCount } = await supabase
+                .from('video_frames')
+                .delete()
+                .in('scan_id', scanIds)
+
+            if (vfError) {
+                console.warn('⚠️  Error deleting video_frames:', vfError)
+            } else if (vfCount) {
+                console.log(`✅ Deleted ${vfCount} video frame records`)
+            }
+
+            // 2c. Delete scan findings (FK constraint)
             const { error: findingsError, count: findingsCount } = await supabase
                 .from('scan_findings')
                 .delete()
@@ -203,7 +239,7 @@ async function main() {
         process.exit(1)
     }
 
-    console.log('🛡️  AI Risk Shield - Data Cleanup Utility\n')
+    console.log('🛡️  AI Content Risk Score - Data Cleanup Utility\n')
 
     const stats = await cleanupOldData(daysOld)
 

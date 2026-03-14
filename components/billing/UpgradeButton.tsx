@@ -35,6 +35,7 @@ export function UpgradeButton({ scanId }: { scanId: string }) {
             if (stripe && sessionId) {
                 // Modern Stripe API: redirect to checkout URL
                 // Type assertion needed as redirectToCheckout exists but may not be in latest types
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Stripe.js redirectToCheckout not in latest type defs
                 const { error: stripeError } = await (stripe as any).redirectToCheckout({ sessionId })
                 if (stripeError) {
                     console.error('Stripe redirect error:', stripeError)

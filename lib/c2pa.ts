@@ -45,12 +45,14 @@ export async function verifyContentCredentials(filePath: string): Promise<C2PARe
 
         if (manifestStore.validation_status && manifestStore.validation_status.length > 0) {
             // Filter out informational codes
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- c2pa-node validation_status entries lack exported types
             const errors = manifestStore.validation_status.filter((s: any) =>
                 !['claimSignature.validated', 'ingredient.validated', 'signingCredential.trusted'].includes(s.code)
             );
 
             if (errors.length > 0) {
                 status = 'invalid'; // BROKEN or TAMPERED
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- c2pa-node validation_status entries lack exported types
                 validationErrors = errors.map((s: any) => `${s.code}: ${s.explanation}`);
             }
         }
@@ -64,9 +66,11 @@ export async function verifyContentCredentials(filePath: string): Promise<C2PARe
         // even though it's not in the TypeScript type definition)
         let serial: string | undefined = undefined;
         if (signatureInfo) {
-            const runtimeSerial = (signatureInfo as any).cert_serial_number
-                ?? (signatureInfo as any).serial_number
-                ?? (signatureInfo as any).serial;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- c2pa-rs serializes dynamic properties not in TS type defs
+            const sigInfo = signatureInfo as any;
+            const runtimeSerial = sigInfo.cert_serial_number
+                ?? sigInfo.serial_number
+                ?? sigInfo.serial;
             if (typeof runtimeSerial === 'string' && runtimeSerial.length > 0) {
                 serial = runtimeSerial;
             }
@@ -83,6 +87,7 @@ export async function verifyContentCredentials(filePath: string): Promise<C2PARe
         const toolVersion = '---';
         const history: Array<{ action: string, tool: string, date: string }> = [];
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- c2pa-node assertion entries have dynamic shape
         activeManifest.assertions?.forEach((assertion: any) => {
             // CreativeWork Identity
             if (assertion.label === 'staxel.creative_work') {
@@ -94,6 +99,7 @@ export async function verifyContentCredentials(filePath: string): Promise<C2PARe
             }
             // Actions / History
             if (assertion.label === 'c2pa.actions') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- c2pa-node action entries have dynamic shape
                 assertion.data.actions?.forEach((action: any) => {
                     history.push({
                         action: action.action,

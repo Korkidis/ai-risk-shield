@@ -50,8 +50,9 @@ export async function validateStripePrices(): Promise<{
     for (const [envName, priceId] of configuredPrices) {
         try {
             await stripe.prices.retrieve(priceId!)
-        } catch (err: any) {
-            errors.push(`${envName}=${priceId} is invalid: ${err.message}`)
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err)
+            errors.push(`${envName}=${priceId} is invalid: ${message}`)
         }
     }
 

@@ -64,7 +64,7 @@ export function RSNavbar({
             {/* Right: Controls & User */}
             <div className="flex items-center gap-4">
                 {/* Branding label (replaces dead search input) */}
-                <div className="text-[9px] font-mono uppercase tracking-widest text-rs-gray-400 hidden md:block">AI_RISK_SHIELD</div>
+                <div className="text-[9px] font-mono uppercase tracking-widest text-rs-gray-400 hidden md:block">AI_CONTENT_RISK_SCORE</div>
 
                 <div className="h-6 w-px bg-rs-gray-200 mx-2" />
 

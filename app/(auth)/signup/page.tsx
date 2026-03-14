@@ -15,7 +15,6 @@ export default function SignupPage() {
         setError(null);
         startTransition(async () => {
             const result = await signUp(null, formData);
-            // @ts-ignore - Types for actions can be loose with simple returns
             if (result?.error) {
                 setError(result.error);
             }

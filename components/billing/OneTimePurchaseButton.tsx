@@ -34,6 +34,7 @@ export function OneTimePurchaseButton({ scanId }: { scanId: string }) {
 
             const stripe = await stripePromise
             if (stripe && sessionId) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Stripe.js redirectToCheckout not in latest type defs
                 const { error: stripeError } = await (stripe as any).redirectToCheckout({ sessionId })
                 if (stripeError) {
                     console.error('Stripe redirect error:', stripeError)

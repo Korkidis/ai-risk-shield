@@ -53,7 +53,6 @@ export default function LoginPage() {
 function LoginContent() {
     const searchParams = useSearchParams();
     const errorParam = searchParams.get('error');
-    // @ts-ignore - useActionState types might need generic adjustment depending on react version
     const [state, formAction] = useActionState(login, initialState);
 
     const errorMessage = state?.error || errorParam;
@@ -68,7 +67,7 @@ function LoginContent() {
                     <div className="flex items-center gap-1.5 opacity-80">
                         <Shield className="w-3 h-3 text-[var(--rs-black)]" />
                         <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--rs-black)]">
-                            RISK_SHIELD
+                            CONTENT_RISK_SCORE
                         </span>
                     </div>
 

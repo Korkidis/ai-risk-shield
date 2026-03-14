@@ -29,7 +29,7 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
     useEffect(() => {
         // Map provenance data to the visual rows
         // If loading or no details, show animated simulated data or empty state
-
+        /* eslint-disable react-hooks/set-state-in-effect -- syncing derived state from props */
         if (customRows) {
             setRows(customRows);
             return;
@@ -96,6 +96,7 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
 
         setRows(newRows);
 
+        /* eslint-enable react-hooks/set-state-in-effect */
     }, [details, customRows, scanStatus]);
 
     const getStatusColor = (status: TelemetryRow['status']) => {

@@ -33,7 +33,7 @@ export const MagicLinkEmail: React.FC<MagicLinkEmailProps> = ({
                 <Container style={container}>
                     {/* Header - Forensic Style */}
                     <Section style={header}>
-                        <Text style={headerTitle}>AI RISK SHIELD</Text>
+                        <Text style={headerTitle}>AI CONTENT RISK SCORE</Text>
                         <Text style={headerSubtitle}>FORENSIC ANALYSIS COMPLETE</Text>
                     </Section>
 
@@ -76,7 +76,7 @@ export const MagicLinkEmail: React.FC<MagicLinkEmailProps> = ({
                     {/* Footer - Technical Grid Style */}
                     <Section style={footer}>
                         <Text style={footerText}>
-                            AI RISK SHIELD • AUTOMATED LEGAL FORENSIC ANALYSIS
+                            AI CONTENT RISK SCORE • AUTOMATED LEGAL FORENSIC ANALYSIS
                         </Text>
                         <Text style={footerSmall}>
                             © {new Date().getFullYear()} All rights reserved

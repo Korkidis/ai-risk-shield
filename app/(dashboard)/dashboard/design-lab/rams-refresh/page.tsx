@@ -26,7 +26,7 @@ export default function RamsRefreshPage() {
             <header className="mb-12 flex justify-between items-end">
                 <div>
                     <h1 className="text-4xl font-black uppercase tracking-tighter mb-2 text-[#1A1A1A]">Design Protocol: v2.0</h1>
-                    <p className="font-mono text-xs opacity-50 uppercase tracking-widest text-[#1A1A1A]">Dieter Rams "Ten Principles" Refresh</p>
+                    <p className="font-mono text-xs opacity-50 uppercase tracking-widest text-[#1A1A1A]">Dieter Rams &ldquo;Ten Principles&rdquo; Refresh</p>
                 </div>
                 <div className="flex gap-4">
                     <button

@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
         let user;
         try {
             user = await getUserFromToken(bearer);
-        } catch (err: any) {
+        } catch (_err: unknown) {
             return NextResponse.json({ error: 'Invalid session token' }, { status: 401 });
         }
 
@@ -173,7 +173,8 @@ export async function POST(req: NextRequest) {
         }
 
         // 3) Insert audit row (best-effort)
-        const ip = req.headers.get('x-forwarded-for') || (req as any).ip || null;
+        const ip = req.headers.get('x-forwarded-for') || // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Next.js request IP not in standard types
+        (req as any).ip || null;
         const userAgent = req.headers.get('user-agent') || null;
 
         // TODO: Determine fromTenantId if possible, for now passing null or we could query active_tenant from current token if available
@@ -183,7 +184,7 @@ export async function POST(req: NextRequest) {
         let tokenData;
         try {
             tokenData = await createShortLivedToken(actor_user_id, active_tenant);
-        } catch (err: any) {
+        } catch (_err: unknown) {
             return NextResponse.json({ error: 'Could not mint short-lived token' }, { status: 500 });
         }
 
@@ -194,7 +195,7 @@ export async function POST(req: NextRequest) {
             active_tenant,
         }, { status: 200 });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('switch-tenant error', err);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

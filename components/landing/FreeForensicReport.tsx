@@ -69,7 +69,7 @@ export function FreeForensicReport({ riskProfile, assetName, scanDate }: Props) 
             <div className="bg-[var(--rs-bg-secondary)] border-b border-[var(--rs-border-primary)] px-8 py-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-[var(--rs-text-primary)] mb-1 uppercase tracking-tight">Risk Shield Forensic Analysis</h1>
+                        <h1 className="text-2xl font-bold text-[var(--rs-text-primary)] mb-1 uppercase tracking-tight">Content Risk Score Forensic Analysis</h1>
                         <p className="text-sm text-[var(--rs-text-secondary)]">Preliminary Assessment Report</p>
                     </div>
                     <div className="text-right text-xs text-[var(--rs-text-tertiary)] font-mono">

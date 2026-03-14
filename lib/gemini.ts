@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, type Part } from '@google/generative-ai'
 import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import fs from 'fs';
 import path from 'path';
@@ -9,7 +9,7 @@ import { BrandGuideline } from '@/types/database';
 // Import and re-export types from separate types file
 import type { SpecialistReport, RiskProfile } from './gemini-types';
 import type { C2PAReport } from './c2pa-types';
-import { computeCompositeScore, computeProvenanceScore, computeVerdict } from './risk/scoring';
+import { computeCompositeScore, computeProvenanceScore, computeVerdict, type C2PAStatus } from './risk/scoring';
 export type { SpecialistReport, RiskProfile };
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -103,7 +103,7 @@ CRITICAL RULES:
 3. If you see Taylor Swift, Beyonce, or ANY major celebrity: score 99+ (CRITICAL LIABILITY)
 4. When in doubt, score HIGHER. Liability is expensive.`;
 
-async function analyzeIP(part: any, guidelineRules?: string): Promise<SpecialistReport> {
+async function analyzeIP(part: Part, guidelineRules?: string): Promise<SpecialistReport> {
     const instruction = IP_SYSTEM_INSTRUCTION + (guidelineRules ? `
 
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -191,7 +191,7 @@ CRITICAL RULES:
 2. Cartoon violence is lower risk than realistic violence
 3. Consider: "Would a Fortune 500 CMO be comfortable with this in an ad?"`;
 
-async function analyzeSafety(part: any, guidelineRules?: string): Promise<SpecialistReport> {
+async function analyzeSafety(part: Part, guidelineRules?: string): Promise<SpecialistReport> {
     const instruction = SAFETY_SYSTEM_INSTRUCTION + (guidelineRules ? `
 
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -276,7 +276,7 @@ CRITICAL RULES:
 2. If C2PA is "missing", the asset is "Unverified" and usually High Risk (75+).
 3. If this is a digital illustration/graphic with no C2PA, score 85+ (unverifiable origin).`;
 
-async function analyzeProvenance(part: any, filename: string = '', c2paStatus: string, guidelineRules?: string): Promise<SpecialistReport> {
+async function analyzeProvenance(part: Part, filename: string = '', c2paStatus: string, guidelineRules?: string): Promise<SpecialistReport> {
     const instruction = PROVENANCE_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES:\n${guidelineRules}` : '');
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
@@ -340,7 +340,7 @@ Provide exactly 3 bullet points of actionable strategic recommendations to mitig
 async function executePrompt(
     model: ReturnType<typeof genAI.getGenerativeModel>,
     prompt: string,
-    part: any
+    part: Part
 ): Promise<SpecialistReport> {
     try {
         const result = await model.generateContent([prompt, part]);
@@ -484,14 +484,14 @@ export async function analyzeImageMultiPersona(
         }
 
         // 4. Calculate Provenance Score based on C2PA Outcome (canonical scoring module)
-        const c2paDerivedScore = computeProvenanceScore(c2paReport.status as any);
+        const c2paDerivedScore = computeProvenanceScore(c2paReport.status as C2PAStatus);
 
         // 5-8. Composite Score (Firefly Rule + weights + multiplier + critical override)
         // All logic is now in the canonical scoring module
         const composite = computeCompositeScore({
             ipScore: ip.score,
             safetyScore: safety.score,
-            c2paStatus: c2paReport.status as any,
+            c2paStatus: c2paReport.status as C2PAStatus,
         });
 
         // Apply C2PA Trust Override side-effects on IP reasoning

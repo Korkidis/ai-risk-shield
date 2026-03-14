@@ -28,6 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     // On mount: read preference from localStorage, then system preference, then default light
     useEffect(() => {
+        /* eslint-disable react-hooks/set-state-in-effect -- syncing from external storage (localStorage) on mount */
         const stored = localStorage.getItem('rs-theme') as Theme | null
         if (stored === 'dark' || stored === 'light') {
             setTheme(stored)
@@ -37,6 +38,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             document.documentElement.setAttribute('data-theme', 'dark')
         }
         setMounted(true)
+        /* eslint-enable react-hooks/set-state-in-effect */
     }, [])
 
     const toggleTheme = () => {

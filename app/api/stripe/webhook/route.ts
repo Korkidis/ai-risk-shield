@@ -6,6 +6,7 @@ import { getPlan, type PlanId } from '@/lib/plans'
 import { sendMagicLinkEmail, sendPurchaseReceiptEmail } from '@/lib/email'
 import { logWebhookEvent, alertWebhookFailure } from '@/lib/webhook-monitor'
 import Stripe from 'stripe'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Must enable raw body for webhook signature verification
 // Next.js 13+ App Router: We just read text() from request
@@ -42,13 +43,13 @@ export async function POST(request: Request) {
 
     try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-    } catch (err: any) {
-        console.error('Webhook signature verification failed.', err.message)
+    } catch (err: unknown) {
+        console.error('Webhook signature verification failed.', err instanceof Error ? err.message : err)
         logWebhookEvent({
             action: 'signature_verification_failed',
             resourceType: 'stripe_webhook',
             severity: 'error',
-            metadata: { error: err.message },
+            metadata: { error: err instanceof Error ? err.message : String(err) },
         }).catch(() => {}) // Fire-and-forget for signature failures
         return NextResponse.json({ error: 'Webhook signature verification failed.' }, { status: 400 })
     }
@@ -98,9 +99,9 @@ export async function POST(request: Request) {
             default:
             // Unhandled event type — still mark as processed to avoid retries
         }
-    } catch (handlerError: any) {
+    } catch (handlerError: unknown) {
         // Don't mark as processed — let Stripe retry
-        console.error(`[Webhook] Handler failed for ${event.type}:`, handlerError.message)
+        console.error(`[Webhook] Handler failed for ${event.type}:`, handlerError instanceof Error ? handlerError.message : handlerError)
         return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
     }
 
@@ -128,7 +129,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true })
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabase: any) {
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabase: SupabaseClient) {
     const meta = session.metadata
     if (!meta) return
 
@@ -255,7 +256,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                         // Last resort: paginated listUsers (bounded, not full table scan)
                         console.error('[Webhook] Profile still not found. Using paginated listUsers.')
                         const { data: users } = await supabase.auth.admin.listUsers({ perPage: 50 })
-                        const found = users.users.find((u: any) => u.email === customerEmail)
+                        const found = users.users.find((u: { email?: string }) => u.email === customerEmail)
                         if (found) {
                             userId = found.id
                             console.log(`[Webhook] Found user via listUsers: ${userId}`)
@@ -310,17 +311,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                 }
             }
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[Webhook] Anonymous user resolution failed:', err)
+            const errMsg = err instanceof Error ? err.message : 'Unknown error'
             await logWebhookEvent({
                 action: 'anonymous_user_resolution_failed',
                 resourceType: 'stripe_webhook',
                 severity: 'critical',
-                metadata: { error: err.message, scanId },
+                metadata: { error: errMsg, scanId },
             })
             await alertWebhookFailure({
                 eventType: 'anonymous_user_resolution',
-                errorMessage: err.message,
+                errorMessage: errMsg,
             })
         }
     }
@@ -350,8 +352,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                 console.log(`[Webhook] Updated ${updatedScans.length} scans.`)
 
                 if (updatedScans.length > 0) {
-                    const scanIds = updatedScans.map((s: any) => s.id)
-                    const assetIds = updatedScans.map((s: any) => s.asset_id)
+                    const scanIds = updatedScans.map((s: { id: string; asset_id?: string }) => s.id)
+                    const assetIds = updatedScans.map((s: { id: string; asset_id?: string }) => s.asset_id)
 
                     // 2. Update Assets
                     const { error: assetError } = await supabase
@@ -526,7 +528,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
     }
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription, supabase: any) {
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription, supabase: SupabaseClient) {
     const tenantId = subscription.metadata?.tenantId
     if (!tenantId) return
 
@@ -540,7 +542,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription, supa
     })
 }
 
-async function handleSubscriptionCanceled(subscription: Stripe.Subscription, supabase: any) {
+async function handleSubscriptionCanceled(subscription: Stripe.Subscription, supabase: SupabaseClient) {
     const tenantId = subscription.metadata?.tenantId
     if (!tenantId) return
 
@@ -557,7 +559,7 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription, sup
  * Only applies to subscription invoices — one-time payments are skipped.
  * This ensures paid users' quota resets on their billing cycle, not a calendar month.
  */
-async function handleInvoicePaid(invoice: Stripe.Invoice, supabase: any) {
+async function handleInvoicePaid(invoice: Stripe.Invoice, supabase: SupabaseClient) {
     // Only reset on subscription invoices (not one-time payments)
     const subscriptionRef = invoice.parent?.subscription_details?.subscription
     if (!subscriptionRef) return
@@ -609,13 +611,13 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, supabase: any) {
                 metadata: { invoiceId: invoice.id },
             })
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[Webhook] handleInvoicePaid error:', err)
         await logWebhookEvent({
             action: 'invoice_paid_handler_error',
             resourceType: 'stripe_webhook',
             severity: 'critical',
-            metadata: { invoiceId: invoice.id, error: err.message },
+            metadata: { invoiceId: invoice.id, error: err instanceof Error ? err.message : 'Unknown error' },
         })
     }
 }
@@ -625,10 +627,10 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, supabase: any) {
  * Source of truth: lib/plans.ts
  */
 async function applyPlanToTenant(
-    supabase: any,
+    supabase: SupabaseClient,
     tenantId: string,
     planId: PlanId,
-    extraFields: Record<string, any> = {}
+    extraFields: Record<string, string | number | boolean | null> = {}
 ) {
     const plan = getPlan(planId)
 

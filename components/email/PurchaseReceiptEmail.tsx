@@ -35,7 +35,7 @@ export const PurchaseReceiptEmail: React.FC<PurchaseReceiptEmailProps> = ({
                 {/* Header */}
                 <div style={{ backgroundColor: colors.ink, padding: '30px', textAlign: 'center' }}>
                     <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                        AI Risk Shield
+                        AI Content Risk Score
                     </h1>
                     <p style={{ margin: '5px 0 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '2px' }}>
                         Purchase Confirmation
@@ -140,7 +140,7 @@ export const PurchaseReceiptEmail: React.FC<PurchaseReceiptEmailProps> = ({
                         This is your receipt. Keep for your records.
                     </p>
                     <p style={{ margin: '5px 0 0 0', fontSize: '9px', textTransform: 'uppercase', color: '#999999', letterSpacing: '1px' }}>
-                        AI Risk Shield &bull; {new Date().getFullYear()}
+                        AI Content Risk Score &bull; {new Date().getFullYear()}
                     </p>
                 </div>
 

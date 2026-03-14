@@ -12,7 +12,8 @@ import {
     Aperture,
     Grid as GridIcon,
     AlertTriangle,
-    FlaskConical
+    FlaskConical,
+    type LucideIcon
 } from 'lucide-react';
 
 import { RSChassisCard } from '@/components/rs/RSChassisCard';
@@ -71,8 +72,33 @@ import { RSTooltip } from '@/components/rs/RSTooltip';
 import { AuditModal } from '@/components/marketing/AuditModal';
 
 
+type TabId = 'palette' | 'components' | 'physics' | 'marketing' | 'substrates' | 'testing';
+
+function TabButton({ id, label, icon: Icon, activeTab, setActiveTab }: {
+    id: TabId;
+    label: string;
+    icon: LucideIcon;
+    activeTab: TabId;
+    setActiveTab: (id: TabId) => void;
+}) {
+    return (
+        <button
+            onClick={() => setActiveTab(id)}
+            className={cn(
+                "flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-[var(--rs-radius-element)]",
+                activeTab === id
+                    ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)] translate-y-[-2px]"
+                    : "text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] hover:bg-[var(--rs-bg-element)]/50"
+            )}
+        >
+            <Icon size={14} />
+            {label}
+        </button>
+    );
+}
+
 export default function DesignLabPage() {
-    const [activeTab, setActiveTab] = useState<'palette' | 'components' | 'physics' | 'marketing' | 'substrates' | 'testing'>('components');
+    const [activeTab, setActiveTab] = useState<TabId>('components');
 
     // Braun Mechanical Deck States
     const [masterLever, setMasterLever] = useState(true);
@@ -90,20 +116,7 @@ export default function DesignLabPage() {
 
     const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-    const TabButton = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
-        <button
-            onClick={() => setActiveTab(id)}
-            className={cn(
-                "flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-[var(--rs-radius-element)]",
-                activeTab === id
-                    ? "bg-[var(--rs-bg-element)] text-[var(--rs-text-primary)] shadow-[var(--rs-shadow-l2)] translate-y-[-2px]" // Extruded Active
-                    : "text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] hover:bg-[var(--rs-bg-element)]/50"
-            )}
-        >
-            <Icon size={14} />
-            {label}
-        </button>
-    );
+
 
     return (
         <div className="min-h-screen bg-[var(--rs-bg-surface)] text-[var(--rs-text-primary)] font-sans selection:bg-[var(--rs-signal)] selection:text-white relative overflow-x-hidden transition-colors duration-500">
@@ -138,11 +151,11 @@ export default function DesignLabPage() {
 
                             {/* Tab Switcher */}
                             <div className="flex gap-2 p-1 bg-[var(--rs-bg-element)] rounded-[var(--rs-radius-container)] shadow-[var(--rs-shadow-l1)]">
-                                <TabButton id="palette" label="Palette & Type" icon={Layers} />
-                                <TabButton id="components" label="Components" icon={Cpu} />
-                                <TabButton id="physics" label="Physics" icon={Move} />
-                                <TabButton id="marketing" label="Marketing" icon={Megaphone} />
-                                <TabButton id="substrates" label="Substrates" icon={GridIcon} />
+                                <TabButton id="palette" activeTab={activeTab} setActiveTab={setActiveTab} label="Palette & Type" icon={Layers} />
+                                <TabButton id="components" activeTab={activeTab} setActiveTab={setActiveTab} label="Components" icon={Cpu} />
+                                <TabButton id="physics" activeTab={activeTab} setActiveTab={setActiveTab} label="Physics" icon={Move} />
+                                <TabButton id="marketing" activeTab={activeTab} setActiveTab={setActiveTab} label="Marketing" icon={Megaphone} />
+                                <TabButton id="substrates" activeTab={activeTab} setActiveTab={setActiveTab} label="Substrates" icon={GridIcon} />
                                 <a
                                     href="/dashboard/design-lab/component-testing"
                                     className="flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-[var(--rs-radius-element)] text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] hover:bg-[var(--rs-bg-element)]/50 ml-2 border border-[var(--rs-border-primary)] border-dashed"

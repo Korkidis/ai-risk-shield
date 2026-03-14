@@ -96,6 +96,7 @@ If no IP is detected, return empty detections array.`
 /**
  * Parse JSON from Gemini response (handles markdown code blocks)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Gemini API returns dynamic JSON shapes
 function parseJSONResponse(text: string): any {
   try {
     // Try direct parse first

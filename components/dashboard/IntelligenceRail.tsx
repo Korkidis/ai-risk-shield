@@ -130,7 +130,7 @@ export function IntelligenceRail({ status, profile }: Props) {
                 {/* Legal Disclaimer inside Rail */}
                 <div className="pt-4 pb-2 text-center">
                     <p className="text-[10px] text-[var(--rs-text-secondary)] uppercase tracking-widest leading-relaxed font-bold">
-                        DISCLAIMER: RISK SHIELD IS A DIAGNOSTIC TOOL FOR FORENSIC PATTERN RECOGNITION. THIS DOES NOT CONSTITUTE LEGAL ADVICE. ALL FINAL COMPLIANCE DECISIONS SHOULD BE MADE BY QUALIFIED LEGAL COUNSEL. RISK SCORES ARE INDICATORS OF ALGORITHMIC EXPOSURE, NOT DEFINITIVE LEGAL RULINGS.
+                        DISCLAIMER: CONTENT RISK SCORE IS A DIAGNOSTIC TOOL FOR FORENSIC PATTERN RECOGNITION. THIS DOES NOT CONSTITUTE LEGAL ADVICE. ALL FINAL COMPLIANCE DECISIONS SHOULD BE MADE BY QUALIFIED LEGAL COUNSEL. RISK SCORES ARE INDICATORS OF ALGORITHMIC EXPOSURE, NOT DEFINITIVE LEGAL RULINGS.
                     </p>
                 </div>
             </div>
@@ -140,7 +140,7 @@ export function IntelligenceRail({ status, profile }: Props) {
     return null
 }
 
-function ScanIcon(props: any) {
+function ScanIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 7V5a2 2 0 0 1 2-2h2" />
@@ -151,7 +151,7 @@ function ScanIcon(props: any) {
     )
 }
 
-function FindingCard({ title, score, description, icon, c2pa }: any) {
+function FindingCard({ title, score, description, icon, c2pa }: { title: string; score: number; description: string; icon: React.ReactNode; c2pa?: { status: string; issuer?: string } }) {
     const getColor = (s: number) => {
         if (s > 65) return 'text-[var(--rs-signal)]'
         if (s > 35) return 'text-[var(--rs-risk-caution)]'

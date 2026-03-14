@@ -4,6 +4,16 @@ import { ExtendedScan, MitigationReportContent, ScanWithRelations } from '@/type
 import { format } from 'date-fns'
 import { getRiskTier } from './risk/tiers'
 
+/** Local type for PDF finding entries (DB findings + synthesized teasers) */
+interface PdfFinding {
+    title: string
+    severity: string
+    finding_type: string
+    description: string
+    _teaser?: string
+    _isTeaser?: boolean
+}
+
 // Dieter Rams / Braun Design Tokens
 const FONT = {
     header: "helvetica",
@@ -88,7 +98,7 @@ export const generateForensicReport = (
     doc.setFont(FONT.header, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLORS.ink)
-    doc.text("AI RISK SHIELD", 20, 15)
+    doc.text("AI CONTENT RISK SCORE", 20, 15)
 
     doc.setFont(FONT.body, "normal")
     doc.setFontSize(8)
@@ -248,12 +258,12 @@ export const generateForensicReport = (
 
     // Sort by severity (critical first)
     const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
-    findings.sort((a: any, b: any) => (severityOrder[a.severity] ?? 4) - (severityOrder[b.severity] ?? 4))
+    findings.sort((a: PdfFinding, b: PdfFinding) => (severityOrder[a.severity] ?? 4) - (severityOrder[b.severity] ?? 4))
 
     if (findings.length > 0) {
         // Determine which findings to show in sample mode
-        let shownFindings: any[] = []
-        let hiddenFindings: any[] = []
+        let shownFindings: PdfFinding[] = []
+        let hiddenFindings: PdfFinding[] = []
         const lockedList: string[] = []
 
         if (isSample) {
@@ -266,7 +276,7 @@ export const generateForensicReport = (
             // 2. content for "Locked" section (Dynamic Counts)
             // Count hidden findings by unique type to avoid clutter
             const hiddenCounts: Record<string, number> = {}
-            hiddenFindings.forEach((f: any) => {
+            hiddenFindings.forEach((f: PdfFinding) => {
                 const type = f.finding_type || 'unknown'
                 hiddenCounts[type] = (hiddenCounts[type] || 0) + 1
             })
@@ -335,7 +345,7 @@ export const generateForensicReport = (
         }
 
         // Render shown findings
-        shownFindings.forEach((f: any) => {
+        shownFindings.forEach((f: PdfFinding) => {
             y = checkPageBreak(y, 25)
 
             // Severity dot
@@ -552,7 +562,7 @@ export const generateForensicReport = (
         doc.setFontSize(6)
         doc.setTextColor(COLORS.sub)
         doc.text(
-            `AI RISK SHIELD  |  ${isSample ? 'SAMPLE' : 'FULL'} REPORT  |  ${format(new Date(scan.created_at), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
+            `AI CONTENT RISK SCORE  |  ${isSample ? 'SAMPLE' : 'FULL'} REPORT  |  ${format(new Date(scan.created_at), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
             105, 290, { align: "center" }
         )
     }
@@ -638,7 +648,7 @@ export const generateMitigationPDF = (
     doc.setFont(FONT.header, "bold")
     doc.setFontSize(14)
     doc.setTextColor(COLORS.ink)
-    doc.text("AI RISK SHIELD", 20, 15)
+    doc.text("AI CONTENT RISK SCORE", 20, 15)
 
     doc.setFont(FONT.body, "normal")
     doc.setFontSize(8)
@@ -1076,7 +1086,7 @@ export const generateMitigationPDF = (
         doc.setFontSize(6)
         doc.setTextColor(COLORS.sub)
         doc.text(
-            `AI RISK SHIELD  |  MITIGATION REPORT  |  ${format(generatedAt ? new Date(generatedAt) : new Date(), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
+            `AI CONTENT RISK SCORE  |  MITIGATION REPORT  |  ${format(generatedAt ? new Date(generatedAt) : new Date(), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
             105, 290, { align: "center" }
         )
     }

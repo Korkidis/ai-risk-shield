@@ -40,6 +40,10 @@ export interface PlanConfig {
         sso: boolean;
     };
 
+    // Video Limits
+    videoMaxDurationSeconds: number; // 0 = no video allowed
+    videoFrameLimit: number;         // frames to extract per video scan
+
     // Support
     supportTier: 'community' | 'email' | 'slack' | 'dedicated';
 }
@@ -70,6 +74,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
             priorityQueue: false,
             sso: false,
         },
+        videoMaxDurationSeconds: 0,  // No video for free tier
+        videoFrameLimit: 0,
         supportTier: 'community',
     },
 
@@ -98,6 +104,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
             priorityQueue: false,
             sso: false,
         },
+        videoMaxDurationSeconds: 120,  // 2 minutes
+        videoFrameLimit: 5,
         supportTier: 'email',
     },
 
@@ -126,6 +134,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
             priorityQueue: false,
             sso: false,
         },
+        videoMaxDurationSeconds: 300,  // 5 minutes
+        videoFrameLimit: 10,
         supportTier: 'email',
     },
 
@@ -154,6 +164,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
             priorityQueue: true,
             sso: false,
         },
+        videoMaxDurationSeconds: 600,  // 10 minutes (capped — no worker/queue)
+        videoFrameLimit: 15,
         supportTier: 'slack',
     },
 
@@ -182,6 +194,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
             priorityQueue: true,
             sso: true,
         },
+        videoMaxDurationSeconds: 600,  // 10 minutes (capped same as Agency — no worker/queue)
+        videoFrameLimit: 15,
         supportTier: 'dedicated',
     },
 };

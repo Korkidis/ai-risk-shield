@@ -99,23 +99,25 @@ export default function DashboardPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const emailGateRef = useRef<HTMLDivElement>(null);
 
-    const mapScanToRecord = useCallback((scan: Record<string, any>): ScanWithRelations => {
-        const riskProfile: RiskProfile = scan.risk_profile || {
-            composite_score: scan.composite_score || 0,
+    const mapScanToRecord = useCallback((scan: Record<string, unknown>): ScanWithRelations => {
+        // Cast properties from unknown to expected types for risk profile construction
+        const assets = scan.assets as { filename?: string; file_type?: string; file_size?: number } | undefined
+        const riskProfile: RiskProfile = (scan.risk_profile as RiskProfile) || {
+            composite_score: (scan.composite_score as number) || 0,
             verdict: scan.risk_level === 'critical' ? 'Critical Risk' :
                 scan.risk_level === 'high' ? 'High Risk' :
                     scan.risk_level === 'review' ? 'Medium Risk' : 'Low Risk',
-            ip_report: { score: scan.ip_risk_score || 0, teaser: 'IP Analysis Complete' },
-            safety_report: { score: scan.safety_risk_score || 0, teaser: 'Safety Analysis Complete' },
-            provenance_report: { score: scan.provenance_risk_score || 0, teaser: 'Provenance Analysis Complete' },
-            c2pa_report: scan.provenance_data || { status: 'missing' }
+            ip_report: { score: (scan.ip_risk_score as number) || 0, teaser: 'IP Analysis Complete' },
+            safety_report: { score: (scan.safety_risk_score as number) || 0, teaser: 'Safety Analysis Complete' },
+            provenance_report: { score: (scan.provenance_risk_score as number) || 0, teaser: 'Provenance Analysis Complete' },
+            c2pa_report: (scan.provenance_data as RiskProfile['c2pa_report']) || { status: 'missing' }
         };
 
         return {
             ...scan,
-            filename: scan.assets?.filename || 'Unnamed Asset',
-            file_type: scan.assets?.file_type || (scan.is_video ? 'video' : 'image'),
-            file_size: scan.assets?.file_size || scan.file_size || 0,
+            filename: assets?.filename || 'Unnamed Asset',
+            file_type: assets?.file_type || (scan.is_video ? 'video' : 'image'),
+            file_size: assets?.file_size || (scan.file_size as number) || 0,
             assets: scan.assets,
             asset_url: scan.asset_url || null,
             risk_profile: riskProfile,
@@ -134,7 +136,7 @@ export default function DashboardPage() {
                 if (data.guidelines?.length) {
                     setGuidelines(data.guidelines)
                     // Auto-select: prefer is_default guideline, else first one
-                    const defaultG = data.guidelines.find((g: any) => g.is_default)
+                    const defaultG = data.guidelines.find((g: { id: string; is_default?: boolean }) => g.is_default)
                     setSelectedGuidelineId(defaultG?.id || data.guidelines[0].id)
                 }
             })
@@ -186,11 +188,12 @@ export default function DashboardPage() {
             setScanStatus('complete');
             addLog('Analysis finalized. Telemetry stream active.', 'done');
             trackEvent('scan_completed', { scanId, score: profile.composite_score });
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[Dashboard] Failed to load scan:', err);
             setScanStatus('error');
-            setErrorMessage(err.message || 'Failed to load scan');
-            addLog(`LOAD FAILED: ${err.message}`, 'error');
+            const errMsg = err instanceof Error ? err.message : 'Failed to load scan';
+            setErrorMessage(errMsg);
+            addLog(`LOAD FAILED: ${errMsg}`, 'error');
         }
     }, [mapScanToRecord]);
 
@@ -388,11 +391,12 @@ export default function DashboardPage() {
             // Subscribe to realtime + poll for completion
             pollForCompletion(scanId);
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
             setScanStatus('error');
-            setErrorMessage(err.message || "Connection lost.");
-            addLog(`SCAN ABORTED: ${err.message}`, 'error');
+            const errMsg = err instanceof Error ? err.message : "Connection lost.";
+            setErrorMessage(errMsg);
+            addLog(`SCAN ABORTED: ${errMsg}`, 'error');
         }
     };
 

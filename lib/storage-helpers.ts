@@ -193,7 +193,7 @@ export async function findOrphanedStorageFiles(
             return orphans
         }
 
-        const dbPaths = new Set((assets || []).map((a: any) => a.storage_path))
+        const dbPaths = new Set((assets || []).map((a: { storage_path: string }) => a.storage_path))
 
         // 3. Find files not in database
         for (const file of files) {

@@ -37,10 +37,10 @@ async function cleanup(): Promise<any> {
 
         console.log(`🧹 Cleaning up data older than ${CUTOFF_DAYS} days (before ${cutoffISO})`);
 
-        // 1. Find old scans (scans reference assets, not the other way around)
+        // 1. Find old scans (include tenant_id + is_video for frame cleanup)
         const { data: oldScans, error: scanErr } = await sb
             .from('scans')
-            .select('id, asset_id')
+            .select('id, asset_id, tenant_id, is_video')
             .lt('created_at', cutoffISO);
 
         if (scanErr) {
@@ -53,8 +53,38 @@ async function cleanup(): Promise<any> {
 
         console.log(`Found ${scanIds.length} old scans referencing ${assetIds.length} assets`);
 
-        // 2. Delete scan_findings first (FK constraint)
+        // 2a. Delete video frame storage files for video scans
         if (scanIds.length > 0) {
+            const videoScans = (oldScans || []).filter((s: any) => s.is_video && s.tenant_id);
+            let frameFilesDeleted = 0;
+            for (const vs of videoScans) {
+                const framePath = `${vs.tenant_id}/frames/${vs.id}`;
+                try {
+                    const { data: frameFiles } = await sb.storage
+                        .from('uploads')
+                        .list(framePath);
+                    if (frameFiles && frameFiles.length > 0) {
+                        const paths = frameFiles.map((f: any) => `${framePath}/${f.name}`);
+                        await sb.storage.from('uploads').remove(paths);
+                        frameFilesDeleted += paths.length;
+                    }
+                } catch {
+                    // Ignore frame cleanup errors — best effort
+                }
+                await sleep(100);
+            }
+            if (frameFilesDeleted > 0) {
+                console.log(`✅ Deleted ${frameFilesDeleted} video frame files from storage`);
+            }
+
+            // 2b. Delete video_frames records (FK constraint)
+            for (let i = 0; i < scanIds.length; i += BATCH_SIZE) {
+                const chunk = scanIds.slice(i, i + BATCH_SIZE);
+                await sb.from('video_frames').delete().in('scan_id', chunk);
+                await sleep(200);
+            }
+
+            // 2c. Delete scan_findings (FK constraint)
             for (let i = 0; i < scanIds.length; i += BATCH_SIZE) {
                 const chunk = scanIds.slice(i, i + BATCH_SIZE);
                 const { error: sfErr, count } = await sb

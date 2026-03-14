@@ -26,7 +26,7 @@ export function AnonymousScanNavbar({ className }: { className?: string }) {
                     <div className="w-4 h-4 border-2 border-[var(--rs-text-primary)] skew-x-[-15deg]" />
                 </div>
                 <span className="text-sm font-bold text-[var(--rs-text-primary)] tracking-wide uppercase hidden sm:block">
-                    AI Risk Shield
+                    AI Content Risk Score
                 </span>
             </Link>
 

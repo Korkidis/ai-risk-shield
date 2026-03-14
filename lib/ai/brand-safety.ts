@@ -115,6 +115,7 @@ If the image is brand-safe, return empty violations array.`
 /**
  * Parse JSON from Gemini response (handles markdown code blocks)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Gemini API returns dynamic JSON shapes
 function parseJSONResponse(text: string): any {
   try {
     return JSON.parse(text)

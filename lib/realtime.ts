@@ -5,7 +5,12 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
  * Broadcast scan progress to listeners
  * Uses Supabase Realtime 'broadcast' channel
  */
-export async function broadcastScanProgress(scanId: string, progress: number, message: string) {
+export async function broadcastScanProgress(
+    scanId: string,
+    progress: number,
+    message: string,
+    frameData?: { current: number; total: number }
+) {
     try {
         const supabase = await createServiceRoleClient()
 
@@ -21,7 +26,7 @@ export async function broadcastScanProgress(scanId: string, progress: number, me
                     await channel.send({
                         type: 'broadcast',
                         event: 'progress',
-                        payload: { scanId, progress, message, timestamp: Date.now() },
+                        payload: { scanId, progress, message, timestamp: Date.now(), ...(frameData && { frameData }) },
                     })
                     clearTimeout(timeout)
                     resolve()

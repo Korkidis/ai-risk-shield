@@ -54,7 +54,7 @@ async function checkPreconditions(supabase: any) {
 }
 
 async function run() {
-  console.log('\n🛡️  AI Risk Shield - Safe Migration Helper\n')
+  console.log('\n🛡️  AI Content Risk Score - Safe Migration Helper\n')
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY

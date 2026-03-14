@@ -14,7 +14,7 @@ export async function GET() {
         let tenantId: string
         try {
             tenantId = await getTenantId()
-        } catch (authError) {
+        } catch (_authError) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
         const supabase = await createClient()
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         let tenantId: string
         try {
             tenantId = await getTenantId()
-        } catch (authError) {
+        } catch (_authError) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
         const supabase = await createClient()

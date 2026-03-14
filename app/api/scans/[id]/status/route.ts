@@ -59,6 +59,7 @@ export async function GET(
       // Include real Gemini risk_profile blob when scan is complete
       risk_profile: typedScan.status === 'complete' ? typedScan.risk_profile : undefined,
     })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

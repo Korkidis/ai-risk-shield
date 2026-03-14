@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'AI Risk Shield',
+  title: 'AI Content Risk Score',
   description: 'Forensic AI Audit',
 }
 
@@ -46,7 +46,7 @@ export default function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          "name": "AI Risk Shield",
+          "name": "AI Content Risk Score",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
           "description": "AI content risk validation — IP risk scoring, C2PA provenance verification, and forensic reporting in 15 seconds.",

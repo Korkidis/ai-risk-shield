@@ -12,7 +12,7 @@ export default function VUMeterDesignLabPage() {
                     <p className="text-[var(--rs-gray-400)] text-sm max-w-2xl">
                         Exploring the transition from circular analog dials to vertical LED VU meters.
                         This optimization reclaims horizontal real estate for high-density truth metrics (Findings)
-                        while maintaining the tactile, physical "Forensic Instrument" aesthetic. Tooltips have been added to clarify methodology.
+                        while maintaining the tactile, physical &ldquo;Forensic Instrument&rdquo; aesthetic. Tooltips have been added to clarify methodology.
                     </p>
                 </header>
 

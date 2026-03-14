@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
     LayoutDashboard,
@@ -8,12 +8,16 @@ import {
     ShieldAlert,
     BookOpen,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    ClipboardList,
+    Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { TenantSwitcher } from '@/components/dashboard/TenantSwitcher';
 import { TenantPlanBadge } from '@/components/dashboard/TenantPlanBadge';
+import { getTenantBillingStatus } from '@/app/actions/billing';
+import { hasFeature, type PlanId } from '@/lib/plans';
 
 interface NavItem {
     label: string;
@@ -21,23 +25,48 @@ interface NavItem {
     href: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", icon: <LayoutDashboard />, href: "/dashboard" },
     { label: "Scans & Reports", icon: <FileSearch />, href: "/dashboard/scans-reports" },
     { label: "Guidelines & Policies", icon: <ShieldAlert />, href: "/dashboard/brand-guidelines" },
     { label: "Help & Documentation", icon: <BookOpen />, href: "/dashboard/help" },
 ];
 
-interface RSSidebarProps extends React.HTMLAttributes<HTMLDivElement> {
-    // 
-}
+type RSSidebarProps = React.HTMLAttributes<HTMLDivElement>
 
 export function RSSidebar({
     className,
     ...props
 }: RSSidebarProps) {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [planId, setPlanId] = useState<PlanId>('free');
     const pathname = usePathname();
+
+    // Fetch tenant plan for conditional nav items
+    useEffect(() => {
+        getTenantBillingStatus()
+            .then(data => {
+                if (data?.planId) setPlanId(data.planId as PlanId);
+            })
+            .catch(() => {}); // Fail silently — defaults to free (no extra nav)
+    }, []);
+
+    // Build nav items based on plan features
+    const navItems = useMemo(() => {
+        const items = [...BASE_NAV_ITEMS];
+
+        // Team page — requires teamDashboard feature (TEAM+)
+        if (hasFeature(planId, 'teamDashboard')) {
+            items.push({ label: "Team", icon: <Users />, href: "/dashboard/team" });
+        }
+
+        // Audit Logs — requires auditLogs feature (AGENCY+)
+        if (hasFeature(planId, 'auditLogs')) {
+            items.push({ label: "Audit Logs", icon: <ClipboardList />, href: "/dashboard/audit-logs" });
+        }
+
+        return items;
+    }, [planId]);
 
     return (
         <aside
@@ -58,7 +87,7 @@ export function RSSidebar({
 
             {/* Nav Container */}
             <div className="flex-1 py-6 px-3 space-y-2">
-                {NAV_ITEMS.map((item) => {
+                {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link
@@ -75,7 +104,8 @@ export function RSSidebar({
                                 "flex-shrink-0 transition-colors",
                                 isActive ? "text-rs-signal" : "text-rs-gray-500 group-hover:text-rs-black"
                             )}>
-                                {React.cloneElement(item.icon as React.ReactElement<any>, { size: 20 })}
+                                {React.cloneElement(item.icon as // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.cloneElement requires any for generic element props
+                                React.ReactElement<any>, { size: 20 })}
                             </span>
 
                             <span className={cn(

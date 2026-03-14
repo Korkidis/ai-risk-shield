@@ -53,7 +53,7 @@ export async function GET(request: Request) {
         })
 
         return NextResponse.json({ success: true, tenantsReset: count })
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[Cron] Unexpected error:', err)
         return NextResponse.json({ error: 'Internal error' }, { status: 500 })
     }

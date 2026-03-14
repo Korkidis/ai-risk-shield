@@ -36,6 +36,7 @@ type Props = {
   tenantId: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function ScanResults({ tenantId: _tenantId }: Props) {
   const [scans, setScans] = useState<ScanResult[]>([])
   const [loading, setLoading] = useState(true)

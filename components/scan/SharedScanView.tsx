@@ -24,13 +24,30 @@ function toRiskPanelLevel(level?: string): RiskLevel {
     }
 }
 
+interface SharedScanData {
+    risk_profile?: {
+        ip_report?: { score: number; teaser?: string }
+        safety_report?: { score: number; teaser?: string }
+        provenance_report?: { score: number; teaser?: string }
+    } | null
+    risk_level?: string
+    created_at: string
+    composite_score?: number
+    ip_risk_score?: number
+    safety_risk_score?: number
+    provenance_risk_score?: number
+    scan_findings?: Array<{ id: string; title: string; severity: string; finding_type?: string; description: string; confidence_score?: number }>
+    assets?: { filename?: string; file_type?: string; file_size?: number; storage_path?: string } | null
+    asset_url?: string | null
+}
+
 interface SharedScanViewProps {
     scanId: string
     token: string
 }
 
 export default function SharedScanView({ scanId, token }: SharedScanViewProps) {
-    const [scan, setScan] = useState<any>(null)
+    const [scan, setScan] = useState<SharedScanData | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -105,7 +122,7 @@ export default function SharedScanView({ scanId, token }: SharedScanViewProps) {
                         action={
                             <Link href="/">
                                 <RSButton variant="primary">
-                                    Go to AI Risk Shield
+                                    Go to AI Content Risk Score
                                 </RSButton>
                             </Link>
                         }
@@ -114,6 +131,9 @@ export default function SharedScanView({ scanId, token }: SharedScanViewProps) {
             </RSBackground>
         )
     }
+
+    // No data after loading complete — should not happen, but guard
+    if (!scan) return null
 
     // Success: render the shared scan
     const riskProfile = scan.risk_profile
@@ -127,7 +147,7 @@ export default function SharedScanView({ scanId, token }: SharedScanViewProps) {
                     <Link href="/" className="flex items-center gap-2 group">
                         <Shield className="w-5 h-5 text-[var(--rs-signal)] group-hover:scale-110 transition-transform" />
                         <span className="font-mono text-xs font-bold uppercase tracking-widest text-[var(--rs-text-primary)]">
-                            AI Risk Shield
+                            AI Content Risk Score
                         </span>
                     </Link>
                     <span className="font-mono text-[10px] uppercase tracking-widest text-[var(--rs-text-tertiary)]">

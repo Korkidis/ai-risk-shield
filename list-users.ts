@@ -58,7 +58,8 @@ async function listUsers() {
   if (!profiles || profiles.length === 0) {
     console.log('No profiles found')
   } else {
-    profiles.forEach((profile: any, i) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase dynamic query with nested joins
+    profiles.forEach((profile: any, i: number) => {
       console.log(`\n${i + 1}. Name: ${profile.full_name}`)
       console.log(`   Email: ${profile.email}`)
       console.log(`   Role: ${profile.role}`)

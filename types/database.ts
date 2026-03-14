@@ -51,6 +51,8 @@ export interface ExtendedScan {
   guideline_id?: string | null
   status: 'pending' | 'processing' | 'complete' | 'failed'
   is_video?: boolean
+  frames_analyzed?: number | null
+  highest_risk_frame?: number | null
   ip_risk_score?: number
   safety_risk_score?: number
   provenance_risk_score?: number
@@ -164,7 +166,9 @@ export interface ProvenanceDetails {
 
   // -- Deep Data (JSONB) --
   // These replace the flat columns that were previously assumed
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase JSONB column with dynamic c2pa edit history shape
   edit_history: any[] | null // JSONB array of edit actions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase JSONB column with dynamic c2pa manifest shape
   raw_manifest?: any | null // JSONB full c2pa manifest
 
   created_at: string
@@ -265,6 +269,7 @@ export interface ReferralEvent {
   tenant_id?: string | null
   scan_id?: string | null
   event_type: 'insurance_click' | 'expert_consult_click' | string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase JSONB column with dynamic referral metadata shape
   metadata?: any | null
   created_at: string
 }

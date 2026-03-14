@@ -14,6 +14,7 @@ import { formatBytes } from '@/lib/utils'
 import { generateMitigationPDF } from '@/lib/pdf-generator'
 import { Download } from 'lucide-react'
 import Image from 'next/image'
+import { VideoFrameGrid } from '@/components/dashboard/VideoFrameGrid'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -323,6 +324,21 @@ export function UnifiedScanDrawer({
                         )}
                     </div>
                 </section>
+
+                {/* ── Section 3.5: Video Frame Analysis (video scans only) ── */}
+                {scan.is_video && (scan.frames_analyzed ?? 0) > 0 && (
+                    <section className="border border-rs-border-primary bg-[var(--rs-bg-surface)]">
+                        <div className="px-5 py-3 border-b border-rs-border-primary bg-[var(--rs-bg-element)]/70 flex items-center justify-between">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Frame_Analysis</span>
+                            <span className="text-[9px] font-mono text-rs-text-tertiary">
+                                Worst-case scoring across {scan.frames_analyzed} analyzed frames
+                            </span>
+                        </div>
+                        <div className="p-5">
+                            <VideoFrameGrid scanId={scan.id} />
+                        </div>
+                    </section>
+                )}
 
                 {/* ── Section 4: Provenance & Creation ── */}
                 <section>

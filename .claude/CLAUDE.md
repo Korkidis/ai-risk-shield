@@ -1,4 +1,4 @@
-# AI Risk Shield - Claude Code Guide
+# AI Content Risk Score - Claude Code Guide
 
 ## Project Overview
 SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Turbopack) + Supabase + Google Gemini 2.5 Flash + Stripe.
@@ -118,10 +118,14 @@ app/
 │       ├── help/                # FAQ + docs (scaffolding)
 │       ├── history/             # STUB → should redirect to scans-reports
 │       ├── reports/             # STUB → should redirect to scans-reports
+│       ├── audit-logs/          # Audit log viewer (AGENCY+ feature gate)
+│       ├── team/                # Team management (TEAM+ feature gate)
 │       └── design-lab/          # Internal component showcase (hide from customers)
 ├── (marketing)/         # Pricing page
 ├── api/                 # API routes
-│   ├── scans/           # Upload, process, capture-email, assign-to-user, list, [id], anonymous-quota, anonymous-upload
+│   ├── scans/           # Upload, process, capture-email, assign-to-user, list, [id], [id]/frames, anonymous-quota, anonymous-upload
+│   ├── audit-logs/      # Audit log API (AGENCY+)
+│   ├── team/            # Team invite, members, invites APIs (TEAM+)
 │   ├── stripe/          # Checkout + webhook
 │   ├── switch-tenant/   # Multi-tenant switching
 │   └── guidelines/      # Brand guidelines CRUD
@@ -140,16 +144,20 @@ lib/
 ├── pdf-generator.ts    # Sample/full PDF report generation
 ├── email.ts            # Resend email sending
 ├── c2pa.ts             # C2PA verification (c2pa-node integration)
-├── video/              # FFmpeg processing (extract-frames.ts)
+├── video/              # FFmpeg processing (extract-frames.ts, processor.ts with getVideoDuration)
+├── __tests__/          # Unit tests (plans-video, entitlements)
 └── stripe/             # Stripe integration
 
 components/
 ├── rs/                 # Design system (62+ "forensic instrument" components)
 ├── landing/            # Landing page components (FreeUploadContainer, LandingClient, etc.)
 ├── marketing/          # AuditModal, pricing components
-├── billing/            # UpgradeButton, OneTimePurchaseButton
+├── billing/            # UpgradeButton, OneTimePurchaseButton, MitigationPurchaseButton
 ├── email/              # React Email templates (SampleReportEmail, MagicLinkEmail)
-└── dashboard/          # Dashboard-specific components
+└── dashboard/          # Dashboard-specific (VideoFrameGrid, TeamClient, AuditLogClient, etc.)
+
+.github/
+└── workflows/ci.yml    # CI pipeline: lint → type-check → vitest → build
 ```
 
 ## Environment Variables
@@ -180,7 +188,7 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) —
 
 - [ ] Upload image → verify scores appear
 - [ ] Upload video as free user → verify blocked
-- [ ] Upload video as paid user → verify 5 frames analyzed (MVP)
+- [ ] Upload video as paid user → verify dynamic frame count per plan tier
 - [ ] Hit quota limit (free) → verify upgrade modal
 - [ ] Hit quota limit (paid) → verify overage allowed
 - [ ] Cross-tenant test → verify can't access other tenant's data
@@ -189,6 +197,13 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) —
 - [ ] Email gate → verify shadow user creation and magic link delivery
 - [ ] $29 one-time purchase → verify Stripe checkout → webhook → scan.purchased = true
 - [ ] Subscription purchase → verify plan applied to tenant
+- [ ] Upload video exceeding plan duration → verify 413 `VIDEO_DURATION_EXCEEDED`
+- [ ] View video frame analysis in drawer → verify `VideoFrameGrid` renders
+- [ ] View audit logs as AGENCY+ user → verify page loads
+- [ ] View audit logs as PRO user → verify upgrade prompt
+- [ ] Invite team member as TEAM+ owner → verify email sent + invite listed
+- [ ] Invitee clicks magic link → verify joins inviter's tenant (not stray tenant)
+- [ ] Hit seat limit → verify 403 with descriptive error
 
 ## Database Schema Overview
 
@@ -222,11 +237,22 @@ Note: User reported applying these + the Feb 15 migrations (`risk_profile_blob`,
 
 ## Video Processing Rules
 
-- **Paid tiers only** - Check plan before allowing upload
-- **Extract 5 frames (MVP)** - Evenly distributed across video duration. Will increase to 10 post-MVP once cost model validated.
+- **Paid tiers only** - Check plan before allowing upload (`videoMaxDurationSeconds > 0`)
+- **Dynamic frame count per plan tier** - Configured via `PlanConfig.videoFrameLimit`:
+  | Tier | Max Duration | Frames |
+  |------|-------------|--------|
+  | FREE | 0 (blocked) | 0 |
+  | PRO | 120s (2min) | 5 |
+  | TEAM | 300s (5min) | 10 |
+  | AGENCY | 600s (10min) | 15 |
+  | ENTERPRISE | 600s (10min) | 15 |
+- **Duration enforcement** - `getVideoDuration()` via ffprobe at upload, compared against `videoMaxDurationSeconds`
+- **Size cap** - 250MB max for video uploads (memory safety on serverless)
 - **Aggregate scores** - Use MAX(all frame scores), not average
-- **Storage** - Delete frames after retention period (same as video)
-- **Frame limit** - 5 frames for MVP cost efficiency; `extractFrames()` default parameter is 10 for future use
+- **Frame persistence** - Frames stored to `uploads/{tenant_id}/frames/{scanId}/frame_XXX.jpg` in Supabase Storage
+- **Frame retrieval** - `/api/scans/[id]/frames` returns signed URLs + per-frame scores
+- **Storage cleanup** - Both retention scripts delete frame files before parent scan/asset
+- **Enterprise capped same as Agency** - No worker/queue, Vercel function timeout makes longer video unsafe
 
 ## Quota Enforcement
 
@@ -377,11 +403,22 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **PDF gating corrected**: In-app scan report downloads are always full (`isSample = false`). Sample PDFs only in pre-account email.
 - **Quota boundary hardened**: `v_new_used + p_amount > limit` (correct for bulk amounts)
 
-### Pending Schema Drift (Updated Mar 3)
+### Sprint 11 Complete (Mar 14, 2026)
+- **Rebrand**: "AI Risk Shield" → "AI Content Risk Score" across all customer-facing UI, metadata, emails, PDFs, navbars
+- **Video production-readiness**: Plan-tier video config (`videoMaxDurationSeconds`, `videoFrameLimit` on `PlanConfig`). Dynamic frame count from tenant plan. `getVideoDuration()` via ffprobe for upload-time enforcement. Duration + 250MB size limits at upload. Frame persistence to Supabase Storage. Frames API (`/api/scans/[id]/frames`). `VideoFrameGrid` component wired into `UnifiedScanDrawer`. Frame cleanup in both retention scripts. Enhanced realtime progress with `frameData`.
+- **Audit log viewer**: `/api/audit-logs` API (paginated, filterable by action/resource/date). `/dashboard/audit-logs` page + `AuditLogClient.tsx`. AGENCY+ feature gate. Conditional sidebar nav.
+- **Team management**: Auth callback invite-aware provisioning (prevents stray tenant on invited user's first login). Partial unique index on `(tenant_id, lower(email)) WHERE accepted_at IS NULL`. `/api/team/invite` + `/api/team/members` + `/api/team/invites` APIs. `/dashboard/team` page + `TeamClient.tsx` with seat gauge, role management, invite modal. TEAM+ feature gate. Conditional sidebar nav.
+- **CI pipeline**: `.github/workflows/ci.yml` — lint → type-check → vitest → build on PR/push to main
+- **Unit tests**: 94 tests passing (13 plans-video + 41 entitlements + 40 risk scoring)
+- **Lint cleanup**: 111 errors → 0 errors (17 legitimate warnings: Next.js error boundaries, React hooks deps, design system `<img>` elements)
+- **Type safety**: Zero `tsc --noEmit` errors maintained
+
+### Pending Schema Drift (Updated Mar 14)
 Migrations created but NOT applied to live DB:
 - `20260224_rate_limits.sql` — rate_limits table + cleanup function
 - `20260302_atomic_mitigation_usage.sql` — `increment_tenant_mitigation_usage()` hardened RPC
 - `20260303_atomic_mitigation_quota.sql` — `consume_mitigation_quota()` atomic check+increment RPC
+- `20260314_team_invites_unique_constraint.sql` — partial unique index on pending invites
 
 ## Lessons Learned (Updated as we build)
 
@@ -430,4 +467,4 @@ Migrations created but NOT applied to live DB:
 
 ---
 
-**Last Updated:** 2026-02-20 (Phase O — Open redirect fix, webhook metadata validation, COOP header, env var fail-fast, session expiry reduction)
+**Last Updated:** 2026-03-14 (Sprint 11 — Rebrand to "AI Content Risk Score", video production tiers, audit log viewer, team management, CI pipeline, 94 unit tests, 0 lint errors)

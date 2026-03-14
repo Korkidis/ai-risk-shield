@@ -21,11 +21,11 @@ type ScanApiResult = {
     provenance_risk_score: number | null
     risk_level: string | null
     provenance_status: string | null
-    provenance_data: Record<string, any> | null
+    provenance_data: Record<string, unknown> | null
     status: string
     share_token: string | null
     share_expires_at: string | null
-    risk_profile?: Record<string, any> | null
+    risk_profile?: Record<string, unknown> | null
     scan_findings: Array<{
         id: string
         title: string | null
@@ -51,15 +51,15 @@ type ScanApiResult = {
         certificate_issuer: string | null
         certificate_serial: string | null
         hashing_algorithm: string | null
-        edit_history: any[] | null
-        raw_manifest: any | null
+        edit_history: unknown[] | null
+        raw_manifest: unknown | null
         created_at: string
     }>
     mitigation_reports: Array<{
         id: string
         advice_content?: string
         status?: string
-        report_content?: any | null
+        report_content?: unknown | null
         report_version?: number
         generator_version?: string
         completed_at?: string | null
@@ -192,11 +192,13 @@ export async function GET(
         // This preserves the full Gemini multi-persona analysis (teasers, reasoning, etc.)
         // Only fall back to reconstruction for legacy scans that predate blob storage.
         // riskProfile is a JSON blob built for the API response — may come from DB or be constructed
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic JSON blob from Supabase
         let riskProfile: Record<string, any>;
         let responseFindingsOverride: ScanApiResult['scan_findings'] | undefined;
 
         if (scan.risk_profile) {
             // Rich path: stored blob from analyzeImageMultiPersona
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic JSON blob from Supabase
             riskProfile = scan.risk_profile as Record<string, any>
 
             // SOFT GATE: Mask sensitive details if anonymous & no email captured
@@ -274,7 +276,9 @@ export async function GET(
         }
 
         // Strip share_token from response (don't leak to clients)
-        const { share_token: _token, share_expires_at: _expires, scan_findings: _findings, provenance_details: _prov, mitigation_reports: _mitigations, ...scanResponse } = scan
+        const { share_token: _shareToken, share_expires_at: _shareExpires, scan_findings: _findings, provenance_details: _prov, mitigation_reports: _mitigations, ...scanResponse } = scan
+        // _shareToken and _shareExpires intentionally destructured and discarded to strip from response
+        void _shareToken; void _shareExpires;
 
         // Normalize provenance_details: array from join → single object (or null)
         const provenanceDetails = Array.isArray(_prov) && _prov.length > 0 ? _prov[0] : null
@@ -322,7 +326,7 @@ export async function PATCH(
             return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
         }
 
-        const updateData: Record<string, any> = {}
+        const updateData: Record<string, string | string[]> = {}
 
         if (action === 'share') {
             // Generate share token valid for 7 days

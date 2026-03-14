@@ -71,9 +71,10 @@ export async function sendSampleReportEmail(
         }] : []
 
         const result = await withRetry(() => resend.emails.send({
-            from: `AI Risk Shield <${fromAddress}>`,
+            from: `AI Content Risk Score <${fromAddress}>`,
             to: email,
             subject: `🔒 Forensic Analysis Complete • Risk Score: ${score}`,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React Email component return type incompatible with Resend's react prop
             react: SampleReportEmail({ scanId, score, riskLevel, findingsCount, magicLink, topFinding }) as any,
             attachments
         }))
@@ -109,15 +110,16 @@ export async function sendMagicLinkEmail(
         const riskLevel = score != null ? getRiskLabel(score) : 'N/A'
 
         const result = await withRetry(() => resend.emails.send({
-            from: `AI Risk Shield <${fromAddress}>`,
+            from: `AI Content Risk Score <${fromAddress}>`,
             to: email,
-            subject: 'Access your AI Risk Shield Report',
+            subject: 'Access your AI Content Risk Score Report',
             react: MagicLinkEmail({
                 scanId: scanId || 'unknown',
                 score: score ?? 0,
                 riskLevel,
                 findingsCount: findingsCount ?? 0,
                 magicLink
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React Email component return type incompatible with Resend's react prop
             }) as any,
         }))
 
@@ -151,9 +153,10 @@ export async function sendPurchaseReceiptEmail(
         const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
 
         const result = await withRetry(() => resend.emails.send({
-            from: `AI Risk Shield <${fromAddress}>`,
+            from: `AI Content Risk Score <${fromAddress}>`,
             to: email,
             subject: `Receipt: Full Forensic Report — ${filename}`,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React Email component return type incompatible with Resend's react prop
             react: PurchaseReceiptEmail({ scanId, score, filename, dashboardUrl, transactionId }) as any,
         }))
 

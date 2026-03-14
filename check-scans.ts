@@ -37,7 +37,8 @@ async function checkScans() {
     return
   }
 
-  scans.forEach((scan: any, i) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase dynamic query with nested joins
+  scans.forEach((scan: any, i: number) => {
     console.log(`\n=== Scan ${i + 1} ===`)
     console.log(`ID: ${scan.id}`)
     console.log(`File: ${scan.assets?.filename || 'N/A'}`)
@@ -51,6 +52,7 @@ async function checkScans() {
 
     if (scan.scan_findings && scan.scan_findings.length > 0) {
       console.log(`\nFindings (${scan.scan_findings.length}):`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase dynamic query result
       scan.scan_findings.forEach((finding: any, j: number) => {
         console.log(`  ${j + 1}. [${finding.severity}] ${finding.title}`)
         console.log(`     ${finding.description}`)

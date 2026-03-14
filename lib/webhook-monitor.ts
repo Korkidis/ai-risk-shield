@@ -54,7 +54,7 @@ export async function alertWebhookFailure(params: {
         const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
 
         await resend.emails.send({
-            from: `AI Risk Shield Alerts <${fromAddress}>`,
+            from: `AI Content Risk Score Alerts <${fromAddress}>`,
             to: alertEmail,
             subject: `[WEBHOOK ALERT] ${params.eventType} failed`,
             html: `
@@ -65,7 +65,7 @@ export async function alertWebhookFailure(params: {
                 <p><strong>Error:</strong> ${params.errorMessage}</p>
                 <p><strong>Time:</strong> ${new Date().toISOString()}</p>
                 <hr />
-                <p style="color: #666; font-size: 12px;">This is an automated alert from AI Risk Shield webhook monitoring.</p>
+                <p style="color: #666; font-size: 12px;">This is an automated alert from AI Content Risk Score webhook monitoring.</p>
             `,
         })
     } catch (err) {

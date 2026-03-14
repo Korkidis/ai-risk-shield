@@ -47,7 +47,7 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
                 {/* Header */}
                 <div style={{ backgroundColor: colors.ink, padding: '30px', textAlign: 'center' }}>
                     <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                        AI Risk Shield
+                        AI Content Risk Score
                     </h1>
                     <p style={{ margin: '5px 0 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '2px' }}>
                         Forensic Analysis Complete
@@ -152,7 +152,7 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
                 {/* Footer */}
                 <div style={{ borderTop: `1px solid ${colors.lightGrey}`, padding: '20px', textAlign: 'center', backgroundColor: '#FFFFFF' }}>
                     <p style={{ margin: 0, fontSize: '9px', textTransform: 'uppercase', color: colors.grey, letterSpacing: '1px' }}>
-                        AI Risk Shield • Automated Legal Forensic Analysis
+                        AI Content Risk Score • Automated Legal Forensic Analysis
                     </p>
                     <p style={{ margin: '5px 0 0 0', fontSize: '9px', color: '#999999' }}>
                         © {new Date().getFullYear()} All rights reserved

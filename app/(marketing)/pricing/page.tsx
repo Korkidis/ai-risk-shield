@@ -49,8 +49,8 @@ export default function PricingPage() {
             } else {
                 setError('Failed to start checkout')
             }
-        } catch (err: any) {
-            setError(err.message || 'Something went wrong')
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Something went wrong')
         }
     }
 

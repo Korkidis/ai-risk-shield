@@ -22,7 +22,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
             .from('tenants')
             .select('stripe_metered_item_id, plan')
             .eq('id', tenantId)
-            .single() as { data: { stripe_metered_item_id: string | null, plan: string } | null, error: any }
+            .single() as { data: { stripe_metered_item_id: string | null, plan: string } | null, error: { message?: string } | null }
 
         if (tenantError || !tenant) {
             console.error('Tenant not found for usage reporting:', tenantId)
@@ -42,7 +42,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
         }
 
         // Report usage to Stripe using usage records API
-        // @ts-ignore - Stripe types may not include createUsageRecord
+        // @ts-expect-error - Stripe types may not include createUsageRecord
         const usageRecord = await stripe.subscriptionItems.createUsageRecord(
             tenant.stripe_metered_item_id,
             {
@@ -55,7 +55,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
         console.log(`Reported ${quantity} scan(s) for tenant ${tenantId}:`, usageRecord.id)
 
         return { success: true }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Failed to report usage to Stripe:', error)
 
         // Record failure for retry via cron job (skip if called FROM the retry worker)
@@ -65,7 +65,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
                 await retrySupabase.from('failed_usage_reports').insert({
                     tenant_id: tenantId,
                     quantity,
-                    last_error: (error.message || 'Unknown error').substring(0, 500),
+                    last_error: (error instanceof Error ? error.message : 'Unknown error').substring(0, 500),
                     next_retry_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 min
                 })
             } catch (recordErr) {
@@ -76,7 +76,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
         // Don't fail the scan if usage reporting fails
         return {
             success: false,
-            error: error.message
+            error: error instanceof Error ? error.message : 'Unknown error'
         }
     }
 }
@@ -86,7 +86,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
  */
 export async function getCurrentUsage(subscriptionItemId: string): Promise<number> {
     try {
-        // @ts-ignore - Stripe types may not include listUsageRecordSummaries
+        // @ts-expect-error - Stripe types may not include listUsageRecordSummaries
         const summaries = await stripe.subscriptionItems.listUsageRecordSummaries(
             subscriptionItemId,
             { limit: 1 }

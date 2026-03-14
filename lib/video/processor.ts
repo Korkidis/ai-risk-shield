@@ -20,6 +20,32 @@ export type FrameResult = {
  * written to disk. We now verify files exist with fs.access() before resolving,
  * with a brief retry if needed.
  */
+/**
+ * Get the duration of a video in seconds.
+ * Writes buffer to temp file, runs ffprobe, cleans up.
+ */
+export async function getVideoDuration(videoBuffer: Buffer): Promise<number> {
+    const tempDir = os.tmpdir()
+    const videoPath = path.join(tempDir, `${uuidv4()}_probe.mp4`)
+    await fs.writeFile(videoPath, videoBuffer)
+
+    try {
+        const duration = await new Promise<number>((resolve, reject) => {
+            ffmpeg.ffprobe(videoPath, (err, metadata) => {
+                if (err) return reject(err)
+                const dur = metadata?.format?.duration
+                if (typeof dur !== 'number' || isNaN(dur)) {
+                    return reject(new Error('Unable to determine video duration'))
+                }
+                resolve(Math.round(dur))
+            })
+        })
+        return duration
+    } finally {
+        await fs.unlink(videoPath).catch(() => { })
+    }
+}
+
 export async function extractFrames(videoBuffer: Buffer, limit = 10): Promise<FrameResult[]> {
     const tempDir = os.tmpdir()
     const runId = uuidv4()

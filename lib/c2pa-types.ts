@@ -13,6 +13,7 @@ export type C2PAReport = {
     issuer?: string;
     serial?: string;
     history?: Array<{ action: string, tool: string, date: string }>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- c2pa-node manifest store has no public type definition
     raw_manifest?: any;
     validation_errors?: string[];
     manifest_source?: string;

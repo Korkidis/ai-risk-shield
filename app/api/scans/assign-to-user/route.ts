@@ -9,6 +9,7 @@ import { getTenantId } from '@/lib/supabase/auth'
  * Migrates sessions scans to the authenticated user
  * Called by client after successful login from Magic Link
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(_request: Request) {
     try {
         const supabase = await createClient()

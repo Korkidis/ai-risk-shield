@@ -12,7 +12,7 @@ interface Column {
 
 interface RSTableProps {
     columns: Column[];
-    data: any[];
+    data: Record<string, unknown>[];
     className?: string;
 }
 
@@ -52,7 +52,7 @@ export function RSTable({
                                         key={`${rowIndex}-${col.key}`}
                                         className="px-6 py-4 text-sm text-rs-black whitespace-nowrap group-hover:text-rs-black/90"
                                     >
-                                        {row[col.key]}
+                                        {row[col.key] as React.ReactNode}
                                     </td>
                                 ))}
                             </tr>

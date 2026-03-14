@@ -26,6 +26,44 @@ const RISK_THEME = {
     textDim: "text-[var(--rs-text-secondary)]"
 };
 
+function LikelihoodBar({ className, hideLabel = false, hasResult, activeColor, isScanning, score }: {
+    className?: string;
+    hideLabel?: boolean;
+    hasResult: boolean;
+    activeColor: string;
+    isScanning: boolean;
+    score: number;
+}) {
+    return (
+        <div className={className}>
+            {!hideLabel && (
+                <div className="flex justify-between items-end mb-4">
+                    <span className={cn("text-[10px] font-bold uppercase tracking-[0.2em]", RISK_THEME.textMuted)}>Likelihood Probability</span>
+                </div>
+            )}
+            <div className={cn("h-4 md:h-6 rounded-sm relative overflow-hidden shadow-inner border border-black/5", "bg-[var(--rs-bg-well)]")}>
+                <div className="absolute inset-0 flex justify-between px-0.5">
+                    {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(tick => (
+                        <div key={tick} className={cn("h-full w-[1px]", tick % 50 === 0 ? "bg-black/10 h-full" : "bg-black/5 h-2 mt-auto")} />
+                    ))}
+                </div>
+                <motion.div
+                    className="h-full relative"
+                    style={{ backgroundColor: hasResult ? activeColor : 'transparent' }}
+                    initial={{ width: 0 }}
+                    animate={{ width: isScanning ? "100%" : `${score}%` }}
+                    transition={{ duration: isScanning ? 2 : 1, ease: "easeOut", repeat: isScanning ? Infinity : 0 }}
+                >
+                    {isScanning && <div className="absolute inset-0 bg-white/30 animate-pulse" />}
+                </motion.div>
+            </div>
+            <div className={cn("flex justify-between mt-2 text-[10px] font-mono", RISK_THEME.textMuted)}>
+                <span>0%</span><span>50%</span><span>100%</span>
+            </div>
+        </div>
+    );
+}
+
 export function RSRiskPanel({
     id = "--",
     score,
@@ -69,35 +107,7 @@ export function RSRiskPanel({
         headerStatus = level === 'critical' ? 'CRITICAL THREAT' : 'SYSTEM SECURE';
     }
 
-    // Helper Component for the Likelihood Bar (DRY)
-    const LikelihoodBar = ({ className, hideLabel = false }: { className?: string, hideLabel?: boolean }) => (
-        <div className={className}>
-            {!hideLabel && (
-                <div className="flex justify-between items-end mb-4">
-                    <span className={cn("text-[10px] font-bold uppercase tracking-[0.2em]", RISK_THEME.textMuted)}>Likelihood Probability</span>
-                </div>
-            )}
-            <div className={cn("h-4 md:h-6 rounded-sm relative overflow-hidden shadow-inner border border-black/5", "bg-[var(--rs-bg-well)]")}>
-                <div className="absolute inset-0 flex justify-between px-0.5">
-                    {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(tick => (
-                        <div key={tick} className={cn("h-full w-[1px]", tick % 50 === 0 ? "bg-black/10 h-full" : "bg-black/5 h-2 mt-auto")} />
-                    ))}
-                </div>
-                <motion.div
-                    className="h-full relative"
-                    style={{ backgroundColor: hasResult ? activeColor : 'transparent' }}
-                    initial={{ width: 0 }}
-                    animate={{ width: isScanning ? "100%" : `${score}%` }}
-                    transition={{ duration: isScanning ? 2 : 1, ease: "easeOut", repeat: isScanning ? Infinity : 0 }}
-                >
-                    {isScanning && <div className="absolute inset-0 bg-white/30 animate-pulse" />}
-                </motion.div>
-            </div>
-            <div className={cn("flex justify-between mt-2 text-[10px] font-mono", RISK_THEME.textMuted)}>
-                <span>0%</span><span>50%</span><span>100%</span>
-            </div>
-        </div>
-    );
+
 
     return (
         <div className={cn(
@@ -163,6 +173,10 @@ export function RSRiskPanel({
                                 <LikelihoodBar
                                     className="block xl:hidden w-[160px] md:w-[240px] pt-4"
                                     hideLabel
+                                    hasResult={hasResult}
+                                    activeColor={activeColor}
+                                    isScanning={isScanning}
+                                    score={score}
                                 />
                             </div>
 
@@ -189,6 +203,10 @@ export function RSRiskPanel({
                         {/* 1. Likelihood Bar (Desktop Only) - TIGHTER SPACING */}
                         <LikelihoodBar
                             className="hidden xl:block w-full"
+                            hasResult={hasResult}
+                            activeColor={activeColor}
+                            isScanning={isScanning}
+                            score={score}
                         />
 
                         {/* 2. AUXILIARY DIALS (Directly on panel, no card) - TIGHTER GRID */}

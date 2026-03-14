@@ -38,6 +38,7 @@ export function RSProcessingPanel({
             timestamp: new Date().toISOString().split('T')[1].slice(0, 8), // HH:MM:SS
         };
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- appending log entry when statusMessage changes
         setLogs(prev => {
             const updated = [...prev, newLog];
             if (updated.length > 8) return updated.slice(updated.length - 8);

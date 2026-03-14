@@ -67,6 +67,7 @@ export function RSAnalogNeedle({
     // Scanning Jitter Effect
     useEffect(() => {
         if (!isScanning) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state when scanning stops
             setJitter(0);
             return;
         }

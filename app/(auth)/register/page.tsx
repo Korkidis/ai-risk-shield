@@ -38,7 +38,6 @@ function SubmitButton() {
 }
 
 export default function RegisterPage() {
-    // @ts-ignore - useActionState types might need generic adjustment depending on react version
     const [state, formAction] = useActionState(signUp, initialState);
 
     return (

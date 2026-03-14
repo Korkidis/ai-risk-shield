@@ -228,8 +228,8 @@ function TierHeader({ title, code, price, description, recommended }: { title: s
     )
 }
 
-function SpecRow({ label, basic, assessment, pro, highlight }: { label: string, basic: any, assessment: any, pro: any, highlight?: boolean }) {
-    const renderCell = (value: any, isRecommended: boolean) => {
+function SpecRow({ label, basic, assessment, pro, highlight }: { label: string, basic: string | boolean, assessment: string | boolean, pro: string | boolean, highlight?: boolean }) {
+    const renderCell = (value: string | boolean, isRecommended: boolean) => {
         if (typeof value === 'boolean') {
             return value ? <Check className="w-4 h-4 text-[var(--rs-safe)] mx-auto" /> : <Minus className="w-3 h-3 text-[var(--rs-text-tertiary)] mx-auto opacity-30" />
         }

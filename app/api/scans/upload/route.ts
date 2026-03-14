@@ -4,6 +4,8 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getTenantId, requireAuth } from '@/lib/supabase/auth'
 import { createHash } from 'crypto'
 import { checkRateLimit } from '@/lib/ratelimit'
+import { getPlan, type PlanId } from '@/lib/plans'
+import { getVideoDuration } from '@/lib/video/processor'
 
 /**
  * POST /api/scans/upload
@@ -37,9 +39,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 })
         }
 
-        // Validate file size (100MB for images, 500MB for videos)
+        // Validate file size (100MB for images, 250MB for videos — memory safety)
         const MAX_IMAGE_SIZE = 100 * 1024 * 1024
-        const MAX_VIDEO_SIZE = 500 * 1024 * 1024
+        const MAX_VIDEO_SIZE = 250 * 1024 * 1024
         const sizeLimit = file.type.startsWith('video/') ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE
         if (file.size > sizeLimit) {
             return NextResponse.json({
@@ -65,9 +67,9 @@ export async function POST(request: Request) {
             .from('tenants')
             .select('monthly_scan_limit, scans_used_this_month, plan, retention_days')
             .eq('id', tenantId)
-            .single() as unknown as { data: any, error: any }
+            .single() as unknown as { data: { monthly_scan_limit: number; scans_used_this_month: number; plan: string; retention_days: number } | null, error: { message?: string } | null }
 
-        if (tenantError) {
+        if (tenantError || !tenant) {
             console.error('Tenant fetch error:', tenantError)
             return NextResponse.json({ error: 'Failed to fetch tenant usage' }, { status: 500 })
         }
@@ -86,6 +88,36 @@ export async function POST(request: Request) {
             }, { status: 403 })
         }
 
+        // Read file buffer once (used for duration check, checksum, and upload)
+        const fileBuffer = Buffer.from(await file.arrayBuffer())
+
+        // Video duration enforcement (plan-tier limits)
+        if (isVideo) {
+            const planConfig = getPlan(plan as PlanId)
+            if (planConfig.videoMaxDurationSeconds === 0) {
+                return NextResponse.json({
+                    error: 'Video analysis is not available on your current plan',
+                    code: 'VIDEO_NOT_AVAILABLE'
+                }, { status: 403 })
+            }
+
+            try {
+                const duration = await getVideoDuration(fileBuffer)
+                if (duration > planConfig.videoMaxDurationSeconds) {
+                    return NextResponse.json({
+                        error: `Video duration (${duration}s) exceeds your plan limit (${planConfig.videoMaxDurationSeconds}s). Upgrade for longer video support.`,
+                        code: 'VIDEO_DURATION_EXCEEDED',
+                        duration,
+                        limit: planConfig.videoMaxDurationSeconds,
+                    }, { status: 413 })
+                }
+            } catch (durationError) {
+                console.error('Video duration check failed:', durationError)
+                // If we can't determine duration, allow the upload but cap frame extraction
+                // The scan processor will handle frame limits
+            }
+        }
+
         // Block FREE users at limit - paid plans can proceed with overage
         if (isOverage && plan === 'free') {
             return NextResponse.json({
@@ -96,9 +128,6 @@ export async function POST(request: Request) {
         // Calculate deletion date
         const deleteAfter = new Date()
         deleteAfter.setDate(deleteAfter.getDate() + retentionDays)
-
-        // Read file buffer for checksum + upload
-        const fileBuffer = Buffer.from(await file.arrayBuffer())
         const sha256Checksum = createHash('sha256').update(fileBuffer).digest('hex')
 
         // Use service role client for storage (bypasses RLS folder restrictions)
@@ -210,7 +239,7 @@ export async function POST(request: Request) {
             overageWarning: isOverage ? 'This scan will incur overage charges at your plan rate.' : null,
             ...(guidelineWarning && { warning: guidelineWarning })
         })
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Upload error:', error)
         return NextResponse.json({ error: 'Upload failed. Please try again.' }, { status: 500 })
     }

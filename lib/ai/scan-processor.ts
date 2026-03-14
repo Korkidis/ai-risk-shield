@@ -20,6 +20,7 @@ import { analyzeBrandSafety } from '@/lib/ai/brand-safety'
 import { broadcastScanProgress } from '@/lib/realtime'
 import type { BrandGuideline } from '@/types/database'
 import { extractFrames, cleanupFrames } from '@/lib/video/processor'
+import { getPlan, type PlanId } from '@/lib/plans'
 import { promises as fs } from 'fs'
 import path from 'path'
 import os from 'os'
@@ -40,10 +41,10 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
   try {
     const supabase = await createServiceRoleClient()
 
-    // 1. Get scan record with asset info
+    // 1. Get scan record with asset info + tenant plan for dynamic video config
     const { data: scan, error: scanError } = await supabase
       .from('scans')
-      .select('*, assets(*)')
+      .select('*, assets(*), tenants!scans_tenant_id_fkey(plan)')
       .eq('id', scanId)
       .single()
 
@@ -132,8 +133,13 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       console.log(`Processing video scan ${scanId}...`)
       await broadcastScanProgress(scanId, 30, "Extracting keyframes for analysis...")
 
+      // Determine frame limit from tenant plan (dynamic, not hardcoded)
+      const tenantPlan = ((scan as Record<string, unknown>).tenants as { plan?: string } | null)?.plan || 'free'
+      const planConfig = getPlan(tenantPlan as PlanId)
+      const frameLimit = planConfig.videoFrameLimit || 5 // fallback to 5 if plan has no config
+
       // Extract frames
-      const frames = await extractFrames(fileBuffer, 5) // MVP: 5 frames (cost), increase to 10 post-MVP
+      const frames = await extractFrames(fileBuffer, frameLimit)
 
       // VIDEO C2PA CHECK
       try {
@@ -159,10 +165,29 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
       let maxIpScore = 0
       let maxSafetyScore = 0
+      let highestRiskFrameIndex = 0
+      let highestRiskFrameScore = 0
+
+      // Persist frames to Supabase Storage before analysis
+      const frameStoragePaths: string[] = []
+      for (const [index, frame] of frames.entries()) {
+        const framePath = `${scan.tenant_id}/frames/${scanId}/frame_${String(index).padStart(3, '0')}.jpg`
+        try {
+          const frameData = await fs.readFile(frame.filePath)
+          await supabase.storage.from('uploads').upload(framePath, frameData, {
+            contentType: 'image/jpeg',
+            upsert: false,
+          })
+          frameStoragePaths.push(framePath)
+        } catch (uploadErr) {
+          console.error(`Failed to persist frame ${index} for scan ${scanId}:`, uploadErr)
+          frameStoragePaths.push(`temp_failed_${index}`) // fallback path
+        }
+      }
 
       // Analyze each frame
       for (const [index, frame] of frames.entries()) {
-        await broadcastScanProgress(scanId, 50 + Math.floor((index / frames.length) * 30), `Analyzing frame ${index + 1}/${frames.length}...`)
+        await broadcastScanProgress(scanId, 50 + Math.floor((index / frames.length) * 30), `Analyzing frame ${index + 1}/${frames.length}...`, { current: index + 1, total: frames.length })
         const frameBuffer = await fs.readFile(frame.filePath)
         const [fIp, fSafe] = await Promise.all([
           analyzeIP(frameBuffer, 'image/jpeg'),
@@ -180,19 +205,25 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
           c2paStatus,
         })
 
+        // Track highest risk frame
+        if (fComposite > highestRiskFrameScore) {
+          highestRiskFrameScore = fComposite
+          highestRiskFrameIndex = index
+        }
+
         videoFramesData.push({
           tenant_id: scan.tenant_id,
           scan_id: scanId,
-          frame_number: frame.timestamp, // treating timestamp as index/frame number
+          frame_number: index,
           timestamp_ms: frame.timestamp * 1000,
-          storage_path: 'temp_processed_inline', // placeholders as we aren't saving frames to storage yet
+          storage_path: frameStoragePaths[index] || 'temp_processed_inline',
           ip_risk_score: fIp.riskScore,
           safety_risk_score: fSafe.riskScore,
           composite_score: fComposite
         })
       }
 
-      // Cleanup temp frames
+      // Cleanup temp frames (persisted copies remain in Supabase Storage)
       await cleanupFrames(frames)
 
       // Synthesize results (use worst case)
@@ -241,12 +272,16 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
           : 'Video analysis indicates acceptable risk levels for publication.',
         is_video: true,
         frames_analyzed: frames.length,
+        highest_risk_frame: highestRiskFrameIndex,
       }
 
-      // Save risk_profile for video scans (image path does this separately)
+      // Save risk_profile + highest_risk_frame for video scans
       await supabase
         .from('scans')
-        .update({ risk_profile: riskProfile })
+        .update({
+          risk_profile: riskProfile,
+          highest_risk_frame: highestRiskFrameIndex,
+        })
         .eq('id', scanId)
 
     } else {
@@ -422,7 +457,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // Supabase generated types don't allow undefined for recommendation even if it's optional in the DB type
       type FindingInsert = Database['public']['Tables']['scan_findings']['Insert']
       const sanitizedFindings: FindingInsert[] = findings.map(f => {
-        return { ...f, recommendation: (f.recommendation || null) as any } as FindingInsert
+        return { ...f, recommendation: (f.recommendation || null) as FindingInsert['recommendation'] } as FindingInsert
       })
       await supabase.from('scan_findings').insert(sanitizedFindings)
     }

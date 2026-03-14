@@ -54,8 +54,8 @@ export default function BrandGuidelinesPage() {
             if (!response.ok) throw new Error('Failed to access protocol database')
             const data = await response.json()
             setGuidelines(data.guidelines)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Unknown error')
         } finally {
             setIsLoading(false)
         }
@@ -83,8 +83,8 @@ export default function BrandGuidelinesPage() {
             await fetchGuidelines()
             setIsCreateOpen(false)
             setFormData(EMPTY_FORM)
-        } catch (err: any) {
-            alert(err.message)
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : 'Unknown error')
         } finally {
             setIsSubmitting(false)
         }
@@ -110,8 +110,8 @@ export default function BrandGuidelinesPage() {
             setIsEditOpen(false)
             setSelectedGuideline(null)
             setFormData(EMPTY_FORM)
-        } catch (err: any) {
-            alert(err.message)
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : 'Unknown error')
         } finally {
             setIsSubmitting(false)
         }
@@ -131,8 +131,8 @@ export default function BrandGuidelinesPage() {
                 const data = await res.json()
                 setDeleteError(data.error || 'Failed to delete guideline')
             }
-        } catch (err: any) {
-            setDeleteError(err.message)
+        } catch (err: unknown) {
+            setDeleteError(err instanceof Error ? err.message : 'Unknown error')
         } finally {
             setIsSubmitting(false)
         }
@@ -175,7 +175,7 @@ export default function BrandGuidelinesPage() {
                     <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-rs-signal" />
                     <div>
                         <h1 className="text-[var(--rs-text-primary)] text-xl font-black tracking-tighter uppercase rs-type-section">POLICY_CONTROL_MODULE</h1>
-                        <p className="text-[9px] font-mono text-rs-text-tertiary mt-2 uppercase tracking-[0.3em] pl-6 rs-type-micro">// ACTIVE_PROTOCOLS: {guidelines.length.toString().padStart(3, '0')} // STATUS: NOMINAL</p>
+                        <p className="text-[9px] font-mono text-rs-text-tertiary mt-2 uppercase tracking-[0.3em] pl-6 rs-type-micro">{/* ACTIVE_PROTOCOLS: */}{guidelines.length.toString().padStart(3, '0')}{/* STATUS: NOMINAL */}</p>
                     </div>
                     <RSButton variant="primary" icon={<Plus size={14} />} onClick={() => { setFormData(EMPTY_FORM); setIsCreateOpen(true) }} className="h-[42px] px-8 text-xs font-black shadow-[var(--rs-shadow-l2)]">
                         INITIALIZE_PROTOCOL
