@@ -37,7 +37,7 @@ export function LandingClient() {
                     />
                     {/* Trust Signals under scanner */}
                     <div className="flex justify-center gap-6 mt-8">
-                        <span className="rs-type-micro text-[var(--rs-text-tertiary)] tracking-widest">Powered by Google Gemini</span>
+                        <span className="rs-type-micro text-[var(--rs-text-tertiary)] tracking-widest">AI-Powered Risk Analysis</span>
                         <span className="text-[var(--rs-text-tertiary)]">&middot;</span>
                         <span className="rs-type-micro text-[var(--rs-text-tertiary)] tracking-widest">C2PA Verified</span>
                     </div>

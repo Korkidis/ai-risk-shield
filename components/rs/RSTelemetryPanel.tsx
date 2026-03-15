@@ -99,7 +99,7 @@ export function RSTelemetryPanel({
                             {currentStatusLabel}
                         </span>
                     </div>
-                    <span className="text-[9px] text-white/30 tracking-widest">
+                    <span className="text-[9px] text-white/10 tracking-widest">
                         SYS.09
                     </span>
                 </div>
@@ -213,8 +213,10 @@ export function RSTelemetryPanel({
                                     {/* Left Status Text */}
                                     <div className="flex items-center gap-3">
                                         <div className="h-[2px] w-8 bg-white/10" />
-                                        <span className="text-[9px] text-white/30 uppercase tracking-[0.2em] font-medium">
-                                            Cryptographic Seal Verified
+                                        <span className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-medium">
+                                            {rows.some(r => r.label.replace(/_/g, ' ').includes('CONTENT ORIGIN') && r.status === 'success')
+                                                ? 'Provenance Verified'
+                                                : 'No Provenance Data'}
                                         </span>
                                     </div>
 

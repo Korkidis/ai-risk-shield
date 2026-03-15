@@ -413,12 +413,24 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Lint cleanup**: 111 errors → 0 errors (17 legitimate warnings: Next.js error boundaries, React hooks deps, design system `<img>` elements)
 - **Type safety**: Zero `tsc --noEmit` errors maintained
 
-### Pending Schema Drift (Updated Mar 14)
-Migrations created but NOT applied to live DB:
-- `20260224_rate_limits.sql` — rate_limits table + cleanup function
-- `20260302_atomic_mitigation_usage.sql` — `increment_tenant_mitigation_usage()` hardened RPC
-- `20260303_atomic_mitigation_quota.sql` — `consume_mitigation_quota()` atomic check+increment RPC
-- `20260314_team_invites_unique_constraint.sql` — partial unique index on pending invites
+### Sprint 12 Complete (Mar 14, 2026)
+- **Findings liberated from scroll constraint**: Dashboard right pane restructured from proportional flex (`flex-[1.3]` + `flex-1`) to natural-height scroll unit (`shrink-0` + parent `overflow-y-auto`). `RSFindingsDossier` inner `overflow-y-auto` and `flex-1` removed — all findings render at full height, no inner scrollbar.
+- **Mitigation CTA elevated to sticky footer**: Extracted `MitigationCTA` from scrollable section in `UnifiedScanDrawer` → `shrink-0` footer with `backdrop-blur-md` between scroll area and `</motion.div>`, always visible without scrolling.
+- **Telemetry de-theatered**: All 12 provenance row labels humanized in both `dashboard/page.tsx` and `ProvenanceTelemetryStream.tsx` (`MANIFEST_STORE` → `CONTENT_ORIGIN`, `CHAIN_OF_CUSTODY` → `EDIT_CHAIN`, `CLAIM_SIGNATURE` → `DIGITAL_SIGNATURE`, etc.). Values use plain language (`VERIFIED`, `INTACT`, `NOT DETECTED`). Loading states use real dimension names instead of `SCANNING_SECTOR_N`. Header/footer theater removed (`BRAVO-RACK-09`, `Buffer: Ready` → `Content Credentials`, `Status: Active`).
+- **Secret sauce scrubbed**: Removed `Google Gemini 2.5 Flash`, exact scoring weights (70/20/10%), temperature settings (`0.2`), agent architecture (`three specialized system prompts`), `c2pa-node` library reference, and unit test counts from all customer-facing UI (landing, dashboard, help, design-lab). Replaced with `AI-Powered Analysis`, `weighted blend`, `three independent dimensions`.
+- **Placeholder theater killed**: `Analyst_Notes` → `Compliance_Log`, `// START_KEYBOARD_STREAM...` → natural placeholder text. `ViT-H/14` model reference removed from design-lab. `MODEL_VERSION` → `ANALYSIS_ENGINE` (all occurrences).
+- **Telemetry panel hardened**: `SYS.09` dimmed to `text-white/10`. Footer changed from hardcoded `Cryptographic Seal Verified` → conditional `Provenance Verified` / `No Provenance Data` based on actual `CONTENT_ORIGIN` row status in real data.
+- **All 5 pending DB migrations applied**: `rate_limits`, `harden_rate_limits`, `atomic_mitigation_usage`, `atomic_mitigation_quota`, `team_invites_unique_constraint` — schema drift fully resolved.
+
+### Pending Schema Drift (Updated Mar 14 — Sprint 12)
+All previously pending migrations have been applied to the live DB:
+- ✅ `20260224_rate_limits.sql` — rate_limits table + cleanup function
+- ✅ `20260228_harden_rate_limits.sql` — atomic `check_rate_limit_atomic()` fn
+- ✅ `20260302_atomic_mitigation_usage.sql` — `increment_tenant_mitigation_usage()` RPC
+- ✅ `20260303_atomic_mitigation_quota.sql` — `consume_mitigation_quota()` atomic RPC
+- ✅ `20260314_team_invites_unique_constraint.sql` — partial unique index on pending invites
+
+No pending schema drift as of Mar 14, 2026.
 
 ## Lessons Learned (Updated as we build)
 
@@ -467,4 +479,4 @@ Migrations created but NOT applied to live DB:
 
 ---
 
-**Last Updated:** 2026-03-14 (Sprint 11 — Rebrand to "AI Content Risk Score", video production tiers, audit log viewer, team management, CI pipeline, 94 unit tests, 0 lint errors)
+**Last Updated:** 2026-03-14 (Sprint 12 — Truth Density: findings liberated, sticky mitigation CTA, telemetry de-theatered, secret sauce scrubbed, all DB migrations applied)

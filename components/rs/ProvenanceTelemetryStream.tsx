@@ -39,10 +39,11 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
 
         if (!details) {
             // Loading / Simulated State
-            newRows = Array(6).fill(0).map((_, i) => ({
+            const loadingLabels = ['CONTENT_ORIGIN', 'DIGITAL_SIGNATURE', 'CONTENT_CREATOR', 'AI_DETECTION', 'EDIT_HISTORY', 'SIGNING_METHOD'];
+            newRows = loadingLabels.map((label, i) => ({
                 id: `0xWAIT_${i}`,
-                label: `SCANNING_SECTOR_${i}`,
-                value: 'PENDING',
+                label,
+                value: 'ANALYZING',
                 barWidth: Math.random() * 60 + 20,
                 status: 'pending'
             }));
@@ -57,37 +58,36 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
             newRows = [
                 {
                     id: '0xMNFST',
-                    label: 'MANIFEST_INTEGRITY',
-                    value: manifestDetected ? 'DETECTED' : 'MISSING',
+                    label: 'CONTENT_ORIGIN',
+                    value: manifestDetected ? 'DECLARED' : 'NOT DECLARED',
                     barWidth: manifestDetected ? 95 : 5,
                     status: manifestDetected ? 'success' : 'error'
                 },
                 {
                     id: '0xSIG_V',
                     label: 'DIGITAL_SIGNATURE',
-                    value: signatureValid ? 'VALID' : (!manifestDetected ? 'MISSING' : 'INVALID'),
+                    value: signatureValid ? 'VERIFIED' : (!manifestDetected ? 'NOT FOUND' : 'INVALID'),
                     barWidth: signatureValid ? 100 : (!manifestDetected ? 0 : 40),
                     status: signatureValid ? 'success' : 'error'
                 },
                 {
                     id: '0xIDENT',
-                    label: 'CREATOR_IDENTITY',
+                    label: 'CONTENT_CREATOR',
                     value: hasIdentity ? 'VERIFIED' : 'UNKNOWN',
                     barWidth: hasIdentity ? 88 : 20,
                     status: hasIdentity ? 'success' : 'warning'
                 },
                 {
                     id: '0xAI_MK',
-                    label: 'AI_WATERMARK',
-                    value: aiConfirmed ? 'DETECTED' : 'UNDECLARED',
+                    label: 'AI_DETECTION',
+                    value: aiConfirmed ? 'DETECTED' : 'NOT DETECTED',
                     barWidth: aiConfirmed ? 100 : 15,
                     status: aiConfirmed ? 'info' : 'warning'
                 },
                 {
                     id: '0xCHAIN',
-                    label: 'CHAIN_OF_CUSTODY',
-                    // Derive chain custody from signature status
-                    value: signatureValid ? 'FULL' : 'BROKEN',
+                    label: 'EDIT_HISTORY',
+                    value: signatureValid ? 'INTACT' : 'BROKEN CHAIN',
                     barWidth: signatureValid ? 100 : 30,
                     status: signatureValid ? 'success' : 'warning'
                 }
@@ -125,12 +125,12 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
                         <div className="space-y-1">
                             <div className="text-rs-signal text-xs font-black tracking-widest flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 bg-rs-signal rounded-full animate-ping shadow-[0_0_8px_var(--rs-signal)]" />
-                                LOG_TELEMETRY_STREAM
+                                PROVENANCE ANALYSIS
                             </div>
-                            <div className="text-[9px] text-white/20 uppercase tracking-[0.3em]">Module: BRAVO-RACK-09</div>
+                            <div className="text-[9px] text-white/20 uppercase tracking-[0.3em]">Content Credentials</div>
                         </div>
                         <div className="text-right text-white/10 text-[10px] leading-tight">
-                            LATENCY: 4.12 MS<br />PID: 7710-X
+                            C2PA STANDARD
                         </div>
                     </div>
 
@@ -166,9 +166,8 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
 
                     {/* Footer Controls */}
                     <div className="flex justify-between items-center pt-6 border-t border-white/5 mt-6">
-                        <div className="flex gap-6 text-[10px] font-bold text-white/30 uppercase tracking-widest">
-                            <span>Buffer: Ready</span>
-                            <span>Rec: Tracking</span>
+                        <div className="flex gap-6 text-[10px] font-bold text-white/20 uppercase tracking-widest">
+                            <span>Status: Active</span>
                         </div>
 
                         {onDetailsClick && (

@@ -1012,7 +1012,7 @@ export default function DesignLabPage() {
                                                     { id: '0xC2PA_V', label: 'C2PA_VERSION', value: '1.3', barWidth: 100, status: 'info' },
                                                     { id: '0xIDENT', label: 'CREATOR_IDENTITY', value: 'VERIFIED', barWidth: 85, status: 'success' },
                                                     { id: '0xTOOL', label: 'GENERATION_TOOL', value: 'ADOBE_FIREFLY', barWidth: 90, status: 'success' },
-                                                    { id: '0xMODEL', label: 'MODEL_VERSION', value: '1.0.0', barWidth: 100, status: 'info' },
+                                                    { id: '0xMODEL', label: 'ANALYSIS_ENGINE', value: 'ACTIVE', barWidth: 100, status: 'info' },
                                                     { id: '0xTIME', label: 'TIMESTAMP', value: '2026-01-26T04:39', barWidth: 100, status: 'info' },
                                                     { id: '0xEDITS', label: 'EDIT_HISTORY', value: '2_ACTIONS', barWidth: 80, status: 'info' },
                                                     { id: '0xAI_MK', label: 'AI_GENERATED', value: 'CONFIRMED', barWidth: 90, status: 'info' },
@@ -1073,7 +1073,7 @@ export default function DesignLabPage() {
                                             state="scanning"
                                             rows={[]}
                                             logEntries={[
-                                                { id: 1, message: 'Initializing Vision Model (ViT-H/14)...', status: 'done', timestamp: '00.12' },
+                                                { id: 1, message: 'Initializing analysis pipeline...', status: 'done', timestamp: '00.12' },
                                                 { id: 2, message: 'Extracting High-Dim Features...', status: 'done', timestamp: '00.24' },
                                                 { id: 3, message: 'Computing Perceptual Hash (pHash)...', status: 'done', timestamp: '00.38' },
                                                 { id: 4, message: 'Querying Global IP Database...', status: 'active', timestamp: '00.55' },
@@ -1103,7 +1103,7 @@ export default function DesignLabPage() {
                                                 { id: '0xC2PA_V', label: 'C2PA_VERSION', value: '1.3', barWidth: 100, status: 'info' },
                                                 { id: '0xIDENT', label: 'CREATOR_IDENTITY', value: 'VERIFIED', barWidth: 85, status: 'success' },
                                                 { id: '0xTOOL', label: 'GENERATION_TOOL', value: 'ADOBE_FIREFLY', barWidth: 90, status: 'success' },
-                                                { id: '0xMODEL', label: 'MODEL_VERSION', value: '1.0.0', barWidth: 100, status: 'info' },
+                                                { id: '0xMODEL', label: 'ANALYSIS_ENGINE', value: 'ACTIVE', barWidth: 100, status: 'info' },
                                                 { id: '0xTIME', label: 'TIMESTAMP', value: '2026-01-26T04:39', barWidth: 100, status: 'info' },
                                                 { id: '0xEDITS', label: 'EDIT_HISTORY', value: '2_ACTIONS', barWidth: 80, status: 'info' },
                                                 { id: '0xAI_MK', label: 'AI_GENERATED', value: 'CONFIRMED', barWidth: 90, status: 'info' },

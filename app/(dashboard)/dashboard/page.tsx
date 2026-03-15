@@ -636,19 +636,19 @@ export default function DashboardPage() {
         const aiValue = isAI ? 'CONFIRMED' : 'ANALYZING';
 
         return [
-            { id: '0xMNFST', label: 'MANIFEST_STORE', value: manifestDetected ? 'DETECTED' : 'MISSING', barWidth: manifestDetected ? 100 : 5, status: manifestDetected ? 'success' : 'error' },
-            { id: '0xSIG', label: 'CLAIM_SIGNATURE', value: signatureValid ? 'VALID' : (manifestDetected ? 'INVALID' : 'MISSING'), barWidth: signatureValid ? 100 : (manifestDetected ? 40 : 0), status: signatureValid ? 'success' : 'error' },
-            { id: '0xALGO', label: 'SIGNATURE_ALGORITHM', value: manifestDetected ? 'SHA-256' : '---', barWidth: manifestDetected ? 100 : 0, status: manifestDetected ? 'info' : 'pending' },
-            { id: '0xCA', label: 'CERT_AUTHORITY', value: manifestDetected ? issuerName : '---', barWidth: manifestDetected ? 100 : 0, status: manifestDetected ? 'info' : 'pending' },
-            { id: '0xVER', label: 'C2PA_VERSION', value: manifestDetected ? '1.3.1' : '---', barWidth: manifestDetected ? 100 : 0, status: manifestDetected ? 'info' : 'pending' },
-            { id: '0xIDENT', label: 'CREATOR_IDENTITY', value: creatorName, barWidth: report.creator ? 85 : 15, status: report.creator ? 'success' : 'warning' },
-            { id: '0xTOOL', label: 'GENERATION_TOOL', value: toolName, barWidth: report.tool ? 90 : 20, status: report.tool ? 'success' : 'warning' },
-            { id: '0xMODEL', label: 'MODEL_VERSION', value: manifestDetected ? '1.0.0' : '---', barWidth: manifestDetected ? 100 : 0, status: 'info' },
-            { id: '0xTIME', label: 'TIMESTAMP', value: formatTime(report.timestamp), barWidth: report.timestamp ? 100 : 0, status: 'info' },
-            { id: '0xEDIT', label: 'EDIT_HISTORY', value: manifestDetected ? `${historyCount}_ACTIONS` : 'N/A', barWidth: historyCount > 0 ? 70 : 0, status: 'info' },
-            { id: '0xAI', label: 'AI_GENERATED', value: aiValue, barWidth: isAI ? 95 : 50, status: isAI ? 'info' : 'warning' },
-            { id: '0xTRAIN', label: 'AI_TRAINING_ALLOWED', value: 'NO_CONSENT', barWidth: 100, status: 'info' },
-            { id: '0xCHAIN', label: 'CHAIN_OF_CUSTODY', value: signatureValid ? 'UNBROKEN_LEDGER' : 'SEGMENT_FAILURE', barWidth: signatureValid ? 100 : 30, status: signatureValid ? 'success' : 'error' }
+            { id: '0xMNFST', label: 'CONTENT_ORIGIN', value: manifestDetected ? 'DECLARED' : 'NOT DECLARED', barWidth: manifestDetected ? 100 : 5, status: manifestDetected ? 'success' : 'error' },
+            { id: '0xSIG', label: 'DIGITAL_SIGNATURE', value: signatureValid ? 'VERIFIED' : (manifestDetected ? 'INVALID' : 'NOT FOUND'), barWidth: signatureValid ? 100 : (manifestDetected ? 40 : 0), status: signatureValid ? 'success' : 'error' },
+            { id: '0xALGO', label: 'SIGNING_METHOD', value: manifestDetected ? 'SHA-256' : 'N/A', barWidth: manifestDetected ? 100 : 0, status: manifestDetected ? 'info' : 'pending' },
+            { id: '0xCA', label: 'SIGNING_AUTHORITY', value: manifestDetected ? issuerName : '---', barWidth: manifestDetected ? 100 : 0, status: manifestDetected ? 'info' : 'pending' },
+            { id: '0xVER', label: 'PROVENANCE_STANDARD', value: manifestDetected ? 'VERIFIED' : '---', barWidth: manifestDetected ? 100 : 0, status: manifestDetected ? 'info' : 'pending' },
+            { id: '0xIDENT', label: 'CONTENT_CREATOR', value: creatorName, barWidth: report.creator ? 85 : 15, status: report.creator ? 'success' : 'warning' },
+            { id: '0xTOOL', label: 'CREATION_TOOL', value: toolName, barWidth: report.tool ? 90 : 20, status: report.tool ? 'success' : 'warning' },
+            { id: '0xMODEL', label: 'ANALYSIS_ENGINE', value: manifestDetected ? 'ACTIVE' : '---', barWidth: manifestDetected ? 100 : 0, status: 'info' },
+            { id: '0xTIME', label: 'SIGNED_AT', value: formatTime(report.timestamp), barWidth: report.timestamp ? 100 : 0, status: 'info' },
+            { id: '0xEDIT', label: 'EDIT_HISTORY', value: manifestDetected ? `${historyCount} EDITS` : 'N/A', barWidth: historyCount > 0 ? 70 : 0, status: 'info' },
+            { id: '0xAI', label: 'AI_DETECTION', value: aiValue, barWidth: isAI ? 95 : 50, status: isAI ? 'info' : 'warning' },
+            { id: '0xTRAIN', label: 'TRAINING_CONSENT', value: 'NOT DECLARED', barWidth: 100, status: 'info' },
+            { id: '0xCHAIN', label: 'EDIT_CHAIN', value: signatureValid ? 'INTACT' : 'BROKEN CHAIN', barWidth: signatureValid ? 100 : 30, status: signatureValid ? 'success' : 'error' }
         ];
     };
 
@@ -767,10 +767,10 @@ export default function DashboardPage() {
             </div>
 
             {/* RIGHT PANE: ANALYSIS & TELEMETRY (50%) - LIGHT MODE PANEL */}
-            <div className="flex flex-col min-h-0 h-full gap-6">
+            <div className="flex flex-col min-h-0 h-full gap-6 overflow-y-auto">
 
                 {/* 1. RISK ANALYSIS PANEL (Active / Standby) */}
-                <div className="flex-[1.3] w-full min-h-0">
+                <div className="shrink-0 w-full">
                     <RSRiskPanel
                         id={isComplete ? (currentScanId?.substring(0, 8).toUpperCase() || "SYS-STD-01") : "--"}
                         score={results.composite}
@@ -779,15 +779,15 @@ export default function DashboardPage() {
                         safetyScore={results.brandSafety}
                         provenanceScore={results.provenance}
                         status={(isScanning || isLoading) ? 'scanning' : isComplete ? 'completed' : 'empty'}
-                        className="w-full h-full"
+                        className="w-full"
                     />
                 </div>
 
                 {/* 2. EMAIL GATE (Anonymous users only) or FINDINGS DOSSIER */}
-                <div className="flex-1 w-full min-h-0 relative bg-[var(--rs-bg-surface)] rounded-2xl shadow-xl border border-[var(--rs-border-primary)] overflow-hidden">
+                <div className="shrink-0 w-full">
                     {/* Anonymous email gate — shown above fold when scan is complete */}
                     {isComplete && isAnonymous && !emailCaptured && currentScanId && (
-                        <div ref={emailGateRef} className="absolute inset-0 z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div ref={emailGateRef} className="bg-[var(--rs-bg-surface)] rounded-2xl shadow-xl border border-[var(--rs-border-primary)] animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <DashboardEmailGate
                                 scanId={currentScanId}
                                 onEmailCaptured={() => {
@@ -796,14 +796,14 @@ export default function DashboardPage() {
                                         loadScanFromParam(currentScanId);
                                     }
                                 }}
-                                className="w-full h-full"
+                                className="w-full"
                             />
                         </div>
                     )}
 
                     {/* Findings Dossier — shown for auth users or after email capture */}
                     {isComplete && analysisResult && (!isAnonymous || emailCaptured) && (
-                        <div className="absolute inset-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <RSFindingsDossier
                                 isComplete={isComplete}
                                 riskProfile={analysisResult}
@@ -815,14 +815,14 @@ export default function DashboardPage() {
                                     trackEvent('upgrade_modal_opened', { scanId: currentScanId, source: 'dashboard_findings' })
                                     setShowAuditModal(true)
                                 }}
-                                className="w-full h-full"
+                                className="w-full"
                             />
                         </div>
                     )}
 
                     {/* Standby state — before scan completes */}
                     {!isComplete && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-20">
+                        <div className="bg-[var(--rs-bg-surface)] rounded-2xl shadow-xl border border-[var(--rs-border-primary)] flex flex-col items-center justify-center py-16 opacity-20">
                             <Terminal size={18} />
                             <div className="font-mono text-[9px] font-black uppercase tracking-widest text-center mt-2">
                                 {(isScanning || isLoading) ? 'Awaiting_Analysis...' : 'Standing_By'}

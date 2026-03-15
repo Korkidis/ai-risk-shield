@@ -606,11 +606,11 @@ export function UnifiedScanDrawer({
                 {/* ── Section 5: Collaboration (Notes) ── */}
                 <section className="space-y-2 pt-4 border-t border-rs-border-primary/50">
                     <div className="flex items-center justify-between">
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Analyst_Notes</span>
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Compliance_Log</span>
                         {isUpdatingNotes && <Loader2 className="w-3 h-3 text-rs-text-tertiary animate-spin" />}
                     </div>
                     <RSTextarea
-                        placeholder="// START_KEYBOARD_STREAM..."
+                        placeholder="Add compliance notes, reviewer observations, or audit trail entries..."
                         rows={4}
                         value={notesBuffer}
                         onChange={(e) => onNotesChange(e.target.value)}
@@ -659,15 +659,6 @@ export function UnifiedScanDrawer({
                         {shareToast || 'Share_Link'}
                     </RSButton>
 
-                    {/* Mitigation Report CTA */}
-                    {scan.status === 'complete' && (
-                        <MitigationCTA
-                            latestMitigation={latestMitigation}
-                            entitlements={entitlements}
-                            onGenerate={() => onGenerateMitigation(scan.id)}
-                        />
-                    )}
-
                     {/* Delete */}
                     <RSButton
                         variant="ghost"
@@ -678,6 +669,17 @@ export function UnifiedScanDrawer({
                     </RSButton>
                 </section>
             </div>
+
+            {/* ═══════════════ STICKY FOOTER: Mitigation CTA ═══════════════ */}
+            {scan.status === 'complete' && (
+                <div className="shrink-0 border-t border-[var(--rs-border-primary)] px-6 py-4 bg-[var(--rs-bg-element)]/80 backdrop-blur-md">
+                    <MitigationCTA
+                        latestMitigation={latestMitigation}
+                        entitlements={entitlements}
+                        onGenerate={() => onGenerateMitigation(scan.id)}
+                    />
+                </div>
+            )}
             </motion.div>
         </>
     )

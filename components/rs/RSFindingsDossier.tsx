@@ -149,10 +149,10 @@ export function RSFindingsDossier({
             </div>
 
             {/* Content Container */}
-            <div className="flex-1 flex flex-col p-8 pt-0 overflow-y-auto">
+            <div className="flex flex-col p-8 pt-0">
 
-                {/* Scrollable Findings */}
-                <div className="flex-1 overflow-y-auto space-y-3 pt-6 pr-2 scrollbar-thin scrollbar-thumb-black/10 scrollbar-track-transparent">
+                {/* Findings — expand to natural height, no inner scroll */}
+                <div className="space-y-3 pt-6 pr-2">
                     {displayFindings.length > 0 ? displayFindings.map((f) => (
                         <div key={f.id} className="group relative pl-6 border-l border-[var(--rs-border-primary)] py-0.5">
                             {/* Marker */}
@@ -196,7 +196,7 @@ export function RSFindingsDossier({
                     <div className="flex items-center gap-3 px-1">
                         <Info size={11} className={RISK_THEME.textMuted} />
                         <div className={cn("font-mono text-[10px] uppercase tracking-widest leading-tight", RISK_THEME.textMuted)}>
-                            Powered by Google Gemini 2.5 Flash &middot; C2PA Verified
+                            AI-Powered Analysis &middot; C2PA Verified
                         </div>
                     </div>
 

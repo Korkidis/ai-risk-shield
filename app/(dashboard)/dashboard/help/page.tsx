@@ -7,11 +7,11 @@ export default function HelpPage() {
     const quickStart = [
         {
             title: "Run Your First Scan",
-            content: "Upload any AI-generated image (JPG, PNG, or WebP, up to 50MB). Three independent AI analysts score it for IP risk, brand safety, and provenance gaps. Results appear in about 15 seconds."
+            content: "Upload any AI-generated image (JPG, PNG, or WebP, up to 50MB). Our AI analysis engine scores it across three dimensions — IP risk, brand safety, and provenance integrity. Results appear in about 15 seconds."
         },
         {
             title: "Understand Your Risk Score",
-            content: "The composite score (0–100) weights IP risk at 70%, provenance at 20%, and safety at 10%. Scores above 85 trigger a critical flag regardless of individual components. The five tiers are: Safe (0–20), Caution (21–40), Review (41–60), High (61–80), and Critical (81–100)."
+            content: "The composite score (0–100) is a weighted blend of IP risk, provenance integrity, and content safety. Scores above 85 trigger a critical flag regardless of individual components. The five tiers are: Safe (0–20), Caution (21–40), Review (41–60), High (61–80), and Critical (81–100)."
         },
         {
             title: "Download a Forensic Report",
@@ -23,17 +23,17 @@ export default function HelpPage() {
         {
             title: "How the Analysis Works",
             icon: <Zap className="w-4 h-4" />,
-            content: "Each upload runs through three specialized Google Gemini 2.5 Flash analysts: an IP Specialist (copyright and trademark pattern detection), a Compliance Auditor (brand safety and content policy), and a Provenance Analyst (origin verification). Each analyst scores independently before results are composited."
+            content: "Each upload is analyzed across three independent dimensions: IP risk (copyright and trademark pattern detection), content safety (brand safety and content policy compliance), and provenance integrity (origin and authenticity verification). Each dimension scores independently before results are composited into a single risk score."
         },
         {
             title: "C2PA Provenance Verification",
             icon: <Shield className="w-4 h-4" />,
-            content: "We verify Content Credentials using the open C2PA standard (c2pa-node). This checks for cryptographic signatures that prove where an image came from and how it was edited. Five outcomes: Verified (valid signature chain), Caution (partial chain), Untrusted (invalid signature), Invalid (corrupted data), or Missing (no C2PA metadata found)."
+            content: "We verify Content Credentials using the open C2PA standard. This checks for cryptographic signatures that prove where an image came from and how it was edited. Five outcomes: Verified (valid signature chain), Caution (partial chain), Untrusted (invalid signature), Invalid (corrupted data), or Missing (no C2PA metadata found)."
         },
         {
-            title: "Composite Scoring Formula",
+            title: "Composite Scoring",
             icon: <Activity className="w-4 h-4" />,
-            content: "The composite risk score uses a weighted formula: (IP Risk × 0.70) + (Provenance Risk × 0.20) + (Safety Risk × 0.10). A Red Flag override activates when any individual score reaches 85 or above, escalating the composite to Critical tier regardless of the weighted calculation."
+            content: "The composite risk score blends all three dimensions using a proprietary weighted formula that prioritizes IP risk. A Red Flag override activates when any individual score reaches 85 or above, escalating the composite to Critical tier regardless of the weighted calculation. This ensures high-severity findings in any single area are never masked by low scores elsewhere."
         }
     ]
 
@@ -48,7 +48,7 @@ export default function HelpPage() {
         },
         {
             q: "How is the risk score calculated?",
-            a: "Three independent AI analysts (powered by Google Gemini 2.5 Flash) each produce a score from 0–100. These are weighted — IP risk 70%, provenance 20%, safety 10% — into a composite. Scores above 85 on any axis trigger an automatic Critical flag. The scoring engine has 40 unit tests to prevent tier drift."
+            a: "Three independent AI analysis dimensions each produce a score from 0–100. These are blended using a proprietary weighted formula into a composite. Scores above 85 on any axis trigger an automatic Critical flag. The scoring engine is continuously validated to prevent tier drift."
         },
         {
             q: "Can I share results with my legal team?",
@@ -60,7 +60,7 @@ export default function HelpPage() {
         },
         {
             q: "What AI model powers the analysis?",
-            a: "Google Gemini 2.5 Flash. We use three specialized system prompts (IP Specialist, Compliance Auditor, Provenance Analyst) at temperature 0.2 for consistent, reproducible scoring. We do not use proprietary models — Gemini is the engine."
+            a: "We use a multi-dimensional AI analysis pipeline purpose-built for content risk assessment. Each dimension (IP risk, content safety, provenance integrity) is analyzed independently for consistent, reproducible scoring. Our analysis engine is continuously tuned and validated."
         }
     ]
 
