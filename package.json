@@ -12,7 +12,8 @@
     "migrate": "tsx scripts/apply-migration.ts",
     "test:db": "tsx scripts/test-db-connection.ts",
     "cleanup": "tsx scripts/cleanup-old-data.ts",
-    "test:smoke": "node --import tsx smoke-test.ts"
+    "test:smoke": "node --import tsx smoke-test.ts",
+    "sync-plans": "tsx scripts/sync-tenant-plans.ts"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
