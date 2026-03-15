@@ -91,7 +91,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Tur
 - **Metered overage billing:** Stripe Usage Records for paid plans exceeding monthly limits
 - **Webhook handler:** `app/api/stripe/webhook/route.ts` processes `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
 - **Plan sync:** `applyPlanToTenant()` syncs all limits and feature flags from `lib/plans.ts` to tenant record
-- **Entitlements:** `lib/entitlements.ts` centralizes access control (`canViewFullReport`, `canViewTeaser`, `isQuotaExceeded`)
+- **Entitlements:** `lib/entitlements.ts` centralizes access control (`canViewScanReport`, `canGenerateMitigation`, `canViewTeaser`, `isQuotaExceeded`)
 
 ## Common Mistakes to Avoid
 
@@ -114,10 +114,10 @@ app/
 │   └── dashboard/
 │       ├── page.tsx             # Scanner (main upload + analysis)
 │       ├── scans-reports/       # THE CANONICAL PRODUCT PAGE
-│       ├── brand-guidelines/    # Guidelines CRUD (UI works, not wired to analysis)
+│       ├── brand-guidelines/    # Guidelines CRUD (wired to scan analysis for images — Phase F)
 │       ├── help/                # FAQ + docs (scaffolding)
-│       ├── history/             # STUB → should redirect to scans-reports
-│       ├── reports/             # STUB → should redirect to scans-reports
+│       ├── history/             # Redirects to scans-reports
+│       ├── reports/             # Redirects to scans-reports
 │       └── design-lab/          # Internal component showcase (hide from customers)
 ├── (marketing)/         # Pricing page
 ├── api/                 # API routes
@@ -207,12 +207,8 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) —
 - `referral_events` - Insurance referral tracking (schema exists)
 - `tenant_invites` - Team invite tokens (schema exists, `metadata` column confirmed in live DB)
 
-### Pending Schema Drift
-Two migrations created but NOT applied to live DB:
-- `20260211_add_tenant_invites_metadata.sql`
-- `20260211_add_tenant_switch_audit_created_at_index.sql` (CONCURRENTLY — must run outside transaction)
-
-Note: User reported applying these + the Feb 15 migrations (`risk_profile_blob`, `fix_scan_assignment`, `cleanup_shadow_users_rpc`, `enable_realtime_scans`) on Feb 16. Verify in Supabase dashboard if uncertain.
+### Schema Drift — Resolved
+All migrations verified applied to production DB on 2026-03-15 (object-level verification: columns, indexes, RLS policies, functions, grants). No pending schema drift remains. See `.claude/CURRENT_STATE.md` §8 for full production-verified inventory.
 
 ### Every Table Must Have
 - `id` (UUID primary key)
@@ -247,7 +243,7 @@ if (!allowed && plan === 'free') {
 - **Region:** US East (iad1) - or closest to target users
 - **Environment:** Separate env vars for preview vs production
 
-## Known Issues (Current as of Feb 17, 2026)
+## Changelog (Phases A through Sprint 10.5)
 
 ### Pipeline Unified (Phase A Complete)
 Both authenticated and anonymous paths now route through `lib/ai/scan-processor.ts`. C2PA runs for all scans. `/api/analyze` (legacy sync endpoint) has been deleted.
@@ -259,7 +255,7 @@ Both authenticated and anonymous paths now route through `lib/ai/scan-processor.
 Upload API extracts `guidelineId` from formData, validates tenant ownership, stores `guideline_id` on scan record. Scan processor fetches the guideline and passes it to `analyzeImageMultiPersona()`. Dashboard has guideline selector dropdown (only shows if user has created guidelines). Video pipeline guidelines deferred (needs per-frame prompt injection).
 
 ### Phase D Complete (Feb 17, 2026)
-- Entitlements enforced in scans-reports drawer (gated findings, sample vs full PDF via `Entitlements.canViewFullReport()`)
+- Entitlements enforced in scans-reports drawer (gated findings, sample vs full PDF via `Entitlements.canViewScanReport()`)
 - Share button wired: API call → clipboard copy → animated toast
 - AuditModal rendering with real Stripe checkout buttons (`OneTimePurchaseButton` + `UpgradeButton`)
 - Bulk download/share wired in `RSBulkActionBar`
@@ -296,7 +292,7 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **billing.ts `as any` removed**: Cast replaced with `Pick<ExtendedTenant, ...>` for real type safety
 - **Soft gate data leak fixed**: `scan_findings` descriptions were returned in full for unauthenticated viewers — now masked with "Unlock full report to view details." (titles/severity preserved as teasers)
 - **Provenance masking gap fixed**: `provenance_report.reasoning` was not masked in the soft gate while IP and safety reports were — now masked consistently
-- **Supabase types note**: `lib/supabase/types.ts` is stale (still has old column names) — causes `as any` casts across the codebase. Run `supabase gen types typescript` against live DB to regenerate.
+- **Supabase types note**: Resolved in Phase R — types rebuilt from production schema, `as any` casts reduced to ~10 (external library boundaries only).
 
 ### Phase J Complete (Feb 19, 2026)
 - **sort_by injection fixed**: `/api/scans/list` now whitelists allowed sort fields (`created_at`, `composite_score`, `risk_level`, `status`) — prevents injection via `.order()`
@@ -328,7 +324,7 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Error detail leak sealed**: Upload route `scanError.message` no longer exposed to clients in scan creation failure response
 
 ### Phase N Complete (Feb 20, 2026)
-- **Stripe webhook idempotency**: Event IDs tracked in-memory Set — duplicate events from Stripe retries are now skipped (prevents double charges, duplicate user creation)
+- **Stripe webhook idempotency**: Event IDs checked against `audit_log` table — duplicate events from Stripe retries are now skipped (prevents double charges, duplicate user creation)
 - **NaN-safe pagination**: `parseInt` calls in `/api/scans/list` now have `|| fallback` after radix 10 — prevents `NaN` offset from empty string params
 - **JSON.parse safety**: `guidelines/extract` now catches malformed Gemini JSON responses with 422 instead of unhandled exception
 - **Security headers**: Added `Permissions-Policy` (camera/mic/geo disabled) and `X-Permitted-Cross-Domain-Policies: none` to `next.config.js`
@@ -373,15 +369,17 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Server-side unlock fixed**: `capture-email` persists email to scan record; `/api/scans/[id]` masking lifts when `scan.email` present. Email persistence failure is fatal (500).
 - **Atomic mitigation credits**: `consume_mitigation_quota()` RPC with `FOR UPDATE` lock + check + increment in single PG transaction. Replaces TOCTOU-prone separate read + increment.
 - **CAS enforcement on status transitions**: Both `pending→processing` and `failed→processing` transitions use `.select('id')` + zero-row check to prevent double-generation from concurrent requests
-- **Mitigation generator extracted**: `lib/ai/mitigation-generator.ts` with `generateMitigationReport()` and `generateMitigationPdf()`
+- **Mitigation generator extracted**: `lib/ai/mitigation-generator.ts` with `generateMitigationReport()` (JSON generation only — PDF export not yet implemented)
 - **PDF gating corrected**: In-app scan report downloads are always full (`isSample = false`). Sample PDFs only in pre-account email.
 - **Quota boundary hardened**: `v_new_used + p_amount > limit` (correct for bulk amounts)
 
-### Pending Schema Drift (Updated Mar 3)
-Migrations created but NOT applied to live DB:
-- `20260224_rate_limits.sql` — rate_limits table + cleanup function
-- `20260302_atomic_mitigation_usage.sql` — `increment_tenant_mitigation_usage()` hardened RPC
-- `20260303_atomic_mitigation_quota.sql` — `consume_mitigation_quota()` atomic check+increment RPC
+### Schema Drift — Resolved (Verified 2026-03-15)
+All migrations applied to production DB. Verified live on 2026-03-15:
+- `rate_limits` table — exists with RLS enabled
+- `check_rate_limit_atomic()` — SECURITY DEFINER, search_path=public, EXECUTE to service_role + owner
+- `cleanup_stale_rate_limits()` — SECURITY DEFINER, search_path=public, EXECUTE to service_role + owner
+- `increment_tenant_mitigation_usage()` — SECURITY DEFINER, EXECUTE to authenticated + service_role + owner
+- `consume_mitigation_quota()` — SECURITY DEFINER, EXECUTE to authenticated + service_role + owner
 
 ## Lessons Learned (Updated as we build)
 
@@ -430,4 +428,4 @@ Migrations created but NOT applied to live DB:
 
 ---
 
-**Last Updated:** 2026-02-20 (Phase O — Open redirect fix, webhook metadata validation, COOP header, env var fail-fast, session expiry reduction)
+**Last Updated:** 2026-03-15 (Documentation reconciliation — removed stale migration drift claims, fixed entitlement function names, corrected changelog accuracy. See `.claude/CURRENT_STATE.md` for canonical shipped state.)
