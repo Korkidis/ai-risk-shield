@@ -2,10 +2,11 @@
 
 import { RSButton } from "@/components/rs/RSButton";
 import { RSInput } from "@/components/rs/RSInput";
-import { ArrowLeft, AlertCircle, ArrowRight } from "lucide-react";
+import { ArrowLeft, AlertCircle, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, Suspense } from "react";
 import { useFormStatus } from "react-dom";
+import { useSearchParams } from "next/navigation";
 import { signUp } from "../actions";
 
 const initialState = {
@@ -38,7 +39,26 @@ function SubmitButton() {
 }
 
 export default function RegisterPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-rs-text-tertiary" />
+            </div>
+        }>
+            <RegisterContent />
+        </Suspense>
+    );
+}
+
+function RegisterContent() {
+    const searchParams = useSearchParams();
+    const plan = searchParams.get('plan');
     const [state, formAction] = useActionState(signUp, initialState);
+
+    // Compute post-signup redirect based on pricing intent
+    const nextUrl = plan === 'pro' ? '/dashboard?checkout=pro&interval=monthly'
+        : plan === 'report' ? '/dashboard?checkout=report'
+        : null;
 
     return (
         <div className="flex flex-col gap-6 w-full">
@@ -52,6 +72,7 @@ export default function RegisterPage() {
             </div>
 
             <form action={formAction} className="flex flex-col gap-6">
+                {nextUrl && <input type="hidden" name="next" value={nextUrl} />}
                 <div className="space-y-4">
                     <div className="space-y-1 group">
                         <label className="text-[10px] font-black uppercase tracking-widest text-[var(--rs-text-secondary)] pl-1 mb-1 block">
@@ -124,7 +145,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="flex items-center justify-center pt-4 border-t border-[var(--rs-border-primary)] border-dashed">
-                    <Link href="/login" className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-2">
+                    <Link href={plan ? `/login?plan=${plan}` : '/login'} className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-2">
                         <ArrowLeft className="w-3 h-3" />
                         Return to Login
                     </Link>

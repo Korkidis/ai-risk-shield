@@ -49,6 +49,8 @@ export default function DashboardPage() {
     const searchParams = useSearchParams();
     const scanIdParam = searchParams.get('scan');
     const isVerified = searchParams.get('verified') === 'true';
+    const checkoutParam = searchParams.get('checkout');
+    const intervalParam = searchParams.get('interval');
 
     const [scanStatus, setScanStatus] = React.useState<'idle' | 'loading' | 'scanning' | 'complete' | 'error'>('idle');
     const [analysisResult, setAnalysisResult] = React.useState<RiskProfile | null>(null);
@@ -77,6 +79,7 @@ export default function DashboardPage() {
     // Track whether we've already processed the scan param (prevent double-fetch)
     const processedScanParam = useRef(false);
     const processedAssignment = useRef(false);
+    const processedCheckout = useRef(false);
 
     // Telemetry State
     const [logs, setLogs] = React.useState<Array<{ id: string, timestamp: string, message: string, status: 'pending' | 'active' | 'done' | 'error' }>>([
@@ -285,11 +288,40 @@ export default function DashboardPage() {
             if (!user) return;
             setUserContext({
                 id: user.id,
-                tenant_id: scanRecord?.tenant_id || '',
+                tenant_id: billingStatus.tenantId,
                 plan: (billingStatus.planId || 'free') as PlanId,
             });
         });
-    }, [billingStatus, scanRecord?.tenant_id]);
+    }, [billingStatus]);
+
+    // ─── Effect: Auto-trigger Stripe checkout from pricing CTA flow ──────────
+    useEffect(() => {
+        if (!checkoutParam || processedCheckout.current || isAnonymous) return;
+        if (!billingStatus) return; // Wait for auth to resolve
+        processedCheckout.current = true;
+        window.history.replaceState(null, '', '/dashboard');
+
+        if (checkoutParam === 'pro') {
+            fetch('/api/stripe/create-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    purchaseType: 'subscription',
+                    planId: 'pro',
+                    interval: intervalParam || 'monthly',
+                }),
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.url) window.location.href = data.url;
+                })
+                .catch(() => {
+                    setShowAuditModal(true); // Fallback: show modal if checkout fails
+                });
+        } else if (checkoutParam === 'report') {
+            setShowAuditModal(true);
+        }
+    }, [checkoutParam, intervalParam, isAnonymous, billingStatus]);
 
     // ─── Effect: Load scan from URL param on mount ───────────────────────────
     useEffect(() => {
@@ -411,7 +443,7 @@ export default function DashboardPage() {
         : false;
     const mitigationEntitlement = billingStatus
         ? Entitlements.getMitigationEntitlement({
-            id: userContext?.tenant_id || scanRecord?.tenant_id || '',
+            id: billingStatus.tenantId,
             plan: (billingStatus.planId || 'free') as PlanId,
             monthly_scan_limit: billingStatus.monthlyScanLimit,
             monthly_report_limit: billingStatus.monthlyReportLimit ?? 0,
@@ -769,19 +801,21 @@ export default function DashboardPage() {
             {/* RIGHT PANE: ANALYSIS & TELEMETRY (50%) - LIGHT MODE PANEL */}
             <div className="flex flex-col min-h-0 h-full gap-6 overflow-y-auto">
 
-                {/* 1. RISK ANALYSIS PANEL (Active / Standby) */}
-                <div className="shrink-0 w-full">
-                    <RSRiskPanel
-                        id={isComplete ? (currentScanId?.substring(0, 8).toUpperCase() || "SYS-STD-01") : "--"}
-                        score={results.composite}
-                        level={isComplete ? getRiskTier(results.composite).level as 'critical' | 'high' | 'medium' | 'low' | 'safe' : 'low'}
-                        ipScore={results.ipRisk}
-                        safetyScore={results.brandSafety}
-                        provenanceScore={results.provenance}
-                        status={(isScanning || isLoading) ? 'scanning' : isComplete ? 'completed' : 'empty'}
-                        className="w-full"
-                    />
-                </div>
+                {/* 1. RISK ANALYSIS PANEL — Deferred until scan completes (no empty dials) */}
+                {isComplete && (
+                    <div className="shrink-0 w-full animate-in fade-in slide-in-from-right-4 duration-700">
+                        <RSRiskPanel
+                            id={currentScanId?.substring(0, 8).toUpperCase() || "SYS-STD-01"}
+                            score={results.composite}
+                            level={getRiskTier(results.composite).level as 'critical' | 'high' | 'medium' | 'low' | 'safe'}
+                            ipScore={results.ipRisk}
+                            safetyScore={results.brandSafety}
+                            provenanceScore={results.provenance}
+                            status="completed"
+                            className="w-full"
+                        />
+                    </div>
+                )}
 
                 {/* 2. EMAIL GATE (Anonymous users only) or FINDINGS DOSSIER */}
                 <div className="shrink-0 w-full">
@@ -820,12 +854,12 @@ export default function DashboardPage() {
                         </div>
                     )}
 
-                    {/* Standby state — before scan completes */}
+                    {/* Standby state — shown when idle or during scan (no empty dials) */}
                     {!isComplete && (
                         <div className="bg-[var(--rs-bg-surface)] rounded-2xl shadow-xl border border-[var(--rs-border-primary)] flex flex-col items-center justify-center py-16 opacity-20">
                             <Terminal size={18} />
                             <div className="font-mono text-[9px] font-black uppercase tracking-widest text-center mt-2">
-                                {(isScanning || isLoading) ? 'Awaiting_Analysis...' : 'Standing_By'}
+                                {(isScanning || isLoading) ? 'Analyzing...' : 'Ready'}
                             </div>
                         </div>
                     )}
@@ -853,6 +887,7 @@ export default function DashboardPage() {
                     shareToast={shareToast}
                     showDownloadBanner={showDownloadBanner}
                     onDismissDownloadBanner={() => setShowDownloadBanner(false)}
+                    userTenantId={userContext?.tenant_id}
                 />
             )}
 

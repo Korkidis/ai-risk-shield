@@ -53,9 +53,15 @@ export default function LoginPage() {
 function LoginContent() {
     const searchParams = useSearchParams();
     const errorParam = searchParams.get('error');
+    const plan = searchParams.get('plan');
     const [state, formAction] = useActionState(login, initialState);
 
     const errorMessage = state?.error || errorParam;
+
+    // Compute post-login redirect based on pricing intent
+    const nextUrl = plan === 'pro' ? '/dashboard?checkout=pro&interval=monthly'
+        : plan === 'report' ? '/dashboard?checkout=report'
+        : null;
 
     return (
         <div className="flex flex-col gap-6 w-full">
@@ -84,6 +90,7 @@ function LoginContent() {
             </div>
 
             <form action={formAction} className="flex flex-col gap-6">
+                {nextUrl && <input type="hidden" name="next" value={nextUrl} />}
                 {/* Recessed Input Bays */}
                 <div className="space-y-6">
                     <hr className="border-t border-[var(--rs-border-primary)]/50" />
@@ -146,7 +153,7 @@ function LoginContent() {
 
                 {/* Secondary Actions / Clearance */}
                 <div className="flex items-center justify-between pt-4 border-t border-[var(--rs-border-primary)] border-dashed">
-                    <a href="/register" className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors cursor-pointer">
+                    <a href={plan ? `/register?plan=${plan}` : '/register'} className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors cursor-pointer">
                         Request Access / Sign Up
                     </a>
                 </div>

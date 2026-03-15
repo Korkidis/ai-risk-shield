@@ -530,15 +530,14 @@ function ScansReportsContent() {
 
     // Build user context for entitlement checks
     useEffect(() => {
-        if (!billingStatus || scans.length === 0) return
+        if (!billingStatus) return
         const supabase = createClient()
         supabase.auth.getUser().then(({ data: { user } }) => {
             if (user) {
-                const tenantId = scans[0]?.tenant_id || ''
-                setUserContext({ id: user.id, tenant_id: tenantId, plan: (billingStatus.planId || 'free') as PlanId })
+                setUserContext({ id: user.id, tenant_id: billingStatus.tenantId, plan: (billingStatus.planId || 'free') as PlanId })
             }
         })
-    }, [billingStatus, scans])
+    }, [billingStatus])
 
     // Computed entitlements for selected scan
     const canViewFull = selectedScan && userContext
@@ -549,7 +548,7 @@ function ScansReportsContent() {
     const mitigationEntitlement = useMemo(() => {
         if (!billingStatus) return { included: 0, used: 0, canGenerate: false, overageCents: 2900 }
         return Entitlements.getMitigationEntitlement({
-            id: userContext?.tenant_id || '',
+            id: billingStatus.tenantId,
             plan: (billingStatus.planId || 'free') as PlanId,
             monthly_scan_limit: billingStatus.monthlyScanLimit,
             monthly_report_limit: billingStatus.monthlyReportLimit ?? 0,
@@ -933,6 +932,7 @@ function ScansReportsContent() {
                             shareToast={shareToast}
                             showDownloadBanner={showDownloadBanner}
                             onDismissDownloadBanner={() => setShowDownloadBanner(false)}
+                            userTenantId={userContext?.tenant_id}
                         />
                     )}
                 </AnimatePresence>

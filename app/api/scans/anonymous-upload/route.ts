@@ -151,9 +151,12 @@ export async function POST(request: Request) {
     }
 
     // 4. Queue async analysis (Direct call, bypass Auth-gated API)
-    // Fire-and-forget
+    // Fire-and-forget with timing instrumentation
+    const processStart = Date.now()
     import('@/lib/ai/scan-processor').then(({ processScan }) => {
-      processScan(newScan.id).catch(err => console.error('Background analysis failed:', err))
+      processScan(newScan.id)
+        .then(() => console.log(`[Perf] processScan ${newScan.id.slice(0, 8)}: ${Date.now() - processStart}ms`))
+        .catch(err => console.error('Background analysis failed:', err))
     })
 
     // 5. Consume one unit from the pre-check result (production only).

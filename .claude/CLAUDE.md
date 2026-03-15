@@ -422,6 +422,25 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Telemetry panel hardened**: `SYS.09` dimmed to `text-white/10`. Footer changed from hardcoded `Cryptographic Seal Verified` → conditional `Provenance Verified` / `No Provenance Data` based on actual `CONTENT_ORIGIN` row status in real data.
 - **All 5 pending DB migrations applied**: `rate_limits`, `harden_rate_limits`, `atomic_mitigation_usage`, `atomic_mitigation_quota`, `team_invites_unique_constraint` — schema drift fully resolved.
 
+### Sprint 13 Complete (Mar 15, 2026)
+- **Mobile hamburger navigation**: `Header.tsx` rewritten with slide-down panel, outside-click dismiss, body scroll lock, hamburger/X toggle
+- **Pricing CTAs wired**: `SubscriptionComparison.tsx` buttons route to `/login?plan=pro` and `/login?plan=report` for conversion funnel
+- **Risk panel deferred**: RSRiskPanel only renders when `isComplete` with `animate-in fade-in slide-in-from-right-4` transition
+- **Sample PDF voice rewritten**: Hero finding shown in full, teasers show 80-char summaries, CTA sells remediation ($29) not "unlock full report"
+- **Scanner dual-axis animation**: `RSScanner.tsx` + globals.css keyframes for scan-line effect
+- **Dark mode color fixes**: RSC2PAWidget, RSSectionHeader, ProvenanceTelemetryStream, globals.css
+- **Video gate alert() replaced**: Inline `RSCallout` in `FreeUploadContainer.tsx` instead of browser alert
+- **SEO metadata**: Title, description, OG tags added to root `app/layout.tsx`
+- **Brand rename**: "RiskShield" → "RiskScore" in header navigation
+- **Full product audit**: `brain/PRODUCT_AUDIT.md` — 484-line code-level + visual evidence audit with 17-item friction log
+
+### Sprint 13.1 Complete (Mar 15, 2026)
+- **Pricing CTA conversion path fixed**: `login()` server action now supports `next` redirect param (matching `signUp()` pattern). Login + register pages read `plan` from searchParams, compute `nextUrl`, pass as hidden form field. Dashboard auto-triggers Stripe checkout when `?checkout=pro` or `?checkout=report` present. Open redirect guard: `next.startsWith('/') && !next.startsWith('//')`.
+- **Mitigation tenant_id mismatch fixed**: `userContext.tenant_id` now sourced from `billingStatus.tenantId` (authenticated user's real tenant) instead of `scanRecord?.tenant_id`. Applied to both `dashboard/page.tsx` and `scans-reports/page.tsx`. `BillingStatus` type extended with `tenantId` field.
+- **Cross-tenant mitigation CTA guard**: `UnifiedScanDrawer` receives `userTenantId` prop; mitigation CTA suppressed when scan belongs to different tenant.
+- **Failed scan error state**: Failed scans render `RSCallout variant="danger"` with `error_message` instead of RSRiskPanel "SYSTEM IDLE". Findings section hidden for failed scans.
+- **Freemium path instrumentation**: `[Perf]` timing logs added to `anonymous-upload` (processScan duration) and `capture-email` (PDF generation + total route time).
+
 ### Pending Schema Drift (Updated Mar 14 — Sprint 12)
 All previously pending migrations have been applied to the live DB:
 - ✅ `20260224_rate_limits.sql` — rate_limits table + cleanup function
@@ -479,4 +498,4 @@ No pending schema drift as of Mar 14, 2026.
 
 ---
 
-**Last Updated:** 2026-03-14 (Sprint 12 — Truth Density: findings liberated, sticky mitigation CTA, telemetry de-theatered, secret sauce scrubbed, all DB migrations applied)
+**Last Updated:** 2026-03-15 (Sprint 13.1 — Pricing CTA wired through login, tenant_id mismatch fixed, failed scan error state, freemium path instrumentation)

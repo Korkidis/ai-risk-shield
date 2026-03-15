@@ -16,6 +16,7 @@ type AssetRow = Pick<Database['public']['Tables']['assets']['Row'], 'filename' |
  * Updates scan record and triggers sample report email
  */
 export async function POST(request: Request) {
+  const routeStart = Date.now()
   try {
     const { scanId, email } = await request.json()
     const sessionId = await getSessionId()
@@ -192,6 +193,7 @@ export async function POST(request: Request) {
     }
 
     // 4. Generate Sample PDF Buffer
+    const pdfStart = Date.now()
     let pdfBuffer: Buffer | undefined = undefined
     if (scanData && scanData.risk_profile) {
       try {
@@ -241,6 +243,8 @@ export async function POST(request: Request) {
       }
     }
 
+    console.log(`[Perf] capture-email PDF: ${Date.now() - pdfStart}ms, size: ${pdfBuffer ? Math.round(pdfBuffer.length / 1024) : 0}KB`)
+
     // Send magic link email
     // linkData.properties.action_link contains the valid auth token
     const magicLink = linkData.properties.action_link
@@ -255,7 +259,7 @@ export async function POST(request: Request) {
       console.log('🔗 [DEV] Magic Link:', magicLink)
     }
 
-    console.log('✅ Shadow User Created & Auth Link Sent')
+    console.log(`✅ Shadow User Created & Auth Link Sent [Perf] capture-email total: ${Date.now() - routeStart}ms`)
     return NextResponse.json({ success: true, verified: true })
   } catch (error) {
     console.error('Email capture error:', error)

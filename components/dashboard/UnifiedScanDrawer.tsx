@@ -8,6 +8,7 @@ import { ScanWithRelations, ProvenanceDetails, MitigationReport } from '@/types/
 import { RSTextarea } from '@/components/rs/RSTextarea'
 import { RSButton } from '@/components/rs/RSButton'
 import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
+import { RSCallout } from '@/components/rs/RSCallout'
 import { type RiskLevel } from '@/components/rs/RSRiskScore'
 import { format } from 'date-fns'
 import { formatBytes } from '@/lib/utils'
@@ -50,6 +51,8 @@ export interface UnifiedScanDrawerProps {
     shareToast: string | null
     showDownloadBanner: boolean
     onDismissDownloadBanner: () => void
+    /** Authenticated user's tenant ID — used to suppress mitigation CTA on cross-tenant scans */
+    userTenantId?: string
 }
 
 // ─── Provenance Helpers ──────────────────────────────────────────────────────
@@ -133,6 +136,7 @@ export function UnifiedScanDrawer({
     shareToast,
     showDownloadBanner,
     onDismissDownloadBanner,
+    userTenantId,
 }: UnifiedScanDrawerProps) {
     const provenance = getProvenanceData(scan)
     const aiDeclaration = parseAiDeclaration(provenance?.raw_manifest)
@@ -242,27 +246,32 @@ export function UnifiedScanDrawer({
 
                 {/* ── Section 2: Risk Overview ── */}
                 <section>
-                    <RSRiskPanel
-                        id={scan.id.slice(0, 8).toUpperCase()}
-                        status={
-                            scan.status === 'processing' || scan.status === 'pending' ? 'scanning' :
-                                scan.status === 'failed' ? 'completed' : 'completed'
-                        }
-                        score={scan.risk_profile?.composite_score || 0}
-                        level={
-                            scan.risk_level === 'review' ? 'medium' :
-                                scan.risk_level === 'caution' ? 'low' :
-                                    (scan.risk_level || 'low') as RiskLevel
-                        }
-                        ipScore={scan.risk_profile?.ip_report?.score || 0}
-                        safetyScore={scan.risk_profile?.safety_report?.score || 0}
-                        provenanceScore={scan.risk_profile?.provenance_report?.score || 0}
-                        className="shadow-sm"
-                    />
+                    {scan.status === 'failed' ? (
+                        <RSCallout variant="danger" title="Analysis Failed">
+                            {(scan as unknown as { error_message?: string }).error_message || 'This scan could not be completed. Try uploading again.'}
+                        </RSCallout>
+                    ) : (
+                        <RSRiskPanel
+                            id={scan.id.slice(0, 8).toUpperCase()}
+                            status={
+                                scan.status === 'processing' || scan.status === 'pending' ? 'scanning' : 'completed'
+                            }
+                            score={scan.risk_profile?.composite_score || 0}
+                            level={
+                                scan.risk_level === 'review' ? 'medium' :
+                                    scan.risk_level === 'caution' ? 'low' :
+                                        (scan.risk_level || 'low') as RiskLevel
+                            }
+                            ipScore={scan.risk_profile?.ip_report?.score || 0}
+                            safetyScore={scan.risk_profile?.safety_report?.score || 0}
+                            provenanceScore={scan.risk_profile?.provenance_report?.score || 0}
+                            className="shadow-sm"
+                        />
+                    )}
                 </section>
 
-                {/* ── Section 3: Findings ── */}
-                <section className="border border-rs-border-primary bg-[var(--rs-bg-surface)]">
+                {/* ── Section 3: Findings (hidden for failed scans) ── */}
+                {scan.status !== 'failed' && <section className="border border-rs-border-primary bg-[var(--rs-bg-surface)]">
                     <div className="px-5 py-3 border-b border-rs-border-primary bg-[var(--rs-bg-element)]/70 flex items-center justify-between">
                         <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Detected_Anomalies</span>
                         <div className="px-2 py-0.5 bg-rs-text-primary text-white text-[9px] font-bold rounded-[1px]">
@@ -323,7 +332,7 @@ export function UnifiedScanDrawer({
                             </div>
                         )}
                     </div>
-                </section>
+                </section>}
 
                 {/* ── Section 3.5: Video Frame Analysis (video scans only) ── */}
                 {scan.is_video && (scan.frames_analyzed ?? 0) > 0 && (
@@ -671,7 +680,7 @@ export function UnifiedScanDrawer({
             </div>
 
             {/* ═══════════════ STICKY FOOTER: Mitigation CTA ═══════════════ */}
-            {scan.status === 'complete' && (
+            {scan.status === 'complete' && (!userTenantId || scan.tenant_id === userTenantId) && (
                 <div className="shrink-0 border-t border-[var(--rs-border-primary)] px-6 py-4 bg-[var(--rs-bg-element)]/80 backdrop-blur-md">
                     <MitigationCTA
                         latestMitigation={latestMitigation}

@@ -15,6 +15,7 @@ export async function getAnonSessionId(): Promise<string | null> {
 }
 
 export type BillingStatus = {
+    tenantId: string;
     planId: string;
     seatLimit: number;
     seatsUsed: number;
@@ -59,6 +60,7 @@ export async function getTenantBillingStatus(tenantId?: string): Promise<Billing
     const scansUsed = tenant.scans_used_this_month || 0;
 
     return {
+        tenantId: targetTenantId,
         planId: tenant.plan || 'free',
         seatLimit: tenant.seat_limit || 1,
         seatsUsed: seatsUsed || 0,

@@ -200,7 +200,11 @@ export async function login(_prevState: unknown, formData: FormData) {
 
   console.log('✅ Login successful for user:', data.user?.id)
 
-  // Success! Redirect to dashboard
+  // Success! Redirect to next url or dashboard
+  const next = formData.get('next') as string
+  if (next && next.startsWith('/') && !next.startsWith('//')) {
+    redirect(next)
+  }
   redirect('/dashboard')
 }
 
