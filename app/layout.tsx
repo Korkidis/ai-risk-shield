@@ -18,8 +18,19 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'AI Content Risk Score',
-  description: 'Forensic AI Audit',
+  title: 'AI Content Risk Score — Check AI Images for Copyright Risk in 15s',
+  description: 'Validate AI-generated images for copyright risk, brand safety, and C2PA provenance. Get an instant risk score and downloadable evidence for legal review.',
+  openGraph: {
+    title: 'AI Content Risk Score — Know Before You Publish',
+    description: 'Validate AI-generated images for copyright risk, brand safety, and provenance verification in 15 seconds.',
+    type: 'website',
+    siteName: 'AI Content Risk Score',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AI Content Risk Score — Know Before You Publish',
+    description: 'Check AI images for copyright risk in 15 seconds. Free tier available.',
+  },
 }
 
 // Inline script to prevent flash of wrong theme on page load

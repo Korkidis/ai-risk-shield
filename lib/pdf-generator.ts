@@ -381,36 +381,34 @@ export const generateForensicReport = (
             }
 
             doc.setFontSize(9)
-            // Mask all finding descriptions in sample mode to prevent data leaks
             const rawDesc = f.description || ''
-            // In sample mode, even the 'hero' finding (which isn't marked _isTeaser) must be masked
-            const displayDesc = (isSample || f._isTeaser)
-                ? rawDesc.substring(0, 60) + '... [Unlock full report for details]'
+            // Sample mode: show hero finding in full, teasers get summary only
+            // Full mode: show all descriptions in full
+            const displayDesc = f._isTeaser
+                ? rawDesc.substring(0, 80) + (rawDesc.length > 80 ? '...' : '')
                 : rawDesc
             const descLines = doc.splitTextToSize(displayDesc, 160)
             doc.text(descLines, 28, y)
             y += (descLines.length * 4) + 3
 
-            // Mitigation hint (teaser-aligned, one line)
-            // For teasers or sample mode, we hide the mitigation to encourage unlock
+            // Mitigation hint
             const teaser = f._teaser || f.description || ''
-            if (!isSample && !f._isTeaser && teaser && teaser !== "No significant risks detected.") {
+            if (!f._isTeaser && teaser && teaser !== "No significant risks detected.") {
                 y = checkPageBreak(y, 8)
                 doc.setFont(FONT.mono, "normal")
                 doc.setFontSize(7)
                 doc.setTextColor(COLORS.ink)
 
-                // Truncate teaser to one clean line
                 const hintText = teaser.length > 80 ? teaser.substring(0, 77) + '...' : teaser
                 doc.text(`MITIGATION: ${hintText}`, 28, y)
                 y += 6
-            } else if (isSample || f._isTeaser) {
-                // Explicitly say "Unlock for details"
+            } else if (isSample && f._isTeaser) {
+                // Teasers in sample mode get a gentle nudge
                 y = checkPageBreak(y, 8)
-                doc.setFont(FONT.mono, "bold")
+                doc.setFont(FONT.mono, "normal")
                 doc.setFontSize(7)
-                doc.setTextColor(COLORS.accent)
-                doc.text("MITIGATION: [LOCKED] Unlock full report to view strategy", 28, y)
+                doc.setTextColor(COLORS.sub)
+                doc.text("NEXT STEP: Get a remediation plan for this risk — $29", 28, y)
                 y += 6
             }
 
@@ -425,21 +423,19 @@ export const generateForensicReport = (
             drawLine(y)
             y += 8
 
-            // Locked section
+            // Additional findings summary
             doc.setFont(FONT.body, "bold")
             doc.setFontSize(9)
             doc.setTextColor(COLORS.sub)
-            doc.text("FULL REPORT INCLUDES:", 28, y)
+            doc.text("ADDITIONAL FINDINGS:", 28, y)
             y += 6
 
             doc.setFont(FONT.body, "normal")
             doc.setFontSize(8)
 
-            // Use our dynamic list
             if (lockedList.length === 0) {
-                // Fallback if nothing specific is hidden but it is a sample
-                lockedList.push("Complete Evidence & Citations")
-                lockedList.push("Legal Grade Mitigation Strategy")
+                lockedList.push("Full evidence citations and source analysis")
+                lockedList.push("Detailed remediation guidance")
             }
 
             lockedList.forEach(item => {
@@ -449,20 +445,28 @@ export const generateForensicReport = (
 
             y += 4
 
-            // Upgrade CTA
+            // Remediation CTA (practical, not aggressive)
             drawLine(y)
             y += 8
 
             doc.setFont(FONT.header, "bold")
-            doc.setFontSize(12)
-            doc.setTextColor(COLORS.accent)
-            doc.text("UNLOCK COMPLETE FORENSIC ANALYSIS", 105, y, { align: "center" })
+            doc.setFontSize(11)
+            doc.setTextColor(COLORS.ink)
+            doc.text("Need a Remediation Plan?", 105, y, { align: "center" })
+            y += 6
+
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(8)
+            doc.setTextColor(COLORS.sub)
+            doc.text("Get a leadership-ready mitigation report with remediation steps,", 105, y, { align: "center" })
+            y += 4
+            doc.text("compliance matrix, and bias audit — $29 one-time.", 105, y, { align: "center" })
             y += 6
 
             doc.setFont(FONT.mono, "normal")
             doc.setFontSize(8)
-            doc.setTextColor(COLORS.ink)
-            doc.text(`airiskshield.com/dashboard/scans-reports?highlight=${scan.id}`, 105, y, { align: "center" })
+            doc.setTextColor(COLORS.accent)
+            doc.text(`aicontentriskscore.com/dashboard/scans-reports?highlight=${scan.id}`, 105, y, { align: "center" })
             y += 4
         }
 

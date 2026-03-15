@@ -104,8 +104,8 @@ export function ProvenanceTelemetryStream({ details, customRows, scanStatus, onD
             case 'success': return 'var(--rs-safe)'; // Brand Green
             case 'warning': return 'var(--rs-risk-caution)'; // Amber
             case 'error': return 'var(--rs-signal)';   // Brand Red (Signal)
-            case 'info': return '#00DDFF';    // Brand Cyan
-            case 'pending': default: return '#FFFFFF';
+            case 'info': return 'var(--rs-info)';    // Brand Cyan
+            case 'pending': default: return 'var(--rs-text-primary)';
         }
     };
 

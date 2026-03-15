@@ -114,9 +114,9 @@
     --rs-gray-100: #222222;
     --rs-gray-200: #2D2D2D;
     --rs-gray-300: #3D3D3D;
-    --rs-gray-400: #666666;
-    --rs-gray-500: #8A8681;
-    --rs-gray-600: #9A9691;
+    --rs-gray-400: #8A8A8A;
+    --rs-gray-500: #9A9691;
+    --rs-gray-600: #B4B0AB;
     --rs-gray-700: #B4B0AB;
     --rs-gray-800: #CFCBC4;
     --rs-gray-900: #E5E1DA;
@@ -132,7 +132,7 @@
 
     --rs-text-primary: #EBE7E0;
     --rs-text-secondary: #9A9691;
-    --rs-text-tertiary: #666666;
+    --rs-text-tertiary: #8A8A8A;
 
     --rs-border-primary: #2D2D2D;
     --rs-border-secondary: #333333;
@@ -436,7 +436,7 @@ body {
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-/* keyframes for scan animation */
+/* keyframes for scan animation — vertical */
 @keyframes scan-line {
   0% {
     top: 0%;
@@ -455,4 +455,35 @@ body {
     top: 100%;
     opacity: 0;
   }
+}
+
+/* keyframes for scan animation — horizontal */
+@keyframes scan-line-h {
+  0% {
+    left: 0%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* Scan animation utility classes */
+.animate-scan {
+  animation: scan-line 3s ease-in-out infinite;
+}
+
+.animate-scan-h {
+  animation: scan-line-h 4s ease-in-out infinite;
+  animation-delay: 1.5s;
 }

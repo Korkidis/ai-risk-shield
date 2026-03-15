@@ -1,7 +1,7 @@
-# AI Risk Shield
+# AI Content Risk Score
 **The Forensic Instrument for AI Content Validation**
 
-AI Risk Shield is a specialized platform for analyzing visual assets (images/video) to detect copyright infringement risk (IP), brand safety violations, and provenance authenticity (C2PA).
+AI Content Risk Score is a specialized platform for analyzing visual assets (images/video) to detect copyright infringement risk (IP), brand safety violations, and provenance authenticity (C2PA).
 
 ---
 

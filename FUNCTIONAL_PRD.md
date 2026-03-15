@@ -9,7 +9,7 @@
 > - **Data handoff:** `/api/scans/[id]` must read stored `risk_profile` (not reconstruct).
 
 ## 1. Introduction & Philosophy
-This document is the execution blueprint for the full AI Risk Shield platform.
+This document is the execution blueprint for the full AI Content Risk Score platform.
 *   **Design Goal**: "Little design as possible." Eliminate decoration. Prioritize data density, clarity, and physical feedback.
 *   **Development Goal**: Agile flexibility with Enterprise rigidity on security. Ship fast, but never break trust.
 *   **Core Loop**: Upload (Frictionless) → Analyze (Forensic) → Gate (Conversion) → Report (Value) → Manage (Teams).

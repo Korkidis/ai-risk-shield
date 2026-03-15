@@ -23,7 +23,7 @@ This plan improves conversion without breaking the current flow and keeps the PD
 
 Replace the “Authorized Recipient” flow with a **mini sign‑up**:
 - Email input (same styling)
-- Sub‑text: “Creates your free AI Risk Shield account (pending verification)”
+- Sub‑text: “Creates your free AI Content Risk Score account (pending verification)”
 - Button: “CREATE ACCOUNT & DOWNLOAD REPORT”
 
 On submit:

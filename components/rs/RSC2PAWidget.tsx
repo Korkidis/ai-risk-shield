@@ -48,8 +48,8 @@ export function RSC2PAWidget({ className, isComplete = false, status = 'valid', 
             case 'error':
                 return {
                     label: 'C2PA_EXTRACTION_FAILURE',
-                    color: 'text-gray-400',
-                    dot: 'bg-gray-400',
+                    color: 'text-[var(--rs-text-tertiary)]',
+                    dot: 'bg-[var(--rs-text-tertiary)]',
                     desc: 'Corrupt Payload • Forensic Analysis Blocked',
                 };
             default:

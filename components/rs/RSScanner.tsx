@@ -71,12 +71,18 @@ export function RSScanner({
             <div className={cn("absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-[var(--rs-text-primary)]/40 transition-colors", isDragActive && "border-[var(--rs-signal)] opacity-100")} />
             <div className={cn("absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-[var(--rs-text-primary)]/40 transition-colors", isDragActive && "border-[var(--rs-signal)] opacity-100")} />
 
-            {/* SCANNING LASER EFFECT */}
+            {/* SCANNING LASER EFFECT — Dual Axis */}
             {isScanning && (
-                <div className="absolute inset-x-0 h-[2px] bg-[var(--rs-signal)] shadow-[0_0_15px_2px_var(--rs-signal)] z-20 animate-scan">
-                    {/* Trailing gradient */}
-                    <div className="absolute bottom-full left-0 right-0 h-12 bg-gradient-to-t from-[var(--rs-signal)]/20 to-transparent" />
-                </div>
+                <>
+                    {/* Vertical scan line (top → bottom) */}
+                    <div className="absolute inset-x-0 h-[2px] bg-[var(--rs-signal)] shadow-[0_0_15px_2px_var(--rs-signal)] z-20 animate-scan">
+                        <div className="absolute bottom-full left-0 right-0 h-12 bg-gradient-to-t from-[var(--rs-signal)]/20 to-transparent" />
+                    </div>
+                    {/* Horizontal scan line (left → right, offset timing) */}
+                    <div className="absolute inset-y-0 w-[2px] bg-[var(--rs-signal)]/70 shadow-[0_0_12px_2px_var(--rs-signal)] z-20 animate-scan-h">
+                        <div className="absolute right-full top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--rs-signal)]/15 to-transparent" />
+                    </div>
+                </>
             )}
 
             {/* Status Overlay */}

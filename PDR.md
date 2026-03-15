@@ -1,6 +1,6 @@
-# Product Definition Record (PDR) — AI Risk Shield
+# Product Definition Record (PDR) — AI Content Risk Score
 
-> **Purpose:** This document defines what AI Risk Shield IS and IS NOT. It is the source of truth for product decisions, feature scoping, and go/no-go calls. Every code change, design choice, and marketing claim must be consistent with this document.
+> **Purpose:** This document defines what AI Content Risk Score IS and IS NOT. It is the source of truth for product decisions, feature scoping, and go/no-go calls. Every code change, design choice, and marketing claim must be consistent with this document.
 
 > **Last Updated:** February 16, 2026
 
@@ -8,7 +8,7 @@
 
 ## 1. What This Product Is
 
-**AI Risk Shield is a forensic validation platform that turns AI content risk from a scary unknown into a quantified, documented decision.**
+**AI Content Risk Score is a forensic validation platform that turns AI content risk from a scary unknown into a quantified, documented decision.**
 
 It answers one question: **"Is this AI-generated asset safe to publish?"**
 
@@ -18,7 +18,7 @@ It serves one moment: **The gap between "we made this with AI" and "we published
 
 ### The Core Promise
 
-When a marketing manager sees a headline about AI copyright lawsuits, when a designer's client asks "is this safe?", when legal blocks AI use — AI Risk Shield gives them:
+When a marketing manager sees a headline about AI copyright lawsuits, when a designer's client asks "is this safe?", when legal blocks AI use — AI Content Risk Score gives them:
 
 1. **A number** (0-100 composite risk score) — defensible, quantified, instant
 2. **A verdict** (safe / caution / review / high / critical) — actionable, not ambiguous
@@ -31,7 +31,7 @@ All delivered in under 20 seconds through an interface that looks like lab equip
 
 The report is the gateway. The platform is the product.
 
-AI Risk Shield isn't "upload → get PDF → leave." It's **the place where AI content decisions live:**
+AI Content Risk Score isn't "upload → get PDF → leave." It's **the place where AI content decisions live:**
 
 - The marketing manager returns before every campaign to validate new assets
 - Legal/compliance logs in to review flagged scans and make go/no-go calls
@@ -41,7 +41,7 @@ AI Risk Shield isn't "upload → get PDF → leave." It's **the place where AI c
 
 The sample report hooks them. The full report makes them look good in front of their boss. The **platform** — the dashboard, the archive, the accumulated evidence — is what makes this indispensable.
 
-**The bigger picture:** Companies using AI content under hyperscaler agreements (Google, Microsoft, Adobe) need to prove compliance with terms. Insurance companies need evidence of due diligence for indemnity. Compliance platforms like Credo need data feeds. AI Risk Shield generates the defensible evidence that satisfies all of these — and having it centralized in one platform (not scattered PDFs on a desktop) is what makes it enterprise-grade and audit-ready.
+**The bigger picture:** Companies using AI content under hyperscaler agreements (Google, Microsoft, Adobe) need to prove compliance with terms. Insurance companies need evidence of due diligence for indemnity. Compliance platforms like Credo need data feeds. AI Content Risk Score generates the defensible evidence that satisfies all of these — and having it centralized in one platform (not scattered PDFs on a desktop) is what makes it enterprise-grade and audit-ready.
 
 Future: hosted report galleries (think Frame.io for compliance), DAM integrations, enterprise storage connectors. The archive becomes the compliance layer for AI content workflows.
 

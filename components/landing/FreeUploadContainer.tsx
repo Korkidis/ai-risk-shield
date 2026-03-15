@@ -7,6 +7,7 @@ import { RSScanner } from '../rs/RSScanner'
 import { RSPanel } from '../rs/RSPanel'
 import { RSButton } from '../rs/RSButton'
 import { cn } from '@/lib/utils'
+import { AlertTriangle } from 'lucide-react'
 
 type Props = {
   onUploadStart: () => void
@@ -22,6 +23,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   const [statusMessage, setStatusMessage] = useState("Initializing forensic engine...")
   const [scansRemaining, setScansRemaining] = useState(3)
   const [limit, setLimit] = useState(3)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   // Sprint 10.1: Email capture gate removed — handled by Scans Workspace
 
@@ -51,9 +53,10 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
   }, [previewUrl])
 
   const handleInitiateScan = async (file: File) => {
+    setUploadError(null)
     // Client-side video gate: anonymous users cannot upload video
     if (file.type.startsWith('video/')) {
-      alert('Video scanning requires a paid plan.\n\nSign up for PRO to unlock video analysis, bulk scanning, and full forensic reports.')
+      setUploadError('Video analysis requires a PRO plan or higher. Sign up to unlock video scanning, bulk analysis, and full forensic reports.')
       return
     }
 
@@ -117,7 +120,7 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
       else if (errMsg.includes('Video analysis requires')) errorMessage = 'Video scanning requires a paid plan.'
       else if (errMsg.includes('Invalid file type')) errorMessage = 'Invalid format. Use JPG, PNG, or WebP.'
 
-      alert(`${errorMessage}\n\nTechnical Details: ${errMsg}`)
+      setUploadError(errorMessage)
       setIsProcessing(false)
       setCurrentFile(null)
     }
@@ -220,8 +223,19 @@ export function FreeUploadContainer({ onUploadStart, onUploadComplete }: Props) 
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
               }
             >
-              Run Free Heuristic Scan
+              Scan Your Image Free
             </RSButton>
+          </div>
+        )}
+
+        {/* Error Banner (replaces alert() popups) */}
+        {uploadError && (
+          <div className="mt-4 flex items-start gap-3 p-4 bg-[var(--rs-signal)]/10 border border-[var(--rs-signal)]/30 rounded-[var(--rs-radius-element)]">
+            <AlertTriangle className="w-4 h-4 text-[var(--rs-signal)] shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-xs font-bold text-[var(--rs-text-primary)] mb-1">{uploadError}</p>
+              <button onClick={() => setUploadError(null)} className="text-[10px] font-mono text-[var(--rs-signal)] hover:underline uppercase tracking-wider">Dismiss</button>
+            </div>
           </div>
         )}
 

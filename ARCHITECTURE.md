@@ -1,7 +1,7 @@
 # System Architecture
 
 ## Overview
-AI Risk Shield is a high-security, forensic analysis platform built on a serverless architecture. It leverages Next.js for the frontend, Supabase for the backend, and Google Gemini for multimodal AI analysis.
+AI Content Risk Score is a high-security, forensic analysis platform built on a serverless architecture. It leverages Next.js for the frontend, Supabase for the backend, and Google Gemini for multimodal AI analysis.
 
 ## Core Stack
 *   **Frontend Check**: `Next.js 16` (App Router), `Tailwind CSS`, `Framer Motion` (Physics).

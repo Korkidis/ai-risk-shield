@@ -1,4 +1,4 @@
-# AI Risk Shield - North Star Document
+# AI Content Risk Score - North Star Document
 **Version:** 1.1 | **Last Updated:** 2026-02-11 | **Status:** Active Development
 
 ## HOW TO USE THIS DOCUMENT
@@ -39,7 +39,7 @@ This is the single source of truth for product vision, user needs, and implement
 - **Canonical Scoring:** All UI and reports must use the shared scoring module (`lib/risk/scoring.ts`) and tiers (`lib/risk/tiers.ts`).
 - **Pending Verification:** Account creation via magic link is **pending** until verification is complete.
 
-# Jobs to Be Done - AI Risk Shield (Updated with Current Solutions)
+# Jobs to Be Done - AI Content Risk Score (Updated with Current Solutions)
 
 ---
 
@@ -278,7 +278,7 @@ This is the single source of truth for product vision, user needs, and implement
 
 ### **6. "White-label for client delivery" → ENTERPRISE FUTURE (Month 9+)**
 
-**Current state:** Reports show "AI Risk Shield" branding
+**Current state:** Reports show "AI Content Risk Score" branding
 **Future:** Agency+ and Enterprise plans get custom branding
 **Why later:** Need 2+ enterprise customers before this is ROI-positive
 

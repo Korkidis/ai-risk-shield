@@ -22,7 +22,7 @@ export function RSSectionHeader({
             )}
             {...props}
         >
-            <span className="font-mono text-xs text-[#9A9691]">{sectionNumber}</span>
+            <span className="font-mono text-xs text-[var(--rs-gray-400)]">{sectionNumber}</span>
             <h2 className="text-2xl font-black tracking-tight uppercase">{title}</h2>
             {/* Divider line intentionally removed per user request */}
         </div>

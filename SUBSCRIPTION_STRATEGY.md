@@ -71,7 +71,7 @@ PRO overage is deliberately **punishing** ($2.50/scan = 5x base cost) to drive u
 | Feature | Description |
 | :--- | :--- |
 | **Co-Branding** | *"Add your studio's logo to PDF reports. Look professional to clients while we do the forensic work."* |
-| **White-Label** | *"Your brand, your product. AI Risk Shield disappears entirely—resell as your own service."* |
+| **White-Label** | *"Your brand, your product. AI Content Risk Score disappears entirely—resell as your own service."* |
 | **Audit Logs** | Full compliance trail: who scanned what, when, and what actions were taken. Required for SOC 2 / Legal. |
 | **Priority Queue** | **Planned**: Agency scans skip ahead of Free/Pro users during high traffic. Target SLA: <5s image, <15s video. |
 

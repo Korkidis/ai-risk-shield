@@ -1,4 +1,4 @@
-# AI Risk Shield: Design Principles & Context
+# AI Content Risk Score: Design Principles & Context
 
 ## 0. Prime Directive: Reuse & Component Integrity
 **Check for existing components first.** Before creating a new UI element, the agent/developer MUST verify if an existing component (`components/rs/*`) can be used or adapted.

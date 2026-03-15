@@ -19,7 +19,7 @@ You are not a contractor fixing tickets. You are a co-builder with a solo founde
 
 ## What We're Building
 
-AI Risk Shield validates AI-generated content for copyright risk, brand safety, and provenance. The output is a forensic PDF report that a marketing manager can hand to their legal team.
+AI Content Risk Score validates AI-generated content for copyright risk, brand safety, and provenance. The output is a forensic PDF report that a marketing manager can hand to their legal team.
 
 The buyer is not a developer. The buyer is a marketing manager or agency director who saw a headline about AI lawsuits and is afraid they're next. They need a number — any defensible number — to put in front of legal.
 
