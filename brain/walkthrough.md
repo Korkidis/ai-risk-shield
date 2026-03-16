@@ -114,6 +114,7 @@ Following the persona-aware refactor, the pricing and marketing presentation was
 * **`SubscriptionComparison.tsx`**: Updated the homepage pricing comparisons to clearly visualize base commitments vs overages, and added a striking "Value Anchor" callout comparing a $3,500 legal dispute to the $0.98 scan cost.
 * **`PricingCard.tsx`**: Removed the traditional `/mo` price tag from paid plans and replaced it with prominent Base Commitment typography, further spelling out the effective per-scan rate. Now utilizes a transparent `i` info tooltip to gracefully disclose Overage metrics and optional $29 Mitigation details without causing meter anxiety. Mitigations and Brand Profiles are explicitly listed in plan specs.
 * **`TenantPlanBadge.tsx`**: Upgraded the dashboard sidebar usage badge to proactively detect `status.scansUsed >= monthlyScanLimit`. If overage is triggered, it renders a flashing warning with contextual upsell copy (e.g., "Upgrading your base commitment to Team cuts per-scan cost by 50%").
+* **`SubscriptionComparison.tsx` & `lib/plans.ts` Matrix Alignment**: Adjusted core plan constants to align perfectly with the target capacity math (e.g., Team Mitigations now 30, Agency now 100). Fully refactored the Desktop Spec Sheet matrix to dynamically render a 6-column grid displaying all 5 tiers (Free, Pro, Team, Agency, Enterprise) side-by-side. Deprecated the standalone "Scale Operations" footer blocks and fully embedded Agency/Enterprise into the Mobile Pricing Carousel.
 
 ## Dashboard Hook Cleanup Follow-up Debt
 

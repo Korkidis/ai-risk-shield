@@ -35,42 +35,7 @@ export function PricingSection() {
                     <MobilePricingView />
                 </div>
 
-                {/* SCALE OPERATIONS FOOTER */}
-                <div className="mt-16 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <RSPanel className="bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] p-8 group hover:bg-[var(--rs-bg-surface)] hover:border-[var(--rs-signal)] transition-all cursor-pointer" onClick={() => window.location.href = '/pricing?persona=agency'}>
-                        <div className="flex flex-col h-full justify-between">
-                            <div>
-                                <div className="flex items-center gap-3 mb-4">
-                                     <div className="w-8 h-8 rounded bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] flex items-center justify-center text-[var(--rs-text-primary)] group-hover:border-[var(--rs-signal)] transition-colors">
-                                        <span className="rs-type-mono text-[10px] font-bold text-[var(--rs-signal)]">L3</span>
-                                    </div>
-                                    <h3 className="rs-type-section text-lg uppercase text-[var(--rs-text-primary)]">Agencies</h3>
-                                </div>
-                                <p className="rs-type-body text-sm text-[var(--rs-text-secondary)] mb-6">White-label client reports, multi-brand management, and dedicated priority queue processing.</p>
-                            </div>
-                            <div className="flex items-center text-[var(--rs-signal)] text-xs font-bold uppercase tracking-widest gap-2">
-                                Explorer Agency Plan <span className="group-hover:translate-x-1 transition-transform">→</span>
-                            </div>
-                        </div>
-                    </RSPanel>
-
-                    <RSPanel className="bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] p-8 group hover:bg-[var(--rs-bg-surface)] hover:border-[var(--rs-text-primary)] transition-all cursor-pointer" onClick={() => window.location.href = '/pricing?persona=enterprise'}>
-                        <div className="flex flex-col h-full justify-between">
-                            <div>
-                                <div className="flex items-center gap-3 mb-4">
-                                     <div className="w-8 h-8 rounded bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] flex items-center justify-center text-[var(--rs-text-primary)] group-hover:border-[var(--rs-text-primary)] transition-colors">
-                                        <span className="rs-type-mono text-[10px] font-bold">L4</span>
-                                    </div>
-                                    <h3 className="rs-type-section text-lg uppercase text-[var(--rs-text-primary)]">Enterprise</h3>
-                                </div>
-                                <p className="rs-type-body text-sm text-[var(--rs-text-secondary)] mb-6">Unlimited scans, SSO/SAML governance, custom SLAs, and dedicated success engineering.</p>
-                            </div>
-                            <div className="flex items-center text-[var(--rs-text-primary)] text-xs font-bold uppercase tracking-widest gap-2">
-                                Contact Sales <span className="group-hover:translate-x-1 transition-transform">→</span>
-                            </div>
-                        </div>
-                    </RSPanel>
-                </div>
+                {/* SCALE OPERATIONS FOOTER IS NOW DEPRECATED AND MOVED TO SPEC SHEET */}
 
                 {/* THE VALUE ANCHOR */}
                 <div className="mt-16 max-w-3xl mx-auto text-center">
@@ -108,41 +73,48 @@ function DesktopSpecSheet() {
                 className="overflow-hidden border border-[var(--rs-border-primary)] shadow-2xl bg-[var(--rs-bg-well)]/80 backdrop-blur-xl p-0 relative rounded-2xl"
             >
                 {/* High-Tech Header */}
-                <div className="grid grid-cols-4 border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-element)]/80">
-                    <div className="p-8 flex flex-col justify-end">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-2 h-2 rounded-full bg-[var(--rs-signal)] animate-pulse" />
-                            <span className="rs-type-mono text-[9px] text-[var(--rs-text-tertiary)] uppercase tracking-widest">LIVE_FEED</span>
+                <div className="grid grid-cols-6 border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-element)]/80">
+                    <div className="p-4 flex flex-col justify-end">
+                        <div className="flex items-center gap-1 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--rs-signal)] animate-pulse" />
+                            <span className="rs-type-mono text-[8px] text-[var(--rs-text-tertiary)] uppercase tracking-widest">LIVE_FEED</span>
                         </div>
-                        <span className="rs-type-display text-2xl font-black tracking-tighter text-[var(--rs-text-primary)]">CLEARANCE</span>
+                        <span className="rs-type-display text-lg font-black tracking-tighter text-[var(--rs-text-primary)]">CLEARANCE</span>
                     </div>
 
                     <TierHeader title="FREE" code="L0" baseCommitment="$0" effectiveRate="Verification Only" overageRate="-" />
-                    <TierHeader title="PRO" code="L1" baseCommitment="$49 Base Commitment" effectiveRate="$0.98 / scan (50 included)" overageRate="$2.50 / additional scan" recommended />
-                    <TierHeader title="TEAM" code="L2" baseCommitment="$199 Base Commitment" effectiveRate="$0.66 / scan (300 included)" overageRate="$1.00 / additional scan" />
+                    <TierHeader title="PRO" code="L1" baseCommitment="$49" effectiveRate="$0.98 / scan" overageRate="$2.50 / addt'l" recommended />
+                    <TierHeader title="TEAM" code="L2" baseCommitment="$199" effectiveRate="$0.66 / scan" overageRate="$1.00 / addt'l" />
+                    <TierHeader title="AGENCY" code="L3" baseCommitment="$499" effectiveRate="$0.49 / scan" overageRate="$0.60 / addt'l" />
+                    <TierHeader title="ENTERPRISE" code="L4" baseCommitment="Custom" effectiveRate="Volume Scale" overageRate="Custom Terms" />
                 </div>
 
                 {/* Spec Rows High Fidelity */}
                 <div className="divide-y divide-[var(--rs-border-primary)]/50 text-sm">
-                    <SpecRow label="Monthly Capacity" basic="3 Scans" assessment="50 Scans" pro="300 Scans" />
-                    <SpecRow label="Forensic Depth" basic="Verification Only" assessment="Full Legal Reasoning" pro="Custom Brand Rules" highlight />
-                    <SpecRow label="Brand Profiles" basic="0 Brands" assessment="1 Brand" pro="5 Brands" />
-                    <SpecRow label="Included Mitigations" basic="0 Reports" assessment="2 Reports" pro="10 Reports" />
-                    <SpecRow label="Full Report Access" basic={false} assessment={true} pro={true} />
-                    <SpecRow label="History Retention" basic="None" assessment="30 Days" pro="90 Days" />
-                    <SpecRow label="Seats" basic="1 Seat" assessment="1 Seat" pro="5 Seats" />
-                    <SpecRow label="Bulk Upload" basic={false} assessment={false} pro={true} />
+                    <SpecRow label="Monthly scan reports" free="3" pro="50" team="300" agency="1,000" enterprise="Custom" />
+                    <SpecRow label="Included mitigation reports" free="0" pro="5" team="30" agency="100" enterprise="Custom" />
+                    <SpecRow label="Brand policy profiles" free="0" pro="1" team="5" agency="20" enterprise="Custom" />
+                    <SpecRow label="Workspace seats" free="1" pro="1" team="5" agency="15" enterprise="Custom" />
+                    <SpecRow label="Video analysis" free="No" pro="Up to 2 min" team="Up to 5 min" agency="Up to 10 min" enterprise="Custom" />
+                    <SpecRow label="History retention" free="7 days" pro="30 days" team="90 days" agency="365 days" enterprise="Custom" />
+                    <SpecRow label="Bulk upload" free={false} pro={false} team={true} agency={true} enterprise={true} />
+                    <RowWithBrands />
+                    <SpecRow label="InfoSec Audit logs" free={false} pro={false} team={false} agency={true} enterprise={true} />
+                    <SpecRow label="SSO / SAML" free={false} pro={false} team={false} agency={false} enterprise={true} />
+                    <SpecRow label="Support" free="Community" pro="Agent" team="Agent" agency="Agent" enterprise="Dedicated" />
                 </div>
 
                 {/* Footer Action Bar */}
-                <div className="grid grid-cols-4 bg-[var(--rs-bg-element)]/60 backdrop-blur-sm border-t border-[var(--rs-border-primary)]">
-                    <div className="p-4" />
-                    <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth onClick={() => window.location.href='/dashboard'}>GET STARTED</RSButton></div>
-                    <div className="p-4 flex justify-center relative">
+                <div className="grid grid-cols-6 bg-[var(--rs-bg-element)]/60 backdrop-blur-sm border-t border-[var(--rs-border-primary)]">
+                    <div className="p-3" />
+                    <div className="p-3 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth className="text-[10px]" onClick={() => window.location.href='/dashboard'}>START FREE</RSButton></div>
+                    <div className="p-3 flex justify-center relative">
                         <div className="absolute inset-0 bg-[var(--rs-signal)]/5 pointer-events-none" />
-                        <RSButton variant="primary" size="sm" fullWidth className="shadow-lg shadow-[var(--rs-signal)]/20" onClick={() => window.location.href='/pricing?plan=pro'}>SUBSCRIBE PRO</RSButton>
+                        <RSButton variant="primary" size="sm" fullWidth className="text-[10px] shadow-lg shadow-[var(--rs-signal)]/20" onClick={() => window.location.href='/pricing?plan=pro'}>SUBSCRIBE</RSButton>
                     </div>
-                    <div className="p-4 flex justify-center"><RSButton variant="secondary" size="sm" fullWidth onClick={() => window.location.href='/pricing?plan=team'}>SUBSCRIBE TEAM</RSButton></div>
+                    <div className="p-3 flex justify-center"><RSButton variant="secondary" size="sm" fullWidth className="text-[10px]" onClick={() => window.location.href='/pricing?plan=team'}>SUBSCRIBE</RSButton></div>
+                    <div className="p-3 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth className="text-[10px]" onClick={() => window.location.href='/pricing?plan=agency'}>SUBSCRIBE</RSButton></div>
+                    <div className="p-3 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth className="text-[10px]" onClick={() => window.location.href='/pricing?persona=enterprise'}>CONTACT</RSButton></div>
                 </div>
             </RSPanel>
         </div>
@@ -189,10 +161,38 @@ function MobilePricingView() {
             features: [
                 { label: "INCLUDED", val: "300 Scans" },
                 { label: "EFFECTIVE", val: "$0.66 / scan" },
-                { label: "MITIGATIONS", val: "10 Included" },
+                { label: "MITIGATIONS", val: "30 Included" },
                 { label: "BRANDS", val: "5 Profiles" }
             ],
             btn: <RSButton variant="secondary" fullWidth onClick={() => window.location.href='/pricing?plan=team'}>SUBSCRIBE TEAM</RSButton>
+        },
+        {
+            title: "AGENCY",
+            code: "L3",
+            price: "$499",
+            sub: "Base Commitment",
+            desc: "Multi-brand programmatic clearance",
+            features: [
+                { label: "INCLUDED", val: "1,000 Scans" },
+                { label: "EFFECTIVE", val: "$0.49 / scan" },
+                { label: "MITIGATIONS", val: "100 Included" },
+                { label: "BRANDS", val: "20 Profiles" }
+            ],
+            btn: <RSButton variant="ghost" fullWidth onClick={() => window.location.href='/pricing?plan=agency'}>EXPLORE AGENCY</RSButton>
+        },
+        {
+            title: "ENTERPRISE",
+            code: "L4",
+            price: "Custom",
+            sub: "Commitment",
+            desc: "Large enterprise operations",
+            features: [
+                { label: "INCLUDED", val: "Custom Scans" },
+                { label: "MITIGATIONS", val: "Custom Volume" },
+                { label: "BRANDS", val: "Custom Profiles" },
+                { label: "SECURITY", val: "SSO / SAML" }
+            ],
+            btn: <RSButton variant="ghost" fullWidth onClick={() => window.location.href='/pricing?persona=enterprise'}>CONTACT SALES</RSButton>
         }
     ];
 
@@ -247,7 +247,7 @@ function MobilePricingView() {
 function TierHeader({ title, code, baseCommitment, effectiveRate, overageRate, recommended }: { title: string, code: string, baseCommitment: string, effectiveRate: string, overageRate: string, recommended?: boolean }) {
     return (
         <div className={cn(
-            "p-6 flex flex-col items-center justify-between gap-4 relative transition-all duration-300",
+            "p-3 flex flex-col items-center justify-between gap-2 relative transition-all duration-300",
             recommended ? "bg-[var(--rs-bg-surface)] shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-10 scale-[1.02] border-x border-[var(--rs-border-primary)] -mx-[1px]" : "hover:bg-[var(--rs-bg-element)]/40",
         )}>
             {recommended && (
@@ -262,8 +262,8 @@ function TierHeader({ title, code, baseCommitment, effectiveRate, overageRate, r
                 </div>
             </div>
 
-            <div className="flex flex-col items-center gap-0.5 mt-2 w-full text-center">
-                <span className={cn("font-bold tracking-tighter text-[var(--rs-text-primary)]", baseCommitment.includes('Base') ? "text-xl pb-1" : "text-3xl")}>{baseCommitment}</span>
+            <div className="flex flex-col items-center gap-0.5 mt-1 w-full text-center">
+                <span className={cn("font-bold tracking-tighter text-[var(--rs-text-primary)]", baseCommitment.includes('Custom') ? "text-sm pb-1" : "text-xl pb-1")}>{baseCommitment}</span>
                 
                 <div className="flex items-center gap-1.5 group/tooltip cursor-help relative mt-1">
                     <span className={cn("text-xs font-bold", recommended ? "text-[var(--rs-text-primary)]" : "text-[var(--rs-text-secondary)]")}>{effectiveRate}</span>
@@ -289,15 +289,19 @@ type SpecValue = string | boolean
 
 function SpecRow({
     label,
-    basic,
-    assessment,
+    free,
     pro,
+    team,
+    agency,
+    enterprise,
     highlight,
 }: {
     label: string
-    basic: SpecValue
-    assessment: SpecValue
+    free: SpecValue
     pro: SpecValue
+    team: SpecValue
+    agency: SpecValue
+    enterprise: SpecValue
     highlight?: boolean
 }) {
     const renderCell = (value: SpecValue, isRecommended: boolean) => {
@@ -306,7 +310,7 @@ function SpecRow({
         }
         return (
             <span className={cn(
-                "rs-type-mono text-[10px] uppercase",
+                "rs-type-mono text-[9px] uppercase tracking-wide",
                 isRecommended ? "text-[var(--rs-text-primary)] font-bold" : "text-[var(--rs-text-secondary)]",
                 highlight && isRecommended ? "text-[var(--rs-signal)]" : ""
             )}>
@@ -316,21 +320,37 @@ function SpecRow({
     }
 
     return (
-        <div className="grid grid-cols-4 divide-x divide-[var(--rs-border-primary)] hover:bg-[var(--rs-bg-secondary)]/30 transition-colors group">
+        <div className="grid grid-cols-6 divide-x divide-[var(--rs-border-primary)] hover:bg-[var(--rs-bg-secondary)]/30 transition-colors group">
             {/* Label */}
-            <div className="p-4 flex items-center bg-[var(--rs-bg-secondary)]/10">
+            <div className="p-3 flex items-center bg-[var(--rs-bg-secondary)]/10">
                 <span className="rs-type-mono text-[9px] font-bold text-[var(--rs-text-tertiary)] uppercase tracking-wider">{label}</span>
             </div>
 
             {/* Tiers */}
-            <div className="p-4 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors">{renderCell(basic, false)}</div>
-
-            {/* Recommended Column (ASSESSMENT) */}
-            <div className="p-4 flex items-center justify-center bg-[var(--rs-bg-surface)] relative shadow-[inset_0_0_20px_rgba(0,0,0,0.02)] border-x border-[var(--rs-border-primary)] -mx-[1px] z-10">
-                {renderCell(assessment, true)}
+            <div className="p-3 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors text-center">{renderCell(free, false)}</div>
+            <div className="p-3 flex items-center justify-center bg-[var(--rs-bg-surface)] relative shadow-[inset_0_0_20px_rgba(0,0,0,0.02)] border-x border-[var(--rs-border-primary)] -mx-[1px] z-10 text-center">
+                {renderCell(pro, true)}
             </div>
+            <div className="p-3 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors text-center">{renderCell(team, false)}</div>
+            <div className="p-3 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors text-center">{renderCell(agency, false)}</div>
+            <div className="p-3 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors text-center">{renderCell(enterprise, false)}</div>
+        </div>
+    )
+}
 
-            <div className="p-4 flex items-center justify-center group-hover:bg-[var(--rs-bg-surface)] transition-colors">{renderCell(pro, false)}</div>
+function RowWithBrands() {
+    return (
+        <div className="grid grid-cols-6 divide-x divide-[var(--rs-border-primary)] hover:bg-[var(--rs-bg-secondary)]/30 transition-colors group">
+            <div className="p-3 flex items-center bg-[var(--rs-bg-secondary)]/10">
+                <span className="rs-type-mono text-[9px] font-bold text-[var(--rs-text-tertiary)] uppercase tracking-wider">Report Branding</span>
+            </div>
+            <div className="p-3 flex items-center justify-center text-center"><span className="rs-type-mono text-[9px] uppercase tracking-wide text-[var(--rs-text-secondary)]">Platform</span></div>
+            <div className="p-3 flex items-center justify-center bg-[var(--rs-bg-surface)] text-center shadow-[inset_0_0_20px_rgba(0,0,0,0.02)] border-x border-[var(--rs-border-primary)] -mx-[1px] z-10">
+                <span className="rs-type-mono text-[9px] uppercase tracking-wide text-[var(--rs-text-primary)] font-bold">Platform</span>
+            </div>
+            <div className="p-3 flex items-center justify-center text-center"><span className="rs-type-mono text-[9px] uppercase tracking-wide text-[var(--rs-text-secondary)]">Co-branded</span></div>
+            <div className="p-3 flex items-center justify-center text-center"><span className="rs-type-mono text-[9px] uppercase tracking-wide text-[var(--rs-text-secondary)]">White-labeled</span></div>
+            <div className="p-3 flex items-center justify-center text-center"><span className="rs-type-mono text-[9px] uppercase tracking-wide text-[var(--rs-text-secondary)]">Custom</span></div>
         </div>
     )
 }

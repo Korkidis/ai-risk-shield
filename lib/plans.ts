@@ -90,7 +90,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         scanOverageCents: 250, // $2.50 - deliberately punishing
         monthlyReports: 5,
         reportOverageCents: 2900, // $29 — universal overage (PDR §6)
-        monthlyMitigations: 2,
+        monthlyMitigations: 5,
         mitigationOverageCents: 2900, // $29 per mitigation report
         brandProfiles: 1,
         retentionDays: 30,
@@ -120,7 +120,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         scanOverageCents: 100, // $1.00
         monthlyReports: 30,
         reportOverageCents: 2900, // $29 — universal overage (PDR §6)
-        monthlyMitigations: 10,
+        monthlyMitigations: 30,
         mitigationOverageCents: 2900, // $29 per mitigation report
         brandProfiles: 5,
         retentionDays: 90,
@@ -150,7 +150,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         scanOverageCents: 60, // $0.60 - volume discount
         monthlyReports: 100,
         reportOverageCents: 2900, // $29 — universal overage (PDR §6)
-        monthlyMitigations: 50,
+        monthlyMitigations: 100,
         mitigationOverageCents: 2900, // $29 per mitigation report
         brandProfiles: 20,
         retentionDays: 365,
