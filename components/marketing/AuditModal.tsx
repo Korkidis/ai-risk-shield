@@ -3,7 +3,6 @@
 
 import { Check, X, ShieldAlert } from 'lucide-react'
 import { MitigationPurchaseButton } from '@/components/billing/MitigationPurchaseButton'
-import { UpgradeButton } from '@/components/billing/UpgradeButton'
 import { RSPanel } from '@/components/rs/RSPanel'
 
 interface AuditModalProps {
@@ -77,22 +76,22 @@ export function AuditModal({ isOpen, onClose, scanId, compositeScore, findingCou
                     {/* Content Grid */}
                     <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[var(--rs-border-primary)]">
 
-                        {/* Option 1: One-Time Mitigation Report */}
-                        <div className="p-8 bg-[var(--rs-bg-surface)]">
-                            <div className="flex flex-col h-full justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <ShieldAlert className="w-5 h-5 text-[var(--rs-text-primary)]" />
-                                        <h3 className="text-xl font-bold text-[var(--rs-text-primary)] uppercase">
+                        {/* One-Time Mitigation Report */}
+                        <div className="p-8 bg-[var(--rs-bg-surface)] col-span-2">
+                            <div className="flex flex-col h-full justify-between items-center text-center max-w-2xl mx-auto">
+                                <div className="w-full">
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <ShieldAlert className="w-6 h-6 text-[var(--rs-text-primary)]" />
+                                        <h3 className="text-2xl font-bold text-[var(--rs-text-primary)] uppercase tracking-tight">
                                             Mitigation Report
                                         </h3>
                                     </div>
-                                    <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-4xl font-black text-[var(--rs-text-primary)]">$29</span>
-                                        <span className="text-[var(--rs-text-tertiary)] uppercase font-mono text-xs">/ One-time</span>
+                                    <div className="flex items-baseline justify-center gap-1 mb-8">
+                                        <span className="text-5xl font-black text-[var(--rs-text-primary)]">$29</span>
+                                        <span className="text-[var(--rs-text-tertiary)] uppercase font-mono text-sm">/ One-time</span>
                                     </div>
 
-                                    <ul className="space-y-3 mb-8">
+                                    <ul className="space-y-4 mb-10 text-left max-w-sm mx-auto">
                                         {[
                                             "Step-by-Step Remediation Plan",
                                             "Bias & Fairness Audit",
@@ -100,60 +99,18 @@ export function AuditModal({ isOpen, onClose, scanId, compositeScore, findingCou
                                             "RAI Considerations & Legal Guidance",
                                             "Downloadable PDF Report"
                                         ].map((item, i) => (
-                                            <li key={i} className="flex items-start gap-3 text-sm text-[var(--rs-text-secondary)]">
-                                                <Check className="w-4 h-4 text-[var(--rs-text-primary)] mt-0.5 shrink-0" />
+                                            <li key={i} className="flex items-start gap-3 text-base text-[var(--rs-text-secondary)]">
+                                                <Check className="w-5 h-5 text-[var(--rs-text-primary)] mt-0.5 shrink-0" />
                                                 <span>{item}</span>
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
 
-                                <MitigationPurchaseButton scanId={scanId} />
-                                <p className="text-[10px] text-[var(--rs-text-tertiary)] mt-3 leading-relaxed text-center">
-                                    Deep analysis of this specific scan. Includes bias audit, compliance roadmap, and remediation priorities. No subscription required.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Option 2: Pro Membership */}
-                        <div className="p-8 bg-[var(--rs-bg-element)] relative overflow-hidden">
-                            {/* "Best Value" Badge */}
-                            <div className="absolute top-0 right-0 bg-[var(--rs-signal)] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-lg">
-                                Recommended
-                            </div>
-
-                            <div className="flex flex-col h-full justify-between relative z-10">
-                                <div>
-                                    <h3 className="text-xl font-bold text-[var(--rs-text-primary)] mb-2 uppercase">
-                                        Pro Membership
-                                    </h3>
-                                    <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-4xl font-black text-[var(--rs-text-primary)]">$49</span>
-                                        <span className="text-[var(--rs-text-tertiary)] uppercase font-mono text-xs">/ Month</span>
-                                    </div>
-
-                                    <ul className="space-y-3 mb-8">
-                                        {[
-                                            "2 Mitigation Reports / Month Included",
-                                            "50 Scans / Month",
-                                            "Brand Profile Support",
-                                            "30-Day History Retention",
-                                            "Video Analysis Support"
-                                        ].map((item, i) => (
-                                            <li key={i} className="flex items-start gap-3 text-sm text-[var(--rs-text-secondary)]">
-                                                <div className="rounded-full bg-[var(--rs-text-primary)] p-0.5 mt-0.5">
-                                                    <Check className="w-3 h-3 text-[var(--rs-bg-root)] shrink-0" />
-                                                </div>
-                                                <span className="font-medium text-[var(--rs-text-primary)]">{item}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <UpgradeButton scanId={scanId} />
-                                    <p className="text-center text-[10px] text-[var(--rs-text-tertiary)] leading-relaxed">
-                                        Monthly subscription. Cancel anytime. Mitigation credits refresh monthly.
+                                <div className="w-full max-w-sm">
+                                    <MitigationPurchaseButton scanId={scanId} />
+                                    <p className="text-xs text-[var(--rs-text-tertiary)] mt-4 leading-relaxed">
+                                        Deep analysis of this specific scan. Includes bias audit, compliance roadmap, and remediation priorities. No subscription required.
                                     </p>
                                 </div>
                             </div>

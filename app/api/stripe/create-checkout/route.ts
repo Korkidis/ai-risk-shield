@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         if (!user && (!customerEmail || customerEmail.trim().length === 0)) {
             return NextResponse.json(
                 { error: 'Email required before checkout. Please provide your email first.' },
-                { status: 400 }
+                { status: 401 }
             )
         }
 
@@ -182,6 +182,7 @@ export async function POST(request: NextRequest) {
                 // Anonymous subscription? Force login on success
                 successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login?magic_link_sent=true`
             }
+            cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true&plan=${planId}&interval=${interval}`
         } else {
             return NextResponse.json({ error: 'Invalid purchase parameters' }, { status: 400 })
         }

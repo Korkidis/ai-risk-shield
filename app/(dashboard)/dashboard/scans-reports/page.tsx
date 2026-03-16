@@ -756,7 +756,7 @@ function ScansReportsContent() {
                             {billingStatus.planId === 'free' && (
                                 <RSButton
                                     variant="ghost"
-                                    onClick={() => setShowAuditModal(true)}
+                                    onClick={() => router.push('/pricing?source=dashboard_banner&plan=pro')}
                                     className="text-[var(--rs-signal)] border-[var(--rs-signal)]/30 hover:bg-[var(--rs-signal)]/10 text-xs uppercase tracking-wider"
                                 >
                                     Upgrade_Plan
@@ -925,7 +925,6 @@ function ScansReportsContent() {
                             onDelete={handleDrawerDelete}
                             onNotesUpdate={(_scanId, notes) => handleSaveNotes(notes)}
                             onDownload={handleDownload}
-                            onUnlock={() => setShowAuditModal(true)}
                             notesBuffer={notesBuffer}
                             onNotesChange={setNotesBuffer}
                             isUpdatingNotes={updating}

@@ -55,7 +55,7 @@ export function AnonymousScanNavbar({ className }: { className?: string }) {
                     Log In
                 </Link>
                 <Link
-                    href="/signup"
+                    href="/register"
                     className="text-xs font-bold text-[var(--rs-text-primary)] bg-[var(--rs-bg-element)] border border-[var(--rs-border-primary)] hover:border-[var(--rs-text-primary)] px-4 py-2 rounded-[4px] uppercase tracking-wider transition-all shadow-sm"
                 >
                     Sign Up Free

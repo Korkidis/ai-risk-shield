@@ -316,7 +316,7 @@ export default function DashboardPage() {
                     if (data.url) window.location.href = data.url;
                 })
                 .catch(() => {
-                    setShowAuditModal(true); // Fallback: show modal if checkout fails
+                    window.location.href = '/pricing?plan=pro&error=checkout_failed'; // Fallback: route to plans if checkout fails
                 });
         } else if (checkoutParam === 'report') {
             setShowAuditModal(true);
@@ -374,7 +374,7 @@ export default function DashboardPage() {
         if (isVideoFile && userPlan === 'free') {
             setScanStatus('error')
             setErrorMessage('Video analysis requires a PRO plan. Upgrade to unlock video scanning.')
-            setShowAuditModal(true)
+            window.location.href = '/pricing?source=dashboard_video_upload&plan=pro'
             return
         }
 
@@ -846,8 +846,8 @@ export default function DashboardPage() {
                                 reportButtonLabel="Open Scan Results"
                                 onOpenReport={handleOpenScanResults}
                                 onUpgradeClick={() => {
-                                    trackEvent('upgrade_modal_opened', { scanId: currentScanId, source: 'dashboard_findings' })
-                                    setShowAuditModal(true)
+                                    trackEvent('upgrade_clicked', { scanId: currentScanId, source: 'dashboard_findings' })
+                                    window.location.href = `/pricing?source=dashboard_findings&plan=pro&scanId=${currentScanId}`
                                 }}
                                 className="w-full"
                             />
@@ -880,7 +880,6 @@ export default function DashboardPage() {
                     onDelete={handleDelete}
                     onNotesUpdate={handleSaveNotes}
                     onDownload={handleDownload}
-                    onUnlock={() => setShowAuditModal(true)}
                     notesBuffer={notesBuffer}
                     onNotesChange={setNotesBuffer}
                     isUpdatingNotes={isUpdatingNotes}

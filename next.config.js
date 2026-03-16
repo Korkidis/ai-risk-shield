@@ -9,6 +9,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/signup',
+        destination: '/register',
+        permanent: false, // Temporary until all legacy links are cleaned up
+      },
+    ]
+  },
   async headers() {
     return [
       {

@@ -56,9 +56,12 @@ function RegisterContent() {
     const [state, formAction] = useActionState(signUp, initialState);
 
     // Compute post-signup redirect based on pricing intent
-    const nextUrl = plan === 'pro' ? '/dashboard?checkout=pro&interval=monthly'
-        : plan === 'report' ? '/dashboard?checkout=report'
-        : null;
+    let nextUrl = null;
+    if (plan === 'report' || searchParams.get('checkout') === 'report') {
+        nextUrl = '/dashboard?checkout=report';
+    } else if (plan || searchParams.get('persona')) {
+        nextUrl = `/pricing?${searchParams.toString()}`;
+    }
 
     return (
         <div className="flex flex-col gap-6 w-full">
@@ -145,7 +148,7 @@ function RegisterContent() {
                 </div>
 
                 <div className="flex items-center justify-center pt-4 border-t border-[var(--rs-border-primary)] border-dashed">
-                    <Link href={plan ? `/login?plan=${plan}` : '/login'} className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-2">
+                    <Link href={`/login${searchParams.toString() ? `?${searchParams.toString()}` : ''}`} className="text-[10px] font-mono uppercase tracking-widest text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors flex items-center gap-2">
                         <ArrowLeft className="w-3 h-3" />
                         Return to Login
                     </Link>

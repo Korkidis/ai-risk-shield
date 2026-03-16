@@ -75,3 +75,35 @@ UnifiedScanDrawer, ScanCard extraction, trust claims, detail fetch, lint clean.
 - Added migration: `supabase/migrations/20260302_atomic_quota_and_anon_ip_hash.sql`
   - Adds `scans.ip_hash`
   - Adds `increment_tenant_scan_usage(uuid, integer)` SECURITY DEFINER function
+
+# Refactoring Pricing & Upgrade Flow Walkthrough
+
+## Accomplishments
+* **Persona-Aware Plans Page:** Rebuilt `/pricing` into a dynamic Plans page with a persona switcher (Individuals & Teams vs. Scale Operations) and a billing interval toggle.
+* **Component Redesign:** Upgraded `PricingCard` to dynamically render rich benefits, FAQs, and appropriate Calls To Action using decoupled marketing logic.
+* **Marketing Data Layer:** Abstracted marketing content away from the `lib/plans.ts` source of truth by introducing `lib/marketing/plans-content.ts` and an intent parser in `lib/marketing/plans-intent.ts`.
+* **Normalized Auth Intent:** Upgraded `/login` and `/register` flows to carry URL parameters (`plan`, `interval`, `persona`, `source`) through the authentication process. Users correctly land on their intended target upon successful login/registration. Deleted redundant `/signup` route.
+* **Modal Refactoring:** Replaced modal-based subscription upgrade triggers in `AuditModal` and Dashboard elements (e.g. `UnifiedScanDrawer`) with route-based intent links directly to the new Plans page. Verified the distinct one-time mitigation purchase modal functions properly.
+## Bug Fixes (Post-Refactor)
+* **Unauthenticated Checkout**: Updated `create-checkout/route.ts` to return `401 Unauthorized` instead of `400 Bad Request` when anonymous users lack an email, allowing `pricing/page.tsx` to correctly catch the error and redirect to `/register` with preserved intents.
+* **Modal Re-Routing**: Replaced deprecated `setShowAuditModal` triggers in the dashboard (video upload paywall, findings upsell, quota exhaustion banner) with route-based deep links to `/pricing?source=...&plan=...`.
+* **Signup Normalization**: Replaced legacy `/signup` links in `AnonymousScanNavbar.tsx`, `robots.ts`, and `middleware.ts` with `/register`. Added a `next.config.js` compatibility redirect for `/signup` to avoid breaking existing external or missed internal links.
+* **Homepage Pricing Alignment**: Updated Desktop and Mobile specs in `SubscriptionComparison.tsx` to reflect actual current plans (Free, Pro, Team) and wired CTAs to `/pricing?plan=...` intent routes instead of dead-ends.
+* **Linting**: Fixed the `prefer-const` lint error in `plans-intent.ts`.
+
+## Testing & Validation
+1. **Code Consistency:** Ran `npm run type-check` and resolved TypeScript errors stemming from the removal of deprecated modal functionality. The build passes all type checks perfectly.
+2. **Auth Routing:** Verified that navigating to `/register` or `/login` with target parameters correctly configures the internal `nextUrl` for the post-authentication webhook redirect.
+3. **Analytics Events:** Ensured `trackEvent` fires at strategic points across client components (page view, plan selection, enterprise inquiry).
+4. **Checkout Edge Cases:** Confirmed that the `/api/stripe/create-checkout` Stripe endpoint preserves state parameters and attaches them to `cancelUrl`, returning users to the exact persona/plan state if they cancel a transaction.
+
+## QA Matrix (Pricing & Upgrade Flow)
+| Scenario | Expected Route | Expected State | Validation |
+| :--- | :--- | :--- | :--- |
+| **Logged-out Subscribe** | `/pricing` -> `/register` | Preserved intent (`?plan=pro&interval=monthly`) | **PASS** (401 triggers redirect correctly) |
+| **Logged-in Subscribe** | `/pricing` -> Checkout | Initiates Stripe session for selected plan | **PASS** |
+| **Quota Banner Upgrade** | `/dashboard/scans-reports` -> `/pricing` | `?source=dashboard_banner&plan=pro` | **PASS** (AuditModal trigger removed) |
+| **Video Upload Upgrade** | `/dashboard` -> `/pricing` | `?source=dashboard_video_upload&plan=pro` | **PASS** (AuditModal trigger removed) |
+| **Findings Page Upgrade** | `/dashboard?scan=...` -> `/pricing` | `?source=dashboard_findings&plan=pro&scanId=...` | **PASS** (AuditModal trigger removed) |
+| **Scan-Specific Remediation** | `/dashboard?scan=...` -> Modal | Opens Mitigation Purchase modal (One-time $29) | **PASS** (Mitigation intent preserved) |
+| **Legacy /signup Redirect** | `/signup?plan=pro` -> `/register` | `?plan=pro` (307 redirect preserves query) | **PASS** (Handled in `next.config.js`) |

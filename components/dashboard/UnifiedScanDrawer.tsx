@@ -44,7 +44,6 @@ export interface UnifiedScanDrawerProps {
     onDelete: (scanId: string) => void
     onNotesUpdate: (scanId: string, notes: string) => void
     onDownload: (scan: ScanWithRelations) => void
-    onUnlock: () => void
     notesBuffer: string
     onNotesChange: (value: string) => void
     isUpdatingNotes: boolean
@@ -129,7 +128,6 @@ export function UnifiedScanDrawer({
     onDelete,
     onNotesUpdate,
     onDownload,
-    onUnlock,
     notesBuffer,
     onNotesChange,
     isUpdatingNotes,
@@ -325,7 +323,7 @@ export function UnifiedScanDrawer({
                                 <RSButton
                                     variant="primary"
                                     className="mx-auto text-[9px] uppercase tracking-widest font-black"
-                                    onClick={onUnlock}
+                                    onClick={() => window.location.href = `/pricing?source=scan_drawer_unlock&plan=pro&scanId=${scan.id}`}
                                 >
                                     Unlock_Full_Report
                                 </RSButton>

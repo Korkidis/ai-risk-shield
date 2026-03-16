@@ -35,19 +35,40 @@ export function PricingSection() {
                     <MobilePricingView />
                 </div>
 
-                {/* ENTERPRISE FOOTER */}
-                <div className="mt-12 max-w-4xl mx-auto">
-                    <RSPanel className="bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-6">
-                        <div className="flex items-center gap-4 text-center md:text-left">
-                            <div className="hidden md:flex w-10 h-10 rounded bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] items-center justify-center text-[var(--rs-text-primary)]">
-                                <span className="rs-type-mono text-xs font-bold">L4</span>
-                            </div>
+                {/* SCALE OPERATIONS FOOTER */}
+                <div className="mt-16 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <RSPanel className="bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] p-8 group hover:bg-[var(--rs-bg-surface)] hover:border-[var(--rs-signal)] transition-all cursor-pointer" onClick={() => window.location.href = '/pricing?persona=agency'}>
+                        <div className="flex flex-col h-full justify-between">
                             <div>
-                                <h3 className="rs-type-section text-sm uppercase text-[var(--rs-text-primary)] mb-1">Enterprise / Governance</h3>
-                                <p className="rs-type-body text-xs text-[var(--rs-text-secondary)] max-w-md">Unlimited scans, custom SLAs, SOC2 audit support, and private instance.</p>
+                                <div className="flex items-center gap-3 mb-4">
+                                     <div className="w-8 h-8 rounded bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] flex items-center justify-center text-[var(--rs-text-primary)] group-hover:border-[var(--rs-signal)] transition-colors">
+                                        <span className="rs-type-mono text-[10px] font-bold text-[var(--rs-signal)]">L3</span>
+                                    </div>
+                                    <h3 className="rs-type-section text-lg uppercase text-[var(--rs-text-primary)]">Agencies</h3>
+                                </div>
+                                <p className="rs-type-body text-sm text-[var(--rs-text-secondary)] mb-6">White-label client reports, multi-brand management, and dedicated priority queue processing.</p>
+                            </div>
+                            <div className="flex items-center text-[var(--rs-signal)] text-xs font-bold uppercase tracking-widest gap-2">
+                                Explorer Agency Plan <span className="group-hover:translate-x-1 transition-transform">→</span>
                             </div>
                         </div>
-                        <RSButton variant="ghost" size="sm" className="border border-[var(--rs-border-primary)] text-xs tracking-widest whitespace-nowrap">CONTACT LEGAL SALES</RSButton>
+                    </RSPanel>
+
+                    <RSPanel className="bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] p-8 group hover:bg-[var(--rs-bg-surface)] hover:border-[var(--rs-text-primary)] transition-all cursor-pointer" onClick={() => window.location.href = '/pricing?persona=enterprise'}>
+                        <div className="flex flex-col h-full justify-between">
+                            <div>
+                                <div className="flex items-center gap-3 mb-4">
+                                     <div className="w-8 h-8 rounded bg-[var(--rs-bg-surface)] border border-[var(--rs-border-primary)] flex items-center justify-center text-[var(--rs-text-primary)] group-hover:border-[var(--rs-text-primary)] transition-colors">
+                                        <span className="rs-type-mono text-[10px] font-bold">L4</span>
+                                    </div>
+                                    <h3 className="rs-type-section text-lg uppercase text-[var(--rs-text-primary)]">Enterprise</h3>
+                                </div>
+                                <p className="rs-type-body text-sm text-[var(--rs-text-secondary)] mb-6">Unlimited scans, SSO/SAML governance, custom SLAs, and dedicated success engineering.</p>
+                            </div>
+                            <div className="flex items-center text-[var(--rs-text-primary)] text-xs font-bold uppercase tracking-widest gap-2">
+                                Contact Sales <span className="group-hover:translate-x-1 transition-transform">→</span>
+                            </div>
+                        </div>
                     </RSPanel>
                 </div>
             </div>
@@ -76,29 +97,30 @@ function DesktopSpecSheet() {
                         <span className="rs-type-display text-2xl font-black tracking-tighter text-[var(--rs-text-primary)]">CLEARANCE</span>
                     </div>
 
-                    <TierHeader title="BASIC" code="L0" price="$0" description="Single Check" />
-                    <TierHeader title="ASSESSMENT" code="L1" price="$29" description="Deep Report" recommended />
-                    <TierHeader title="PROFESSIONAL" code="L2" price="$49" description="Volume Access" />
+                    <TierHeader title="FREE" code="L0" price="$0" description="Verification Only" />
+                    <TierHeader title="PRO" code="L1" price="$49" description="Individual Teams" recommended />
+                    <TierHeader title="TEAM" code="L2" price="$99" description="Small Volume" />
                 </div>
 
                 {/* Spec Rows High Fidelity */}
                 <div className="divide-y divide-[var(--rs-border-primary)]/50 text-sm">
-                    <SpecRow label="Daily Capacity" basic="3 Scans / Month" assessment="Single Deep Scan" pro="Unlimited" />
+                    <SpecRow label="Daily Capacity" basic="3 Scans / Month" assessment="50 / Month" pro="200 / Month" />
                     <SpecRow label="Forensic Depth" basic="Verification Only" assessment="Full Legal Reasoning" pro="Custom Brand Rules" highlight />
-                    <SpecRow label="Mitigation Strategy" basic={false} assessment={true} pro={true} />
-                    <SpecRow label="Regeneration Prompts" basic={false} assessment={true} pro={true} />
-                    <SpecRow label="History Retention" basic="None" assessment="30 Days" pro="Unlimited" />
+                    <SpecRow label="Full Report Access" basic={false} assessment={true} pro={true} />
+                    <SpecRow label="History Retention" basic="None" assessment="30 Days" pro="90 Days" />
+                    <SpecRow label="Seats" basic="1 Seat" assessment="1 Seat" pro="5 Seats" />
+                    <SpecRow label="Bulk Upload" basic={false} assessment={false} pro={true} />
                 </div>
 
                 {/* Footer Action Bar */}
                 <div className="grid grid-cols-4 bg-[var(--rs-bg-element)]/60 backdrop-blur-sm border-t border-[var(--rs-border-primary)]">
                     <div className="p-4" />
-                    <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth>INITIALIZE</RSButton></div>
+                    <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth onClick={() => window.location.href='/dashboard'}>GET STARTED</RSButton></div>
                     <div className="p-4 flex justify-center relative">
                         <div className="absolute inset-0 bg-[var(--rs-signal)]/5 pointer-events-none" />
-                        <RSButton variant="primary" size="sm" fullWidth className="shadow-lg shadow-[var(--rs-signal)]/20">ACCESS REPORT</RSButton>
+                        <RSButton variant="primary" size="sm" fullWidth className="shadow-lg shadow-[var(--rs-signal)]/20" onClick={() => window.location.href='/pricing?plan=pro'}>SUBSCRIBE PRO</RSButton>
                     </div>
-                    <div className="p-4 flex justify-center"><RSButton variant="secondary" size="sm" fullWidth>SUBSCRIBE</RSButton></div>
+                    <div className="p-4 flex justify-center"><RSButton variant="secondary" size="sm" fullWidth onClick={() => window.location.href='/pricing?plan=team'}>SUBSCRIBE TEAM</RSButton></div>
                 </div>
             </RSPanel>
         </div>
@@ -110,44 +132,44 @@ function DesktopSpecSheet() {
 function MobilePricingView() {
     const tiers = [
         {
-            title: "BASIC",
-            code: "L0-PUBLIC",
+            title: "FREE",
+            code: "L0",
             price: "$0",
-            desc: "Safety Assessment",
+            desc: "Verification Only",
             features: [
                 { label: "CAPACITY", val: "3 / Month" },
                 { label: "DEPTH", val: "Verification" },
-                { label: "REPORT", val: "Sample Only" },
+                { label: "SEATS", val: "1 Seat" },
             ],
-            btn: <RSButton variant="ghost" fullWidth>INITIALIZE</RSButton>
+            btn: <RSButton variant="ghost" fullWidth onClick={() => window.location.href='/dashboard'}>GET STARTED</RSButton>
         },
         {
-            title: "FULL REPORT",
-            code: "L1-DEEP",
-            price: "$29",
-            sub: "/scan",
-            desc: "Critical Need",
-            isRecommended: true,
-            features: [
-                { label: "CAPACITY", val: "Single Scan" },
-                { label: "DEPTH", val: "Deep Forensic" },
-                { label: "OUTPUT", val: "6-Page PDF" },
-                { label: "GUIDANCE", val: "Mitigation Steps" }
-            ],
-            btn: <RSButton variant="primary" fullWidth>ACCESS REPORT</RSButton>
-        },
-        {
-            title: "PROFESSIONAL",
-            code: "L2-SCALE",
+            title: "PRO",
+            code: "L1",
             price: "$49",
             sub: "/mo",
-            desc: "Persistent Validation",
+            desc: "Individual Teams",
+            isRecommended: true,
             features: [
-                { label: "CAPACITY", val: "Unlimited" },
-                { label: "HISTORY", val: "Persistent" },
-                { label: "RULES", val: "Custom Brand" }
+                { label: "CAPACITY", val: "50 / Month" },
+                { label: "DEPTH", val: "Legal Reasoning" },
+                { label: "REPORT", val: "Full Access" },
+                { label: "HISTORY", val: "30 Days" }
             ],
-            btn: <RSButton variant="secondary" fullWidth>SUBSCRIBE</RSButton>
+            btn: <RSButton variant="primary" fullWidth onClick={() => window.location.href='/pricing?plan=pro'}>SUBSCRIBE PRO</RSButton>
+        },
+        {
+            title: "TEAM",
+            code: "L2",
+            price: "$99",
+            sub: "/mo",
+            desc: "Small Volume",
+            features: [
+                { label: "CAPACITY", val: "200 / Month" },
+                { label: "HISTORY", val: "90 Days" },
+                { label: "SEATS", val: "5 Seats" }
+            ],
+            btn: <RSButton variant="secondary" fullWidth onClick={() => window.location.href='/pricing?plan=team'}>SUBSCRIBE TEAM</RSButton>
         }
     ];
 
