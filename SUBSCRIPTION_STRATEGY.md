@@ -22,7 +22,7 @@ Context: The canonical reference for all pricing, limits, and entitlements. Driv
 | **Monthly Price** | $0 | $49 | $199 | $499 | Contact Sales |
 | **Annual Price** (20% off) | — | $470/yr | $1,910/yr | $4,790/yr | Custom |
 | **Effective $/mo** (Annual) | — | $39.17 | $159.17 | $399.17 | — |
-| **🔑 Key Unlock** | *"3 Scans to Test"* | *"Brand Profile + Pro Reports"* | *"Multi-Seat + Bulk Upload"* | *"White-Label + Priority Queue"* | *"SSO + Dedicated CSM"* |
+| **🔑 Key Unlock** | *"3 Scans to Test"* | *"Brand Profile + 5 Mitigation Credits"* | *"Multi-Seat + 30 Mitigation Credits"* | *"White-Label + 100 Mitigation Credits"* | *"SSO + Dedicated CSM"* |
 
 ---
 
@@ -33,13 +33,16 @@ Context: The canonical reference for all pricing, limits, and entitlements. Driv
 | **Seats** | 1 | 1 | 5 | 15 | Custom |
 | **Monthly Scans** | 3 | 50 | 300 | 1,000 | Custom |
 | **Scan Overage Cost** | BLOCKED | **$2.50** | $1.00 | $0.60 | Negotiated |
-| **Mitigation Reports** | 0 | 5 | 20 | 100 | Unlimited |
-| **Report Overage Cost** | $29 | $20 | $15 | $10 | Custom |
+| **Included Mitigation Reports** | 0 | 5 | 30 | 100 | Custom |
+| **Mitigation Report Overage** | $29 | $29 | $29 | $29 | Custom |
 | **Brand Profiles** | 0 | 1 | 5 | 20 | Unlimited |
 | **Data Retention** | 7 days | 30 days | 90 days | 1 year | 2 years (default; custom by contract) |
 
 > [!NOTE]
 > Enterprise limits are **contract‑specific**. The codebase uses high defaults as a safety ceiling; contracts override them.
+
+> [!IMPORTANT]
+> Every completed scan now includes a **scan findings report**. In pricing and business planning, the quota-limited premium asset is the **mitigation report**. The internal `monthlyReports` / `monthly_report_limit` naming is legacy compatibility and should not be marketed as a separate scan-report allowance.
 ### Overage Psychology
 PRO overage is deliberately **punishing** ($2.50/scan = 5x base cost) to drive upgrades to TEAM.
 
@@ -56,7 +59,7 @@ PRO overage is deliberately **punishing** ($2.50/scan = 5x base cost) to drive u
 
 | Feature | **FREE** | **PRO** | **TEAM** | **AGENCY** | **ENTERPRISE** |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Full Report Access** | ❌ | ✅ | ✅ | ✅ | ✅ |
+| **Mitigation Workflow Access*** | ❌ | ✅ | ✅ | ✅ | ✅ |
 | **Bulk Upload** | ❌ | ❌ | ✅ | ✅ | ✅ |
 | **Co-Branding** *(Add your logo)* | ❌ | ❌ | ✅ | ✅ | ✅ |
 | **White-Label** *(Remove our brand)* | ❌ | ❌ | ❌ | ✅ | ✅ |
@@ -74,6 +77,8 @@ PRO overage is deliberately **punishing** ($2.50/scan = 5x base cost) to drive u
 | **White-Label** | *"Your brand, your product. AI Content Risk Score disappears entirely—resell as your own service."* |
 | **Audit Logs** | Full compliance trail: who scanned what, when, and what actions were taken. Required for SOC 2 / Legal. |
 | **Priority Queue** | **Planned**: Agency scans skip ahead of Free/Pro users during high traffic. Target SLA: <5s image, <15s video. |
+
+\* Internally this is still backed by the legacy `fullReportAccess` flag. Externally, avoid calling this "full report access" because every scan already includes a findings report.
 
 ### Implementation Status (As of Feb 2026)
 The feature table above defines **entitlements**, not necessarily shipped UI or workflows. Use these labels when communicating externally:
@@ -111,6 +116,23 @@ The feature table above defines **entitlements**, not necessarily shipped UI or 
 | **PRO** | $49 | 50 | $0.75 | **98.5%** |
 | **TEAM** | $199 | 300 | $4.50 | **97.7%** |
 | **AGENCY** | $499 | 1,000 | $15.00 | **97.0%** |
+
+### Reality Check: Contribution Margin After Stripe
+
+These subscription margins are directionally correct for **infra-only COGS**, but they exclude payment processing, support, sales, and any human review.
+
+Assuming Stripe at ~`2.9% + $0.30`:
+
+| Tier | Revenue | Stripe Fees | Infra COGS | **Contribution Margin** |
+| :--- | :--- | :--- | :--- | :--- |
+| **PRO** | $49.00 | ~$1.72 | $0.75 | **~95.0%** |
+| **TEAM** | $199.00 | ~$6.07 | $4.50 | **~94.7%** |
+| **AGENCY** | $499.00 | ~$14.77 | $15.00 | **~94.0%** |
+
+For mitigation reports at `$29`, with current automated generation costs (`~$0.03-$0.05`) plus Stripe fees (`~$1.14`), contribution margin is still roughly **95.9%-96.0%** before support and staffing.
+
+> [!NOTE]
+> The main margin risk is not model inference. It is support load, enterprise onboarding, and any future human-in-the-loop review layered into mitigation or compliance workflows.
 
 ### LTV Analysis (Conservative: 15% Monthly Churn)
 

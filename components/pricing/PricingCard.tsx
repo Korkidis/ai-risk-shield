@@ -42,9 +42,9 @@ export function PricingCard({
     }
 
     const features = [
-        { label: `${plan.monthlyScans} scans/mo`, included: true },
+        { label: `${plan.monthlyScans} scans/mo`, included: true, tooltip: content.overageRate && content.overageRate !== '-' ? `Additional scans automatically billed at ${content.overageRate}.` : undefined },
         { label: `${plan.monthlyReports} reports/mo`, included: plan.monthlyReports > 0 },
-        { label: `${plan.monthlyMitigations} mitigation report${plan.monthlyMitigations !== 1 ? 's' : ''}/mo`, included: plan.monthlyMitigations > 0 },
+        { label: `${plan.monthlyMitigations} mitigation report${plan.monthlyMitigations !== 1 ? 's' : ''}/mo`, included: plan.monthlyMitigations > 0, tooltip: "Additional mitigation reports are available for $29 each." },
         { label: `${plan.brandProfiles || 1} brand profile${(plan.brandProfiles || 1) !== 1 ? 's' : ''}`, included: true },
         { label: `${plan.seats} seat${plan.seats > 1 ? 's' : ''}`, included: true },
         { label: 'Full Report Access', included: plan.features.fullReportAccess },
@@ -217,9 +217,21 @@ export function PricingCard({
                                     <X className="w-3 h-3 text-[var(--rs-text-tertiary)]" />
                                 </div>
                             )}
-                            <span className={cn("text-xs leading-tight", feature.included && "font-medium text-[var(--rs-text-primary)]")}>
-                                {feature.label}
-                            </span>
+                            <div className="flex items-center gap-1.5 group/ftooltip relative">
+                                <span className={cn("text-xs leading-tight", feature.included && "font-medium text-[var(--rs-text-primary)]")}>
+                                    {feature.label}
+                                </span>
+                                {feature.tooltip && (
+                                    <>
+                                        <div className="w-3.5 h-3.5 rounded-full border border-[var(--rs-border-primary)] flex items-center justify-center transition-colors text-[var(--rs-text-tertiary)] group-hover/ftooltip:border-[var(--rs-text-primary)] cursor-help">
+                                            <span className="text-[9px] font-bold italic">i</span>
+                                        </div>
+                                        <div className="absolute left-2 text-left bottom-full mb-2 w-48 p-2 bg-[var(--rs-bg-root)] border border-[var(--rs-border-primary)] shadow-xl rounded text-[10px] text-[var(--rs-text-secondary)] opacity-0 group-hover/ftooltip:opacity-100 transition-opacity pointer-events-none z-50">
+                                            {feature.tooltip}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </li>
                     ))}
                 </ul>

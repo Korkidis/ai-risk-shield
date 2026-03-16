@@ -4,7 +4,7 @@
 > **Reality Update (2026-02-11)**  
 > - **One product reality:** Dashboard **Scans & Reports** is the canonical home. Landing is a thin bridge.  
 > - **Gate framing:** Account creation is **pending verification** (shadow user + magic link).  
-> - **PDF:** Sample PDF should download immediately on landing; full report must be downloadable from dashboard.  
+> - **PDF:** Findings summary PDF should download immediately after email capture; mitigation report must be downloadable from dashboard.  
 > - **Telemetry:** Must be real (no scripted logs).  
 > - **Data handoff:** `/api/scans/[id]` must read stored `risk_profile` (not reconstruct).
 

@@ -39,7 +39,7 @@ AI Content Risk Score isn't "upload → get PDF → leave." It's **the place whe
 - The designer shares scan results with their client to demonstrate professionalism
 - Enterprise teams maintain a single source of truth for AI content governance
 
-The sample report hooks them. The full report makes them look good in front of their boss. The **platform** — the dashboard, the archive, the accumulated evidence — is what makes this indispensable.
+The findings summary hooks them. The mitigation report makes them look prepared in front of their boss. The **platform** — the dashboard, the archive, the accumulated evidence — is what makes this indispensable.
 
 **The bigger picture:** Companies using AI content under hyperscaler agreements (Google, Microsoft, Adobe) need to prove compliance with terms. Insurance companies need evidence of due diligence for indemnity. Compliance platforms like Credo need data feeds. AI Content Risk Score generates the defensible evidence that satisfies all of these — and having it centralized in one platform (not scattered PDFs on a desktop) is what makes it enterprise-grade and audit-ready.
 
@@ -196,21 +196,21 @@ ANONYMOUS USER:
   → Redirect to /dashboard?scan=<id>
   → See: risk score + C2PA telemetry + safety scores (visible)
   → See: findings (gated — blurred/locked)
-  → CTA (above fold, below scores): "Enter email to unlock details & access sample report"
+  → CTA (above fold, below scores): "Enter email to unlock details & get the findings summary"
   → Email captured → magic link sent
   → Click magic link → account auto-provisioned (free plan) → scan saved
   → Return to /dashboard?scan=<id>
-  → Findings revealed + sample report downloadable (PDF: hero finding + teaser)
-  → CTA changes to: "Buy Full Report ($29)" — unlocks complete findings + deep mitigation
+  → Findings revealed + findings summary downloadable
+  → CTA changes to: "Generate Mitigation Report ($29)" — unlocks tailored mitigation guidance
   → Scan saved to /dashboard/scans-reports archive
 
-AUTHENTICATED FREE USER (3 scans/month, 3 sample reports):
+AUTHENTICATED FREE USER (3 scans/month):
   /dashboard → upload → processing → results in-place
   → Score + C2PA telemetry visible
   → Findings revealed (free users see basic findings after email capture)
-  → CTA (above fold): "Download Sample Report" (PDF with hero finding)
-  → CTA (secondary): "Buy Full Report ($29)" → complete findings + mitigation
-  → Drawer: findings log + C2PA telemetry stream + "Buy Full Report" CTA
+  → CTA (above fold): "Download Findings Summary"
+  → CTA (secondary): "Generate Mitigation Report ($29)"
+  → Drawer: findings log + C2PA telemetry stream + mitigation CTA
 
 AUTHENTICATED PAID USER:
   /dashboard → upload → processing → full results
@@ -242,14 +242,14 @@ Each step delivers meaningfully more than the last. No step feels like repackagi
 | Step | What User Gets | Cost | Gemini Calls |
 |------|---------------|------|-------------|
 | **1. Free scan** | Risk score + C2PA status + safety scores (visible). Findings gated/blurred. | Free (3/mo) | 1 (standard analysis) |
-| **2. Email capture** | Findings revealed + sample report PDF (hero finding + teaser). | Free (email) | 0 (uses existing data) |
-| **3. Deep Report** | Enhanced analysis + full C2PA chain + strategic briefing + tailored mitigation. Stored as scan attachment. | $29 one-time OR included in subscription quota | 1 additional (mitigation + brand context) |
+| **2. Email capture** | Findings revealed + downloadable scan findings summary PDF. | Free (email) | 0 (uses existing data) |
+| **3. Mitigation Report** | Enhanced analysis + full C2PA chain + strategic briefing + tailored mitigation. Stored as scan attachment. | $29 one-time OR included in subscription quota | 1 additional (mitigation + brand context) |
 
-**$29 = deep findings + mitigation.** One price, one product. Same whether it's a one-time purchase, a subscription report, or an overage report. Always $29.
+**$29 = mitigation.** One price, one product. Same whether it's a one-time purchase, an included subscription credit, or an overage report. Always $29.
 
 ### Report Quotas Per Tier
 
-| Plan | Scans/mo | Deep Reports (included) | Overage Cost |
+| Plan | Scans/mo | Included Mitigation Reports | Overage Cost |
 |------|----------|------------------------|-------------|
 | FREE | 3 | 0 | $29/report |
 | PRO | 50 | 5 | $29/report |
@@ -257,21 +257,21 @@ Each step delivers meaningfully more than the last. No step feels like repackagi
 | AGENCY | 1000 | 100 | $29/report |
 | ENTERPRISE | Custom | Unlimited | Included |
 
-~10% of scan volume as deep report quota. Every scan produces findings (included in scan). Deep reports with mitigation are the premium, quota-limited asset.
+~10% of scan volume as mitigation quota. Every scan produces findings (included in scan). Mitigation reports are the premium, quota-limited asset.
 
 ### The Consumption Flywheel
 
 1. **Scans are cheap** — high volume, low unit cost. Every scan shows findings.
 2. **Most scans are fine** — safe score, no action needed. Findings confirm "you're good."
-3. **Some scans flag risk** — these need the deep report with mitigation strategy.
-4. **Mitigation is scarce** — ~5% of scan quota. Users burn reports only on high-risk items.
+3. **Some scans flag risk** — these need the mitigation report.
+4. **Mitigation is scarce** — ~5-10% of scan quota. Users burn credits only on high-risk items.
 5. **Need more?** → Buy per-report ($29) or upgrade tier for better ratio.
 
 ### Why Subscriptions Win
 
 | | One-Time | PRO ($49/mo) | TEAM ($199/mo) | AGENCY ($499/mo) |
 |---|---|---|---|---|
-| Deep reports included | 1 | 5 | 30 | 100 |
+| Mitigation reports included | 1 | 5 | 30 | 100 |
 | Per-report cost | $29 | ~$9.80 | ~$6.63 | ~$4.99 |
 | Break-even vs one-time | — | 2 reports/month | 7 reports/month | 18 reports/month |
 
@@ -283,11 +283,11 @@ The CTA zone sits **above the fold, below the score/telemetry area** on the dash
 
 | User State | CTA in Results Area | CTA in Drawer |
 |-----------|-------------------|---------------|
-| Anonymous (pre-email) | "Enter email to unlock details & sample report" | N/A (drawer not accessible) |
-| Free (post-email) | "Download Sample Report" | "Generate Deep Report ($29)" |
-| Paid (post-scan, no deep report) | "Generate Deep Report" (uses quota) | Same + "Download Findings PDF" |
-| Paid (deep report exists) | "Download Deep Report" | "View Full Provenance" → opens drawer |
-| Any user (quota exceeded) | "Generate Deep Report ($29)" (overage) | Same |
+| Anonymous (pre-email) | "Enter email to unlock details & findings summary" | N/A (drawer not accessible) |
+| Free (post-email) | "Download Findings Summary" | "Generate Mitigation Report ($29)" |
+| Paid (post-scan, no mitigation) | "Generate Mitigation Report" (uses quota) | Same + "Download Findings PDF" |
+| Paid (mitigation exists) | "Download Mitigation Report" | "View Full Provenance" → opens drawer |
+| Any user (quota exceeded) | "Generate Mitigation Report ($29)" (overage) | Same |
 
 The drawer opens via a "View Full Provenance / Manifest" button — visually clear invitation to go deeper.
 
@@ -307,7 +307,7 @@ The drawer opens via a "View Full Provenance / Manifest" button — visually cle
 - Search, filter by risk level (high risk / safe / all), sort by date
 - Click thumbnail → image detail + side drawer opens
 - Drawer: findings log, C2PA telemetry stream, comments
-- Report actions: generate/download sample, full, or mitigation reports
+- Report actions: download findings summaries and generate/download mitigation reports
 - Previously generated reports stored as scan attachments
 - Team: invite members, leave comments
 - Delete scan (de-emphasized)
@@ -323,7 +323,7 @@ The drawer opens via a "View Full Provenance / Manifest" button — visually cle
 
 ### Hybrid Billing: Subscriptions + Per-Report Purchases + Metered Overage
 
-| Tier | Price | Scans/mo | Deep Reports (included) | Target |
+| Tier | Price | Scans/mo | Included Mitigation Reports | Target |
 |------|-------|----------|------------------------|--------|
 | **FREE** | $0 | 3 | 0 | Try before you buy |
 | **PRO** | $49/mo | 50 | 5 | Freelancer / regular user |
@@ -331,26 +331,26 @@ The drawer opens via a "View Full Provenance / Manifest" button — visually cle
 | **AGENCY** | $499/mo | 1,000 | 100 | Production house |
 | **ENTERPRISE** | Custom | Custom | Unlimited | Corporate / legal |
 
-Every scan produces findings (included with scan). Deep reports (findings + mitigation) are the premium, quota-limited asset.
+Every scan produces findings (included with scan). Mitigation reports are the premium, quota-limited asset.
 
-### One Price: $29 per Deep Report
+### One Price: $29 per Mitigation Report
 Available to any user, any plan. Includes **enhanced findings + full C2PA chain + tailored mitigation strategy**. Same price whether one-time purchase, subscription overage, or standalone buy.
 
 ### Overage Pricing
 
-| | Scan Overage | Deep Report Overage |
+| | Scan Overage | Mitigation Report Overage |
 |---|---|---|
 | **PRO** | $2.50/scan | $29/report |
 | **TEAM** | $1.00/scan | $29/report |
 | **AGENCY** | $0.60/scan | $29/report |
 
 - Scan overage deliberately punishing on PRO ($2.50) → drives TEAM upgrades
-- Deep report is always $29 — simple, no tier-based confusion
+- Mitigation is always $29 — simple, no tier-based confusion
 
-### Margin Target: 96%+
-- Scan: ~$0.015 (Gemini API + storage)
-- Deep report: ~$0.03-0.05 (additional Gemini call with brand context)
-- At $29/report, margin is 99%+
+### Margin Target: 96%+ Contribution Margin
+- Scan infra: ~$0.015 (Gemini API + storage)
+- Mitigation infra: ~$0.03-0.05 (additional Gemini call with brand context)
+- More realistic contribution margin on a $29 mitigation report is ~96% after Stripe, before support and staffing
 
 ---
 
@@ -410,16 +410,14 @@ If a feature isn't built, don't show it. If a number isn't computed, don't displ
 - **API access** — No API exists for any plan. All interaction is through the web UI. API is on the roadmap but not v1.
 - **Shadow user → tenant provisioning** — Auth user created but no profile/tenant. Dashboard crashes.
 - **Scan assignment** — Anonymous scans don't transfer `tenant_id` to dashboard.
-- **Deep Mitigation Reports** — Schema exists (`mitigation_reports` table). PDF generator has `chief_officer_strategy` field. But no separate generation flow, no quota tracking, no second Gemini call. Needs to be built as a first-class feature.
-- **Report quota enforcement** — `monthly_report_limit` exists in plans.ts but no code checks it. Currently unlimited report downloads for paid users.
+- **Legacy report quota field** — `monthly_report_limit` still exists in schema/config for backward compatibility, but product reality has shifted: owned scans can download findings summaries, while quota-limited premium capacity is now modeled through mitigation credits.
 
 ### Must Fix Before Launch
 - Shadow user provisioning (auth/callback creates no profile/tenant)
 - Scan assignment (anonymous scans don't transfer tenant_id)
 - Unified scan flow (landing → dashboard redirect, dashboard as single result surface)
 - Metered overage billing (verify Stripe Usage Records work E2E)
-- Report quota enforcement (track and limit full reports + mitigation reports per tier)
-- Deep Mitigation Report generation (second Gemini call with brand context)
+- Legacy report quota field cleanup / rename so docs, pricing, and code all speak in terms of mitigation credits instead of generic "reports"
 - Scripted telemetry → real analysis progress
 - Hardcoded quota displays → live database reads
 - AuditModal feature claims → only list what exists

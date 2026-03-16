@@ -211,7 +211,7 @@ This is the single source of truth for product vision, user needs, and implement
 **User journey:**
 1. Upload image → Score: 95/100 (Critical)
 2. See finding: "Disney character detected"
-3. Click "Get Mitigation Guidance" → Purchase Deep Report ($29) OR use included scan (Team+ plan)
+3. Click "Get Mitigation Guidance" → Purchase Mitigation Report ($29) OR use an included mitigation credit (Team+ plan)
 4. Report shows: "You cannot use this. Here are 3 alternative approaches..."
 5. If still stuck: "Need expert help? [Book IP Consultation] [Get Insurance Quote]"
 
@@ -356,7 +356,7 @@ This is the single source of truth for product vision, user needs, and implement
 - ✓ Platform didn't ban the post
 - ✓ **Client legal approved deliverables without additional documentation requests**
 - ✓ **Complete provenance trail available for audit/litigation if needed**
-- ✓ **Got actionable mitigation steps (not just "it's risky")** via Deep Report
+- ✓ **Got actionable mitigation steps (not just "it's risky")** via Mitigation Report
 - ✓ **Connected with expert when needed** (IP attorney, insurance)
 
 **Emotional success:**
@@ -422,7 +422,7 @@ This is the single source of truth for product vision, user needs, and implement
 - Job: "Streamline client approval process with documented provenance"
 - Trigger: Client legal requires proof of asset creation for every deliverable
 - Success: "Client approves full campaign in one meeting instead of 3-round back-and-forth"
-- Uses: Team/Agency plan with bulk scanning + Deep Mitigation Reports for high-risk assets
+- Uses: Team/Agency plan with bulk scanning + Mitigation Reports for high-risk assets
 
 **Enterprise Risk/Compliance Officer:**
 - Job: "Establish and enforce AI content governance policy"
@@ -434,7 +434,7 @@ This is the single source of truth for product vision, user needs, and implement
 - Job: "Investigate infringement claims and maintain litigation-ready evidence"
 - Trigger: Received C&D letter or need to defend against competitor claim
 - Success: "Responded in 24 hours with technical provenance report, claim dropped"
-- Uses: Scan archive for evidence, Deep Mitigation Reports for legal reasoning, insurance referrals for high-exposure cases
+- Uses: Scan archive for evidence, Mitigation Reports for legal reasoning, insurance referrals for high-exposure cases
 
 ---
 
@@ -465,7 +465,7 @@ This is the single source of truth for product vision, user needs, and implement
 ## PHASED ROLLOUT PLAN
 
 ### Phase 1: MVP Core - "It Works"
-**Goal:** Free users can upload → see results → enter email → get sample report
+**Goal:** Free users can upload → see results → enter email → get a findings summary
 
 > **Note:** This is a reference checklist reflecting MVP scope. For the actual sprint-level execution plan with dependencies, see **[`tasks/todo.md`](tasks/todo.md)**.
 
@@ -723,7 +723,7 @@ Track major decisions here to maintain context:
 
 ### Business Logic (The "Freemium" Engine)
 *   **The Hook**: Anonymous users can scan assets immediately (stored via `session_id`).
-*   **The Gate**: High-level results are teased; full report download requires **Email Capture** (Magic Link).
+*   **The Gate**: High-level results are teased; findings summary download requires **Email Capture** (Magic Link).
 *   **The Upsell**: Detailed "Deep Mitigation" or high-volume usage requires **Payment** (tracked via `purchased` boolean).
 
 ---
