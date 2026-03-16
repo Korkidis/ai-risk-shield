@@ -24,6 +24,19 @@ export function TenantPlanBadge() {
     const planConfig = PLANS[status.planId as keyof typeof PLANS] || PLANS.free;
     const planName = planConfig.name.toUpperCase();
 
+    const isOverage = status.monthlyScanLimit > 0 && status.scansUsed >= status.monthlyScanLimit;
+
+    let overageMessage = null;
+    if (isOverage) {
+        if (status.planId === 'pro') {
+            overageMessage = "Upgrading your base commitment to Team cuts per-scan cost by 50%.";
+        } else if (status.planId === 'team') {
+            overageMessage = "Upgrading your base commitment to Agency cuts per-scan cost by 50%.";
+        } else if (status.planId === 'free') {
+            overageMessage = "Upgrade your plan to unlock more scans.";
+        }
+    }
+
     return (
         <div className="bg-rs-gray-200/50 rounded p-3 text-xs text-rs-gray-500">
             <p className="font-bold text-rs-black mb-1">{planName} PLAN</p>
@@ -34,9 +47,18 @@ export function TenantPlanBadge() {
                 <span className="font-mono font-medium text-rs-black">{status.seatsUsed}/{status.seatLimit}</span>
             </div>
             <div className="flex justify-between items-center mt-1">
-                <span>Scans Used:</span>
-                <span className="font-mono font-medium text-rs-black">{status.scansUsed}/{status.monthlyScanLimit}</span>
+                <span>Scans:</span>
+                <span className={isOverage ? "font-mono font-bold text-red-600 dark:text-red-400" : "font-mono font-medium text-rs-black"}>
+                    {status.scansUsed}/{status.monthlyScanLimit}
+                </span>
             </div>
+
+            {isOverage && overageMessage && (
+                <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded text-[10px] leading-tight text-red-700 dark:text-red-400">
+                    <span className="font-bold block mb-0.5 animate-pulse">OVERAGE ACTIVE</span>
+                    {overageMessage}
+                </div>
+            )}
         </div>
     );
 }

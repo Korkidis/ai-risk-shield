@@ -4,14 +4,20 @@ import { ExtendedScan, MitigationReportContent, ScanWithRelations } from '@/type
 import { format } from 'date-fns'
 import { getRiskTier } from './risk/tiers'
 
-/** Local type for PDF finding entries (DB findings + synthesized teasers) */
+/** Local type for PDF finding entries (DB findings + synthesized from profile) */
 interface PdfFinding {
     title: string
     severity: string
     finding_type: string
     description: string
-    _teaser?: string
-    _isTeaser?: boolean
+}
+
+/** Optional asset image data for embedding a preview in the PDF */
+export interface AssetImageData {
+    data: Uint8Array
+    format: 'JPEG' | 'PNG'
+    width: number
+    height: number
 }
 
 // Dieter Rams / Braun Design Tokens
@@ -52,7 +58,8 @@ function severityDotColor(severity: string): string {
 export const generateForensicReport = (
     scan: ExtendedScan & { filename: string },
     profile: RiskProfile,
-    isSample: boolean = false
+    isSample: boolean = false,
+    assetImageData?: AssetImageData
 ) => {
     const doc = new jsPDF({
         orientation: 'portrait',
@@ -102,7 +109,7 @@ export const generateForensicReport = (
 
     doc.setFont(FONT.body, "normal")
     doc.setFontSize(8)
-    doc.text(isSample ? "SAMPLE FORENSIC ANALYSIS" : "FORENSIC ANALYSIS REPORT", 20, 19)
+    doc.text(isSample ? "SCAN FINDINGS SUMMARY" : "FORENSIC ANALYSIS REPORT", 20, 19)
 
     // Metadata (Top Right)
     doc.setFont(FONT.mono, "normal")
@@ -127,10 +134,42 @@ export const generateForensicReport = (
     drawValue((scan.is_video ? 'VIDEO' : 'IMAGE').toUpperCase(), 120, 40)
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // ASSET PREVIEW (optional — images only, graceful skip for videos)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    let previewHeight = 0
+    if (assetImageData && !scan.is_video) {
+        const maxW = 80 // mm
+        const maxH = 55 // mm
+        const aspectRatio = assetImageData.width / assetImageData.height
+        let imgW = maxW
+        let imgH = maxW / aspectRatio
+        if (imgH > maxH) {
+            imgH = maxH
+            imgW = maxH * aspectRatio
+        }
+
+        drawLabel("SCANNED ASSET", 20, 47)
+        try {
+            doc.addImage(
+                assetImageData.data,
+                assetImageData.format,
+                20,
+                50,
+                imgW,
+                imgH
+            )
+            previewHeight = imgH + 15 // space for label + image + padding
+        } catch {
+            // Graceful fallback: skip preview if addImage fails
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // PROMINENT SCORE GAUGE
     // ═══════════════════════════════════════════════════════════════════════════
 
-    const scoreY = 60
+    const scoreY = previewHeight > 0 ? 45 + previewHeight : 60
     const riskColor = riskLevelColor(tier.level)
 
     doc.setFillColor(riskColor)
@@ -146,13 +185,13 @@ export const generateForensicReport = (
     doc.text(tier.verdict.toUpperCase(), 20, scoreY + 2)
     drawLabel("RISK ASSESSMENT", 20, scoreY - 10)
 
-    drawLine(80)
+    drawLine(scoreY + 20)
 
     // ═══════════════════════════════════════════════════════════════════════════
     // SUB-SCORES
     // ═══════════════════════════════════════════════════════════════════════════
 
-    let y = 90
+    let y = scoreY + 30
     drawLabel("RISK BREAKDOWN", 20, y)
     y += 8
 
@@ -180,6 +219,31 @@ export const generateForensicReport = (
         doc.text(subTier.label, 95, y)
 
         y += 7
+    })
+
+    // Domain Teasers — what each analysis domain found
+    y += 2
+    const domainTeasers = [
+        { label: "IP ANALYSIS", teaser: profile.ip_report.teaser },
+        { label: "SAFETY ANALYSIS", teaser: profile.safety_report.teaser },
+        { label: "PROVENANCE ANALYSIS", teaser: profile.provenance_report.teaser },
+    ]
+
+    domainTeasers.forEach(({ label, teaser }) => {
+        if (teaser && teaser.length > 0) {
+            y = checkPageBreak(y, 12)
+            doc.setFont(FONT.body, "bold")
+            doc.setFontSize(7)
+            doc.setTextColor(COLORS.sub)
+            doc.text(label, 28, y)
+            y += 4
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(8)
+            doc.setTextColor(COLORS.ink)
+            const teaserLines = doc.splitTextToSize(teaser, 155)
+            doc.text(teaserLines, 28, y)
+            y += (teaserLines.length * 3.5) + 3
+        }
     })
 
     // C2PA Status Summary
@@ -221,7 +285,7 @@ export const generateForensicReport = (
 
     // Build findings list: DB findings first, then synthesized from profile
     // scan_findings comes from the joined query on ScanWithRelations
-    const findings = [...((scan as ExtendedScan & { scan_findings?: Array<{ title: string; severity: string; finding_type: string; description: string; _teaser?: string }> }).scan_findings || [])]
+    const findings: PdfFinding[] = [...((scan as ExtendedScan & { scan_findings?: Array<{ title: string; severity: string; finding_type: string; description: string }> }).scan_findings || [])]
 
     if (findings.length === 0 && profile.composite_score > 25) {
         if (profile.ip_report.score > 25) {
@@ -231,7 +295,6 @@ export const generateForensicReport = (
                 severity: ipTier.level === 'critical' ? 'critical' : ipTier.level === 'high' ? 'high' : 'medium',
                 finding_type: 'ip_violation',
                 description: profile.ip_report.teaser,
-                _teaser: profile.ip_report.teaser,
             })
         }
         if (profile.safety_report.score > 25) {
@@ -241,7 +304,6 @@ export const generateForensicReport = (
                 severity: safeTier.level === 'critical' ? 'critical' : safeTier.level === 'high' ? 'high' : 'medium',
                 finding_type: 'safety_violation',
                 description: profile.safety_report.teaser,
-                _teaser: profile.safety_report.teaser,
             })
         }
         if (profile.provenance_report.score > 25) {
@@ -251,7 +313,6 @@ export const generateForensicReport = (
                 severity: provTier.level === 'critical' ? 'critical' : provTier.level === 'high' ? 'high' : 'medium',
                 finding_type: 'provenance_issue',
                 description: profile.provenance_report.teaser,
-                _teaser: profile.provenance_report.teaser,
             })
         }
     }
@@ -261,92 +322,12 @@ export const generateForensicReport = (
     findings.sort((a: PdfFinding, b: PdfFinding) => (severityOrder[a.severity] ?? 4) - (severityOrder[b.severity] ?? 4))
 
     if (findings.length > 0) {
-        // Determine which findings to show in sample mode
-        let shownFindings: PdfFinding[] = []
-        let hiddenFindings: PdfFinding[] = []
-        const lockedList: string[] = []
+        // Show all findings — scan reports are free (mitigation is the paid product)
+        const shownFindings = findings.slice(0, 10)
 
-        if (isSample) {
-            // 1. Pick Hero Finding (Highest Severity)
-            // Already sorted by severity above
-            const hero = findings[0]
-            shownFindings = [hero]
-            hiddenFindings = findings.slice(1)
-
-            // 2. content for "Locked" section (Dynamic Counts)
-            // Count hidden findings by unique type to avoid clutter
-            const hiddenCounts: Record<string, number> = {}
-            hiddenFindings.forEach((f: PdfFinding) => {
-                const type = f.finding_type || 'unknown'
-                hiddenCounts[type] = (hiddenCounts[type] || 0) + 1
-            })
-
-            // Generate specific strings for locked content
-            Object.entries(hiddenCounts).forEach(([type, count]) => {
-                const label = type.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-                lockedList.push(`${count} Additional ${label} ${count > 1 ? 'Risks' : 'Risk'}`)
-            })
-
-            // Add Chief Officer Strategy if missing (it usually is for sample)
-            if (profile.chief_officer_strategy) {
-                lockedList.push("Chief Safety Officer Strategy")
-            }
-            if (profile.c2pa_report?.history && profile.c2pa_report.history.length > 0) {
-                lockedList.push("Full C2PA Custody History")
-            }
-
-            // 3. Inject Teasers for MISSING categories (if not covered by Hero/Shown Findings)
-            // We want to ensure that if a category has risk in the profile, it is represented either by a real finding or a teaser.
-            const coveredCategories = new Set<string>()
-            shownFindings.forEach(f => {
-                const type = (f.finding_type || '').toLowerCase()
-                if (type.includes('ip') || type.includes('copyright') || type.includes('trademark')) coveredCategories.add('ip')
-                if (type.includes('safety') || type.includes('nsfw') || type.includes('violent')) coveredCategories.add('safety')
-                if (type.includes('provenance') || type.includes('c2pa') || type.includes('fake')) coveredCategories.add('provenance')
-            })
-
-            const teasersToAdd = []
-
-            if (!coveredCategories.has('ip') && profile.ip_report.score > 25) {
-                teasersToAdd.push({
-                    title: "Intellectual Property Risk Detected",
-                    severity: 'medium', // Visual placeholder
-                    finding_type: 'ip_violation',
-                    description: profile.ip_report.teaser,
-                    _isTeaser: true
-                })
-            }
-            if (!coveredCategories.has('safety') && profile.safety_report.score > 25) {
-                teasersToAdd.push({
-                    title: "Content Safety Flag",
-                    severity: 'medium',
-                    finding_type: 'safety_violation',
-                    description: profile.safety_report.teaser,
-                    _isTeaser: true
-                })
-            }
-            if (!coveredCategories.has('provenance') && profile.provenance_report.score > 25) {
-                teasersToAdd.push({
-                    title: "Provenance Verification Issue",
-                    severity: 'medium',
-                    finding_type: 'provenance_issue',
-                    description: profile.provenance_report.teaser,
-                    _isTeaser: true
-                })
-            }
-
-            // Append teasers to shown list
-            shownFindings = [...shownFindings, ...teasersToAdd]
-
-        } else {
-            // Full Report: Show detailed list
-            shownFindings = findings.slice(0, 10) // Limit fairly high
-            hiddenFindings = findings.slice(10)
-        }
-
-        // Render shown findings
+        // Render findings
         shownFindings.forEach((f: PdfFinding) => {
-            y = checkPageBreak(y, 25)
+            y = checkPageBreak(y, 20)
 
             // Severity dot
             doc.setFillColor(severityDotColor(f.severity))
@@ -363,134 +344,21 @@ export const generateForensicReport = (
             doc.setFont(FONT.mono, "normal")
             doc.setFontSize(7)
             doc.setTextColor(COLORS.sub)
-            const labelText = f._isTeaser ? "DETECTED - PARTIAL" : typeLabel
-            doc.text(labelText, 150, y, { align: "right" })
+            doc.text(typeLabel, 150, y, { align: "right" })
 
             y += 5
 
-            // Description / Teaser Body
+            // Description
             doc.setFont(FONT.body, "normal")
-            // If it's a teaser, blur it or make it distinct?
-            // For now, just show the text but maybe italicized or lighter if it's a teaser
-            if (f._isTeaser) {
-                doc.setTextColor(COLORS.sub)
-                doc.setFont(FONT.body, "italic")
-            } else {
-                doc.setTextColor(COLORS.sub)
-                doc.setFont(FONT.body, "normal")
-            }
-
+            doc.setTextColor(COLORS.sub)
             doc.setFontSize(9)
-            const rawDesc = f.description || ''
-            // Sample mode: show hero finding in full, teasers get summary only
-            // Full mode: show all descriptions in full
-            const displayDesc = f._isTeaser
-                ? rawDesc.substring(0, 80) + (rawDesc.length > 80 ? '...' : '')
-                : rawDesc
-            const descLines = doc.splitTextToSize(displayDesc, 160)
+            const descLines = doc.splitTextToSize(f.description || '', 160)
             doc.text(descLines, 28, y)
-            y += (descLines.length * 4) + 3
-
-            // Mitigation hint
-            const teaser = f._teaser || f.description || ''
-            if (!f._isTeaser && teaser && teaser !== "No significant risks detected.") {
-                y = checkPageBreak(y, 8)
-                doc.setFont(FONT.mono, "normal")
-                doc.setFontSize(7)
-                doc.setTextColor(COLORS.ink)
-
-                const hintText = teaser.length > 80 ? teaser.substring(0, 77) + '...' : teaser
-                doc.text(`MITIGATION: ${hintText}`, 28, y)
-                y += 6
-            } else if (isSample && f._isTeaser) {
-                // Teasers in sample mode get a gentle nudge
-                y = checkPageBreak(y, 8)
-                doc.setFont(FONT.mono, "normal")
-                doc.setFontSize(7)
-                doc.setTextColor(COLORS.sub)
-                doc.text("NEXT STEP: Get a remediation plan for this risk — $29", 28, y)
-                y += 6
-            }
-
-            y += 3
+            y += (descLines.length * 4) + 6
         })
 
-        // ───────────────────────────────────────────────────────────────────
-        // SAMPLE: Locked content indicator + upgrade CTA
-        // ───────────────────────────────────────────────────────────────────
-        if (isSample && (hiddenFindings.length > 0 || profile.chief_officer_strategy)) {
-            y = checkPageBreak(y, 40)
-            drawLine(y)
-            y += 8
-
-            // Additional findings summary
-            doc.setFont(FONT.body, "bold")
-            doc.setFontSize(9)
-            doc.setTextColor(COLORS.sub)
-            doc.text("ADDITIONAL FINDINGS:", 28, y)
-            y += 6
-
-            doc.setFont(FONT.body, "normal")
-            doc.setFontSize(8)
-
-            if (lockedList.length === 0) {
-                lockedList.push("Full evidence citations and source analysis")
-                lockedList.push("Detailed remediation guidance")
-            }
-
-            lockedList.forEach(item => {
-                doc.text(`\u2022  ${item}`, 32, y)
-                y += 5
-            })
-
-            y += 4
-
-            // Remediation CTA (practical, not aggressive)
-            drawLine(y)
-            y += 8
-
-            doc.setFont(FONT.header, "bold")
-            doc.setFontSize(11)
-            doc.setTextColor(COLORS.ink)
-            doc.text("Need a Remediation Plan?", 105, y, { align: "center" })
-            y += 6
-
-            doc.setFont(FONT.body, "normal")
-            doc.setFontSize(8)
-            doc.setTextColor(COLORS.sub)
-            doc.text("Get a leadership-ready mitigation report with remediation steps,", 105, y, { align: "center" })
-            y += 4
-            doc.text("compliance matrix, and bias audit — $29 one-time.", 105, y, { align: "center" })
-            y += 6
-
-            doc.setFont(FONT.mono, "normal")
-            doc.setFontSize(8)
-            doc.setTextColor(COLORS.accent)
-            doc.text(`aicontentriskscore.com/dashboard/scans-reports?highlight=${scan.id}`, 105, y, { align: "center" })
-            y += 4
-        }
-
-        // ───────────────────────────────────────────────────────────────────
-        // FULL REPORT: Additional content
-        // ───────────────────────────────────────────────────────────────────
-        if (!isSample && profile.chief_officer_strategy) {
-            y = checkPageBreak(y, 30)
-            drawLine(y)
-            y += 10
-
-            drawLabel("CHIEF OFFICER RISK BRIEFING", 20, y)
-            y += 6
-
-            doc.setFont(FONT.body, "normal")
-            doc.setFontSize(9)
-            doc.setTextColor(COLORS.ink)
-            const strategyLines = doc.splitTextToSize(profile.chief_officer_strategy, 160)
-            doc.text(strategyLines, 20, y)
-            y += (strategyLines.length * 4) + 6
-        }
-
     } else {
-        // No findings — clean checks
+        // No findings — comprehensive clean checks
         const checks = [
             { label: "IP CHECK", status: "PASS", detail: "No known copyright matches found." },
             { label: "SAFETY CHECK", status: "PASS", detail: "Content is safe for commercial use." },
@@ -524,13 +392,72 @@ export const generateForensicReport = (
 
             y += 8
         })
+
+        // Domain teasers for safe results — show what was analyzed
+        y += 4
+        const safeDomainTeasers = [
+            { label: "IP ANALYSIS", teaser: profile.ip_report.teaser },
+            { label: "SAFETY ANALYSIS", teaser: profile.safety_report.teaser },
+            { label: "PROVENANCE ANALYSIS", teaser: profile.provenance_report.teaser },
+        ]
+
+        safeDomainTeasers.forEach(({ label, teaser }) => {
+            if (teaser && teaser.length > 0) {
+                y = checkPageBreak(y, 12)
+                doc.setFont(FONT.body, "bold")
+                doc.setFontSize(7)
+                doc.setTextColor(COLORS.sub)
+                doc.text(label, 28, y)
+                y += 4
+                doc.setFont(FONT.body, "normal")
+                doc.setFontSize(8)
+                doc.setTextColor(COLORS.ink)
+                const tLines = doc.splitTextToSize(teaser, 155)
+                doc.text(tLines, 28, y)
+                y += (tLines.length * 3.5) + 3
+            }
+        })
+
+        // C2PA details for safe scans
+        if (c2pa.issuer || c2pa.tool) {
+            y += 2
+            drawLabel("C2PA DETAILS", 28, y)
+            y += 5
+            doc.setFont(FONT.mono, "normal")
+            doc.setFontSize(8)
+            doc.setTextColor(COLORS.ink)
+            if (c2pa.issuer) { doc.text(`ISSUER: ${c2pa.issuer}`, 28, y); y += 4 }
+            if (c2pa.tool) { doc.text(`TOOL: ${c2pa.tool}${c2pa.tool_version ? ` v${c2pa.tool_version}` : ''}`, 28, y); y += 4 }
+            if (c2pa.creator) { doc.text(`CREATOR: ${c2pa.creator}`, 28, y); y += 4 }
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // PROVENANCE FOOTER (Full reports only)
+    // RISK INTELLIGENCE SUMMARY / CHIEF OFFICER RISK BRIEFING
     // ═══════════════════════════════════════════════════════════════════════════
 
-    if (!isSample) {
+    if (profile.chief_officer_strategy) {
+        y = checkPageBreak(y, 30)
+        drawLine(y)
+        y += 10
+
+        const strategyLabel = isSample ? "RISK INTELLIGENCE SUMMARY" : "CHIEF OFFICER RISK BRIEFING"
+        drawLabel(strategyLabel, 20, y)
+        y += 6
+
+        doc.setFont(FONT.body, "normal")
+        doc.setFontSize(9)
+        doc.setTextColor(COLORS.ink)
+        const strategyLines = doc.splitTextToSize(profile.chief_officer_strategy, 160)
+        doc.text(strategyLines, 20, y)
+        y += (strategyLines.length * 4) + 6
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PROVENANCE DATA
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    {
         y = checkPageBreak(y, 30)
         drawLine(y + 10)
         y += 20
@@ -556,6 +483,26 @@ export const generateForensicReport = (
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // SUBTLE END SECTION (findings summary only)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    if (isSample) {
+        y += 25
+        y = checkPageBreak(y, 20)
+        drawLine(y)
+        y += 8
+
+        doc.setFont(FONT.body, "normal")
+        doc.setFontSize(8)
+        doc.setTextColor(COLORS.sub)
+        doc.text("AI Content Risk Score", 105, y, { align: "center" })
+        y += 5
+        doc.setFont(FONT.body, "italic")
+        doc.setFontSize(7)
+        doc.text("Need deeper analysis? Mitigation guidance is available in your workspace.", 105, y, { align: "center" })
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // FOOTER
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -566,14 +513,14 @@ export const generateForensicReport = (
         doc.setFontSize(6)
         doc.setTextColor(COLORS.sub)
         doc.text(
-            `AI CONTENT RISK SCORE  |  ${isSample ? 'SAMPLE' : 'FULL'} REPORT  |  ${format(new Date(scan.created_at), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
+            `AI CONTENT RISK SCORE  |  ${isSample ? 'FINDINGS SUMMARY' : 'FULL REPORT'}  |  ${format(new Date(scan.created_at), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
             105, 290, { align: "center" }
         )
     }
 
     // Save or Return
     if (typeof window !== 'undefined') {
-        const prefix = isSample ? 'AIRS_Sample_' : 'AIRS_Report_'
+        const prefix = isSample ? 'AIRS_Findings_' : 'AIRS_Report_'
         doc.save(`${prefix}${scan.filename.substring(0, 10)}_${format(new Date(scan.created_at), 'yyyyMMdd')}.pdf`)
     }
 

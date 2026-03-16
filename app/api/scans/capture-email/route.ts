@@ -7,7 +7,31 @@ import type { ExtendedScan } from '@/types/database'
 import type { Database } from '@/lib/supabase/types'
 
 type ScanFindingRow = Database['public']['Tables']['scan_findings']['Row']
-type AssetRow = Pick<Database['public']['Tables']['assets']['Row'], 'filename' | 'file_type' | 'file_size'>
+type AssetRow = Pick<Database['public']['Tables']['assets']['Row'], 'filename' | 'file_type' | 'file_size' | 'storage_path' | 'mime_type'>
+
+/**
+ * Parse image dimensions from JPEG (SOF0/SOF2) or PNG (IHDR) headers.
+ * Returns fallback 800x600 if parsing fails.
+ */
+function parseImageDimensions(buffer: Buffer, format: 'JPEG' | 'PNG'): { width: number; height: number } {
+  const defaultDims = { width: 800, height: 600 }
+  try {
+    if (format === 'PNG') {
+      if (buffer.length > 24) {
+        return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) }
+      }
+    } else {
+      for (let i = 0; i < buffer.length - 9; i++) {
+        if (buffer[i] === 0xFF && (buffer[i + 1] === 0xC0 || buffer[i + 1] === 0xC2)) {
+          return { height: buffer.readUInt16BE(i + 5), width: buffer.readUInt16BE(i + 7) }
+        }
+      }
+    }
+  } catch {
+    // Fall through to default
+  }
+  return defaultDims
+}
 
 /**
  * POST /api/scans/capture-email
@@ -167,6 +191,48 @@ export async function POST(request: Request) {
 
     console.log(`[Email Capture Debug] ScanId: ${scanId}, Score: ${score}, Count: ${count}`)
 
+    // Fetch asset image for PDF embedding (images only, graceful fallback)
+    let assetImageForPdf: import('@/lib/pdf-generator').AssetImageData | undefined = undefined
+
+    if (scanData) {
+      const imgAsset = (
+        Array.isArray(scanData.assets) ? scanData.assets[0] : scanData.assets
+      ) as AssetRow | null
+
+      if (imgAsset?.storage_path && imgAsset?.file_type === 'image') {
+        try {
+          const { data: signedUrlData } = await supabase.storage
+            .from('uploads')
+            .createSignedUrl(imgAsset.storage_path, 60)
+
+          if (signedUrlData?.signedUrl) {
+            const imgResponse = await fetch(signedUrlData.signedUrl)
+            if (imgResponse.ok) {
+              const imgArrayBuffer = await imgResponse.arrayBuffer()
+              const imgBuffer = Buffer.from(imgArrayBuffer)
+
+              // Only embed if image is under 2MB to avoid bloating the PDF
+              if (imgBuffer.length < 2 * 1024 * 1024) {
+                const mime = imgAsset.mime_type || 'image/jpeg'
+                const format: 'JPEG' | 'PNG' = mime.includes('png') ? 'PNG' : 'JPEG'
+                const dims = parseImageDimensions(imgBuffer, format)
+
+                assetImageForPdf = {
+                  data: new Uint8Array(imgBuffer),
+                  format,
+                  width: dims.width,
+                  height: dims.height,
+                }
+              }
+            }
+          }
+        } catch (imgErr) {
+          console.error('[Email Capture] Failed to fetch asset image for PDF:', imgErr)
+          // Non-fatal: PDF will be generated without asset preview
+        }
+      }
+    }
+
     // Set immediate session cookie for instant unlock (UX only, real auth comes from link)
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
@@ -226,7 +292,7 @@ export async function POST(request: Request) {
           })),
         }
 
-        const doc = generateForensicReport(mappedScan, scanData.risk_profile as unknown as RiskProfile, true)
+        const doc = generateForensicReport(mappedScan, scanData.risk_profile as unknown as RiskProfile, true, assetImageForPdf)
         const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer
         const buffer = Buffer.from(arrayBuffer)
 

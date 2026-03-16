@@ -95,13 +95,28 @@ export function PricingCard({
                     </div>
                 ) : (
                     <>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-black text-[var(--rs-text-primary)] tracking-tighter">
-                                ${Math.round(price / 100)}
-                            </span>
-                            <span className="text-xs font-mono text-[var(--rs-text-tertiary)] uppercase tracking-wider">/mo</span>
+                        <div className="flex flex-col gap-1 items-start">
+                            {content.baseCommitment ? (
+                                <>
+                                    <span className="text-3xl font-black text-[var(--rs-text-primary)] tracking-tighter leading-none">
+                                        {content.baseCommitment}
+                                    </span>
+                                </>
+                            ) : (
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-4xl font-black text-[var(--rs-text-primary)] tracking-tighter">
+                                        ${Math.round(price / 100)}
+                                    </span>
+                                    <span className="text-xs font-mono text-[var(--rs-text-tertiary)] uppercase tracking-wider">/mo</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="min-h-[20px] mt-1">
+                        <div className="min-h-[30px] mt-2 flex flex-col gap-1">
+                            {content.effectiveRate && (
+                                <p className="text-xs font-mono text-[var(--rs-text-secondary)]">
+                                    {content.effectiveRate}
+                                </p>
+                            )}
                             {interval === 'annual' && !isFree && (
                                 <p className="text-[10px] text-[var(--rs-safe)] font-bold uppercase tracking-wider">
                                     Billed ${(plan.annualPriceCents / 100).toFixed(0)}/year
@@ -193,10 +208,10 @@ export function PricingCard({
                 </ul>
 
                 {/* Overage info */}
-                {!isFree && !isEnterprise && (
+                {!isFree && !isEnterprise && content.overageRate && (
                     <div className="mt-auto pt-4 border-t border-[var(--rs-border-primary)]/30">
-                        <p className="text-[9px] text-[var(--rs-text-tertiary)] uppercase tracking-wider font-mono">
-                            Overage: ${(plan.scanOverageCents / 100).toFixed(2)}/scan
+                        <p className="text-[9px] text-[var(--rs-signal)] uppercase tracking-wider font-mono font-bold">
+                            Overage: {content.overageRate}
                         </p>
                     </div>
                 )}

@@ -6,6 +6,9 @@ export interface PlanContent {
     name: string
     tagline: string
     audience: string
+    baseCommitment?: string
+    effectiveRate?: string
+    overageRate?: string
     idealFor: string[]
     softBenefits: string[]
     ctaPrimary: string
@@ -32,7 +35,10 @@ export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
     pro: {
         name: 'Pro',
         tagline: 'Brand Profile + Pro Reports',
-        audience: 'Freelancers & Solo Consultants',
+        audience: 'Individual creators and small teams clearing weekly campaigns.',
+        baseCommitment: '$49 Base Commitment',
+        effectiveRate: '$0.98 / scan (50 included)',
+        overageRate: '$2.50 / additional scan',
         idealFor: [
             'Consistent validation needs',
             'Applying custom brand guidelines',
@@ -48,7 +54,10 @@ export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
     team: {
         name: 'Team',
         tagline: 'Multi-Seat + Bulk Upload',
-        audience: 'Small to Medium Teams',
+        audience: 'Dedicated marketing arms publishing high-volume daily content.',
+        baseCommitment: '$199 Base Commitment',
+        effectiveRate: '$0.66 / scan (300 included)',
+        overageRate: '$1.00 / additional scan',
         idealFor: [
             'Collaborative review workflows',
             'High-volume content production',
@@ -64,7 +73,10 @@ export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
     agency: {
         name: 'Agency',
         tagline: 'White-Label + Priority Queue',
-        audience: 'Agencies & Content Studios',
+        audience: 'Enterprise multi-brand management and API-scale programmatic clearance.',
+        baseCommitment: '$499 Base Commitment',
+        effectiveRate: '$0.49 / scan (1,000 included)',
+        overageRate: '$0.60 / additional scan',
         idealFor: [
             'Managing multiple brand profiles',
             'Client-facing white-labeled reports',
@@ -81,6 +93,9 @@ export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
         name: 'Enterprise',
         tagline: 'SSO + Dedicated CSM',
         audience: 'Large Enterprise Operations',
+        baseCommitment: 'Custom Commitment',
+        effectiveRate: 'Custom / volume scale',
+        overageRate: 'Custom terms',
         idealFor: [
             'Custom integrations & SLA requirements',
             'Procurement and legal compliance',

@@ -107,3 +107,10 @@ UnifiedScanDrawer, ScanCard extraction, trust claims, detail fetch, lint clean.
 | **Findings Page Upgrade** | `/dashboard?scan=...` -> `/pricing` | `?source=dashboard_findings&plan=pro&scanId=...` | **PASS** (AuditModal trigger removed) |
 | **Scan-Specific Remediation** | `/dashboard?scan=...` -> Modal | Opens Mitigation Purchase modal (One-time $29) | **PASS** (Mitigation intent preserved) |
 | **Legacy /signup Redirect** | `/signup?plan=pro` -> `/register` | `?plan=pro` (307 redirect preserves query) | **PASS** (Handled in `next.config.js`) |
+
+## Consumption-Based Pricing Shift
+Following the persona-aware refactor, the pricing and marketing presentation was shifted from a traditional feature-gating model to a **"Consumption-Based Base Commitment"** model. This is purely a marketing and UX framing change, avoiding any disruption to the underlying Stripe or `lib/plans.ts` enforcement logic.
+* **`lib/marketing/plans-content.ts`**: Updated the central marketing dictionary to include `baseCommitment`, `effectiveRate` (e.g. `$0.98 / scan`), and `overageRate` strings mapped to existing pricing realities.
+* **`SubscriptionComparison.tsx`**: Updated the homepage pricing comparisons to clearly visualize base commitments vs overages, and added a striking "Value Anchor" callout comparing a $3,500 legal dispute to the $0.98 scan cost.
+* **`PricingCard.tsx`**: Removed the traditional `/mo` price tag from paid plans and replaced it with prominent Base Commitment typography, further spelling out the effective per-scan rate.
+* **`TenantPlanBadge.tsx`**: Upgraded the dashboard sidebar usage badge to proactively detect `status.scansUsed >= monthlyScanLimit`. If overage is triggered, it renders a flashing warning with contextual upsell copy (e.g., "Upgrading your base commitment to Team cuts per-scan cost by 50%").

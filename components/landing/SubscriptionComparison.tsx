@@ -71,6 +71,26 @@ export function PricingSection() {
                         </div>
                     </RSPanel>
                 </div>
+
+                {/* THE VALUE ANCHOR */}
+                <div className="mt-16 max-w-3xl mx-auto text-center">
+                    <div className="p-1.5 inline-block bg-gradient-to-br from-[var(--rs-signal)]/20 to-transparent rounded-2xl mb-6">
+                        <div className="bg-[var(--rs-bg-surface)] border border-[var(--rs-signal)]/30 rounded-xl px-6 py-4 flex flex-col md:flex-row items-center gap-4 text-left">
+                           <div className="w-10 h-10 shrink-0 bg-[var(--rs-signal)]/10 rounded-full flex items-center justify-center border border-[var(--rs-signal)]/20">
+                               <Check className="w-5 h-5 text-[var(--rs-signal)]" />
+                           </div>
+                           <div>
+                               <p className="rs-type-body text-sm text-[var(--rs-text-secondary)] mb-1">Average cost of a single forensic legal brand assessment:</p>
+                               <div className="flex items-baseline gap-3 relative">
+                                    <span className="rs-type-display font-black text-3xl text-[var(--rs-text-primary)] absolute line-through opacity-30 italic">$3,500</span>
+                                    <span className="rs-type-display font-black text-3xl text-[var(--rs-signal)] ml-[120px]">$0.98</span>
+                                    <span className="rs-type-mono text-[10px] uppercase font-bold text-[var(--rs-text-tertiary)] tracking-widest">(Cost of AI Risk Shield per asset)</span>
+                               </div>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
     )
@@ -97,9 +117,9 @@ function DesktopSpecSheet() {
                         <span className="rs-type-display text-2xl font-black tracking-tighter text-[var(--rs-text-primary)]">CLEARANCE</span>
                     </div>
 
-                    <TierHeader title="FREE" code="L0" price="$0" description="Verification Only" />
-                    <TierHeader title="PRO" code="L1" price="$49" description="Individual Teams" recommended />
-                    <TierHeader title="TEAM" code="L2" price="$99" description="Small Volume" />
+                    <TierHeader title="FREE" code="L0" baseCommitment="$0" effectiveRate="Verification Only" overageRate="-" />
+                    <TierHeader title="PRO" code="L1" baseCommitment="$49 Base Commitment" effectiveRate="$0.98 / scan (50 included)" overageRate="$2.50 / additional scan" recommended />
+                    <TierHeader title="TEAM" code="L2" baseCommitment="$199 Base Commitment" effectiveRate="$0.66 / scan (300 included)" overageRate="$1.00 / additional scan" />
                 </div>
 
                 {/* Spec Rows High Fidelity */}
@@ -139,7 +159,7 @@ function MobilePricingView() {
             features: [
                 { label: "CAPACITY", val: "3 / Month" },
                 { label: "DEPTH", val: "Verification" },
-                { label: "SEATS", val: "1 Seat" },
+                { label: "OVERAGE", val: "Blocked" },
             ],
             btn: <RSButton variant="ghost" fullWidth onClick={() => window.location.href='/dashboard'}>GET STARTED</RSButton>
         },
@@ -147,26 +167,27 @@ function MobilePricingView() {
             title: "PRO",
             code: "L1",
             price: "$49",
-            sub: "/mo",
-            desc: "Individual Teams",
+            sub: "Base Commitment",
+            desc: "Individual creators & small teams",
             isRecommended: true,
             features: [
-                { label: "CAPACITY", val: "50 / Month" },
-                { label: "DEPTH", val: "Legal Reasoning" },
+                { label: "INCLUDED", val: "50 Scans" },
+                { label: "EFFECTIVE", val: "$0.98 / scan" },
+                { label: "OVERAGE", val: "$2.50 / addt'l" },
                 { label: "REPORT", val: "Full Access" },
-                { label: "HISTORY", val: "30 Days" }
             ],
             btn: <RSButton variant="primary" fullWidth onClick={() => window.location.href='/pricing?plan=pro'}>SUBSCRIBE PRO</RSButton>
         },
         {
             title: "TEAM",
             code: "L2",
-            price: "$99",
-            sub: "/mo",
-            desc: "Small Volume",
+            price: "$199",
+            sub: "Base Commitment",
+            desc: "Dedicated marketing arms",
             features: [
-                { label: "CAPACITY", val: "200 / Month" },
-                { label: "HISTORY", val: "90 Days" },
+                { label: "INCLUDED", val: "300 Scans" },
+                { label: "EFFECTIVE", val: "$0.66 / scan" },
+                { label: "OVERAGE", val: "$1.00 / addt'l" },
                 { label: "SEATS", val: "5 Seats" }
             ],
             btn: <RSButton variant="secondary" fullWidth onClick={() => window.location.href='/pricing?plan=team'}>SUBSCRIBE TEAM</RSButton>
@@ -221,7 +242,7 @@ function MobilePricingView() {
 // --- SUB COMPONENTS ---
 
 
-function TierHeader({ title, code, price, description, recommended }: { title: string, code: string, price: string, description: string, recommended?: boolean }) {
+function TierHeader({ title, code, baseCommitment, effectiveRate, overageRate, recommended }: { title: string, code: string, baseCommitment: string, effectiveRate: string, overageRate: string, recommended?: boolean }) {
     return (
         <div className={cn(
             "p-6 flex flex-col items-center justify-between gap-4 relative transition-all duration-300",
@@ -237,14 +258,16 @@ function TierHeader({ title, code, price, description, recommended }: { title: s
                 <div className={cn("rs-type-display text-lg font-black tracking-tighter text-[var(--rs-text-primary)]")}>
                     {title}
                 </div>
-                <div className={cn("text-[10px] font-medium uppercase tracking-wide mt-1 text-[var(--rs-text-secondary)]")}>
-                    {description}
-                </div>
             </div>
 
-            <div className="flex items-baseline gap-0.5">
-                <span className={cn("text-3xl font-bold tracking-tighter text-[var(--rs-text-primary)]")}>{price}</span>
-                {price !== "$0" && <span className={cn("text-[10px] font-mono text-[var(--rs-text-secondary)]")}>/mo</span>}
+            <div className="flex flex-col items-center gap-0.5 mt-2 w-full text-center">
+                <span className={cn("font-bold tracking-tighter text-[var(--rs-text-primary)]", baseCommitment.includes('Base') ? "text-xl pb-1" : "text-3xl")}>{baseCommitment}</span>
+                <span className={cn("text-[10px] font-mono", recommended ? "text-[var(--rs-text-primary)] font-bold" : "text-[var(--rs-text-secondary)]")}>{effectiveRate}</span>
+                {overageRate !== '-' && (
+                     <span className={cn("text-[10px] mt-1 uppercase font-bold tracking-widest", recommended ? "text-[var(--rs-signal)]" : "text-[var(--rs-text-tertiary)]")}>
+                        {overageRate}
+                     </span>
+                )}
             </div>
         </div>
     )
