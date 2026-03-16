@@ -7,7 +7,7 @@ import { Check, Minus } from 'lucide-react'
 
 export function PricingSection() {
     return (
-        <section id="pricing" className="py-24 bg-[var(--rs-bg-surface)] rs-edge-top relative overflow-hidden">
+        <section id="pricing" className="scroll-mt-24 py-24 bg-[var(--rs-bg-surface)] rs-edge-top relative overflow-hidden">
 
             <div className="max-w-7xl mx-auto px-6 relative">
 
@@ -228,8 +228,22 @@ function TierHeader({ title, code, price, description, recommended }: { title: s
     )
 }
 
-function SpecRow({ label, basic, assessment, pro, highlight }: { label: string, basic: any, assessment: any, pro: any, highlight?: boolean }) {
-    const renderCell = (value: any, isRecommended: boolean) => {
+type SpecValue = string | boolean
+
+function SpecRow({
+    label,
+    basic,
+    assessment,
+    pro,
+    highlight,
+}: {
+    label: string
+    basic: SpecValue
+    assessment: SpecValue
+    pro: SpecValue
+    highlight?: boolean
+}) {
+    const renderCell = (value: SpecValue, isRecommended: boolean) => {
         if (typeof value === 'boolean') {
             return value ? <Check className="w-4 h-4 text-[var(--rs-safe)] mx-auto" /> : <Minus className="w-3 h-3 text-[var(--rs-text-tertiary)] mx-auto opacity-30" />
         }

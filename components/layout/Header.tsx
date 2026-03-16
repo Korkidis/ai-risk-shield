@@ -1,10 +1,34 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 import { Shield } from 'lucide-react'
 
 
 export function Header() {
+    const pathname = usePathname()
+    const router = useRouter()
+    const isHome = pathname === '/'
+    const protocolHref = isHome ? '#protocol' : '/#protocol'
+    const riskIndexHref = isHome ? '#benchmarks' : '/#benchmarks'
+    const pricingHref = isHome ? '#pricing' : '/#pricing'
+
+    const handleFreeScan = () => {
+        if (!isHome) {
+            router.push('/#scanner')
+            return
+        }
+
+        const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')
+
+        if (fileInput) {
+            fileInput.click()
+            return
+        }
+
+        document.getElementById('scanner')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
     return (
         <nav className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] backdrop-blur-md sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -41,13 +65,16 @@ export function Header() {
 
                 {/* NAVIGATION */}
                 <div className="hidden md:flex items-center gap-8">
-                    <Link href="#protocol" className="text-[11px] font-bold text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors uppercase tracking-widest">
+                    <Link href={protocolHref} className="text-[11px] font-bold text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors uppercase tracking-widest">
                         Protocol
                     </Link>
-                    <Link href="#benchmarks" className="text-[11px] font-bold text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors uppercase tracking-widest">
-                        Benchmarks
+                    <Link href={riskIndexHref} className="text-[11px] font-bold text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors uppercase tracking-widest">
+                        Guidance
                     </Link>
-                    <Link href="#pricing" className="text-[11px] font-bold text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors uppercase tracking-widest">
+                    <Link href="/ai-content-governance" className="text-[11px] font-bold text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors uppercase tracking-widest">
+                        Governance
+                    </Link>
+                    <Link href={pricingHref} className="text-[11px] font-bold text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors uppercase tracking-widest">
                         Pricing
                     </Link>
                     <Link href="/login" className="text-[11px] font-bold text-[var(--rs-text-secondary)] hover:text-[var(--rs-text-primary)] transition-colors uppercase tracking-widest">
@@ -55,7 +82,7 @@ export function Header() {
                     </Link>
 
                     <button
-                        onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+                        onClick={handleFreeScan}
                         className="bg-[var(--rs-signal)] hover:brightness-110 text-white shadow-[var(--rs-shadow-sm)] px-5 py-2 rounded-[2px] text-[10px] font-bold uppercase tracking-widest transition-all"
                     >
                         Free Scan

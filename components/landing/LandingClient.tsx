@@ -23,7 +23,7 @@ export function LandingClient() {
                 </div>
 
                 {/* 2a. The Forensic Analysis Bay (Scanner Widget) */}
-                <div className="w-full max-w-2xl">
+                <div id="scanner" className="w-full max-w-2xl scroll-mt-24">
                     <FreeUploadContainer
                         onUploadStart={() => {
                             // Optional: Scroll to top or prepare UI

@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { PostHogProvider } from '@/components/PostHogProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { getSiteUrl } from '@/lib/site'
 
 
 const inter = Inter({
@@ -18,8 +19,27 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'AI Risk Shield',
-  description: 'Forensic AI Audit',
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: 'AI Risk Shield',
+    template: '%s | AI Risk Shield',
+  },
+  description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'AI Risk Shield',
+    description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
+    url: '/',
+    siteName: 'AI Risk Shield',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'AI Risk Shield',
+    description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
+  },
 }
 
 // Inline script to prevent flash of wrong theme on page load
