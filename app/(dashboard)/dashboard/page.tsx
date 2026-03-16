@@ -86,7 +86,7 @@ export default function DashboardPage() {
         INITIAL_LOG_ENTRY
     ]);
 
-    const addLog = (message: string, status: 'active' | 'done' | 'error' = 'active') => {
+    const addLog = useCallback((message: string, status: 'active' | 'done' | 'error' = 'active') => {
         setLogs(prev => {
             const newLogs = prev.map(l => l.status === 'active' ? { ...l, status: 'done' as const } : l);
             const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -97,7 +97,7 @@ export default function DashboardPage() {
                 status
             }].slice(-6);
         });
-    };
+    }, []);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const emailGateRef = useRef<HTMLDivElement>(null);
@@ -145,6 +145,60 @@ export default function DashboardPage() {
             })
             .catch(() => { }) // Silently fail — selector stays at 'none'
     }, [])
+
+    // Poll for a scan that's still processing
+    const pollForCompletion = useCallback((scanId: string) => {
+        const supabase = createClient();
+        const channel = supabase.channel(`scan-${scanId}`);
+
+        channel
+            .on('broadcast', { event: 'progress' }, (payload) => {
+                if (payload.payload?.message) {
+                    addLog(payload.payload.message, 'active');
+                }
+            })
+            .subscribe();
+
+        const pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/scans/${scanId}`, { cache: 'no-store' });
+                if (!res.ok) return;
+                const scan = await res.json();
+
+                if (scan.status === 'complete') {
+                    clearInterval(pollInterval);
+                    supabase.removeChannel(channel);
+                    addLog('Analysis finalized. Telemetry stream active.', 'done');
+
+                    const mappedScan = mapScanToRecord(scan);
+                    setScanRecord(mappedScan);
+                    setCurrentScanId(scan.id);
+                    setNotesBuffer(mappedScan.notes || '');
+                    setEmailCaptured((prev) => prev || Boolean(scan.email));
+
+                    if (scan.asset_url) setPreviewUrl(scan.asset_url);
+
+                    const profile = mappedScan.risk_profile as RiskProfile;
+
+                    setAnalysisResult(profile);
+                    setScanStatus('complete');
+                    trackEvent('scan_completed', { scanId, score: profile.composite_score });
+                } else if (scan.status === 'failed') {
+                    clearInterval(pollInterval);
+                    supabase.removeChannel(channel);
+                    setScanStatus('error');
+                    setErrorMessage(scan.error_message || 'Analysis failed');
+                    addLog(`SCAN ABORTED: ${scan.error_message || 'Unknown error'}`, 'error');
+                    const mappedScan = mapScanToRecord(scan);
+                    setScanRecord(mappedScan);
+                    setCurrentScanId(scan.id);
+                    setEmailCaptured((prev) => prev || Boolean(scan.email));
+                }
+            } catch {
+                // Polling error, retry silently
+            }
+        }, 2000);
+    }, [addLog, mapScanToRecord]);
 
     // ─── VIEWER MODE: Load scan from ?scan=<id> param ────────────────────────
     const loadScanFromParam = useCallback(async (scanId: string) => {
@@ -198,61 +252,7 @@ export default function DashboardPage() {
             setErrorMessage(errMsg);
             addLog(`LOAD FAILED: ${errMsg}`, 'error');
         }
-    }, [mapScanToRecord]);
-
-    // Poll for a scan that's still processing
-    const pollForCompletion = (scanId: string) => {
-        const supabase = createClient();
-        const channel = supabase.channel(`scan-${scanId}`);
-
-        channel
-            .on('broadcast', { event: 'progress' }, (payload) => {
-                if (payload.payload?.message) {
-                    addLog(payload.payload.message, 'active');
-                }
-            })
-            .subscribe();
-
-        const pollInterval = setInterval(async () => {
-            try {
-                const res = await fetch(`/api/scans/${scanId}`, { cache: 'no-store' });
-                if (!res.ok) return;
-                const scan = await res.json();
-
-                if (scan.status === 'complete') {
-                    clearInterval(pollInterval);
-                    supabase.removeChannel(channel);
-                    addLog('Analysis finalized. Telemetry stream active.', 'done');
-
-                    const mappedScan = mapScanToRecord(scan);
-                    setScanRecord(mappedScan);
-                    setCurrentScanId(scan.id);
-                    setNotesBuffer(mappedScan.notes || '');
-                    setEmailCaptured((prev) => prev || Boolean(scan.email));
-
-                    if (scan.asset_url) setPreviewUrl(scan.asset_url);
-
-                    const profile = mappedScan.risk_profile as RiskProfile;
-
-                    setAnalysisResult(profile);
-                    setScanStatus('complete');
-                    trackEvent('scan_completed', { scanId, score: profile.composite_score });
-                } else if (scan.status === 'failed') {
-                    clearInterval(pollInterval);
-                    supabase.removeChannel(channel);
-                    setScanStatus('error');
-                    setErrorMessage(scan.error_message || 'Analysis failed');
-                    addLog(`SCAN ABORTED: ${scan.error_message || 'Unknown error'}`, 'error');
-                    const mappedScan = mapScanToRecord(scan);
-                    setScanRecord(mappedScan);
-                    setCurrentScanId(scan.id);
-                    setEmailCaptured((prev) => prev || Boolean(scan.email));
-                }
-            } catch {
-                // Polling error, retry silently
-            }
-        }, 2000);
-    };
+    }, [addLog, mapScanToRecord, pollForCompletion]);
 
     // ─── Effect: Fetch billing/plan status on mount (always, for all authenticated users) ──
     useEffect(() => {
@@ -362,10 +362,14 @@ export default function DashboardPage() {
         });
     }, [scanIdParam, isVerified, loadScanFromParam]);
 
+    const lastSyncedScanId = useRef<string | null>(null);
+
     useEffect(() => {
         if (!scanRecord) return;
+        if (lastSyncedScanId.current === scanRecord.id) return;
+        lastSyncedScanId.current = scanRecord.id;
         setNotesBuffer(scanRecord.notes || '');
-    }, [scanRecord?.id]);
+    }, [scanRecord]);
 
     // ─── SCANNER MODE: File upload (anonymous + authenticated) ───────────────
     const handleFileProcess = async (file: File) => {

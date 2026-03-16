@@ -93,10 +93,15 @@ function ScansReportsContent() {
     }, [updateUrl])
 
     // Data Fetching — passes search/sort/filter to server
-    const fetchScans = async (isBackground = false) => {
+    // Ref holds current filter state so fetchScans can be a stable useCallback
+    const filtersRef = useRef({ searchTerm, sortBy, filterRisk })
+    filtersRef.current = { searchTerm, sortBy, filterRisk }
+
+    const fetchScans = useCallback(async (isBackground = false) => {
         if (!isBackground) setIsLoading(true)
         setError(null)
         try {
+            const { searchTerm, sortBy, filterRisk } = filtersRef.current
             const params = new URLSearchParams()
             if (searchTerm.trim()) params.set('search', searchTerm.trim())
             if (filterRisk !== 'all') params.set('risk_level', filterRisk)
@@ -145,18 +150,17 @@ function ScansReportsContent() {
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [])
 
     useEffect(() => {
         fetchScans()
-    }, [])
+    }, [fetchScans])
 
     // Re-fetch when sort or filter changes (debounced for search)
     useEffect(() => {
         setPage(1)
         fetchScans()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sortBy, filterRisk])
+    }, [sortBy, filterRisk, fetchScans])
 
     // Debounced search — re-fetches from server after 300ms
     useEffect(() => {
@@ -166,8 +170,7 @@ function ScansReportsContent() {
             fetchScans()
         }, 300)
         return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current) }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchTerm])
+    }, [searchTerm, fetchScans])
 
     // Realtime subscription for processing scans (replaces polling)
     const handleScanUpdate = useCallback((updated: Partial<ScanWithRelations> & { id: string }) => {
@@ -394,9 +397,9 @@ function ScansReportsContent() {
             pollMitigation();
         }
 
-    }, [searchParams, scans, selectedScanId, pathname, router]) // Re-run when scans load so we can find the highlighted one
+    }, [searchParams, scans, selectedScanId, pathname, router, fetchScans]) // Re-run when scans load so we can find the highlighted one
 
-    const selectedScan = scans.find(s => s.id === selectedScanId)
+    const selectedScan = useMemo(() => scans.find(s => s.id === selectedScanId), [scans, selectedScanId])
 
     const handleScanClick = (id: string) => {
         if (selectedScanId === id) {
@@ -450,13 +453,15 @@ function ScansReportsContent() {
     }
 
     const [notesBuffer, setNotesBuffer] = useState('')
+    const lastSyncedId = useRef<string | null>(null)
 
     // Sync buffer when selection changes
     useEffect(() => {
-        if (selectedScan) {
-            setNotesBuffer(selectedScan.notes || '')
-        }
-    }, [selectedScanId, scans]) // Update when scan selection or data changes
+        if (!selectedScan) { lastSyncedId.current = null; return }
+        if (lastSyncedId.current === selectedScan.id) return
+        lastSyncedId.current = selectedScan.id
+        setNotesBuffer(selectedScan.notes || '')
+    }, [selectedScan])
 
     const handleSaveNotes = async (newNotes: string) => {
         if (!selectedScanId) return
@@ -557,7 +562,7 @@ function ScansReportsContent() {
             monthly_mitigation_limit: billingStatus.monthlyMitigationLimit ?? 0,
             mitigations_used_this_month: billingStatus.mitigationsUsedThisMonth ?? 0,
         })
-    }, [billingStatus, userContext?.tenant_id])
+    }, [billingStatus])
 
     const handleDownload = (scan: ScanWithRelations) => {
         if (!scan) return
