@@ -6,6 +6,26 @@
 We are not adding features. We are completing the transaction.
 The measure of "done" is: can someone scan an image, feel scared, pay $29, and get a PDF they can hand to legal, without dead ends, fake claims, or silent failures?
 
+## Active Session: AI Content Governance MVP
+
+- [x] Write mini-spec for the governance hub + live risk index widget
+- [x] Create typed governance content/data model for homepage and crawlable guides
+- [x] Replace landing `MarketExposure` with a data-backed AI risk index section
+- [x] Add first crawlable `AI Content Governance` hub + guide pages with metadata/schema
+- [x] Add sitemap/robots support for the new marketing routes
+- [x] Validate touched surfaces with targeted lint + type-check
+
+### Review
+- Added a typed governance data layer powering the homepage index, hub page, guide pages, and sitemap.
+- Reworked the landing governance section into three JTBD-focused rows plus a secondary CTA to the hub.
+- Added `/ai-content-governance` plus six guide pages with page-specific metadata and schema.
+- Added root metadata improvements plus `robots.ts` and `sitemap.ts` for crawlability.
+- Simplified the hub layout by promoting mitigation/control-stack guidance into its own sixth tile and moving the public lawsuit / standards links into a cleaner watch section.
+- Fixed the shared header so off-home navigation routes correctly back to homepage anchors and the scanner CTA never becomes a dead button.
+- Added explicit source anchors and related-guide internal links so the governance pages read like authoritative content assets, not isolated landing pages.
+- Targeted ESLint and project type-check passed.
+- `next build` was blocked in sandbox because `next/font` could not fetch Google Fonts.
+
 ## Status Legend
 - `DONE`: Implemented in repo and aligned with the requirement.
 - `PARTIAL`: Implemented, but incomplete or not yet at launch quality.

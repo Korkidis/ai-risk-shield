@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { PostHogProvider } from '@/components/PostHogProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { getSiteUrl } from '@/lib/site'
 
 
 const inter = Inter({
@@ -18,18 +19,26 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'AI Content Risk Score — Check AI Images for Copyright Risk in 15s',
-  description: 'Validate AI-generated images for copyright risk, brand safety, and C2PA provenance. Get an instant risk score and downloadable evidence for legal review.',
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: 'AI Risk Shield',
+    template: '%s | AI Risk Shield',
+  },
+  description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
-    title: 'AI Content Risk Score — Know Before You Publish',
-    description: 'Validate AI-generated images for copyright risk, brand safety, and provenance verification in 15 seconds.',
+    title: 'AI Risk Shield',
+    description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
+    url: '/',
+    siteName: 'AI Risk Shield',
     type: 'website',
-    siteName: 'AI Content Risk Score',
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'AI Content Risk Score — Know Before You Publish',
-    description: 'Check AI images for copyright risk in 15 seconds. Free tier available.',
+    card: 'summary',
+    title: 'AI Risk Shield',
+    description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
   },
 }
 
@@ -57,7 +66,7 @@ export default function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          "name": "AI Content Risk Score",
+          "name": "AI Risk Shield",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
           "description": "AI content risk validation — IP risk scoring, C2PA provenance verification, and forensic reporting in 15 seconds.",

@@ -5,7 +5,7 @@ import { RSPanel } from '../rs/RSPanel'
 
 export function HowItWorks() {
     return (
-        <section id="protocol" className="py-24 bg-[var(--rs-bg-well)] rs-bg-grid rs-edge-top relative overflow-hidden">
+        <section id="protocol" className="scroll-mt-24 py-24 bg-[var(--rs-bg-well)] rs-bg-grid rs-edge-top relative overflow-hidden">
             {/* Ruler Gutter - Left */}
             <div className="absolute left-0 top-0 bottom-0 w-12 border-r border-[var(--rs-border-primary)]/50 hidden md:flex flex-col items-center py-4 overflow-hidden bg-[var(--rs-bg-well)] z-20">
                 {Array.from({ length: 40 }).map((_, i) => (

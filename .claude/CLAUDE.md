@@ -1,4 +1,4 @@
-# AI Content Risk Score - Claude Code Guide
+# AI Risk Shield - Claude Code Guide
 
 ## Project Overview
 SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Turbopack) + Supabase + Google Gemini 2.5 Flash + Stripe.
@@ -91,7 +91,7 @@ SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Tur
 - **Metered overage billing:** Stripe Usage Records for paid plans exceeding monthly limits
 - **Webhook handler:** `app/api/stripe/webhook/route.ts` processes `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
 - **Plan sync:** `applyPlanToTenant()` syncs all limits and feature flags from `lib/plans.ts` to tenant record
-- **Entitlements:** `lib/entitlements.ts` centralizes access control (`canViewFullReport`, `canViewTeaser`, `isQuotaExceeded`)
+- **Entitlements:** `lib/entitlements.ts` centralizes access control (`canViewScanReport`, `canGenerateMitigation`, `canViewTeaser`, `isQuotaExceeded`)
 
 ## Common Mistakes to Avoid
 
@@ -114,18 +114,14 @@ app/
 │   └── dashboard/
 │       ├── page.tsx             # Scanner (main upload + analysis)
 │       ├── scans-reports/       # THE CANONICAL PRODUCT PAGE
-│       ├── brand-guidelines/    # Guidelines CRUD (UI works, not wired to analysis)
+│       ├── brand-guidelines/    # Guidelines CRUD (wired to scan analysis for images — Phase F)
 │       ├── help/                # FAQ + docs (scaffolding)
-│       ├── history/             # STUB → should redirect to scans-reports
-│       ├── reports/             # STUB → should redirect to scans-reports
-│       ├── audit-logs/          # Audit log viewer (AGENCY+ feature gate)
-│       ├── team/                # Team management (TEAM+ feature gate)
+│       ├── history/             # Redirects to scans-reports
+│       ├── reports/             # Redirects to scans-reports
 │       └── design-lab/          # Internal component showcase (hide from customers)
 ├── (marketing)/         # Pricing page
 ├── api/                 # API routes
-│   ├── scans/           # Upload, process, capture-email, assign-to-user, list, [id], [id]/frames, anonymous-quota, anonymous-upload
-│   ├── audit-logs/      # Audit log API (AGENCY+)
-│   ├── team/            # Team invite, members, invites APIs (TEAM+)
+│   ├── scans/           # Upload, process, capture-email, assign-to-user, list, [id], anonymous-quota, anonymous-upload
 │   ├── stripe/          # Checkout + webhook
 │   ├── switch-tenant/   # Multi-tenant switching
 │   └── guidelines/      # Brand guidelines CRUD
@@ -144,20 +140,16 @@ lib/
 ├── pdf-generator.ts    # Sample/full PDF report generation
 ├── email.ts            # Resend email sending
 ├── c2pa.ts             # C2PA verification (c2pa-node integration)
-├── video/              # FFmpeg processing (extract-frames.ts, processor.ts with getVideoDuration)
-├── __tests__/          # Unit tests (plans-video, entitlements)
+├── video/              # FFmpeg processing (extract-frames.ts)
 └── stripe/             # Stripe integration
 
 components/
 ├── rs/                 # Design system (62+ "forensic instrument" components)
 ├── landing/            # Landing page components (FreeUploadContainer, LandingClient, etc.)
 ├── marketing/          # AuditModal, pricing components
-├── billing/            # UpgradeButton, OneTimePurchaseButton, MitigationPurchaseButton
+├── billing/            # UpgradeButton, OneTimePurchaseButton
 ├── email/              # React Email templates (SampleReportEmail, MagicLinkEmail)
-└── dashboard/          # Dashboard-specific (VideoFrameGrid, TeamClient, AuditLogClient, etc.)
-
-.github/
-└── workflows/ci.yml    # CI pipeline: lint → type-check → vitest → build
+└── dashboard/          # Dashboard-specific components
 ```
 
 ## Environment Variables
@@ -188,7 +180,7 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) —
 
 - [ ] Upload image → verify scores appear
 - [ ] Upload video as free user → verify blocked
-- [ ] Upload video as paid user → verify dynamic frame count per plan tier
+- [ ] Upload video as paid user → verify 5 frames analyzed (MVP)
 - [ ] Hit quota limit (free) → verify upgrade modal
 - [ ] Hit quota limit (paid) → verify overage allowed
 - [ ] Cross-tenant test → verify can't access other tenant's data
@@ -197,13 +189,6 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) —
 - [ ] Email gate → verify shadow user creation and magic link delivery
 - [ ] $29 one-time purchase → verify Stripe checkout → webhook → scan.purchased = true
 - [ ] Subscription purchase → verify plan applied to tenant
-- [ ] Upload video exceeding plan duration → verify 413 `VIDEO_DURATION_EXCEEDED`
-- [ ] View video frame analysis in drawer → verify `VideoFrameGrid` renders
-- [ ] View audit logs as AGENCY+ user → verify page loads
-- [ ] View audit logs as PRO user → verify upgrade prompt
-- [ ] Invite team member as TEAM+ owner → verify email sent + invite listed
-- [ ] Invitee clicks magic link → verify joins inviter's tenant (not stray tenant)
-- [ ] Hit seat limit → verify 403 with descriptive error
 
 ## Database Schema Overview
 
@@ -222,12 +207,8 @@ ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) —
 - `referral_events` - Insurance referral tracking (schema exists)
 - `tenant_invites` - Team invite tokens (schema exists, `metadata` column confirmed in live DB)
 
-### Pending Schema Drift
-Two migrations created but NOT applied to live DB:
-- `20260211_add_tenant_invites_metadata.sql`
-- `20260211_add_tenant_switch_audit_created_at_index.sql` (CONCURRENTLY — must run outside transaction)
-
-Note: User reported applying these + the Feb 15 migrations (`risk_profile_blob`, `fix_scan_assignment`, `cleanup_shadow_users_rpc`, `enable_realtime_scans`) on Feb 16. Verify in Supabase dashboard if uncertain.
+### Schema Drift — Resolved
+All migrations verified applied to production DB on 2026-03-15 (object-level verification: columns, indexes, RLS policies, functions, grants). No pending schema drift remains. See `.claude/CURRENT_STATE.md` §8 for full production-verified inventory.
 
 ### Every Table Must Have
 - `id` (UUID primary key)
@@ -237,22 +218,11 @@ Note: User reported applying these + the Feb 15 migrations (`risk_profile_blob`,
 
 ## Video Processing Rules
 
-- **Paid tiers only** - Check plan before allowing upload (`videoMaxDurationSeconds > 0`)
-- **Dynamic frame count per plan tier** - Configured via `PlanConfig.videoFrameLimit`:
-  | Tier | Max Duration | Frames |
-  |------|-------------|--------|
-  | FREE | 0 (blocked) | 0 |
-  | PRO | 120s (2min) | 5 |
-  | TEAM | 300s (5min) | 10 |
-  | AGENCY | 600s (10min) | 15 |
-  | ENTERPRISE | 600s (10min) | 15 |
-- **Duration enforcement** - `getVideoDuration()` via ffprobe at upload, compared against `videoMaxDurationSeconds`
-- **Size cap** - 250MB max for video uploads (memory safety on serverless)
+- **Paid tiers only** - Check plan before allowing upload
+- **Extract 5 frames (MVP)** - Evenly distributed across video duration. Will increase to 10 post-MVP once cost model validated.
 - **Aggregate scores** - Use MAX(all frame scores), not average
-- **Frame persistence** - Frames stored to `uploads/{tenant_id}/frames/{scanId}/frame_XXX.jpg` in Supabase Storage
-- **Frame retrieval** - `/api/scans/[id]/frames` returns signed URLs + per-frame scores
-- **Storage cleanup** - Both retention scripts delete frame files before parent scan/asset
-- **Enterprise capped same as Agency** - No worker/queue, Vercel function timeout makes longer video unsafe
+- **Storage** - Delete frames after retention period (same as video)
+- **Frame limit** - 5 frames for MVP cost efficiency; `extractFrames()` default parameter is 10 for future use
 
 ## Quota Enforcement
 
@@ -273,7 +243,7 @@ if (!allowed && plan === 'free') {
 - **Region:** US East (iad1) - or closest to target users
 - **Environment:** Separate env vars for preview vs production
 
-## Known Issues (Current as of Feb 17, 2026)
+## Changelog (Phases A through Sprint 10.5)
 
 ### Pipeline Unified (Phase A Complete)
 Both authenticated and anonymous paths now route through `lib/ai/scan-processor.ts`. C2PA runs for all scans. `/api/analyze` (legacy sync endpoint) has been deleted.
@@ -285,7 +255,7 @@ Both authenticated and anonymous paths now route through `lib/ai/scan-processor.
 Upload API extracts `guidelineId` from formData, validates tenant ownership, stores `guideline_id` on scan record. Scan processor fetches the guideline and passes it to `analyzeImageMultiPersona()`. Dashboard has guideline selector dropdown (only shows if user has created guidelines). Video pipeline guidelines deferred (needs per-frame prompt injection).
 
 ### Phase D Complete (Feb 17, 2026)
-- Entitlements enforced in scans-reports drawer (gated findings, sample vs full PDF via `Entitlements.canViewFullReport()`)
+- Entitlements enforced in scans-reports drawer (gated findings, sample vs full PDF via `Entitlements.canViewScanReport()`)
 - Share button wired: API call → clipboard copy → animated toast
 - AuditModal rendering with real Stripe checkout buttons (`OneTimePurchaseButton` + `UpgradeButton`)
 - Bulk download/share wired in `RSBulkActionBar`
@@ -322,7 +292,7 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **billing.ts `as any` removed**: Cast replaced with `Pick<ExtendedTenant, ...>` for real type safety
 - **Soft gate data leak fixed**: `scan_findings` descriptions were returned in full for unauthenticated viewers — now masked with "Unlock full report to view details." (titles/severity preserved as teasers)
 - **Provenance masking gap fixed**: `provenance_report.reasoning` was not masked in the soft gate while IP and safety reports were — now masked consistently
-- **Supabase types note**: `lib/supabase/types.ts` is stale (still has old column names) — causes `as any` casts across the codebase. Run `supabase gen types typescript` against live DB to regenerate.
+- **Supabase types note**: Resolved in Phase R — types rebuilt from production schema, `as any` casts reduced to ~10 (external library boundaries only).
 
 ### Phase J Complete (Feb 19, 2026)
 - **sort_by injection fixed**: `/api/scans/list` now whitelists allowed sort fields (`created_at`, `composite_score`, `risk_level`, `status`) — prevents injection via `.order()`
@@ -354,7 +324,7 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Error detail leak sealed**: Upload route `scanError.message` no longer exposed to clients in scan creation failure response
 
 ### Phase N Complete (Feb 20, 2026)
-- **Stripe webhook idempotency**: Event IDs tracked in-memory Set — duplicate events from Stripe retries are now skipped (prevents double charges, duplicate user creation)
+- **Stripe webhook idempotency**: Event IDs checked against `audit_log` table — duplicate events from Stripe retries are now skipped (prevents double charges, duplicate user creation)
 - **NaN-safe pagination**: `parseInt` calls in `/api/scans/list` now have `|| fallback` after radix 10 — prevents `NaN` offset from empty string params
 - **JSON.parse safety**: `guidelines/extract` now catches malformed Gemini JSON responses with 422 instead of unhandled exception
 - **Security headers**: Added `Permissions-Policy` (camera/mic/geo disabled) and `X-Permitted-Cross-Domain-Policies: none` to `next.config.js`
@@ -399,57 +369,17 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Server-side unlock fixed**: `capture-email` persists email to scan record; `/api/scans/[id]` masking lifts when `scan.email` present. Email persistence failure is fatal (500).
 - **Atomic mitigation credits**: `consume_mitigation_quota()` RPC with `FOR UPDATE` lock + check + increment in single PG transaction. Replaces TOCTOU-prone separate read + increment.
 - **CAS enforcement on status transitions**: Both `pending→processing` and `failed→processing` transitions use `.select('id')` + zero-row check to prevent double-generation from concurrent requests
-- **Mitigation generator extracted**: `lib/ai/mitigation-generator.ts` with `generateMitigationReport()` and `generateMitigationPdf()`
+- **Mitigation generator extracted**: `lib/ai/mitigation-generator.ts` with `generateMitigationReport()` (JSON generation only — PDF export not yet implemented)
 - **PDF gating corrected**: In-app scan report downloads are always full (`isSample = false`). Sample PDFs only in pre-account email.
 - **Quota boundary hardened**: `v_new_used + p_amount > limit` (correct for bulk amounts)
 
-### Sprint 11 Complete (Mar 14, 2026)
-- **Rebrand**: "AI Risk Shield" → "AI Content Risk Score" across all customer-facing UI, metadata, emails, PDFs, navbars
-- **Video production-readiness**: Plan-tier video config (`videoMaxDurationSeconds`, `videoFrameLimit` on `PlanConfig`). Dynamic frame count from tenant plan. `getVideoDuration()` via ffprobe for upload-time enforcement. Duration + 250MB size limits at upload. Frame persistence to Supabase Storage. Frames API (`/api/scans/[id]/frames`). `VideoFrameGrid` component wired into `UnifiedScanDrawer`. Frame cleanup in both retention scripts. Enhanced realtime progress with `frameData`.
-- **Audit log viewer**: `/api/audit-logs` API (paginated, filterable by action/resource/date). `/dashboard/audit-logs` page + `AuditLogClient.tsx`. AGENCY+ feature gate. Conditional sidebar nav.
-- **Team management**: Auth callback invite-aware provisioning (prevents stray tenant on invited user's first login). Partial unique index on `(tenant_id, lower(email)) WHERE accepted_at IS NULL`. `/api/team/invite` + `/api/team/members` + `/api/team/invites` APIs. `/dashboard/team` page + `TeamClient.tsx` with seat gauge, role management, invite modal. TEAM+ feature gate. Conditional sidebar nav.
-- **CI pipeline**: `.github/workflows/ci.yml` — lint → type-check → vitest → build on PR/push to main
-- **Unit tests**: 94 tests passing (13 plans-video + 41 entitlements + 40 risk scoring)
-- **Lint cleanup**: 111 errors → 0 errors (17 legitimate warnings: Next.js error boundaries, React hooks deps, design system `<img>` elements)
-- **Type safety**: Zero `tsc --noEmit` errors maintained
-
-### Sprint 12 Complete (Mar 14, 2026)
-- **Findings liberated from scroll constraint**: Dashboard right pane restructured from proportional flex (`flex-[1.3]` + `flex-1`) to natural-height scroll unit (`shrink-0` + parent `overflow-y-auto`). `RSFindingsDossier` inner `overflow-y-auto` and `flex-1` removed — all findings render at full height, no inner scrollbar.
-- **Mitigation CTA elevated to sticky footer**: Extracted `MitigationCTA` from scrollable section in `UnifiedScanDrawer` → `shrink-0` footer with `backdrop-blur-md` between scroll area and `</motion.div>`, always visible without scrolling.
-- **Telemetry de-theatered**: All 12 provenance row labels humanized in both `dashboard/page.tsx` and `ProvenanceTelemetryStream.tsx` (`MANIFEST_STORE` → `CONTENT_ORIGIN`, `CHAIN_OF_CUSTODY` → `EDIT_CHAIN`, `CLAIM_SIGNATURE` → `DIGITAL_SIGNATURE`, etc.). Values use plain language (`VERIFIED`, `INTACT`, `NOT DETECTED`). Loading states use real dimension names instead of `SCANNING_SECTOR_N`. Header/footer theater removed (`BRAVO-RACK-09`, `Buffer: Ready` → `Content Credentials`, `Status: Active`).
-- **Secret sauce scrubbed**: Removed `Google Gemini 2.5 Flash`, exact scoring weights (70/20/10%), temperature settings (`0.2`), agent architecture (`three specialized system prompts`), `c2pa-node` library reference, and unit test counts from all customer-facing UI (landing, dashboard, help, design-lab). Replaced with `AI-Powered Analysis`, `weighted blend`, `three independent dimensions`.
-- **Placeholder theater killed**: `Analyst_Notes` → `Compliance_Log`, `// START_KEYBOARD_STREAM...` → natural placeholder text. `ViT-H/14` model reference removed from design-lab. `MODEL_VERSION` → `ANALYSIS_ENGINE` (all occurrences).
-- **Telemetry panel hardened**: `SYS.09` dimmed to `text-white/10`. Footer changed from hardcoded `Cryptographic Seal Verified` → conditional `Provenance Verified` / `No Provenance Data` based on actual `CONTENT_ORIGIN` row status in real data.
-- **All 5 pending DB migrations applied**: `rate_limits`, `harden_rate_limits`, `atomic_mitigation_usage`, `atomic_mitigation_quota`, `team_invites_unique_constraint` — schema drift fully resolved.
-
-### Sprint 13 Complete (Mar 15, 2026)
-- **Mobile hamburger navigation**: `Header.tsx` rewritten with slide-down panel, outside-click dismiss, body scroll lock, hamburger/X toggle
-- **Pricing CTAs wired**: `SubscriptionComparison.tsx` buttons route to `/login?plan=pro` and `/login?plan=report` for conversion funnel
-- **Risk panel deferred**: RSRiskPanel only renders when `isComplete` with `animate-in fade-in slide-in-from-right-4` transition
-- **Sample PDF voice rewritten**: Hero finding shown in full, teasers show 80-char summaries, CTA sells remediation ($29) not "unlock full report"
-- **Scanner dual-axis animation**: `RSScanner.tsx` + globals.css keyframes for scan-line effect
-- **Dark mode color fixes**: RSC2PAWidget, RSSectionHeader, ProvenanceTelemetryStream, globals.css
-- **Video gate alert() replaced**: Inline `RSCallout` in `FreeUploadContainer.tsx` instead of browser alert
-- **SEO metadata**: Title, description, OG tags added to root `app/layout.tsx`
-- **Brand rename**: "RiskShield" → "RiskScore" in header navigation
-- **Full product audit**: `brain/PRODUCT_AUDIT.md` — 484-line code-level + visual evidence audit with 17-item friction log
-
-### Sprint 13.1 Complete (Mar 15, 2026)
-- **Pricing CTA conversion path fixed**: `login()` server action now supports `next` redirect param (matching `signUp()` pattern). Login + register pages read `plan` from searchParams, compute `nextUrl`, pass as hidden form field. Dashboard auto-triggers Stripe checkout when `?checkout=pro` or `?checkout=report` present. Open redirect guard: `next.startsWith('/') && !next.startsWith('//')`.
-- **Mitigation tenant_id mismatch fixed**: `userContext.tenant_id` now sourced from `billingStatus.tenantId` (authenticated user's real tenant) instead of `scanRecord?.tenant_id`. Applied to both `dashboard/page.tsx` and `scans-reports/page.tsx`. `BillingStatus` type extended with `tenantId` field.
-- **Cross-tenant mitigation CTA guard**: `UnifiedScanDrawer` receives `userTenantId` prop; mitigation CTA suppressed when scan belongs to different tenant.
-- **Failed scan error state**: Failed scans render `RSCallout variant="danger"` with `error_message` instead of RSRiskPanel "SYSTEM IDLE". Findings section hidden for failed scans.
-- **Freemium path instrumentation**: `[Perf]` timing logs added to `anonymous-upload` (processScan duration) and `capture-email` (PDF generation + total route time).
-
-### Pending Schema Drift (Updated Mar 14 — Sprint 12)
-All previously pending migrations have been applied to the live DB:
-- ✅ `20260224_rate_limits.sql` — rate_limits table + cleanup function
-- ✅ `20260228_harden_rate_limits.sql` — atomic `check_rate_limit_atomic()` fn
-- ✅ `20260302_atomic_mitigation_usage.sql` — `increment_tenant_mitigation_usage()` RPC
-- ✅ `20260303_atomic_mitigation_quota.sql` — `consume_mitigation_quota()` atomic RPC
-- ✅ `20260314_team_invites_unique_constraint.sql` — partial unique index on pending invites
-
-No pending schema drift as of Mar 14, 2026.
+### Schema Drift — Resolved (Verified 2026-03-15)
+All migrations applied to production DB. Verified live on 2026-03-15:
+- `rate_limits` table — exists with RLS enabled
+- `check_rate_limit_atomic()` — SECURITY DEFINER, search_path=public, EXECUTE to service_role + owner
+- `cleanup_stale_rate_limits()` — SECURITY DEFINER, search_path=public, EXECUTE to service_role + owner
+- `increment_tenant_mitigation_usage()` — SECURITY DEFINER, EXECUTE to authenticated + service_role + owner
+- `consume_mitigation_quota()` — SECURITY DEFINER, EXECUTE to authenticated + service_role + owner
 
 ## Lessons Learned (Updated as we build)
 
@@ -498,4 +428,4 @@ No pending schema drift as of Mar 14, 2026.
 
 ---
 
-**Last Updated:** 2026-03-15 (Sprint 13.1 — Pricing CTA wired through login, tenant_id mismatch fixed, failed scan error state, freemium path instrumentation)
+**Last Updated:** 2026-03-15 (Documentation reconciliation — removed stale migration drift claims, fixed entitlement function names, corrected changelog accuracy. See `.claude/CURRENT_STATE.md` for canonical shipped state.)

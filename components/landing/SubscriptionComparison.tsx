@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { RSButton } from "../rs/RSButton"
 import { RSPanel } from "../rs/RSPanel"
 import { cn } from '@/lib/utils'
@@ -8,7 +7,7 @@ import { Check, Minus } from 'lucide-react'
 
 export function PricingSection() {
     return (
-        <section id="pricing" className="py-24 bg-[var(--rs-bg-surface)] rs-edge-top relative overflow-hidden">
+        <section id="pricing" className="scroll-mt-24 py-24 bg-[var(--rs-bg-surface)] rs-edge-top relative overflow-hidden">
 
             <div className="max-w-7xl mx-auto px-6 relative">
 
@@ -16,13 +15,13 @@ export function PricingSection() {
                 <div className="text-center mb-16 space-y-4 pt-12">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-[var(--rs-bg-secondary)] border border-[var(--rs-border-primary)] rounded-full mb-4">
                         <div className="w-1.5 h-1.5 rounded-full bg-[var(--rs-signal)] animate-pulse" />
-                        <span className="rs-type-mono text-[10px] tracking-widest text-[var(--rs-text-secondary)]">PRICING</span>
+                        <span className="rs-type-mono text-[10px] tracking-widest text-[var(--rs-text-secondary)]">CLEARANCE_MATRIX_P100</span>
                     </div>
                     <h2 className="text-4xl md:text-5xl rs-header-bold-italic tracking-tighter text-[var(--rs-text-primary)]">
-                        CHOOSE YOUR <span className="text-[var(--rs-signal)]">PLAN</span>
+                        CLEARANCE <span className="text-[var(--rs-signal)]">ACCESS</span>
                     </h2>
                     <p className="rs-type-body text-[var(--rs-text-secondary)] text-lg max-w-2xl mx-auto">
-                        Select the analysis depth that matches your needs.
+                        Determine the forensic depth required for your operational theater.
                     </p>
                 </div>
 
@@ -59,7 +58,6 @@ export function PricingSection() {
 // --- DESKTOP VIEW ---
 
 function DesktopSpecSheet() {
-    const router = useRouter()
     return (
         <div className="max-w-6xl mx-auto relative group">
             {/* Ambient Backlight Glow */}
@@ -78,9 +76,9 @@ function DesktopSpecSheet() {
                         <span className="rs-type-display text-2xl font-black tracking-tighter text-[var(--rs-text-primary)]">CLEARANCE</span>
                     </div>
 
-                    <TierHeader title="FREE" code="L0" price="$0" description="Quick Assessment" />
-                    <TierHeader title="FULL REPORT" code="L1" price="$29" description="Deep Analysis" recommended />
-                    <TierHeader title="PRO" code="L2" price="$49" description="Volume Access" />
+                    <TierHeader title="BASIC" code="L0" price="$0" description="Single Check" />
+                    <TierHeader title="ASSESSMENT" code="L1" price="$29" description="Deep Report" recommended />
+                    <TierHeader title="PROFESSIONAL" code="L2" price="$49" description="Volume Access" />
                 </div>
 
                 {/* Spec Rows High Fidelity */}
@@ -95,12 +93,12 @@ function DesktopSpecSheet() {
                 {/* Footer Action Bar */}
                 <div className="grid grid-cols-4 bg-[var(--rs-bg-element)]/60 backdrop-blur-sm border-t border-[var(--rs-border-primary)]">
                     <div className="p-4" />
-                    <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth onClick={() => document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth' })}>Start Free</RSButton></div>
+                    <div className="p-4 flex justify-center"><RSButton variant="ghost" size="sm" fullWidth>INITIALIZE</RSButton></div>
                     <div className="p-4 flex justify-center relative">
                         <div className="absolute inset-0 bg-[var(--rs-signal)]/5 pointer-events-none" />
-                        <RSButton variant="primary" size="sm" fullWidth className="shadow-lg shadow-[var(--rs-signal)]/20" onClick={() => router.push('/login?plan=report')}>Get Report — $29</RSButton>
+                        <RSButton variant="primary" size="sm" fullWidth className="shadow-lg shadow-[var(--rs-signal)]/20">ACCESS REPORT</RSButton>
                     </div>
-                    <div className="p-4 flex justify-center"><RSButton variant="secondary" size="sm" fullWidth onClick={() => router.push('/login?plan=pro')}>Subscribe — $49/mo</RSButton></div>
+                    <div className="p-4 flex justify-center"><RSButton variant="secondary" size="sm" fullWidth>SUBSCRIBE</RSButton></div>
                 </div>
             </RSPanel>
         </div>
@@ -110,26 +108,25 @@ function DesktopSpecSheet() {
 // --- MOBILE VIEW ---
 
 function MobilePricingView() {
-    const router = useRouter()
     const tiers = [
         {
-            title: "FREE",
+            title: "BASIC",
             code: "L0-PUBLIC",
             price: "$0",
-            desc: "Quick Assessment",
+            desc: "Safety Assessment",
             features: [
                 { label: "CAPACITY", val: "3 / Month" },
                 { label: "DEPTH", val: "Verification" },
                 { label: "REPORT", val: "Sample Only" },
             ],
-            btn: <RSButton variant="ghost" fullWidth onClick={() => document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth' })}>Start Free</RSButton>
+            btn: <RSButton variant="ghost" fullWidth>INITIALIZE</RSButton>
         },
         {
             title: "FULL REPORT",
             code: "L1-DEEP",
             price: "$29",
             sub: "/scan",
-            desc: "Deep Analysis",
+            desc: "Critical Need",
             isRecommended: true,
             features: [
                 { label: "CAPACITY", val: "Single Scan" },
@@ -137,20 +134,20 @@ function MobilePricingView() {
                 { label: "OUTPUT", val: "6-Page PDF" },
                 { label: "GUIDANCE", val: "Mitigation Steps" }
             ],
-            btn: <RSButton variant="primary" fullWidth onClick={() => router.push('/login?plan=report')}>Get Report — $29</RSButton>
+            btn: <RSButton variant="primary" fullWidth>ACCESS REPORT</RSButton>
         },
         {
             title: "PROFESSIONAL",
             code: "L2-SCALE",
             price: "$49",
             sub: "/mo",
-            desc: "Volume Access",
+            desc: "Persistent Validation",
             features: [
                 { label: "CAPACITY", val: "Unlimited" },
                 { label: "HISTORY", val: "Persistent" },
                 { label: "RULES", val: "Custom Brand" }
             ],
-            btn: <RSButton variant="secondary" fullWidth onClick={() => router.push('/login?plan=pro')}>Subscribe — $49/mo</RSButton>
+            btn: <RSButton variant="secondary" fullWidth>SUBSCRIBE</RSButton>
         }
     ];
 
@@ -231,8 +228,22 @@ function TierHeader({ title, code, price, description, recommended }: { title: s
     )
 }
 
-function SpecRow({ label, basic, assessment, pro, highlight }: { label: string, basic: string | boolean, assessment: string | boolean, pro: string | boolean, highlight?: boolean }) {
-    const renderCell = (value: string | boolean, isRecommended: boolean) => {
+type SpecValue = string | boolean
+
+function SpecRow({
+    label,
+    basic,
+    assessment,
+    pro,
+    highlight,
+}: {
+    label: string
+    basic: SpecValue
+    assessment: SpecValue
+    pro: SpecValue
+    highlight?: boolean
+}) {
+    const renderCell = (value: SpecValue, isRecommended: boolean) => {
         if (typeof value === 'boolean') {
             return value ? <Check className="w-4 h-4 text-[var(--rs-safe)] mx-auto" /> : <Minus className="w-3 h-3 text-[var(--rs-text-tertiary)] mx-auto opacity-30" />
         }
