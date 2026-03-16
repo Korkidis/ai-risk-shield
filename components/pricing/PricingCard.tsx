@@ -44,6 +44,8 @@ export function PricingCard({
     const features = [
         { label: `${plan.monthlyScans} scans/mo`, included: true },
         { label: `${plan.monthlyReports} reports/mo`, included: plan.monthlyReports > 0 },
+        { label: `${plan.monthlyMitigations} mitigation report${plan.monthlyMitigations !== 1 ? 's' : ''}/mo`, included: plan.monthlyMitigations > 0 },
+        { label: `${plan.brandProfiles || 1} brand profile${(plan.brandProfiles || 1) !== 1 ? 's' : ''}`, included: true },
         { label: `${plan.seats} seat${plan.seats > 1 ? 's' : ''}`, included: true },
         { label: 'Full Report Access', included: plan.features.fullReportAccess },
         { label: 'Bulk Upload', included: plan.features.bulkUpload },
@@ -111,11 +113,26 @@ export function PricingCard({
                                 </div>
                             )}
                         </div>
-                        <div className="min-h-[30px] mt-2 flex flex-col gap-1">
+                        <div className="min-h-[30px] mt-2 flex flex-col gap-1 items-start">
                             {content.effectiveRate && (
-                                <p className="text-xs font-mono text-[var(--rs-text-secondary)]">
-                                    {content.effectiveRate}
-                                </p>
+                                <div className="flex items-center gap-1.5 group/overage cursor-help relative">
+                                    <p className="text-sm font-bold text-[var(--rs-text-primary)] tracking-tight">
+                                        {content.effectiveRate}
+                                    </p>
+                                    {content.overageRate && (
+                                        <>
+                                            <div className="w-4 h-4 rounded-full border border-[var(--rs-border-primary)] flex items-center justify-center text-[var(--rs-text-tertiary)] group-hover/overage:border-[var(--rs-text-primary)] group-hover/overage:text-[var(--rs-text-primary)] transition-colors">
+                                                <span className="text-[10px] font-bold italic">i</span>
+                                            </div>
+                                            {/* Tooltip */}
+                                            <div className="absolute left-0 bottom-full mb-2 w-56 p-3 bg-[var(--rs-bg-root)] border border-[var(--rs-border-primary)] shadow-xl rounded text-xs text-[var(--rs-text-secondary)] opacity-0 group-hover/overage:opacity-100 transition-opacity pointer-events-none z-50">
+                                                <span className="block font-bold mb-1 text-[var(--rs-text-primary)]">Overage Details</span>
+                                                <span className="italic block mb-2 leading-tight">Additional scans beyond volume are automatically billed at {content.overageRate}.</span>
+                                                <span className="block leading-tight border-t border-[var(--rs-border-primary)] pt-2 mt-2">Optional Mitigation Reports are available for <strong className="text-[var(--rs-text-primary)]">$29 each</strong> if you need hands-on legal remediation.</span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             )}
                             {interval === 'annual' && !isFree && (
                                 <p className="text-[10px] text-[var(--rs-safe)] font-bold uppercase tracking-wider">
@@ -207,14 +224,7 @@ export function PricingCard({
                     ))}
                 </ul>
 
-                {/* Overage info */}
-                {!isFree && !isEnterprise && content.overageRate && (
-                    <div className="mt-auto pt-4 border-t border-[var(--rs-border-primary)]/30">
-                        <p className="text-[9px] text-[var(--rs-signal)] uppercase tracking-wider font-mono font-bold">
-                            Overage: {content.overageRate}
-                        </p>
-                    </div>
-                )}
+                {/* Overage block removed intentionally per user request to rely on transparent tooltips */}
             </div>
         </div>
     )

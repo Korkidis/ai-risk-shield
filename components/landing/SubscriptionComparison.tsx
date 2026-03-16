@@ -124,8 +124,10 @@ function DesktopSpecSheet() {
 
                 {/* Spec Rows High Fidelity */}
                 <div className="divide-y divide-[var(--rs-border-primary)]/50 text-sm">
-                    <SpecRow label="Daily Capacity" basic="3 Scans / Month" assessment="50 / Month" pro="200 / Month" />
+                    <SpecRow label="Monthly Capacity" basic="3 Scans" assessment="50 Scans" pro="300 Scans" />
                     <SpecRow label="Forensic Depth" basic="Verification Only" assessment="Full Legal Reasoning" pro="Custom Brand Rules" highlight />
+                    <SpecRow label="Brand Profiles" basic="0 Brands" assessment="1 Brand" pro="5 Brands" />
+                    <SpecRow label="Included Mitigations" basic="0 Reports" assessment="2 Reports" pro="10 Reports" />
                     <SpecRow label="Full Report Access" basic={false} assessment={true} pro={true} />
                     <SpecRow label="History Retention" basic="None" assessment="30 Days" pro="90 Days" />
                     <SpecRow label="Seats" basic="1 Seat" assessment="1 Seat" pro="5 Seats" />
@@ -173,8 +175,8 @@ function MobilePricingView() {
             features: [
                 { label: "INCLUDED", val: "50 Scans" },
                 { label: "EFFECTIVE", val: "$0.98 / scan" },
-                { label: "OVERAGE", val: "$2.50 / addt'l" },
-                { label: "REPORT", val: "Full Access" },
+                { label: "MITIGATIONS", val: "2 Included" },
+                { label: "BRANDS", val: "1 Profile" },
             ],
             btn: <RSButton variant="primary" fullWidth onClick={() => window.location.href='/pricing?plan=pro'}>SUBSCRIBE PRO</RSButton>
         },
@@ -187,8 +189,8 @@ function MobilePricingView() {
             features: [
                 { label: "INCLUDED", val: "300 Scans" },
                 { label: "EFFECTIVE", val: "$0.66 / scan" },
-                { label: "OVERAGE", val: "$1.00 / addt'l" },
-                { label: "SEATS", val: "5 Seats" }
+                { label: "MITIGATIONS", val: "10 Included" },
+                { label: "BRANDS", val: "5 Profiles" }
             ],
             btn: <RSButton variant="secondary" fullWidth onClick={() => window.location.href='/pricing?plan=team'}>SUBSCRIBE TEAM</RSButton>
         }
@@ -262,12 +264,22 @@ function TierHeader({ title, code, baseCommitment, effectiveRate, overageRate, r
 
             <div className="flex flex-col items-center gap-0.5 mt-2 w-full text-center">
                 <span className={cn("font-bold tracking-tighter text-[var(--rs-text-primary)]", baseCommitment.includes('Base') ? "text-xl pb-1" : "text-3xl")}>{baseCommitment}</span>
-                <span className={cn("text-[10px] font-mono", recommended ? "text-[var(--rs-text-primary)] font-bold" : "text-[var(--rs-text-secondary)]")}>{effectiveRate}</span>
-                {overageRate !== '-' && (
-                     <span className={cn("text-[10px] mt-1 uppercase font-bold tracking-widest", recommended ? "text-[var(--rs-signal)]" : "text-[var(--rs-text-tertiary)]")}>
-                        {overageRate}
-                     </span>
-                )}
+                
+                <div className="flex items-center gap-1.5 group/tooltip cursor-help relative mt-1">
+                    <span className={cn("text-xs font-bold", recommended ? "text-[var(--rs-text-primary)]" : "text-[var(--rs-text-secondary)]")}>{effectiveRate}</span>
+                    {overageRate !== '-' && overageRate !== 'Custom terms' && (
+                        <>
+                            <div className={cn("w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors", recommended ? "border-[var(--rs-signal)] text-[var(--rs-signal)]" : "border-[var(--rs-border-primary)] text-[var(--rs-text-tertiary)] group-hover/tooltip:border-[var(--rs-text-primary)]")}>
+                                <span className="text-[9px] font-bold italic">i</span>
+                            </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-[var(--rs-bg-root)] border border-[var(--rs-border-primary)] shadow-xl rounded text-[10px] text-left text-[var(--rs-text-secondary)] opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50">
+                                <span className="block font-bold mb-1 text-[var(--rs-text-primary)]">Overage Usage</span>
+                                <span className="italic block mb-1">Additional scans are {overageRate}.</span>
+                                Mitigation Reports available for $29/ea.
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     )

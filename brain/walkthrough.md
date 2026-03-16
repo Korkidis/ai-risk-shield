@@ -112,5 +112,14 @@ UnifiedScanDrawer, ScanCard extraction, trust claims, detail fetch, lint clean.
 Following the persona-aware refactor, the pricing and marketing presentation was shifted from a traditional feature-gating model to a **"Consumption-Based Base Commitment"** model. This is purely a marketing and UX framing change, avoiding any disruption to the underlying Stripe or `lib/plans.ts` enforcement logic.
 * **`lib/marketing/plans-content.ts`**: Updated the central marketing dictionary to include `baseCommitment`, `effectiveRate` (e.g. `$0.98 / scan`), and `overageRate` strings mapped to existing pricing realities.
 * **`SubscriptionComparison.tsx`**: Updated the homepage pricing comparisons to clearly visualize base commitments vs overages, and added a striking "Value Anchor" callout comparing a $3,500 legal dispute to the $0.98 scan cost.
-* **`PricingCard.tsx`**: Removed the traditional `/mo` price tag from paid plans and replaced it with prominent Base Commitment typography, further spelling out the effective per-scan rate.
+* **`PricingCard.tsx`**: Removed the traditional `/mo` price tag from paid plans and replaced it with prominent Base Commitment typography, further spelling out the effective per-scan rate. Now utilizes a transparent `i` info tooltip to gracefully disclose Overage metrics and optional $29 Mitigation details without causing meter anxiety. Mitigations and Brand Profiles are explicitly listed in plan specs.
 * **`TenantPlanBadge.tsx`**: Upgraded the dashboard sidebar usage badge to proactively detect `status.scansUsed >= monthlyScanLimit`. If overage is triggered, it renders a flashing warning with contextual upsell copy (e.g., "Upgrading your base commitment to Team cuts per-scan cost by 50%").
+
+## Dashboard Hook Cleanup Follow-up Debt
+
+### Post-Purchase Download Flow Still Uses a Stale Closure
+- **File:** `app/(dashboard)/dashboard/scans-reports/page.tsx`
+- **Area:** post-purchase branch inside the highlight/assignment/purchase effect
+- **Current risk:** after `fetchScans(true)` resolves, the auto-download path still reads `scans.find(...)` from the stale effect closure instead of the freshly updated list. That can cause false fallback banners or missed auto-downloads right after purchase.
+- **Additional bug:** the `return () => clearTimeout(downloadTimeout)` currently sits inside the `then(...)` callback, so it is never registered as the effect cleanup.
+- **Recommended fix:** use the fresh fetch response directly or move the lookup into a functional updater / ref-backed latest value. If the timeout remains, promote it to effect scope and clear it from the actual effect cleanup.
