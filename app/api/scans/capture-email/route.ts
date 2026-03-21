@@ -84,11 +84,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
     }
 
-    // Persist email on scan record — this is the server-side unlock signal.
-    // /api/scans/[id] checks scan.email to decide full vs masked response.
+    // Persist email + timestamp on scan record — email_captured_at is the server-side unlock signal.
+    // /api/scans/[id] checks scan.email_captured_at to decide full vs masked response.
     const { error: emailUpdateError } = await supabase
       .from('scans')
-      .update({ email })
+      .update({ email, email_captured_at: new Date().toISOString() })
       .eq('id', scanId)
 
     if (emailUpdateError) {

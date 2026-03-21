@@ -42,7 +42,7 @@ export async function GET(
     // Cast to typed scan with relations
     const typedScan = scan as unknown as ScanWithRelations
     const findings = typedScan.scan_findings || []
-    const hasEmail = !!typedScan.email
+    const isUnlocked = !!typedScan.email_captured_at
 
     return NextResponse.json({
       status: typedScan.status,
@@ -51,13 +51,13 @@ export async function GET(
       ip_risk_score: typedScan.ip_risk_score,
       safety_risk_score: typedScan.safety_risk_score,
       provenance_risk_score: typedScan.provenance_risk_score || 0,
-      email_captured: hasEmail,
-      // Only show top 3 findings if email not captured
-      findings: hasEmail ? findings : findings.slice(0, 3),
+      email_captured: isUnlocked,
+      // Only show top 3 findings before email capture
+      findings: isUnlocked ? findings : findings.slice(0, 3),
       total_findings: findings.length,
       filename: typedScan.assets?.filename,
-      // Include real Gemini risk_profile blob when scan is complete
-      risk_profile: typedScan.status === 'complete' ? typedScan.risk_profile : undefined,
+      // Only return risk_profile after email capture (prevents pre-gate data leak)
+      risk_profile: (typedScan.status === 'complete' && isUnlocked) ? typedScan.risk_profile : undefined,
     })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {

@@ -1,4 +1,7 @@
-# AI Risk Shield - Claude Code Guide
+# AI Content Risk Score - Claude Code Guide
+
+**Production:** [contentriskscore.com](https://contentriskscore.com)
+**Vercel Project:** `ai-content-risk-score`
 
 ## Project Overview
 SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Turbopack) + Supabase + Google Gemini 2.5 Flash + Stripe.
@@ -173,13 +176,32 @@ GEMINI_API_KEY=                    # Gemini API key (SERVER-SIDE ONLY)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY= # Publishable key (safe to expose)
 STRIPE_SECRET_KEY=                 # Secret key (SERVER-SIDE ONLY)
 STRIPE_WEBHOOK_SECRET=             # Webhook signing secret
-STRIPE_PRICE_ONE_TIME=             # $29 one-time report Stripe price ID
+STRIPE_PRICE_ONE_TIME=             # $29 one-time report price ID
+STRIPE_PRICE_PRO_MONTHLY=         # Pro monthly subscription price ID
+STRIPE_PRICE_PRO_ANNUAL=          # Pro annual subscription price ID
+STRIPE_PRICE_TEAM_MONTHLY=        # Team monthly subscription price ID
+STRIPE_PRICE_TEAM_ANNUAL=         # Team annual subscription price ID
+STRIPE_PRICE_AGENCY_MONTHLY=      # Agency monthly subscription price ID
+STRIPE_PRICE_AGENCY_ANNUAL=       # Agency annual subscription price ID
+STRIPE_PRICE_PRO_METERED=         # Pro metered overage price ID
+STRIPE_PRICE_TEAM_METERED=        # Team metered overage price ID
+STRIPE_PRICE_AGENCY_METERED=      # Agency metered overage price ID
+STRIPE_PRICE_MITIGATION=          # Mitigation report price ID
 
 # Resend
 RESEND_API_KEY=                    # Email API key (SERVER-SIDE ONLY)
 
 # Encryption
 ENCRYPTION_MASTER_KEY=             # For brand guidelines (SERVER-SIDE ONLY) — not yet used
+
+# Application
+NEXT_PUBLIC_APP_URL=               # Base URL (http://localhost:3000 in dev)
+NEXT_PUBLIC_SITE_URL=              # Production URL (https://contentriskscore.com)
+
+# Cron & Security
+CRON_SECRET=                       # Auth token for Vercel Cron jobs (SERVER-SIDE ONLY)
+IP_HASH_SECRET=                    # Salt for IP hashing in rate limits (SERVER-SIDE ONLY)
+WEBHOOK_ALERT_EMAIL=               # Optional: email for webhook failure alerts
 ```
 
 ## Testing Checklist (Run After Each Feature)

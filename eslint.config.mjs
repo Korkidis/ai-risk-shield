@@ -2,7 +2,18 @@ import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import nextTypescript from "eslint-config-next/typescript";
 
 export default [
-  { ignores: ["scripts/**", "supabase/**"] },
+  { ignores: [
+    "scripts/**",
+    "supabase/**",
+    ".claude/**",
+    ".agent/**",
+    ".agents/**",
+    ".codex/**",
+    ".opencode/**",
+    "brain/**",
+    "tasks/**",
+    "skills/**",
+  ] },
   ...nextCoreWebVitals,
   ...nextTypescript,
 ];

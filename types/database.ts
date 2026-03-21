@@ -88,6 +88,7 @@ export interface ScanWithRelations extends ExtendedScan {
   assets?: Pick<ExtendedAsset, 'filename' | 'file_type' | 'file_size'>
   scan_findings?: ScanFinding[]
   email?: string | null
+  email_captured_at?: string | null
   mitigation_reports?: MitigationReport[] | null
 
   // UI Helper Props (Join Results / Mapped from fetchScans)

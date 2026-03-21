@@ -73,6 +73,28 @@ NORTH_STAR.md
 SOC 2 Compliance.md
 ROADMAP.md
 
+# Internal docs (pass 2)
+CHANGELOG.md
+FREEMIUM_IMPLEMENTATION.md
+PDR.md
+SUPABASE_SETUP.md
+DATABASE_BACKEND.md
+DESIGN_CONTEXT.md
+GEMINI_C2PA_STANDARDS.md
+SUBSCRIPTION_STRATEGY.md
+FUNCTIONAL_PRD.md
+roadmap.md
+
+# Debug/test scripts at root
+check-*.ts
+check-*.sql
+confirm-*.ts
+list-*.ts
+smoke-test.ts
+temp_*.sql
+test-*.ts
+test-*.sql
+
 # Debug scripts & backups
 tmp_*.js
 *.bak

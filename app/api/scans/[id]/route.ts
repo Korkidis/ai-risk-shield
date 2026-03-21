@@ -15,6 +15,7 @@ type ScanApiResult = {
     analyzed_by: string | null
     session_id: string | null
     email: string | null
+    email_captured_at: string | null
     composite_score: number | null
     ip_risk_score: number | null
     safety_risk_score: number | null
@@ -86,6 +87,7 @@ export async function GET(
             analyzed_by,
             session_id,
             email,
+            email_captured_at,
             composite_score,
             ip_risk_score,
             safety_risk_score,
@@ -203,7 +205,7 @@ export async function GET(
 
             // SOFT GATE: Mask sensitive details if anonymous & no email captured
             // Allow full access if user is authenticated OR email is already associated
-            const isFullyUnlocked = (user && isAuthorized) || (scan.email && scan.email.length > 0)
+            const isFullyUnlocked = (user && isAuthorized) || !!scan.email_captured_at
 
             if (!isFullyUnlocked) {
                 // Mask sensitive fields
