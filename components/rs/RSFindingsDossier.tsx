@@ -149,7 +149,7 @@ export function RSFindingsDossier({
             </div>
 
             {/* Content Container */}
-            <div className="flex flex-col p-8 pt-0">
+            <div className="flex flex-col p-8 pt-0 shrink-0">
 
                 {/* Findings — expand to natural height, no inner scroll */}
                 <div className="space-y-3 pt-6 pr-2">
