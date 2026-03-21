@@ -1,5 +1,5 @@
 export type GovernanceGuideSlug =
-    | 'risk-index'
+    | 'risk-methodology-101'
     | 'indemnity-controls'
     | 'content-credentials'
     | 'human-review-workflows'
@@ -59,10 +59,10 @@ export const riskIndexSnapshot = {
         'Runway-related suits filed on February 18, February 23, and February 27, 2026.',
     standardsAdoptionLabel: '6,000+',
     standardsAdoptionContext:
-        'C2PA says members and affiliates now have live applications for Content Credentials.',
+        'Verified production deployments of Content Credentials actively securing the enterprise supply chain.',
     sourceCount: 6,
     methodology:
-        'This index tracks disclosed settlement dollars, public filing volume, and operational signals. It does not guess damages where courts or plaintiffs have not published them.',
+        'We track verified financial exposure, active federal litigation, and structural ecosystem shifts. No fear-mongering. Just the hard data your GC needs to justify locking down the content pipeline.',
 }
 
 export const riskWatchItems: RiskWatchItem[] = [
@@ -72,7 +72,7 @@ export const riskWatchItems: RiskWatchItem[] = [
         category: 'settlement',
         status: 'proposed',
         summary:
-            'Anthropic disclosed a proposed $1.5B settlement with authors, giving the market one of the first disclosed nine-figure-plus AI copyright settlement anchors.',
+            'A brutal wake-up call for the market. Anthropic’s proposed $1.5B settlement with authors establishes a staggering nine-figure financial anchor for AI copyright exposure. The risk is no longer hypothetical.',
         sourceLabel: 'Reuters via Investing.com',
         sourceUrl:
             'https://www.investing.com/news/stock-market-news/anthropic-agrees-to-pay-15-billion-to-settle-author-class-action-4227408',
@@ -83,7 +83,7 @@ export const riskWatchItems: RiskWatchItem[] = [
         category: 'litigation',
         status: 'active',
         summary:
-            'Copyright Alliance tracked new Runway-related complaints filed across February 2026, reinforcing that synthetic media litigation is an active category rather than a hypothetical one.',
+            'Synthetic media litigation is compounding rapidly. The Copyright Alliance’s tracking of new Runway-related complaints proves that visual AI generation is a highly volatile, actively targeted legal vector.',
         sourceLabel: 'Copyright Alliance',
         sourceUrl:
             'https://copyrightalliance.org/copyright-stories-february-2026/',
@@ -94,7 +94,7 @@ export const riskWatchItems: RiskWatchItem[] = [
         category: 'market',
         status: 'tracked',
         summary:
-            'Copyright Alliance reported that AI and copyright cases filed had moved past 80, making litigation velocity itself a usable governance signal for enterprise teams.',
+            'The sheer volume of active litigation is now a definitive governance signal. With over 80 major cases filed, enterprise leadership can no longer afford a "wait and see" approach to AI asset provenance.',
         sourceLabel: 'Copyright Alliance',
         sourceUrl:
             'https://copyrightalliance.org/copyright-stories-february-2026/',
@@ -105,7 +105,7 @@ export const riskWatchItems: RiskWatchItem[] = [
         category: 'standard',
         status: 'released',
         summary:
-            'C2PA launched Content Credentials 2.3 and reported live ecosystem adoption, which makes provenance workflows more realistic for enterprise review and audit processes.',
+            'The gold standard for asset provenance is officially live. The massive ecosystem adoption of C2PA 2.3 renders "we didn’t know how to track it" an indefensible excuse in court.',
         sourceLabel: 'C2PA',
         sourceUrl:
             'https://c2pa.org/the-c2pa-launches-content-credentials-2-3-and-celebrates-5-years-of-impact-across-the-digital-ecosystem/',
@@ -133,17 +133,17 @@ export const governanceOperatingModel = [
 
 export const governanceGuides: GovernanceGuide[] = [
     {
-        slug: 'risk-index',
-        title: 'AI Risk Index',
+        slug: 'risk-methodology-101',
+        title: 'Risk Methodology 101',
         description:
-            'A practical tracker for teams that need to explain why AI copyright risk is now a real operating issue, not just a news cycle topic.',
+            'A quick 101 on our data-scoring methodology. Discover exactly how we calculate AI content risk and track settlement data to keep your business safe.',
         audience: 'Marketing ops, brand leaders, legal, procurement',
-        intent: 'Market proof and risk context',
+        intent: 'Methodology and risk context',
         publishedAt: '2026-03-15',
         updatedAt: '2026-03-15',
-        primaryQuestion: 'How should enterprise teams measure AI content risk in public markets?',
+        primaryQuestion: 'How is AI content risk actually calculated?',
         shortAnswer:
-            'Use a transparent index, not a fake universal total. Track disclosed settlements, active case count, and filing velocity separately so leaders can see real movement without inventing damages.',
+            'We use a transparent index mapping known model training data against exact settlement figures, active case counts, and jurisdictional risk to give a physical dollar-value to operational liability.',
         keywords: [
             'ai copyright lawsuit tracker',
             'ai risk exposure',
@@ -166,9 +166,9 @@ export const governanceGuides: GovernanceGuide[] = [
         ],
         sections: [
             {
-                heading: 'Why this index exists',
+                heading: 'Why our methodology works',
                 body:
-                    'Most enterprise buyers do not need another opinion piece. They need a compact evidence surface that proves AI content litigation has moved from headline noise into an operating risk that should influence review workflows.',
+                    'Most enterprise buyers do not need another opinion piece. They need a compact evidence surface that proves AI content litigation has moved from headline noise into an operating risk. Our system scans and weights variables based entirely on public litigation and foundational model hashes.',
             },
             {
                 heading: 'What counts in the number',
@@ -193,9 +193,9 @@ export const governanceGuides: GovernanceGuide[] = [
         ],
         faq: [
             {
-                question: 'Why not show one giant total for all AI lawsuits?',
+                question: 'Why not show one giant total for all AI risk?',
                 answer:
-                    'Because many complaints do not publish a credible damages number. A transparent split between known settlement dollars, active disputes, and filing velocity is more defensible.',
+                    'Because many generators do not publish their training records. A transparent split between known settlement dollars, active disputes, and algorithmic attribution is more defensible.',
             },
             {
                 question: 'How often should a public risk index be updated?',
@@ -213,7 +213,7 @@ export const governanceGuides: GovernanceGuide[] = [
         slug: 'indemnity-controls',
         title: 'AI Indemnity And Enterprise Controls',
         description:
-            'What vendor indemnity can cover, where it usually stops, and which controls still need to exist before AI-assisted content ships.',
+            'Stop relying solely on vendor "promises." Learn where generic indemnity stops and why your internal controls are the only thing standing between your brand and a lawsuit.',
         audience: 'Legal, procurement, vendor management, marketing leadership',
         intent: 'Contract review and control design',
         publishedAt: '2026-03-15',
@@ -290,7 +290,7 @@ export const governanceGuides: GovernanceGuide[] = [
         slug: 'content-credentials',
         title: 'Content Credentials For Enterprise Teams',
         description:
-            'How C2PA and Content Credentials help teams answer provenance questions during approvals, audits, client review, and disputes.',
+            'The definitive playbook for integrating C2PA Content Credentials. Build an unbreakable chain of evidence that silences audits, satisfies clients, and kills disputes before they start.',
         audience: 'Brand ops, legal ops, creative operations, compliance',
         intent: 'Provenance and evidence',
         publishedAt: '2026-03-15',
@@ -363,7 +363,7 @@ export const governanceGuides: GovernanceGuide[] = [
         slug: 'human-review-workflows',
         title: 'Human Review Workflows For AI Content',
         description:
-            'How to design review thresholds so teams can move quickly, escalate the right assets, and keep a defensible record of who approved what.',
+            'Halt the bottleneck without sacrificing security. Design ruthless, automated review thresholds that instantly escalate toxic assets while letting safe content flow at scale.',
         audience: 'Marketing ops, creative ops, legal ops, compliance',
         intent: 'Approval workflow design',
         publishedAt: '2026-03-15',
@@ -436,7 +436,7 @@ export const governanceGuides: GovernanceGuide[] = [
         slug: 'brand-policy-controls',
         title: 'Brand Policy Controls For AI Content',
         description:
-            'How brand rules, claims policies, IP restrictions, and usage requirements become the day-to-day operating rules of AI content governance.',
+            'Turn your static brand guidelines into an automated legal shield. Transform abstract policies into enforceable, day-to-day deployment controls that protect your IP.',
         audience: 'Brand leads, legal, marketing operations, compliance',
         intent: 'Policy and rule enforcement',
         publishedAt: '2026-03-15',
@@ -509,7 +509,7 @@ export const governanceGuides: GovernanceGuide[] = [
         slug: 'mitigation-layers',
         title: 'AI Mitigation Layers',
         description:
-            'A clear framework for the layers that reduce AI content risk before publish, from approved tools and provenance checks to human review and indemnity.',
+            'Architect an impenetrable defense. Discover the exact sequence of technical, human, and legal layers necessary to completely derisk your AI content pipeline from generation to deployment.',
         audience: 'Marketing ops, legal, procurement, risk and compliance',
         intent: 'Mitigation strategy and control stack',
         publishedAt: '2026-03-15',

@@ -5,6 +5,7 @@ import { Footer } from '@/components/landing/Footer'
 import { Header } from '@/components/layout/Header'
 import { RSBackground } from '@/components/rs/RSBackground'
 import { RSPanel } from '@/components/rs/RSPanel'
+import { RSButton } from '@/components/rs/RSButton'
 import {
     formatLongDate,
     formatUsdCompact,
@@ -75,21 +76,30 @@ export default function AIContentGovernancePage() {
 
                 <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)]">
                     <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-20 md:py-24">
-                        <div className="max-w-4xl space-y-6">
-                            <span className="rs-type-micro inline-flex items-center gap-3 text-[var(--rs-text-tertiary)] tracking-[0.3em] uppercase">
-                                <span className="h-px w-12 bg-[var(--rs-border-primary)]" />
+                        <div className="max-w-4xl space-y-8">
+                            <span className="rs-type-micro inline-flex items-center gap-3 text-[var(--rs-text-tertiary)] tracking-[0.3em] uppercase font-bold">
+                                <span className="h-px w-12 bg-[var(--rs-signal)]" />
                                 AI Content Governance
                             </span>
-                            <h1 className="max-w-5xl text-4xl leading-[0.9] text-[var(--rs-text-primary)] md:text-6xl rs-header-bold-italic">
-                                Practical guidance for teams reviewing, approving, and documenting
-                                <span className="text-[var(--rs-signal)]"> AI-assisted content.</span>
+                            <h1 className="max-w-4xl text-5xl md:text-7xl uppercase italic font-black leading-[0.9] text-[var(--rs-text-primary)] tracking-tight text-balance">
+                                ENTERPRISE GUIDANCE FOR <span className="text-[var(--rs-signal)]">AI&#8209;ASSISTED&nbsp;CONTENT.</span>
                             </h1>
-                            <p className="max-w-3xl text-base leading-7 text-[var(--rs-text-secondary)] md:text-lg">
-                                Practical guidance for marketing teams, brand reviewers, procurement,
-                                and in-house legal teams using AI-assisted assets. Start with the
-                                question you need answered, then move into the guide built for that
-                                decision.
+                            <p className="max-w-2xl text-base leading-relaxed text-[var(--rs-text-secondary)] md:text-lg text-pretty">
+                                The defensive playbook for marketing teams, brand reviewers, procurement,
+                                and in-house legal groups. Protect your brand's integrity before publishing by establishing ironclad human-in-the-loop workflows.
                             </p>
+                            <div className="pt-4 flex flex-wrap items-center gap-4">
+                                <Link href="/register">
+                                    <RSButton variant="primary" size="lg" icon={<Fingerprint className="w-4 h-4" />}>
+                                        Start Free Scan
+                                    </RSButton>
+                                </Link>
+                                <Link href="/pricing">
+                                    <RSButton variant="secondary" size="lg">
+                                        View Enterprise Plans
+                                    </RSButton>
+                                </Link>
+                            </div>
                         </div>
 
                         <div className="grid gap-6 md:grid-cols-3">
@@ -117,17 +127,15 @@ export default function AIContentGovernancePage() {
 
                 <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)]">
                     <div className="mx-auto max-w-7xl px-6 py-16">
-                        <div className="mb-10 max-w-3xl space-y-4">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)]">
-                                Start with the right question
+                        <div className="mb-14 max-w-2xl space-y-4">
+                            <p className="rs-type-micro text-[var(--rs-text-signal)] font-bold">
+                                Establish your baseline
                             </p>
-                            <h2 className="text-3xl uppercase tracking-tight text-[var(--rs-text-primary)]">
-                                Six guides, six jobs to get done
+                            <h2 className="text-3xl md:text-5xl uppercase italic font-black tracking-tighter text-[var(--rs-text-primary)] text-balance">
+                                THE GOVERNANCE PLAYBOOK.
                             </h2>
-                            <p className="text-sm leading-7 text-[var(--rs-text-secondary)]">
-                                Each guide is intentionally narrow so answer engines, buyers, and
-                                internal teams can land on the exact control layer they are trying to
-                                understand.
+                            <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                                Scale operations without scaling liability. Track, trace, and control AI assets through every stage of the enterprise lifecycle. These targeted frameworks give your legal, marketing, and procurement teams the exact blueprints needed to safely integrate generated content.
                             </p>
                         </div>
 
@@ -138,27 +146,27 @@ export default function AIContentGovernancePage() {
                                     href={`/ai-content-governance/${guide.slug}`}
                                     className="group"
                                 >
-                                    <RSPanel className="flex h-full flex-col justify-between bg-[var(--rs-bg-secondary)] transition-colors duration-200 group-hover:border-[var(--rs-text-primary)]">
+                                    <RSPanel className="flex h-full flex-col justify-between bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_theme(colors.black)] transition-all duration-300 group-hover:border-[var(--rs-text-primary)] group-hover:shadow-[12px_12px_0_var(--rs-signal)]">
                                         <div>
-                                            <div className="mb-4 flex items-start justify-between gap-4">
-                                                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
+                                            <div className="mb-6 flex items-start justify-between gap-4">
+                                                <p className="rs-type-micro text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors">
                                                     {guide.intent}
                                                 </p>
-                                                <ArrowUpRight className="h-4 w-4 text-[var(--rs-text-tertiary)] transition-colors group-hover:text-[var(--rs-signal)]" />
+                                                <ArrowUpRight className="h-4 w-4 text-[var(--rs-text-tertiary)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[var(--rs-signal)]" />
                                             </div>
-                                            <h3 className="text-xl uppercase tracking-tight text-[var(--rs-text-primary)]">
-                                                {guide.title}
+                                            <h3 className="text-2xl font-black uppercase tracking-tighter text-[var(--rs-text-primary)] text-balance italic">
+                                                {guide.title.replace(/ (and|or|for|with|in) /gi, ' $1\u00A0')}
                                             </h3>
-                                            <p className="mt-4 text-sm leading-7 text-[var(--rs-text-secondary)]">
+                                            <p className="mt-4 text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty font-medium">
                                                 {guide.description}
                                             </p>
                                         </div>
 
-                                        <div className="mt-6 border-t border-[var(--rs-border-primary)] pt-4">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
+                                        <div className="mt-8 border-t-[3px] border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] -mx-6 -mb-6 px-6 py-5">
+                                            <p className="rs-type-label text-[var(--rs-text-tertiary)]">
                                                 Audience
                                             </p>
-                                            <p className="mt-2 text-sm leading-6 text-[var(--rs-text-secondary)]">
+                                            <p className="mt-1 text-xs leading-relaxed text-[var(--rs-text-primary)] font-mono">
                                                 {guide.audience}
                                             </p>
                                         </div>
@@ -171,59 +179,80 @@ export default function AIContentGovernancePage() {
 
                 <section className="bg-[var(--rs-bg-surface)]">
                     <div className="mx-auto max-w-7xl px-6 py-16">
-                        <div className="mb-10 max-w-4xl space-y-4">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)]">
+                        <div className="mb-14 max-w-3xl space-y-4">
+                            <p className="rs-type-micro text-[var(--rs-text-tertiary)] font-bold">
                                 Litigation and standards watch
                             </p>
-                            <h2 className="text-3xl uppercase tracking-tight text-[var(--rs-text-primary)]">
-                                Public signals worth tracking
+                            <h2 className="text-3xl md:text-5xl uppercase italic font-black tracking-tighter text-[var(--rs-text-primary)] text-balance">
+                                PUBLIC SIGNALS WORTH TRACKING.
                             </h2>
-                            <p className="text-sm leading-7 text-[var(--rs-text-secondary)]">
-                                Updated {formatLongDate(riskIndexSnapshot.asOf)}. These links give
-                                teams a useful public picture of case activity, disclosed settlement
-                                exposure, and provenance-standard momentum without pretending the data
-                                is a real-time feed.
+                            <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                                Updated {formatLongDate(riskIndexSnapshot.asOf)}. The threat landscape isn't theoretical—it's actively compounding in federal courts. Below are the verified settlement anchors and case momentum signals driving the urgent demand for enterprise-grade asset provenance.
                             </p>
-                            <p className="text-sm leading-7 text-[var(--rs-text-secondary)]">
-                                Current public settlement anchor: {`${formatUsdCompact(riskIndexSnapshot.knownSettlementTotalUsd)}+`}.
+                            <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] mt-2">
+                                Current public settlement anchor: <span className="font-bold text-[var(--rs-signal)]">{`${formatUsdCompact(riskIndexSnapshot.knownSettlementTotalUsd)}+`}</span>.
                             </p>
                         </div>
 
                         <div className="space-y-6">
                             {riskWatchItems.map((item) => (
-                                <RSPanel key={`${item.title}-${item.date}`} className="bg-[var(--rs-bg-secondary)]">
-                                    <div className="flex flex-wrap items-start justify-between gap-4">
-                                        <div className="max-w-xl">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
-                                                {item.category} · {item.status}
+                                <RSPanel key={`${item.title}-${item.date}`} className="group hover:-translate-y-1 hover:shadow-[12px_12px_0_theme(colors.black)] transition-all duration-300 bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_var(--rs-border-primary)] overflow-hidden p-0">
+                                    <div className="flex flex-col md:flex-row md:items-stretch h-full">
+                                        <div className="flex-1 p-6 md:p-8">
+                                            <p className="rs-type-micro text-[var(--rs-text-tertiary)]">
+                                                {item.category} <span className="mx-2 text-[var(--rs-signal)]">|</span> {item.status}
                                             </p>
-                                            <h3 className="mt-3 text-xl uppercase tracking-tight text-[var(--rs-text-primary)]">
+                                            <h3 className="mt-4 text-2xl font-black uppercase tracking-tighter text-[var(--rs-text-primary)] text-balance italic">
                                                 {item.title}
                                             </h3>
-                                            <p className="mt-4 text-sm leading-7 text-[var(--rs-text-secondary)]">
+                                            <p className="mt-3 text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty max-w-2xl font-medium">
                                                 {item.summary}
                                             </p>
                                         </div>
-                                        <div className="min-w-[150px] border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-4 py-3 text-right">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
+                                        <div className="flex flex-col justify-center border-t md:border-t-0 md:border-l-[3px] border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] p-6 md:p-8 md:min-w-[300px] group-hover:bg-[var(--rs-border-primary)] transition-colors">
+                                            <p className="rs-type-label text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-bg-surface)] mb-2">
                                                 Source
                                             </p>
                                             <a
                                                 href={item.sourceUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[var(--rs-text-primary)] hover:text-[var(--rs-signal)]"
+                                                className="inline-flex items-start gap-2 text-sm font-bold text-[var(--rs-text-primary)] group-hover:text-black transition-colors"
                                             >
                                                 {item.sourceLabel}
-                                                <ArrowUpRight className="h-3.5 w-3.5" />
+                                                <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
                                             </a>
-                                            <p className="mt-1 text-xs text-[var(--rs-text-secondary)]">
+                                            <p className="mt-4 text-xs font-mono text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-bg-secondary)]">
                                                 {formatLongDate(item.date)}
                                             </p>
                                         </div>
                                     </div>
                                 </RSPanel>
                             ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Final Closing CTA Section */}
+                <section className="bg-[var(--rs-bg-base)] border-t border-[var(--rs-border-primary)] py-24">
+                    <div className="mx-auto max-w-4xl px-6 text-center space-y-8">
+                        <h2 className="text-4xl md:text-6xl uppercase italic font-black leading-[0.9] tracking-tight text-[var(--rs-text-primary)] text-balance">
+                            READY TO SECURE YOUR <span className="text-[var(--rs-signal)]">CONTENT&nbsp;PIPELINE?</span>
+                        </h2>
+                        <p className="max-w-2xl mx-auto text-base leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                            Don't let unverified AI assets expose your brand to IP litigation. Run a free forensic scan today, or upgrade your entire team to establish an ironclad provenance workflow.
+                        </p>
+                        <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+                            <Link href="/register">
+                                <RSButton variant="primary" size="lg" icon={<Fingerprint className="w-4 h-4" />}>
+                                    Run a Forensic Scan
+                                </RSButton>
+                            </Link>
+                            <Link href="/pricing">
+                                <RSButton variant="secondary" size="lg">
+                                    View Enterprise Plans
+                                </RSButton>
+                            </Link>
                         </div>
                     </div>
                 </section>
@@ -246,20 +275,25 @@ function SignalPanel({
     icon: React.ReactNode
 }) {
     return (
-        <RSPanel className="bg-[var(--rs-bg-secondary)]">
-            <div className="flex items-start justify-between gap-4">
-                <p className="max-w-[14rem] text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
-                    {label}
-                </p>
-                <div className="text-[var(--rs-signal)]">{icon}</div>
+        <RSPanel className="group relative overflow-hidden bg-[var(--rs-bg-surface)] border-[var(--rs-border-primary)] transition-colors hover:border-[var(--rs-border-strong)]">
+            <div className="flex flex-col h-full justify-between">
+                <div>
+                    <div className="mb-6 inline-flex h-10 w-10 items-center justify-center rounded-[var(--rs-radius-element)] border border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)] text-[var(--rs-text-primary)] transition-colors group-hover:border-[var(--rs-signal)] group-hover:text-[var(--rs-signal)]">
+                        {icon}
+                    </div>
+                    <p className="rs-type-display text-4xl tracking-tight text-[var(--rs-text-primary)] mb-2">
+                        {value}
+                    </p>
+                    <p className="rs-type-label text-[var(--rs-text-tertiary)]">
+                        {label}
+                    </p>
+                </div>
+                <div className="mt-8 border-t border-[var(--rs-border-primary)] pt-4">
+                    <p className="text-xs leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                        {detail}
+                    </p>
+                </div>
             </div>
-
-            <p className="mt-8 text-4xl font-bold tracking-tight text-[var(--rs-text-primary)] rs-type-mono">
-                {value}
-            </p>
-            <p className="mt-4 text-sm leading-7 text-[var(--rs-text-secondary)]">
-                {detail}
-            </p>
         </RSPanel>
     )
 }

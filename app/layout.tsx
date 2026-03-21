@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { PostHogProvider } from '@/components/PostHogProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { RSToastProvider } from '@/components/rs/RSToast'
 import { getSiteUrl } from '@/lib/site'
 
 
@@ -80,7 +81,9 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-[var(--rs-bg-surface)] text-[var(--rs-text-primary)] min-h-screen flex flex-col" suppressHydrationWarning>
         <PostHogProvider>
           <ThemeProvider>
-            {children}
+            <RSToastProvider>
+              {children}
+            </RSToastProvider>
           </ThemeProvider>
         </PostHogProvider>
       </body>

@@ -41,7 +41,7 @@ export function Header() {
                         </div>
                         <div className="flex flex-col leading-none">
                             <span className="font-bold tracking-tighter text-lg uppercase text-[var(--rs-text-primary)]">
-                                RiskShield
+                                AI Content Risk Score
                             </span>
                         </div>
                     </Link>

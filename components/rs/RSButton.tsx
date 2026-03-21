@@ -17,24 +17,24 @@ export function RSButton({
     ...props
 }: RSButtonProps) {
     const baseStyles = cn(
-        "inline-flex items-center justify-center font-medium font-sans relative overflow-hidden rs-bevel",
-        "transition-all duration-150 ease-out active:scale-[0.98]", // Tactile press scale
+        "inline-flex items-center justify-center font-medium font-sans relative overflow-hidden",
+        "transition-all duration-75", // Fast, snappy hardware tactile response
         "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rs-black",
-        "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+        "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:shadow-inherit"
     );
 
     const variants = {
-        // Primary: Signal Orange (Molded L2)
-        primary: "bg-[var(--rs-signal)] text-white shadow-[var(--rs-shadow-l2)] hover:brightness-105 active:shadow-[var(--rs-shadow-pressed)]",
+        // Primary: Signal Orange, heavy mechanical edge
+        primary: "bg-[var(--rs-signal)] text-white shadow-[0_4px_0_#9a2b00] border border-[var(--rs-signal)] hover:brightness-105 active:shadow-none active:translate-y-[4px]",
 
-        // Secondary: Semantic Grey (Molded L1/L2 mix)
-        secondary: "bg-[var(--rs-gray-50)] text-[var(--rs-text-primary)] border border-[var(--rs-border-primary)] shadow-[var(--rs-shadow-l2)] hover:bg-[var(--rs-gray-100)] active:shadow-[var(--rs-shadow-pressed)]",
+        // Secondary: Semantic Grey, heavy mechanical edge
+        secondary: "bg-[var(--rs-gray-50)] text-[var(--rs-text-primary)] border border-black/10 shadow-[0_4px_0_rgba(0,0,0,0.15)] hover:bg-[var(--rs-bg-surface)] active:shadow-none active:translate-y-[4px] active:bg-[var(--rs-gray-100)]",
 
-        // Danger: Inverse (Molded L3) - Matches "SYSTEM PURGE" aesthetic
-        danger: "bg-[var(--rs-bg-inverse)] text-[var(--rs-signal)] shadow-[var(--rs-shadow-l2)] hover:brightness-110 active:shadow-[var(--rs-shadow-pressed)]",
+        // Danger: Inverse (Molded L3)
+        danger: "bg-[var(--rs-bg-inverse)] text-[var(--rs-signal)] shadow-[0_4px_0_#000] border border-black hover:brightness-110 active:shadow-none active:translate-y-[4px]",
 
         // Ghost: Flat (L0)
-        ghost: "bg-transparent text-[var(--rs-text-tertiary)] hover:bg-[var(--rs-bg-element)]/50 active:bg-[var(--rs-bg-well)]",
+        ghost: "bg-transparent text-[var(--rs-text-tertiary)] hover:bg-[var(--rs-bg-element)]/50 active:bg-[var(--rs-bg-well)] active:translate-y-[1px]",
     };
 
     const sizes = {

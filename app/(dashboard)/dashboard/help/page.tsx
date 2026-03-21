@@ -159,7 +159,7 @@ export default function HelpPage() {
                     Need Help?
                 </h3>
                 <p className="text-sm text-[var(--rs-text-secondary)] mb-4">
-                    Reach out at <span className="font-mono font-bold text-[var(--rs-text-primary)]">support@riskshield.ai</span>
+                    Reach out at <span className="font-mono font-bold text-[var(--rs-text-primary)]">support@aicontentriskscore.com</span>
                 </p>
                 <p className="text-[10px] text-[var(--rs-text-secondary)] uppercase tracking-widest">
                     Typical response time: under 24 hours

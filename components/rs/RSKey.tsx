@@ -27,29 +27,46 @@ export function RSKey({
     return (
         <div className={cn("flex flex-col items-center gap-3", className)}>
             <button
+                type="button"
                 onClick={onClick}
                 className={cn(
-                    "relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-100 border border-white/40",
+                    "relative w-[72px] h-[72px] rounded-[20px] flex items-center justify-center transition-all duration-300 ease-[var(--rs-ease-spring)]",
+                    // The core button shape and depth
                     active
-                        ? "bg-[var(--rs-gray-900)] text-[var(--rs-white)] translate-y-[2px] shadow-[inset_2px_2px_8px_rgba(0,0,0,0.8)]"
-                        : "bg-[var(--rs-gray-50)] text-[var(--rs-text-secondary)] shadow-[var(--rs-shadow-l2)] active:translate-y-[1px] active:shadow-inner"
+                        ? "bg-[var(--rs-gray-900)] text-[var(--rs-white)] shadow-[inset_0_4px_10px_rgba(0,0,0,0.6),0_1px_1px_rgba(255,255,255,0.1)] border-t border-black"
+                        : "bg-[var(--rs-bg-surface)] text-[var(--rs-text-secondary)] shadow-[0_4px_10px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)] border border-black/5 active:scale-95 active:shadow-inner"
                 )}
             >
-                {/* The Convex Lens Effect */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/5 to-white/20 rounded-2xl pointer-events-none" />
-
-                {Icon && <Icon size={20} className={active ? 'text-white' : 'text-black/40'} />}
-
-                {/* Active Indicator Light */}
+                {/* Embedded LED for active state */}
                 {active && (
                     <div
-                        className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full shadow-[0_0_8px_currentColor]"
-                        style={{ backgroundColor: color, color: color }}
+                        className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full"
+                        style={{ 
+                            backgroundColor: color, 
+                            boxShadow: `0 0 10px ${color}, inset 0 1px 2px rgba(255,255,255,0.5)` 
+                        }}
                     />
                 )}
+
+                {/* The Icon */}
+                {Icon && (
+                    <Icon 
+                        size={24} 
+                        strokeWidth={active ? 2.5 : 2} 
+                        className={cn(
+                            "transition-colors duration-200",
+                            active ? "text-white drop-shadow-[0_0_2px_rgba(255,255,255,0.3)]" : "text-[var(--rs-gray-400)]"
+                        )} 
+                    />
+                )}
+                
+                {/* Surface Reflection (Convex Bevel) */}
+                <div className="absolute inset-0 rounded-[20px] bg-gradient-to-b from-white/10 to-transparent pointer-events-none opacity-50 mix-blend-overlay" />
             </button>
+            
+            {/* Detached Label */}
             {label && (
-                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--rs-text-tertiary)] select-none">
                     {label}
                 </span>
             )}

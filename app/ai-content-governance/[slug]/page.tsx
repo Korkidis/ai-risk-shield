@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowUpRight, ScrollText } from 'lucide-react'
 import { Footer } from '@/components/landing/Footer'
 import { Header } from '@/components/layout/Header'
 import { RSBackground } from '@/components/rs/RSBackground'
+import { RSButton } from '@/components/rs/RSButton'
 import { RSPanel } from '@/components/rs/RSPanel'
 import {
     formatLongDate,
@@ -86,7 +87,7 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
     }
 
     const pageSchema =
-        guide.slug === 'risk-index'
+        guide.slug === 'risk-methodology-101'
             ? {
                   '@context': 'https://schema.org',
                   '@type': 'Dataset',
@@ -153,7 +154,7 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
                         </div>
 
                         <div className="mt-8 max-w-4xl space-y-6">
-                            <h1 className="text-4xl leading-[0.92] text-[var(--rs-text-primary)] md:text-6xl rs-header-bold-italic">
+                            <h1 className="text-4xl leading-[0.92] text-[var(--rs-text-primary)] md:text-6xl rs-header-bold-italic uppercase">
                                 {guide.title}
                             </h1>
                             <p className="max-w-3xl text-base leading-7 text-[var(--rs-text-secondary)] md:text-lg">
@@ -171,12 +172,12 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
 
                 <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)]">
                     <div className="mx-auto grid max-w-6xl gap-8 px-6 py-16 lg:grid-cols-[1.15fr_0.85fr]">
-                        <RSPanel className="bg-[var(--rs-bg-surface)]">
+                        <RSPanel className="bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_var(--rs-border-primary)]">
                             <div className="mb-6 border-b border-[var(--rs-border-primary)] pb-6">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
                                     Direct answer
                                 </p>
-                                <h2 className="mt-3 text-2xl uppercase tracking-tight text-[var(--rs-text-primary)]">
+                                <h2 className="mt-3 text-2xl uppercase tracking-tight text-[var(--rs-text-primary)] font-black">
                                     {guide.primaryQuestion}
                                 </h2>
                             </div>
@@ -219,11 +220,11 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
 
                 <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)]">
                     <div className="mx-auto max-w-6xl px-6 py-16">
-                        <div className="mb-10 max-w-3xl space-y-4">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
+                        <div className="mb-10 max-w-5xl space-y-4">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)] hover:text-[var(--rs-signal)] transition-colors">
                                 Guide sections
                             </p>
-                            <h2 className="text-3xl uppercase tracking-tight text-[var(--rs-text-primary)]">
+                            <h2 className="text-3xl md:text-5xl uppercase tracking-tighter text-[var(--rs-text-primary)] font-black italic">
                                 One page, one decision path
                             </h2>
                         </div>
@@ -255,7 +256,7 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
                     </div>
                 </section>
 
-                {guide.slug === 'risk-index' ? (
+                {guide.slug === 'risk-methodology-101' ? (
                     <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)]">
                         <div className="mx-auto grid max-w-6xl gap-8 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr]">
                             <RSPanel className="bg-[var(--rs-bg-surface)]">
@@ -386,11 +387,11 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
 
                 <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)]">
                     <div className="mx-auto max-w-6xl px-6 py-16">
-                        <div className="mb-10 max-w-3xl space-y-4">
+                        <div className="mb-10 max-w-5xl space-y-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
                                 Related guides
                             </p>
-                            <h2 className="text-3xl uppercase tracking-tight text-[var(--rs-text-primary)]">
+                            <h2 className="text-3xl md:text-5xl uppercase tracking-tighter text-[var(--rs-text-primary)] rs-header-bold-italic">
                                 Keep moving through the control stack
                             </h2>
                         </div>
@@ -437,18 +438,16 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
                                     </p>
                                 </div>
 
-                                <div className="flex flex-col gap-4 sm:flex-row lg:flex-col">
-                                    <Link
-                                        href="/"
-                                        className="inline-flex items-center justify-center gap-2 bg-[var(--rs-signal)] px-5 py-3 text-[11px] font-bold uppercase tracking-[0.24em] text-white transition-all hover:brightness-110"
-                                    >
-                                        Run a free scan <ArrowUpRight className="h-4 w-4" />
+                                <div className="flex flex-col gap-4 sm:flex-row lg:flex-col pt-4">
+                                    <Link href="/" className="inline-block">
+                                        <RSButton variant="primary" size="lg" icon={<ArrowUpRight />}>
+                                            RUN A FREE SCAN
+                                        </RSButton>
                                     </Link>
-                                    <Link
-                                        href="/ai-content-governance"
-                                        className="inline-flex items-center justify-center gap-2 border border-[var(--rs-border-primary)] px-5 py-3 text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-primary)] transition-colors hover:border-[var(--rs-text-primary)]"
-                                    >
-                                        Back to governance hub
+                                    <Link href="/ai-content-governance" className="inline-block mt-2">
+                                        <RSButton variant="secondary" size="md">
+                                            BACK TO GOVERNANCE HUB
+                                        </RSButton>
                                     </Link>
                                 </div>
                             </div>
@@ -464,11 +463,11 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
 
 function MetadataChip({ label, value }: { label: string; value: string }) {
     return (
-        <div className="border border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
+        <div className="border-t-[3px] border-[var(--rs-border-primary)] border-x border-b bg-[var(--rs-bg-secondary)] px-4 py-4 hover:border-t-black hover:shadow-lg transition-all duration-300 group">
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-text-secondary)] transition-colors">
                 {label}
             </p>
-            <p className="mt-2 text-sm leading-6 text-[var(--rs-text-primary)]">{value}</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--rs-text-primary)] font-mono">{value}</p>
         </div>
     )
 }
