@@ -5,7 +5,15 @@ import { PurchaseReceiptEmail } from '@/components/email/PurchaseReceiptEmail'
 import { MagicLinkEmail } from '@/components/email/MagicLinkEmail'
 import { getRiskTier } from '@/lib/risk/tiers'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialization — avoid build-time failures when RESEND_API_KEY isn't set
+let _resend: Resend | null = null
+function getResend(): Resend {
+    if (!_resend) {
+        if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is required')
+        _resend = new Resend(process.env.RESEND_API_KEY)
+    }
+    return _resend
+}
 
 // Helper to determine risk label (single source of truth)
 function getRiskLabel(score: number): string {
@@ -70,7 +78,7 @@ export async function sendSampleReportEmail(
             content: pdfBuffer
         }] : []
 
-        const result = await withRetry(() => resend.emails.send({
+        const result = await withRetry(() => getResend().emails.send({
             from: `AI Content Risk Score <${fromAddress}>`,
             to: email,
             subject: `Your AI Content Risk Score: ${score}`,
@@ -109,7 +117,7 @@ export async function sendMagicLinkEmail(
         const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
         const riskLevel = score != null ? getRiskLabel(score) : 'N/A'
 
-        const result = await withRetry(() => resend.emails.send({
+        const result = await withRetry(() => getResend().emails.send({
             from: `AI Content Risk Score <${fromAddress}>`,
             to: email,
             subject: 'Access your AI Content Risk Score Report',
@@ -152,7 +160,7 @@ export async function sendPurchaseReceiptEmail(
     try {
         const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
 
-        const result = await withRetry(() => resend.emails.send({
+        const result = await withRetry(() => getResend().emails.send({
             from: `AI Content Risk Score <${fromAddress}>`,
             to: email,
             subject: `Receipt: Full Forensic Report — ${filename}`,

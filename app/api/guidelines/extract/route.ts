@@ -2,7 +2,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/auth'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+function getGenAI() {
+    if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is required');
+    return new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+}
 
 const EXTRACTION_SYSTEM_INSTRUCTION = `
 You are a Brand Policy Analyst. Your job is to read brand guideline documents (PDFs or images) and extract structured rules for AI safety and compliance scanning.
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
         const bytes = await file.arrayBuffer()
         const base64 = Buffer.from(bytes).toString('base64')
 
-        const model = genAI.getGenerativeModel({
+        const model = getGenAI().getGenerativeModel({
             model: 'gemini-1.5-flash',
             systemInstruction: EXTRACTION_SYSTEM_INSTRUCTION
         })

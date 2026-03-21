@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, type Part } from '@google/generative-ai'
+import { GoogleGenerativeAI, type GenerativeModel, type Part } from '@google/generative-ai'
 import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import fs from 'fs';
 import path from 'path';
@@ -12,8 +12,25 @@ import type { C2PAReport } from './c2pa-types';
 import { computeCompositeScore, computeProvenanceScore, computeVerdict, type C2PAStatus } from './risk/scoring';
 export type { SpecialistReport, RiskProfile };
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
+// Lazy initialization — avoid build-time failures when env vars aren't set
+let _genAI: GoogleGenerativeAI | null = null;
+let _fileManager: GoogleAIFileManager | null = null;
+
+function getGenAI(): GoogleGenerativeAI {
+    if (!_genAI) {
+        if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is required');
+        _genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+    return _genAI;
+}
+
+function getFileManager(): GoogleAIFileManager {
+    if (!_fileManager) {
+        if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is required');
+        _fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
+    }
+    return _fileManager;
+}
 
 // ============================================================================
 // FILE MANAGER HELPERS
@@ -32,16 +49,16 @@ function writeTempFile(buffer: Buffer, mimeType: string): string {
 async function uploadToGemini(filePath: string, mimeType: string): Promise<string> {
     try {
         // 2. Upload to Gemini
-        const uploadResponse = await fileManager.uploadFile(filePath, {
+        const uploadResponse = await getFileManager().uploadFile(filePath, {
             mimeType,
             displayName: "Forensic Asset Analysis",
         });
 
         // 3. Poll for Active State (if video)
-        let file = await fileManager.getFile(uploadResponse.file.name);
+        let file = await getFileManager().getFile(uploadResponse.file.name);
         while (file.state === FileState.PROCESSING) {
             await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2s
-            file = await fileManager.getFile(uploadResponse.file.name);
+            file = await getFileManager().getFile(uploadResponse.file.name);
         }
 
         if (file.state === FileState.FAILED) {
@@ -118,7 +135,7 @@ ${guidelineRules}
 
 CRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaults.
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550` : '');
-    const model = genAI.getGenerativeModel({
+    const model = getGenAI().getGenerativeModel({
         model: 'gemini-2.5-flash',
         systemInstruction: instruction
     });
@@ -208,7 +225,7 @@ CRITICAL: If the generic scoring says "Alcohol = 40-69" but the brand guideline
 says "Alcohol is approved", the brand guideline WINS. Score alcohol content 0-9.
 Brand-specific rules ALWAYS take priority over generic industry defaults.
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550` : '');
-    const model = genAI.getGenerativeModel({
+    const model = getGenAI().getGenerativeModel({
         model: 'gemini-2.5-flash',
         systemInstruction: instruction
     });
@@ -278,7 +295,7 @@ CRITICAL RULES:
 
 async function analyzeProvenance(part: Part, filename: string = '', c2paStatus: string, guidelineRules?: string): Promise<SpecialistReport> {
     const instruction = PROVENANCE_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES:\n${guidelineRules}` : '');
-    const model = genAI.getGenerativeModel({
+    const model = getGenAI().getGenerativeModel({
         model: 'gemini-2.5-flash',
         systemInstruction: instruction
     });
@@ -308,7 +325,7 @@ Respond with ONLY a JSON object in this exact format:
 // CHIEF OFFICER (SYNTHESIS)
 // ============================================================================
 async function generateChiefStrategy(reports: SpecialistReport[]): Promise<string> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are a Chief Forensic Risk Officer. Based on these findings, provide a 3-point strategic mitigation plan:
 
@@ -338,7 +355,7 @@ Provide exactly 3 bullet points of actionable strategic recommendations to mitig
 // PROMPT EXECUTOR
 // ============================================================================
 async function executePrompt(
-    model: ReturnType<typeof genAI.getGenerativeModel>,
+    model: GenerativeModel,
     prompt: string,
     part: Part
 ): Promise<SpecialistReport> {
@@ -548,7 +565,7 @@ export async function analyzeImageMultiPersona(
                 // fileUri is "https://generativeai.googleapis.com/v1beta/files/NAME"
                 // fileManager expects just the name
                 const name = (geminiFileUri as string).split('/').pop();
-                if (name) await fileManager.deleteFile(name);
+                if (name) await getFileManager().deleteFile(name);
             } catch (e) {
                 console.error("Cleanup Error", e);
             }

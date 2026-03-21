@@ -1,8 +1,5 @@
-import Stripe from 'stripe'
 import { createServiceRoleClient } from './supabase/server'
-
-// Initialize Stripe with secret key for usage reporting
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+import { getStripeInstance } from './stripe'
 
 /**
  * Report scan usage to Stripe for metered billing
@@ -43,7 +40,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
 
         // Report usage to Stripe using usage records API
         // @ts-expect-error - Stripe types may not include createUsageRecord
-        const usageRecord = await stripe.subscriptionItems.createUsageRecord(
+        const usageRecord = await getStripeInstance().subscriptionItems.createUsageRecord(
             tenant.stripe_metered_item_id,
             {
                 quantity,
@@ -87,7 +84,7 @@ export async function reportScanUsage(tenantId: string, quantity: number = 1, op
 export async function getCurrentUsage(subscriptionItemId: string): Promise<number> {
     try {
         // @ts-expect-error - Stripe types may not include listUsageRecordSummaries
-        const summaries = await stripe.subscriptionItems.listUsageRecordSummaries(
+        const summaries = await getStripeInstance().subscriptionItems.listUsageRecordSummaries(
             subscriptionItemId,
             { limit: 1 }
         )

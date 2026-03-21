@@ -19,7 +19,8 @@ import { analyzeIP } from '@/lib/ai/ip-detection'
 import { analyzeBrandSafety } from '@/lib/ai/brand-safety'
 import { broadcastScanProgress } from '@/lib/realtime'
 import type { BrandGuideline } from '@/types/database'
-import { extractFrames, cleanupFrames } from '@/lib/video/processor'
+// FFmpeg is dynamically imported only for video processing (avoids bundling ~70MB binary for image scans)
+// import { extractFrames, cleanupFrames } from '@/lib/video/processor'
 import { getPlan, type PlanId } from '@/lib/plans'
 import { promises as fs } from 'fs'
 import path from 'path'
@@ -139,6 +140,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       const frameLimit = planConfig.videoFrameLimit || 5 // fallback to 5 if plan has no config
 
       // Extract frames
+      const { extractFrames, cleanupFrames } = await import('@/lib/video/processor')
       const frames = await extractFrames(fileBuffer, frameLimit)
 
       // VIDEO C2PA CHECK

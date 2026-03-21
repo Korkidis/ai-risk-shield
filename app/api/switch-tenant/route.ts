@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!; 
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const TTL_SECONDS = 900; // 15 minutes
 
-// Fallback if the user didn't set SUPABASE_URL but has NEXT_PUBLIC_SUPABASE_URL
-const API_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-if (!API_URL || !SERVICE_KEY) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars — switch-tenant route cannot function');
+function getEnvVars() {
+    const API_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!API_URL || !SERVICE_KEY) {
+        throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars — switch-tenant route cannot function');
+    }
+    return { API_URL, SERVICE_KEY };
 }
 
 // Helper: call Supabase Auth user endpoint with the caller's token
 async function getUserFromToken(token: string) {
-    const res = await fetch(`${API_URL!.replace(/\/$/, '')}/auth/v1/user`, {
+    const { API_URL } = getEnvVars();
+    const res = await fetch(`${API_URL.replace(/\/$/, '')}/auth/v1/user`, {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
     });
@@ -26,8 +27,9 @@ async function getUserFromToken(token: string) {
 
 // Helper: verify tenant exists and that the user's profile.tenant_id (agency) is the parent of requested child, or matches the requested tenant.
 async function verifyUserCanSwitch(userId: string, requestedTenantId: string) {
+    const { API_URL, SERVICE_KEY } = getEnvVars();
     // Check tenant exists
-    const tenantResp = await fetch(`${API_URL!.replace(/\/$/, '')}/rest/v1/tenants?id=eq.${encodeURIComponent(requestedTenantId)}&select=id,parent_tenant_id`, {
+    const tenantResp = await fetch(`${API_URL.replace(/\/$/, '')}/rest/v1/tenants?id=eq.${encodeURIComponent(requestedTenantId)}&select=id,parent_tenant_id`, {
         method: 'GET',
         headers: {
             apikey: SERVICE_KEY,
@@ -40,7 +42,7 @@ async function verifyUserCanSwitch(userId: string, requestedTenantId: string) {
     if (!Array.isArray(tenants) || tenants.length === 0) throw new Error('Requested tenant not found');
 
     // Fetch user's profile to get profiles.tenant_id (the user's canonical tenant)
-    const profileResp = await fetch(`${API_URL!.replace(/\/$/, '')}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,tenant_id,role,is_agency_admin`, {
+    const profileResp = await fetch(`${API_URL.replace(/\/$/, '')}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,tenant_id,role,is_agency_admin`, {
         method: 'GET',
         headers: {
             apikey: SERVICE_KEY,
@@ -81,6 +83,7 @@ async function verifyUserCanSwitch(userId: string, requestedTenantId: string) {
 
 // Helper: insert audit row
 async function insertAudit(actorUserId: string | null, actorSessionId: string | null, fromTenantId: string | null, toTenantId: string, ip: string | null, userAgent: string | null, reason: string | null) {
+    const { API_URL, SERVICE_KEY } = getEnvVars();
     const payload = {
         actor_user_id: actorUserId,
         actor_session_id: actorSessionId,
@@ -92,7 +95,7 @@ async function insertAudit(actorUserId: string | null, actorSessionId: string | 
         metadata: { via: 'nextjs-switch-tenant' },
     };
 
-    const res = await fetch(`${API_URL!.replace(/\/$/, '')}/rest/v1/tenant_switch_audit`, {
+    const res = await fetch(`${API_URL.replace(/\/$/, '')}/rest/v1/tenant_switch_audit`, {
         method: 'POST',
         headers: {
             apikey: SERVICE_KEY,
@@ -117,8 +120,9 @@ async function insertAudit(actorUserId: string | null, actorSessionId: string | 
 
 // Helper: request admin token with custom claims via admin endpoint
 async function createShortLivedToken(userId: string, active_tenant: string) {
+    const { API_URL, SERVICE_KEY } = getEnvVars();
     // Attempt to use admin token creation endpoint with custom_claims
-    const url = `${API_URL!.replace(/\/$/, '')}/auth/v1/admin/token`;
+    const url = `${API_URL.replace(/\/$/, '')}/auth/v1/admin/token`;
 
     const res = await fetch(url, {
         method: 'POST',

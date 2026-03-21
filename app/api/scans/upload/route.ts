@@ -5,7 +5,8 @@ import { getTenantId, requireAuth } from '@/lib/supabase/auth'
 import { createHash } from 'crypto'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { getPlan, type PlanId } from '@/lib/plans'
-import { getVideoDuration } from '@/lib/video/processor'
+// FFmpeg is dynamically imported only when processing video (avoids bundling ~70MB binary for image uploads)
+// import { getVideoDuration } from '@/lib/video/processor'
 
 /**
  * POST /api/scans/upload
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
             }
 
             try {
+                const { getVideoDuration } = await import('@/lib/video/processor')
                 const duration = await getVideoDuration(fileBuffer)
                 if (duration > planConfig.videoMaxDurationSeconds) {
                     return NextResponse.json({
