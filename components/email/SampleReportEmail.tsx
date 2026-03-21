@@ -50,7 +50,7 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
                         AI Content Risk Score
                     </h1>
                     <p style={{ margin: '5px 0 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                        Forensic Analysis Complete
+                        Your Scan Results Are Ready
                     </p>
                 </div>
 
@@ -116,7 +116,7 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
                             textTransform: 'uppercase',
                             letterSpacing: '1px'
                         }}>
-                            View Full Report →
+                            View Your Results →
                         </a>
                         <p style={{ marginTop: '20px', fontSize: '11px', color: colors.grey, fontFamily: 'monospace' }}>
                             SECURE ACCESS LINK • EXPIRES IN 15 MINUTES
@@ -128,31 +128,20 @@ export const SampleReportEmail: React.FC<SampleReportEmailProps> = ({
 
                 </div>
 
-                {/* Upsell Section */}
+                {/* Subtle Mitigation Mention */}
                 <div style={{ padding: '0 40px 30px' }}>
-                    <div style={{ padding: '18px 20px', backgroundColor: '#F4F4F4', borderRadius: '6px', border: `1px solid ${colors.lightGrey}` }}>
-                        <p style={{ margin: '0 0 10px 0', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: colors.grey }}>
-                            Want full access?
-                        </p>
-                        <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: colors.ink, lineHeight: '1.5' }}>
-                            <strong>$29</strong> unlocks this full report. Or go Pro at <strong>$49/month</strong> — 50 scans, 5 full reports/mo, video support, and 30-day history.
-                        </p>
-                        <ul style={{ paddingLeft: '16px', margin: '0 0 8px 0', color: colors.grey, fontSize: '11px', lineHeight: '1.8' }}>
-                            <li>Complete IP risk analysis with evidence citations</li>
-                            <li>Full brand safety breakdown + severity scores</li>
-                            <li>Legal remediation steps you can act on</li>
-                            <li>Downloadable PDF audit trail</li>
-                        </ul>
-                        <p style={{ margin: 0, fontSize: '10px', color: '#999999', fontStyle: 'italic' }}>
-                            Your findings are available for 30 days.
-                        </p>
-                    </div>
+                    <p style={{ margin: 0, fontSize: '11px', color: colors.grey, textAlign: 'center', lineHeight: '1.5' }}>
+                        Need remediation guidance? Explore mitigation reports in your workspace.
+                    </p>
+                    <p style={{ margin: '8px 0 0 0', fontSize: '10px', color: '#999999', textAlign: 'center', fontStyle: 'italic' }}>
+                        Your findings are available for 30 days.
+                    </p>
                 </div>
 
                 {/* Footer */}
                 <div style={{ borderTop: `1px solid ${colors.lightGrey}`, padding: '20px', textAlign: 'center', backgroundColor: '#FFFFFF' }}>
                     <p style={{ margin: 0, fontSize: '9px', textTransform: 'uppercase', color: colors.grey, letterSpacing: '1px' }}>
-                        AI Content Risk Score • Automated Legal Forensic Analysis
+                        AI Content Risk Score • Automated Risk Analysis
                     </p>
                     <p style={{ margin: '5px 0 0 0', fontSize: '9px', color: '#999999' }}>
                         © {new Date().getFullYear()} All rights reserved

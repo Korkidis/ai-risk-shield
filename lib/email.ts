@@ -66,14 +66,14 @@ export async function sendSampleReportEmail(
         const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
 
         const attachments = pdfBuffer ? [{
-            filename: `Sample_Report_${scanId.slice(0, 8)}.pdf`,
+            filename: `Findings_Summary_${scanId.slice(0, 8)}.pdf`,
             content: pdfBuffer
         }] : []
 
         const result = await withRetry(() => resend.emails.send({
             from: `AI Content Risk Score <${fromAddress}>`,
             to: email,
-            subject: `🔒 Forensic Analysis Complete • Risk Score: ${score}`,
+            subject: `Your AI Content Risk Score: ${score}`,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React Email component return type incompatible with Resend's react prop
             react: SampleReportEmail({ scanId, score, riskLevel, findingsCount, magicLink, topFinding }) as any,
             attachments
