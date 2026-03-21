@@ -178,7 +178,7 @@ function MobilePricingView() {
             features: [
                 { label: "INCLUDED", val: "50 Scans" },
                 { label: "EFFECTIVE", val: "$0.98 / scan" },
-                { label: "MITIGATIONS", val: "2 Included" },
+                { label: "MITIGATIONS", val: "5 Included" },
                 { label: "BRANDS", val: "1 Profile" },
             ],
             btn: <RSButton variant="primary" fullWidth onClick={() => window.location.href='/pricing?plan=pro'}>SUBSCRIBE PRO</RSButton>
