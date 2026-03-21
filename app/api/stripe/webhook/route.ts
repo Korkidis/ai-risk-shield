@@ -424,7 +424,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
                 .single()
 
             if (scanMeta) {
-                const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://airiskshield.com'
+                const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://contentriskscore.com'
                 const dashboardUrl = `${appUrl}/dashboard?scan=${scanId}`
                 sendPurchaseReceiptEmail(
                     customerEmail,

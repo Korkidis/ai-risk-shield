@@ -21,23 +21,23 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: 'AI Risk Shield',
-    template: '%s | AI Risk Shield',
+    default: 'AI Content Risk Score',
+    template: '%s | AI Content Risk Score',
   },
   description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'AI Risk Shield',
+    title: 'AI Content Risk Score',
     description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
     url: '/',
-    siteName: 'AI Risk Shield',
+    siteName: 'AI Content Risk Score',
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: 'AI Risk Shield',
+    title: 'AI Content Risk Score',
     description: 'AI content risk validation with IP risk scoring, C2PA provenance verification, and forensic reporting for legal and brand teams.',
   },
 }
@@ -66,7 +66,7 @@ export default function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          "name": "AI Risk Shield",
+          "name": "AI Content Risk Score",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
           "description": "AI content risk validation — IP risk scoring, C2PA provenance verification, and forensic reporting in 15 seconds.",

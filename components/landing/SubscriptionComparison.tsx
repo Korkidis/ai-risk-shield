@@ -84,7 +84,7 @@ export function PricingSection() {
                                <div className="flex items-baseline gap-3 relative">
                                     <span className="rs-type-display font-black text-3xl text-[var(--rs-text-primary)] absolute line-through opacity-30 italic">$3,500</span>
                                     <span className="rs-type-display font-black text-3xl text-[var(--rs-signal)] ml-[120px]">$0.98</span>
-                                    <span className="rs-type-mono text-[10px] uppercase font-bold text-[var(--rs-text-tertiary)] tracking-widest">(Cost of AI Risk Shield per asset)</span>
+                                    <span className="rs-type-mono text-[10px] uppercase font-bold text-[var(--rs-text-tertiary)] tracking-widest">(Cost of AI Content Risk Score per asset)</span>
                                </div>
                            </div>
                         </div>

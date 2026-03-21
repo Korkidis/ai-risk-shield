@@ -161,7 +161,7 @@ export function PricingCard({
                             fullWidth
                             onClick={() => {
                                 trackEvent('contact_sales_clicked', { source: 'pricing_card_primary', planId: plan.id });
-                                window.location.href = 'mailto:sales@airiskshield.com?subject=Enterprise%20Inquiry';
+                                window.location.href = 'mailto:sales@contentriskscore.com?subject=Enterprise%20Inquiry';
                             }}
                         >
                             {content.ctaPrimary}
@@ -173,7 +173,7 @@ export function PricingCard({
                                 className="text-[10px] uppercase tracking-widest border border-[var(--rs-border-primary)]"
                                 onClick={() => {
                                     trackEvent('contact_sales_clicked', { source: 'pricing_card_secondary', planId: plan.id });
-                                    window.location.href = 'mailto:sales@airiskshield.com?subject=Enterprise%20Demo';
+                                    window.location.href = 'mailto:sales@contentriskscore.com?subject=Enterprise%20Demo';
                                 }}
                             >
                                 {content.ctaSecondary}

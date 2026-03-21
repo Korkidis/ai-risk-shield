@@ -71,7 +71,7 @@ export async function sendSampleReportEmail(
     try {
         // In dev, Resend only allows sending to your own email unless domain is verified.
         // We assume the user has set this up or is testing with their own email.
-        const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
+        const fromAddress = process.env.EMAIL_FROM || 'reports@contentriskscore.com'
 
         const attachments = pdfBuffer ? [{
             filename: `Findings_Summary_${scanId.slice(0, 8)}.pdf`,
@@ -114,7 +114,7 @@ export async function sendMagicLinkEmail(
     }
 
     try {
-        const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
+        const fromAddress = process.env.EMAIL_FROM || 'reports@contentriskscore.com'
         const riskLevel = score != null ? getRiskLabel(score) : 'N/A'
 
         const result = await withRetry(() => getResend().emails.send({
@@ -158,7 +158,7 @@ export async function sendPurchaseReceiptEmail(
     }
 
     try {
-        const fromAddress = process.env.EMAIL_FROM || 'reports@airiskshield.com'
+        const fromAddress = process.env.EMAIL_FROM || 'reports@contentriskscore.com'
 
         const result = await withRetry(() => getResend().emails.send({
             from: `AI Content Risk Score <${fromAddress}>`,

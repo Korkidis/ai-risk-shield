@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: GuidePageProps): Promise<Meta
             canonical: path,
         },
         openGraph: {
-            title: `${guide.title} | AI Risk Shield`,
+            title: `${guide.title} | AI Content Risk Score`,
             description: guide.description,
             url: path,
             type: 'article',
@@ -95,7 +95,7 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
                   url: getAbsoluteUrl(pageUrl),
                   creator: {
                       '@type': 'Organization',
-                      name: 'AI Risk Shield',
+                      name: 'AI Content Risk Score',
                   },
                   datePublished: guide.publishedAt,
                   dateModified: guide.updatedAt,
@@ -111,11 +111,11 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
                   mainEntityOfPage: getAbsoluteUrl(pageUrl),
                   author: {
                       '@type': 'Organization',
-                      name: 'AI Risk Shield',
+                      name: 'AI Content Risk Score',
                   },
                   publisher: {
                       '@type': 'Organization',
-                      name: 'AI Risk Shield',
+                      name: 'AI Content Risk Score',
                   },
                   datePublished: guide.publishedAt,
                   dateModified: guide.updatedAt,

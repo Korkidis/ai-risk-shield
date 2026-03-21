@@ -25,7 +25,7 @@ export const metadata: Metadata = {
         canonical: hubUrl,
     },
     openGraph: {
-        title: 'AI Content Governance | AI Risk Shield',
+        title: 'AI Content Governance | AI Content Risk Score',
         description: hubDescription,
         url: hubUrl,
         type: 'website',
@@ -43,7 +43,7 @@ export default function AIContentGovernancePage() {
             dateModified: riskIndexSnapshot.asOf,
             publisher: {
                 '@type': 'Organization',
-                name: 'AI Risk Shield',
+                name: 'AI Content Risk Score',
             },
         },
         {
