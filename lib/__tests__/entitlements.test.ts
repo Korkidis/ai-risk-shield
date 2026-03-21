@@ -289,9 +289,9 @@ describe('Entitlements limit getters', () => {
 
     it('getMitigationLimit returns correct values per tier', () => {
         expect(Entitlements.getMitigationLimit('free')).toBe(0)
-        expect(Entitlements.getMitigationLimit('pro')).toBe(2)
-        expect(Entitlements.getMitigationLimit('team')).toBe(10)
-        expect(Entitlements.getMitigationLimit('agency')).toBe(50)
+        expect(Entitlements.getMitigationLimit('pro')).toBe(5)
+        expect(Entitlements.getMitigationLimit('team')).toBe(30)
+        expect(Entitlements.getMitigationLimit('agency')).toBe(100)
         expect(Entitlements.getMitigationLimit('enterprise')).toBe(9999)
     })
 })
@@ -319,6 +319,6 @@ describe('Entitlements.getMitigationEntitlement', () => {
     it('uses plan default when tenant limit not set', () => {
         const tenant = makeTenant({ plan: 'team', monthly_mitigation_limit: undefined as unknown as number })
         const result = Entitlements.getMitigationEntitlement(tenant)
-        expect(result.included).toBe(10) // team plan default
+        expect(result.included).toBe(30) // team plan default
     })
 })

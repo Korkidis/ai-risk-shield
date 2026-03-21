@@ -54,4 +54,25 @@ temp/
 # Logs
 logs
 *.log
-Screenshot 2026-01-16 at 10.04.15 PM.png
+Screenshot*
+
+# AI agent workspaces (keep .claude/CLAUDE.md tracked for project instructions)
+.claude/*
+!.claude/CLAUDE.md
+.agent/
+.agents/
+.codex/
+.opencode/
+
+# Planning & strategy docs (not customer-facing)
+brain/
+tasks/
+skills/
+ARCHITECTURE.md
+NORTH_STAR.md
+SOC 2 Compliance.md
+ROADMAP.md
+
+# Debug scripts & backups
+tmp_*.js
+*.bak

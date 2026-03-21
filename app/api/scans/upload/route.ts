@@ -1,5 +1,5 @@
 
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getTenantId, requireAuth } from '@/lib/supabase/auth'
 import { createHash } from 'crypto'
@@ -229,9 +229,14 @@ export async function POST(request: Request) {
         // Usage is charged at scan COMPLETION, not at upload.
         // Failed scans are free. Stripe usage is also reported at completion.
 
-        // Trigger background processing (Direct call, bypass Auth-gated API)
-        import('@/lib/ai/scan-processor').then(({ processScan }) => {
-            processScan(scan!.id).catch(err => console.error('Background analysis failed:', err))
+        // Trigger background processing — after() keeps the Vercel function alive until complete
+        after(async () => {
+            try {
+                const { processScan } = await import('@/lib/ai/scan-processor')
+                await processScan(scan!.id)
+            } catch (err) {
+                console.error('Background analysis failed:', err)
+            }
         })
 
         return NextResponse.json({

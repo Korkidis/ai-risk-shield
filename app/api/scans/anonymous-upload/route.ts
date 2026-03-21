@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getOrCreateSessionId } from '@/lib/session'
 import { getClientIp, hashIp } from '@/lib/ratelimit'
@@ -150,13 +150,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create scan' }, { status: 500 })
     }
 
-    // 4. Queue async analysis (Direct call, bypass Auth-gated API)
-    // Fire-and-forget with timing instrumentation
+    // 4. Queue async analysis — after() keeps the Vercel function alive until complete
     const processStart = Date.now()
-    import('@/lib/ai/scan-processor').then(({ processScan }) => {
-      processScan(newScan.id)
-        .then(() => console.log(`[Perf] processScan ${newScan.id.slice(0, 8)}: ${Date.now() - processStart}ms`))
-        .catch(err => console.error('Background analysis failed:', err))
+    after(async () => {
+      try {
+        const { processScan } = await import('@/lib/ai/scan-processor')
+        await processScan(newScan.id)
+        console.log(`[Perf] processScan ${newScan.id.slice(0, 8)}: ${Date.now() - processStart}ms`)
+      } catch (err) {
+        console.error('Background analysis failed:', err)
+      }
     })
 
     // 5. Consume one unit from the pre-check result (production only).
