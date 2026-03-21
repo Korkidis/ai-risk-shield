@@ -66,6 +66,12 @@ SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Tur
 - **Storage paths:** Always use tenant_id in folder structure (`uploads/{tenant_id}/{file}`)
 - **Realtime** - Switched from polling to Supabase Realtime (Feb 2026) for scan status updates. Polling caused 139GB egress.
 
+### SDK Client Initialization (Vercel Deploy)
+- **All external SDK clients use lazy initialization** — Stripe, Resend, Gemini, FFmpeg are instantiated on first request, NOT at module load. This prevents build-time failures when env vars aren't set during Next.js static page collection.
+- **Pattern:** Private `_client` variable + `getClient()` function that checks env var and creates instance on first call.
+- **FFmpeg is dynamically imported** (`await import()`) inside video-only code paths to avoid bundling the ~70MB binary into image upload functions.
+- **Do NOT add `new Stripe()`, `new Resend()`, or `new GoogleGenerativeAI()` at module level** — always use the lazy getters from `lib/stripe.ts`, `lib/email.ts`, `lib/gemini.ts`.
+
 ### Gemini API Usage
 - **Model:** `gemini-2.5-flash` — verify metadata stores this, not `gemini-1.5-flash`
 - **Safety blocks = feature, not bug** - Convert to critical finding (score: 100)
@@ -161,7 +167,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Anon key (safe to expose)
 SUPABASE_SERVICE_ROLE_KEY=         # Service role (SERVER-SIDE ONLY)
 
 # Google Gemini
-GOOGLE_GEMINI_API_KEY=             # Gemini API key (SERVER-SIDE ONLY)
+GEMINI_API_KEY=                    # Gemini API key (SERVER-SIDE ONLY)
 
 # Stripe
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY= # Publishable key (safe to expose)
@@ -346,7 +352,7 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Webhook health alerting**: `lib/webhook-monitor.ts` writes failures to `audit_log` table + optional email alerts via Resend (`WEBHOOK_ALERT_EMAIL` env var). Instrumented: signature failures, plan apply errors, scan purchase failures, anonymous user resolution errors
 - **Stripe price ID validation**: Lazy validation on first checkout request via `lib/stripe-validate-prices.ts` — validates all configured `STRIPE_PRICE_*` env vars against Stripe API, caches result, logs errors
 - **Legacy magic_links table dropped**: Migration `20260208_cleanup_magic_links.sql` applied
-- **Vercel Cron configured**: `vercel.json` with two cron jobs (monthly quota reset + 15-min usage retry)
+- **Vercel Cron configured**: `vercel.json` with two cron jobs (monthly quota reset + daily rate-limit cleanup). 15-min usage retry removed (incompatible with Vercel Hobby plan; route still exists for future Pro upgrade)
 
 ### Phase R Complete (Feb 24, 2026)
 - **Supabase types rebuilt**: `lib/supabase/types.ts` manually reconstructed from schema mapping (18 tables, 6 RPCs, `rate_limits` table added). Includes `Relationships: []` on all tables, `Views`, `CompositeTypes` for Supabase-js compatibility. `scans.status` and `scans.risk_level` narrowed to union types.
