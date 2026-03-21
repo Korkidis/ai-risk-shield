@@ -271,6 +271,64 @@ if (!allowed && plan === 'free') {
 - **Region:** US East (iad1) - or closest to target users
 - **Environment:** Separate env vars for preview vs production
 
+## Pre-Launch Checklist (Infrastructure — Not Code)
+
+### DNS + Cloudflare
+- [ ] Point `contentriskscore.com` to Vercel (A record or CNAME)
+- [ ] If using Cloudflare proxy: set SSL mode to "Full (strict)" to avoid redirect loops with Vercel's auto-SSL
+- [ ] Verify SSL certificate auto-provisions after DNS propagation
+- [ ] Add `www.contentriskscore.com` redirect to apex domain
+
+### Vercel
+- [ ] Project `ai-content-risk-score` linked to GitHub repo
+- [ ] All env vars set in Vercel dashboard
+- [ ] Custom domain added in Vercel project settings
+- [ ] Production branch = `main`
+- [ ] Check build succeeds on Vercel after first deploy
+
+### Stripe
+- [ ] Create webhook endpoint: `https://contentriskscore.com/api/stripe/webhook`
+- [ ] Enable events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`
+- [ ] Verify all `STRIPE_PRICE_*` env vars match actual Stripe price IDs
+- [ ] Decide: test mode or live mode for friends preview
+
+### Supabase
+- [ ] Add `https://contentriskscore.com` to Auth redirect URLs
+- [ ] Add `https://contentriskscore.com` to Storage CORS allowed origins
+- [ ] Verify `NEXT_PUBLIC_APP_URL` = `https://contentriskscore.com` in Vercel env vars
+
+### Resend
+- [ ] Verify domain `contentriskscore.com` in Resend dashboard
+- [ ] Confirm sending address (`reports@` or `noreply@`) is configured
+
+### Post-Deploy Smoke Test
+- [ ] Landing page loads at contentriskscore.com
+- [ ] Anonymous image upload → risk score appears
+- [ ] Email capture → magic link email arrives
+- [ ] Magic link click → dashboard loads with scan visible
+- [ ] Stripe checkout redirects correctly
+
+## Development Workflow (Solo Developer)
+
+### Mental Model
+```
+local files → git commit (saved) → git push (GitHub) → Vercel auto-deploys (live)
+```
+
+### Rules
+1. **Only `main` gets deployed.** Worktree branches are workspaces.
+2. **Commit before switching tasks.** Uncommitted work in worktrees is invisible to other agents.
+3. **One agent per worktree.** Never have two agents editing the same worktree.
+4. **Merge to main when done.** Push the worktree branch, then merge to main from the main repo.
+5. **Don't use `git add -A` blindly.** Use `git add -u` or name specific files to avoid staging secrets.
+
+### Multi-Agent Workflow
+- Each Claude Code agent gets its own **worktree** (isolated copy of the code)
+- Agents can work in parallel without conflicts
+- When an agent finishes: commit on its branch → merge to `main` from the main repo folder → push
+- The main repo folder (`ai-risk-sheild/`) should always be on the `main` branch
+- Worktree folders (`.claude/worktrees/*/`) are on their own branches
+
 ## Changelog (Phases A through Sprint 10.5)
 
 ### Pipeline Unified (Phase A Complete)
