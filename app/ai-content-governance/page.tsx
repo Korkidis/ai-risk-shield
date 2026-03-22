@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowUpRight, Fingerprint, Scale, Workflow } from 'lucide-react'
-import { Footer } from '@/components/landing/Footer'
 import { Header } from '@/components/layout/Header'
 import { RSBackground } from '@/components/rs/RSBackground'
 import { RSPanel } from '@/components/rs/RSPanel'
@@ -10,6 +9,7 @@ import {
     formatLongDate,
     formatUsdCompact,
     governanceGuides,
+    policySignals,
     riskIndexSnapshot,
     riskWatchItems,
 } from '@/lib/marketing/ai-content-governance'
@@ -34,6 +34,8 @@ export const metadata: Metadata = {
 }
 
 export default function AIContentGovernancePage() {
+    const trackedSignals = [...policySignals, ...riskWatchItems].sort((a, b) => b.date.localeCompare(a.date))
+
     const schema = [
         {
             '@context': 'https://schema.org',
@@ -103,24 +105,30 @@ export default function AIContentGovernancePage() {
                         </div>
 
                         <div className="grid gap-6 md:grid-cols-3">
-                            <SignalPanel
-                                label="Known public settlements tracked"
-                                value={`${formatUsdCompact(riskIndexSnapshot.knownSettlementTotalUsd)}+`}
-                                detail="Disclosed settlement dollars only. No guessed damages."
-                                icon={<Scale className="h-5 w-5" />}
-                            />
-                            <SignalPanel
-                                label="AI copyright case velocity"
-                                value={riskIndexSnapshot.trackedCaseCountLabel}
-                                detail={riskIndexSnapshot.trackedCaseCountContext}
-                                icon={<Workflow className="h-5 w-5" />}
-                            />
-                            <SignalPanel
-                                label="Provenance ecosystem adoption"
-                                value={riskIndexSnapshot.standardsAdoptionLabel}
-                                detail={riskIndexSnapshot.standardsAdoptionContext}
-                                icon={<Fingerprint className="h-5 w-5" />}
-                            />
+                            <a href="#signals" className="group block h-full">
+                                <SignalPanel
+                                    label="Known public settlements tracked"
+                                    value={`${formatUsdCompact(riskIndexSnapshot.knownSettlementTotalUsd)}+`}
+                                    detail="Based on disclosed settlements alone, in an industry still getting started."
+                                    icon={<Scale className="h-5 w-5" />}
+                                />
+                            </a>
+                            <a href="#signals" className="group block h-full">
+                                <SignalPanel
+                                    label="AI copyright case velocity"
+                                    value={riskIndexSnapshot.trackedCaseCountLabel}
+                                    detail={riskIndexSnapshot.trackedCaseCountContext}
+                                    icon={<Workflow className="h-5 w-5" />}
+                                />
+                            </a>
+                            <a href="#signals" className="group block h-full">
+                                <SignalPanel
+                                    label="Provenance ecosystem adoption"
+                                    value={riskIndexSnapshot.standardsAdoptionLabel}
+                                    detail={riskIndexSnapshot.standardsAdoptionContext}
+                                    icon={<Fingerprint className="h-5 w-5" />}
+                                />
+                            </a>
                         </div>
                     </div>
                 </section>
@@ -144,7 +152,7 @@ export default function AIContentGovernancePage() {
                                 <Link
                                     key={guide.slug}
                                     href={`/ai-content-governance/${guide.slug}`}
-                                    className="group"
+                                    className="group block h-full"
                                 >
                                     <RSPanel className="flex h-full flex-col justify-between bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_theme(colors.black)] transition-all duration-300 group-hover:border-[var(--rs-text-primary)] group-hover:shadow-[12px_12px_0_var(--rs-signal)]">
                                         <div>
@@ -163,12 +171,16 @@ export default function AIContentGovernancePage() {
                                         </div>
 
                                         <div className="mt-8 border-t-[3px] border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] -mx-6 -mb-6 px-6 py-5">
-                                            <p className="rs-type-label text-[var(--rs-text-tertiary)]">
-                                                Audience
-                                            </p>
-                                            <p className="mt-1 text-xs leading-relaxed text-[var(--rs-text-primary)] font-mono">
-                                                {guide.audience}
-                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {guide.audience.split(',').map((tag) => (
+                                                    <span
+                                                        key={`${guide.slug}-${tag.trim()}`}
+                                                        className="inline-flex items-center border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--rs-text-secondary)]"
+                                                    >
+                                                        {tag.trim()}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
                                     </RSPanel>
                                 </Link>
@@ -177,58 +189,106 @@ export default function AIContentGovernancePage() {
                     </div>
                 </section>
 
-                <section className="bg-[var(--rs-bg-surface)]">
+                <section id="signals" className="bg-[var(--rs-bg-surface)]">
                     <div className="mx-auto max-w-7xl px-6 py-16">
                         <div className="mb-14 max-w-3xl space-y-4">
                             <p className="rs-type-micro text-[var(--rs-text-tertiary)] font-bold">
-                                Litigation and standards watch
+                                Litigation, policy, and standards watch
                             </p>
                             <h2 className="text-3xl md:text-5xl uppercase italic font-black tracking-tighter text-[var(--rs-text-primary)] text-balance">
                                 PUBLIC SIGNALS WORTH TRACKING.
                             </h2>
                             <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
-                                Updated {formatLongDate(riskIndexSnapshot.asOf)}. The threat landscape isn't theoretical—it's actively compounding in federal courts. Below are the verified settlement anchors and case momentum signals driving the urgent demand for enterprise-grade asset provenance.
-                            </p>
-                            <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] mt-2">
-                                Current public settlement anchor: <span className="font-bold text-[var(--rs-signal)]">{`${formatUsdCompact(riskIndexSnapshot.knownSettlementTotalUsd)}+`}</span>.
+                                Updated {formatLongDate(riskIndexSnapshot.asOf)}. The rules are being written, governments are establishing AI frameworks, and the threat landscape is not theoretical. It is actively compounding in federal courts, enterprise review workflows, and client-facing publishing decisions. The signals below combine regulatory movement, litigation momentum, and verified settlement anchors, including a current disclosed public settlement anchor of <span className="font-bold text-[var(--rs-signal)]">{`${formatUsdCompact(riskIndexSnapshot.knownSettlementTotalUsd)}+`}</span>.
                             </p>
                         </div>
 
                         <div className="space-y-6">
-                            {riskWatchItems.map((item) => (
-                                <RSPanel key={`${item.title}-${item.date}`} className="group hover:-translate-y-1 hover:shadow-[12px_12px_0_theme(colors.black)] transition-all duration-300 bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_var(--rs-border-primary)] overflow-hidden p-0">
-                                    <div className="flex flex-col md:flex-row md:items-stretch h-full">
-                                        <div className="flex-1 p-6 md:p-8">
-                                            <p className="rs-type-micro text-[var(--rs-text-tertiary)]">
-                                                {item.category} <span className="mx-2 text-[var(--rs-signal)]">|</span> {item.status}
-                                            </p>
-                                            <h3 className="mt-4 text-2xl font-black uppercase tracking-tighter text-[var(--rs-text-primary)] text-balance italic">
-                                                {item.title}
-                                            </h3>
-                                            <p className="mt-3 text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty max-w-2xl font-medium">
-                                                {item.summary}
-                                            </p>
+                            {trackedSignals.map((item) => (
+                                <a
+                                    key={`${item.title}-${item.date}`}
+                                    href={item.sourceUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="group block h-full"
+                                >
+                                    <RSPanel className="h-full overflow-hidden border-2 border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] p-0 shadow-[8px_8px_0_var(--rs-border-primary)] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[12px_12px_0_theme(colors.black)]">
+                                        <div className="flex h-full flex-col md:flex-row md:items-stretch">
+                                            <div className="flex-1 p-6 md:p-8">
+                                                <p className="rs-type-micro text-[var(--rs-text-tertiary)]">
+                                                    {item.category} <span className="mx-2 text-[var(--rs-signal)]">|</span> {item.status}
+                                                </p>
+                                                <h3 className="mt-4 text-2xl font-black uppercase tracking-tighter text-[var(--rs-text-primary)] text-balance italic">
+                                                    {item.title}
+                                                </h3>
+                                                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty font-medium">
+                                                    {item.summary}
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-col justify-center border-t border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] p-6 transition-colors group-hover:bg-[var(--rs-bg-well)] md:min-w-[300px] md:border-t-0 md:border-l-[3px] md:p-8">
+                                                <p className="rs-type-label mb-2 text-[var(--rs-text-tertiary)]">
+                                                    Source
+                                                </p>
+                                                <p className="inline-flex items-start gap-2 text-sm font-bold text-[var(--rs-text-primary)] transition-colors group-hover:text-[var(--rs-signal)]">
+                                                    {item.sourceLabel}
+                                                    <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
+                                                </p>
+                                                <p className="mt-4 text-xs font-mono text-[var(--rs-text-secondary)]">
+                                                    {formatLongDate(item.date)}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col justify-center border-t md:border-t-0 md:border-l-[3px] border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] p-6 md:p-8 md:min-w-[300px] group-hover:bg-[var(--rs-border-primary)] transition-colors">
-                                            <p className="rs-type-label text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-bg-surface)] mb-2">
-                                                Source
-                                            </p>
-                                            <a
-                                                href={item.sourceUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="inline-flex items-start gap-2 text-sm font-bold text-[var(--rs-text-primary)] group-hover:text-black transition-colors"
-                                            >
-                                                {item.sourceLabel}
-                                                <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
-                                            </a>
-                                            <p className="mt-4 text-xs font-mono text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-bg-secondary)]">
-                                                {formatLongDate(item.date)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </RSPanel>
+                                    </RSPanel>
+                                </a>
                             ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Product Methodology Section */}
+                <section id="methodology" className="border-t border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)]">
+                    <div className="mx-auto max-w-7xl px-6 py-16">
+                        <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-start">
+                            <div className="space-y-6">
+                                <p className="rs-type-micro text-[var(--rs-text-signal)] font-bold">
+                                    Our scoring methodology
+                                </p>
+                                <h2 className="text-3xl md:text-5xl uppercase italic font-black tracking-tighter text-[var(--rs-text-primary)] text-balance">
+                                    HOW THE ENGINE WORKS.
+                                </h2>
+                                <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                                    The scoring engine is deterministic, policy-aware, and grounded in established IP and governance frameworks. It does not rely on generative AI to produce assessments. It applies a fixed set of rules to every asset you submit. Same asset in, same score out.
+                                </p>
+                                <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                                    On Pro and higher tiers, you upload your own brand guidelines, restricted vocabulary, and policy documents. The methodology adapts to your standards and applies them consistently across every asset your team submits. Your rules shape the score.
+                                </p>
+                            </div>
+                            <div className="space-y-4">
+                                <RSPanel className="bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_var(--rs-border-primary)]">
+                                    <h3 className="text-lg font-black uppercase tracking-tight text-[var(--rs-text-primary)]">
+                                        Deterministic
+                                    </h3>
+                                    <p className="mt-3 text-sm leading-relaxed text-[var(--rs-text-secondary)]">
+                                        No generative guesswork. The engine applies a fixed rule set grounded in established governance frameworks. Submit the same asset twice, get the same score.
+                                    </p>
+                                </RSPanel>
+                                <RSPanel className="bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_var(--rs-border-primary)]">
+                                    <h3 className="text-lg font-black uppercase tracking-tight text-[var(--rs-text-primary)]">
+                                        Policy-Aware
+                                    </h3>
+                                    <p className="mt-3 text-sm leading-relaxed text-[var(--rs-text-secondary)]">
+                                        Upload your brand guidelines, restricted vocabulary, and policy documents. The engine absorbs your standards and applies them to every scan.
+                                    </p>
+                                </RSPanel>
+                                <RSPanel className="bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_var(--rs-border-primary)]">
+                                    <h3 className="text-lg font-black uppercase tracking-tight text-[var(--rs-text-primary)]">
+                                        Transparent
+                                    </h3>
+                                    <p className="mt-3 text-sm leading-relaxed text-[var(--rs-text-secondary)]">
+                                        Every report itemizes the specific findings that contributed to the score. Your team can trace every flag back to the rule that triggered it.
+                                    </p>
+                                </RSPanel>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -237,10 +297,10 @@ export default function AIContentGovernancePage() {
                 <section className="bg-[var(--rs-bg-base)] border-t border-[var(--rs-border-primary)] py-24">
                     <div className="mx-auto max-w-4xl px-6 text-center space-y-8">
                         <h2 className="text-4xl md:text-6xl uppercase italic font-black leading-[0.9] tracking-tight text-[var(--rs-text-primary)] text-balance">
-                            READY TO SECURE YOUR <span className="text-[var(--rs-signal)]">CONTENT&nbsp;PIPELINE?</span>
+                            MAKE GOVERNANCE <span className="text-[var(--rs-signal)]">OPERATIONAL.</span>
                         </h2>
                         <p className="max-w-2xl mx-auto text-base leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
-                            Don't let unverified AI assets expose your brand to IP litigation. Run a free forensic scan today, or upgrade your entire team to establish an ironclad provenance workflow.
+                            Give legal, brand, and marketing one shared decision layer before anything ships. Scan the asset, preserve the evidence, and turn policy from a static document into a repeatable publishing workflow.
                         </p>
                         <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
                             <Link href="/register">
@@ -254,11 +314,14 @@ export default function AIContentGovernancePage() {
                                 </RSButton>
                             </Link>
                         </div>
+                        <div className="border-t border-[var(--rs-border-primary)] pt-8">
+                            <p className="mx-auto max-w-3xl text-[10px] leading-loose uppercase tracking-widest text-[var(--rs-text-secondary)]">
+                                Disclaimer: AI Content Risk Score provides technical risk assessment data. We do not provide legal advice. Final publishing decisions should be made with qualified legal and compliance review.
+                            </p>
+                        </div>
                     </div>
                 </section>
             </main>
-
-            <Footer />
         </RSBackground>
     )
 }

@@ -9,13 +9,10 @@ import { RSButton } from '@/components/rs/RSButton'
 import { RSPanel } from '@/components/rs/RSPanel'
 import {
     formatLongDate,
-    formatUsdCompact,
     getGovernanceGuide,
     getRelatedGovernanceGuides,
     governanceGuides,
     governanceOperatingModel,
-    riskIndexSnapshot,
-    riskWatchItems,
 } from '@/lib/marketing/ai-content-governance'
 import { getAbsoluteUrl } from '@/lib/site'
 
@@ -86,43 +83,25 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
         ],
     }
 
-    const pageSchema =
-        guide.slug === 'risk-methodology-101'
-            ? {
-                  '@context': 'https://schema.org',
-                  '@type': 'Dataset',
-                  name: guide.title,
-                  description: guide.description,
-                  url: getAbsoluteUrl(pageUrl),
-                  creator: {
-                      '@type': 'Organization',
-                      name: 'AI Content Risk Score',
-                  },
-                  datePublished: guide.publishedAt,
-                  dateModified: guide.updatedAt,
-                  keywords: guide.keywords,
-                  citation: guide.sourceLinks.map((source) => source.url),
-                  isAccessibleForFree: true,
-              }
-            : {
-                  '@context': 'https://schema.org',
-                  '@type': 'Article',
-                  headline: guide.title,
-                  description: guide.description,
-                  mainEntityOfPage: getAbsoluteUrl(pageUrl),
-                  author: {
-                      '@type': 'Organization',
-                      name: 'AI Content Risk Score',
-                  },
-                  publisher: {
-                      '@type': 'Organization',
-                      name: 'AI Content Risk Score',
-                  },
-                  datePublished: guide.publishedAt,
-                  dateModified: guide.updatedAt,
-                  keywords: guide.keywords.join(', '),
-                  citation: guide.sourceLinks.map((source) => source.url),
-              }
+    const pageSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: guide.title,
+        description: guide.description,
+        mainEntityOfPage: getAbsoluteUrl(pageUrl),
+        author: {
+            '@type': 'Organization',
+            name: 'AI Content Risk Score',
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'AI Content Risk Score',
+        },
+        datePublished: guide.publishedAt,
+        dateModified: guide.updatedAt,
+        keywords: guide.keywords.join(', '),
+        citation: guide.sourceLinks.map((source) => source.url),
+    }
 
     const relatedGuides = getRelatedGovernanceGuides(guide.slug)
 
@@ -256,76 +235,6 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
                     </div>
                 </section>
 
-                {guide.slug === 'risk-methodology-101' ? (
-                    <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)]">
-                        <div className="mx-auto grid max-w-6xl gap-8 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr]">
-                            <RSPanel className="bg-[var(--rs-bg-surface)]">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
-                                    Snapshot
-                                </p>
-                                <div className="mt-6 border-y border-[var(--rs-border-primary)] py-8">
-                                    <p className="text-5xl font-bold tracking-tight text-[var(--rs-text-primary)] rs-type-mono">
-                                        {`${formatUsdCompact(riskIndexSnapshot.knownSettlementTotalUsd)}+`}
-                                    </p>
-                                    <p className="mt-4 text-sm leading-7 text-[var(--rs-text-secondary)]">
-                                        Known public settlement dollars tracked as of{' '}
-                                        {formatLongDate(riskIndexSnapshot.asOf)}.
-                                    </p>
-                                </div>
-
-                                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                                    <MiniSignal
-                                        label="Case volume"
-                                        value={riskIndexSnapshot.trackedCaseCountLabel}
-                                        detail={riskIndexSnapshot.trackedCaseCountContext}
-                                    />
-                                    <MiniSignal
-                                        label="Recent filings"
-                                        value={riskIndexSnapshot.recentFilingsLabel}
-                                        detail={riskIndexSnapshot.recentFilingsContext}
-                                    />
-                                </div>
-                            </RSPanel>
-
-                            <div className="space-y-6">
-                                {riskWatchItems.map((item) => (
-                                    <RSPanel key={`${item.title}-${item.date}`} className="bg-[var(--rs-bg-secondary)]">
-                                        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
-                                            {item.category} · {item.status}
-                                        </p>
-                                        <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-                                            <div className="max-w-xl">
-                                                <h3 className="text-xl uppercase tracking-tight text-[var(--rs-text-primary)]">
-                                                    {item.title}
-                                                </h3>
-                                                <p className="mt-4 text-sm leading-7 text-[var(--rs-text-secondary)]">
-                                                    {item.summary}
-                                                </p>
-                                            </div>
-                                            <div className="border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-4 py-3 text-right">
-                                                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
-                                                    Source
-                                                </p>
-                                                <a
-                                                    href={item.sourceUrl}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[var(--rs-text-primary)] hover:text-[var(--rs-signal)]"
-                                                >
-                                                    {item.sourceLabel}
-                                                    <ArrowUpRight className="h-3.5 w-3.5" />
-                                                </a>
-                                                <p className="mt-1 text-xs text-[var(--rs-text-secondary)]">
-                                                    {formatLongDate(item.date)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </RSPanel>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                ) : null}
 
                 <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)]">
                     <div className="mx-auto max-w-6xl px-6 py-16">
@@ -472,24 +381,4 @@ function MetadataChip({ label, value }: { label: string; value: string }) {
     )
 }
 
-function MiniSignal({
-    label,
-    value,
-    detail,
-}: {
-    label: string
-    value: string
-    detail: string
-}) {
-    return (
-        <div className="border border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
-                {label}
-            </p>
-            <p className="mt-3 text-2xl font-bold tracking-tight text-[var(--rs-text-primary)] rs-type-mono">
-                {value}
-            </p>
-            <p className="mt-3 text-sm leading-6 text-[var(--rs-text-secondary)]">{detail}</p>
-        </div>
-    )
-}
+

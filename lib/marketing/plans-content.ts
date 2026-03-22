@@ -18,12 +18,12 @@ export interface PlanContent {
 export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
     free: {
         name: 'Free',
-        tagline: '3 Scans to Test',
-        audience: 'Independent Researchers',
+        tagline: 'Test the engine with 3 free scans',
+        audience: 'See what a structured risk report looks like.',
         idealFor: [
             'Evaluating validation depth',
             'Testing single assets',
-            'Understanding risk profiles',
+            'Proving model functionality',
         ],
         softBenefits: [
             'Instant verification',
@@ -45,9 +45,9 @@ export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
             'Maintaining forensic history',
         ],
         softBenefits: [
-            'Full PDF report generation',
-            'Custom brand rules applied to checks',
-            'Prioritized scanning speed',
+            'Forensic mitigation reports with step-by-step remediation',
+            'Your brand rules and policies define every score',
+            'Deterministic methodology: same asset in, same score out',
         ],
         ctaPrimary: 'Subscribe Pro',
     },
@@ -73,7 +73,7 @@ export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
     agency: {
         name: 'Agency',
         tagline: 'White-Label + Priority Queue',
-        audience: 'Enterprise multi-brand management and API-scale programmatic clearance.',
+        audience: 'Agencies managing multiple brands and client campaigns at scale.',
         baseCommitment: '$499 Base Commitment',
         effectiveRate: '$0.49 / scan (1,000 included)',
         overageRate: '$0.60 / additional scan',
@@ -99,46 +99,58 @@ export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
         idealFor: [
             'Custom integrations & SLA requirements',
             'Procurement and legal compliance',
-            'Unlimited operational scale',
+            'Enterprise-grade operational scale',
         ],
         softBenefits: [
             'Dedicated Customer Success Manager',
             'SSO / SAML integration',
             'Negotiated rates and customized terms',
         ],
-        ctaPrimary: 'Contact Sales',
-        ctaSecondary: 'Request Demo'
+        ctaPrimary: 'Explore Plan',
     }
 }
 
 export const FAQs = [
     {
-        question: 'What happens if I exceed my scan limit?',
-        answer: 'Paid plans allow overage usage. You\'ll be billed at your plan\'s overage rate at the end of each billing cycle. Free users must upgrade to continue scanning.'
+        question: 'What types of content can I scan?',
+        answer: 'Images, video, and audio files. You upload the asset, and the engine checks for IP infringement signals, brand safety violations, and provenance gaps, then returns a structured risk report.'
     },
     {
-        question: 'Can I change plans anytime?',
-        answer: 'Yes! Upgrade or downgrade anytime. When upgrading, you\'ll be prorated for the remaining period. When downgrading, changes take effect at your next billing date.'
+        question: 'Can I set my own brand rules and policies?',
+        answer: 'Yes. On Pro and higher tiers, you upload your brand guidelines, restricted vocabulary, and policy documents. The engine adopts your standards and flags any content that drifts from your brand voice.'
     },
     {
-        question: 'Do you offer refunds?',
-        answer: 'We offer a 14-day money-back guarantee on all paid plans. No questions asked.'
+        question: 'Is my content used to train your models?',
+        answer: 'Never. Your data is your IP. We process scans in secure, ephemeral environments with zero retention. We hold no claim to your content and do absolutely no model training on your data.'
     },
     {
-        question: 'What is a Mitigation Report?',
-        answer: 'A Mitigation Report provides a deep forensic analysis, bias audit, compliance checks (e.g., GDPR, EU AI Act), and actionable remediation steps. They are available as a one-time purchase or included in higher-tier plans.'
+        question: 'What methodology powers the risk score?',
+        answer: 'The engine uses a deterministic, rule-based approach grounded in established IP and governance frameworks. It adapts to your organization\'s brand guidelines and policies. Same asset in, same score out. No generative guesswork.'
+    },
+    {
+        question: 'Does this replace our legal review process?',
+        answer: 'No. It accelerates it. The engine catches obvious IP risks and policy violations up front, so your legal team can focus on high-level strategy instead of basic risk screening.'
+    },
+    {
+        question: 'What is a deep mitigation report?',
+        answer: 'A detailed remediation document that goes beyond the risk score. It outlines specific findings, recommended next steps, and strategic options for resolving flagged issues before publication.'
     }
 ]
 
 export const PERSONA_CONTENT: Record<'agency' | 'enterprise', { title: string; description: string; benefits: string[] }> = {
     agency: {
-        title: 'For Agencies',
-        description: 'Accelerate client delivery with white-labeled validation, multi-brand management, and frictionless workflows.',
+        title: 'Enterprise & Agency Capabilities',
+        description: 'Governance-grade compliance integrated directly into your workflows.',
         benefits: [
-            'White-Label Client Reports',
-            'Manage up to 20 Brand Profiles',
-            'High-Volume Bulk Verification',
-            'Priority Queue Processing'
+            'Operational Scale for High-Volume Teams',
+            'Dedicated SLA Processing',
+            'Full White-Labeled Deliverables',
+            'Multi-Brand Profile Management',
+            'Priority Processing Queue',
+            'Custom Risk Threshold Policies',
+            'Secure Data Retention',
+            'Configurable API Rate Limits',
+            'SSO / SAML Available (Enterprise Only)'
         ]
     },
     enterprise: {
@@ -146,7 +158,7 @@ export const PERSONA_CONTENT: Record<'agency' | 'enterprise', { title: string; d
         description: 'Governance-grade compliance with SSO, dedicated support, and custom SLAs tailored to your operational theater.',
         benefits: [
             'SSO / SAML Security',
-            'Unlimited Operational Scale',
+            'Enterprise-Grade Operational Scale',
             'Dedicated Success Manager',
             'Advanced Audit Logging'
         ]

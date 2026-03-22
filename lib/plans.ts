@@ -65,7 +65,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         brandProfiles: 0,
         retentionDays: 7,
         features: {
-            fullReportAccess: false,
+            fullReportAccess: true,
             bulkUpload: false,
             coBranding: false,
             whiteLabel: false,
@@ -175,14 +175,14 @@ export const PLANS: Record<PlanId, PlanConfig> = {
         tagline: 'SSO + Dedicated CSM',
         monthlyPriceCents: 0, // Custom
         annualPriceCents: 0, // Custom
-        seats: 999, // Effectively unlimited
+        seats: 9999, // Effectively unlimited
         monthlyScans: 9999,
         scanOverageCents: 0, // Negotiated
         monthlyReports: 9999,
         reportOverageCents: 0, // Negotiated
         monthlyMitigations: 9999,
         mitigationOverageCents: 0, // Negotiated
-        brandProfiles: 999,
+        brandProfiles: 9999,
         retentionDays: 730, // 2 years
         features: {
             fullReportAccess: true,

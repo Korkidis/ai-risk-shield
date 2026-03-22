@@ -1,102 +1,43 @@
 'use client'
 
-import { Shield, Lock, CheckCircle, Component, Globe } from 'lucide-react'
+
 
 export function TrustCompliance() {
     return (
-        <section className="py-24 bg-[var(--rs-bg-well)] rs-bg-grid rs-edge-top relative overflow-hidden">
-            {/* Ruler Gutter - Left */}
-            <div className="absolute left-0 top-0 bottom-0 w-12 border-r border-[var(--rs-border-primary)]/50 hidden md:flex flex-col items-center py-4 overflow-hidden bg-[var(--rs-bg-well)] z-20">
-                {Array.from({ length: 20 }).map((_, i) => (
-                    <div key={i} className="rs-ruler-tick" />
-                ))}
-            </div>
-
-            <div className="max-w-7xl mx-auto px-6 relative z-10 w-full pl-16 md:pl-6">
-
-                {/* Section Header */}
-                <div className="flex items-center gap-4 mb-16">
-                    <div className="h-px bg-[var(--rs-border-primary)] flex-1" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] bg-[var(--rs-bg-well)] px-4">
-                        System Integrity
-                    </span>
-                    <div className="h-px bg-[var(--rs-border-primary)] flex-1" />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-12 md:gap-24">
-
-                    {/* Trust & Compliance Panel */}
-                    <div className="space-y-8">
-                        <div className="flex items-center space-x-4 mb-8 pb-6 border-b border-[var(--rs-border-primary)]">
-                            <div className="p-2 border border-[var(--rs-border-primary)] rounded-[var(--rs-radius-small)]">
-                                <Shield className="w-5 h-5 text-[var(--rs-text-primary)]" />
-                            </div>
-                            <h3 className="text-2xl rs-type-section tracking-tight text-[var(--rs-text-primary)] uppercase">TRUST & COMPLIANCE</h3>
-                        </div>
-
-                        <ul className="space-y-8">
-                            <ListItem
-                                icon={<Lock className="w-4 h-4" />}
-                                title="PRIVACY FIRST"
-                                description="All data encrypted in transit (TLS 1.3) and at rest. Data deleted after 7-day retention period. No training on user data."
-                            />
-                            <ListItem
-                                icon={<CheckCircle className="w-4 h-4" />}
-                                title="C2PA VERIFICATION"
-                                description="Reads and validates C2PA content credentials using the open standard. Verify independently at contentcredentials.org."
-                            />
-                            <ListItem
-                                icon={<Shield className="w-4 h-4" />}
-                                title="DATA ISOLATION"
-                                description="Row-level security on every database query. Multi-tenant isolation enforced at the infrastructure level."
-                            />
-                            <ListItem
-                                icon={<Globe className="w-4 h-4" />}
-                                title="COMPLIANCE ROADMAP"
-                                description="SOC 2 Type II and ISO 27001 certification planned. Built on Supabase + Vercel infrastructure."
-                            />
-                        </ul>
-                    </div>
-
-                    {/* Badges / Logos Visual */}
-                    <div className="flex flex-col justify-center gap-6">
-                        <div className="border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] p-8 rounded-lg flex flex-wrap gap-8 items-center justify-center opacity-80 hover:opacity-100 transition-opacity">
-                            <Badge text="C2PA VERIFICATION" />
-                            <Badge text="GEMINI POWERED" />
-                            <Badge text="SOC 2 PLANNED" dimmed />
-                            <Badge text="GDPR PLANNED" dimmed />
-                        </div>
-                        <div className="p-8 border border-[var(--rs-border-primary)] border-dashed rounded-lg bg-[var(--rs-bg-secondary)]/50 text-center">
-                            <Component className="w-12 h-12 text-[var(--rs-text-tertiary)] mx-auto mb-4" />
-                            <p className="text-xs uppercase tracking-widest text-[var(--rs-text-tertiary)] font-bold">
-                                SOC 2 &middot; ISO 27001 &middot; Planned
-                            </p>
-                        </div>
-                    </div>
+        <section className="py-24 bg-[var(--rs-bg-surface)] border-t border-[var(--rs-border-primary)] relative overflow-hidden">
+            <div className="max-w-5xl mx-auto px-6 text-center">
+                <h2 className="text-4xl md:text-5xl rs-header-bold-italic tracking-tighter text-[var(--rs-text-primary)] mb-16 uppercase">
+                    A SECURE, VERIFIABLE <span className="text-[var(--rs-signal)]">INFRASTRUCTURE.</span>
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[var(--rs-border-primary)] border-2 border-[var(--rs-border-primary)] shadow-[12px_12px_0_theme(colors.black)] text-left">
+                    <TrustBlock 
+                        title="No Training. Ever." 
+                        desc="Your assets are analyzed in a volatile environment and immediately purged. We do not use your data or uploads to train our analysis engine." 
+                    />
+                    <TrustBlock 
+                        title="Open Provenance" 
+                        desc="Cryptographic C2PA validation ensures all metadata is verified against open standard registries, not proprietary walled gardens." 
+                    />
+                    <TrustBlock 
+                        title="Data Isolation" 
+                        desc="Row-level security enforcement guarantees absolute multitenant separation of your forensic reports and strategic logic." 
+                    />
+                    <TrustBlock 
+                        title="Compliance Grade" 
+                        desc="Operating within SOC2 Type II and ISO 27001 target parameters, securely hosted on Vercel and Supabase cloud infrastructure." 
+                    />
                 </div>
             </div>
         </section>
     )
 }
 
-function ListItem({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+function TrustBlock({ title, desc }: { title: string, desc: string }) {
     return (
-        <li className="flex items-start space-x-4 group">
-            <div className="mt-1 flex-shrink-0 text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-text-primary)] transition-colors duration-300">
-                {icon}
-            </div>
-            <div>
-                <h4 className="text-[var(--rs-text-primary)] font-bold text-sm mb-1 uppercase tracking-wide">{title}</h4>
-                <p className="text-[var(--rs-text-secondary)] text-sm leading-relaxed max-w-sm">{description}</p>
-            </div>
-        </li>
-    )
-}
-
-function Badge({ text, dimmed }: { text: string; dimmed?: boolean }) {
-    return (
-        <div className={`px-3 py-1.5 border border-[var(--rs-border-primary)] rounded bg-[var(--rs-bg-element)] text-[10px] font-bold uppercase tracking-widest ${dimmed ? 'text-[var(--rs-text-tertiary)] opacity-60' : 'text-[var(--rs-text-secondary)]'}`}>
-            {text}
+        <div className="bg-[var(--rs-bg-surface)] p-10 h-full flex flex-col justify-start group hover:bg-[var(--rs-bg-secondary)] transition-colors duration-300">
+            <h3 className="rs-type-section text-lg uppercase text-[var(--rs-text-primary)] font-bold mb-4 tracking-tight">{title}</h3>
+            <p className="rs-type-body text-sm md:text-base text-[var(--rs-text-secondary)] leading-relaxed">{desc}</p>
         </div>
     )
 }

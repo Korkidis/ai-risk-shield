@@ -28,7 +28,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
             url: getAbsoluteUrl(`/ai-content-governance/${guide.slug}`),
             lastModified: new Date(`${guide.updatedAt}T00:00:00Z`),
             changeFrequency: 'monthly' as const,
-            priority: guide.slug === 'risk-methodology-101' ? 0.8 : 0.7,
+            priority: guide.slug === 'assessing-ai-content-risk' ? 0.8 : 0.7,
         })),
     ]
 }

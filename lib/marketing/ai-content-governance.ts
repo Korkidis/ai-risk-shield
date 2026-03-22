@@ -1,5 +1,5 @@
 export type GovernanceGuideSlug =
-    | 'risk-methodology-101'
+    | 'assessing-ai-content-risk'
     | 'indemnity-controls'
     | 'content-credentials'
     | 'human-review-workflows'
@@ -49,7 +49,7 @@ export interface GovernanceGuide {
 }
 
 export const riskIndexSnapshot = {
-    asOf: '2026-03-15',
+    asOf: '2026-03-21',
     knownSettlementTotalUsd: 1_500_000_000,
     trackedCaseCountLabel: '80+',
     trackedCaseCountContext:
@@ -112,6 +112,31 @@ export const riskWatchItems: RiskWatchItem[] = [
     },
 ]
 
+export const policySignals: RiskWatchItem[] = [
+    {
+        title: 'US National AI Policy Framework',
+        date: '2026-03-19',
+        category: 'standard',
+        status: 'enacted',
+        summary:
+            'The US administration published a national framework for AI model training and deployment. This is a foundational policy moment that establishes guardrails for how AI systems are built and used. Enterprise teams should expect downstream compliance requirements to crystallize around this framework.',
+        sourceLabel: 'White House',
+        sourceUrl:
+            'https://www.whitehouse.gov/ostp/ai-bill-of-rights/',
+    },
+    {
+        title: 'EU AI Act: 50 enforcement rules go live',
+        date: '2026-03-15',
+        category: 'standard',
+        status: 'active',
+        summary:
+            'The European Union\'s AI Act enforcement framework is now operational, with 50 rules governing how AI systems must be documented, tested, and deployed in regulated markets. For any enterprise publishing AI-generated content into EU markets, compliance is no longer optional.',
+        sourceLabel: 'European Commission',
+        sourceUrl:
+            'https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai',
+    },
+]
+
 export const governanceOperatingModel = [
     {
         label: 'Rules first',
@@ -133,31 +158,27 @@ export const governanceOperatingModel = [
 
 export const governanceGuides: GovernanceGuide[] = [
     {
-        slug: 'risk-methodology-101',
-        title: 'Risk Methodology 101',
+        slug: 'assessing-ai-content-risk',
+        title: 'Assessing AI Content Risk',
         description:
-            'A quick 101 on our data-scoring methodology. Discover exactly how we calculate AI content risk and track settlement data to keep your business safe.',
-        audience: 'Marketing ops, brand leaders, legal, procurement',
-        intent: 'Methodology and risk context',
+            'Start with the fundamentals. See why existing brand, IP, and review controls still apply to AI content, and why structured assessment matters when synthetic media scales.',
+        audience: 'Legal, compliance, brand leaders, marketing ops',
+        intent: 'Risk assessment foundations',
         publishedAt: '2026-03-15',
-        updatedAt: '2026-03-15',
-        primaryQuestion: 'How is AI content risk actually calculated?',
+        updatedAt: '2026-03-21',
+        primaryQuestion: 'Do existing content governance frameworks still apply to AI-generated assets?',
         shortAnswer:
-            'We use a transparent index mapping known model training data against exact settlement figures, active case counts, and jurisdictional risk to give a physical dollar-value to operational liability.',
+            'Yes. The fundamentals of brand compliance, IP clearance, and claims review have not changed. What has changed is the volume and speed at which AI-generated content enters the pipeline. That scale demands a structured, repeatable methodology.',
         keywords: [
-            'ai copyright lawsuit tracker',
-            'ai risk exposure',
-            'ai copyright cases 2026',
-            'enterprise ai risk index',
+            'ai content risk assessment',
+            'enterprise content governance',
+            'synthetic media risk',
+            'ai content compliance',
         ],
         sourceLinks: [
             {
                 label: 'Copyright Alliance AI court case coverage',
                 url: 'https://copyrightalliance.org/copyright-stories-february-2026/',
-            },
-            {
-                label: 'Anthropic settlement coverage',
-                url: 'https://www.investing.com/news/stock-market-news/anthropic-agrees-to-pay-15-billion-to-settle-author-class-action-4227408',
             },
             {
                 label: 'C2PA 2.3 ecosystem update',
@@ -166,46 +187,46 @@ export const governanceGuides: GovernanceGuide[] = [
         ],
         sections: [
             {
-                heading: 'Why our methodology works',
+                heading: 'Content governance is not new',
                 body:
-                    'Most enterprise buyers do not need another opinion piece. They need a compact evidence surface that proves AI content litigation has moved from headline noise into an operating risk. Our system scans and weights variables based entirely on public litigation and foundational model hashes.',
+                    'Every enterprise already has some version of content governance. Brand guidelines define what can and cannot be said. Legal reviews check claims. Rights clearance verifies licensing. These controls exist because publishing the wrong thing has always carried risk. AI does not change that.',
             },
             {
-                heading: 'What counts in the number',
+                heading: 'What changes with synthetic media',
                 body:
-                    'The useful public number is disclosed settlement dollars. That is why the lead metric stays grounded in known amounts rather than multiplying speculative statutory damages across every complaint on the internet.',
+                    'The difference is scale and speed. AI tools let teams create hundreds of assets in the time it used to take to produce one. Manual review cannot keep pace. Without a structured methodology, teams either bottleneck production or publish unchecked work.',
+            },
+            {
+                heading: 'Why you need a structured methodology',
+                body:
+                    'A methodology gives every asset a consistent, repeatable evaluation before it ships. It removes guesswork, creates audit trails, and lets your team move fast without skipping the controls that keep you out of trouble. The methodology itself should be grounded in the same governance frameworks your organization already trusts.',
                 bullets: [
-                    'Disclosed settlements belong in the dollar figure.',
-                    'Active disputes belong in tracked case counts.',
-                    'Bursts of new filings belong in a case-velocity signal.',
+                    'Apply the same rigor to AI-generated assets that you apply to everything else.',
+                    'Build audit trails that hold up under scrutiny from legal, clients, and regulators.',
+                    'Scale your review process without scaling your headcount.',
                 ],
             },
             {
-                heading: 'What does not belong in the number',
+                heading: 'What a structured assessment gives you',
                 body:
-                    'Unpriced complaints, uncertain work counts, and theoretical statutory maximums should not be collapsed into one fake precise total. Those are better represented as range, count, or methodology notes.',
-            },
-            {
-                heading: 'How to use it operationally',
-                body:
-                    'The index is not legal advice. It is a boardroom and workflow signal: when the public market is moving, content teams need stronger provenance, policy enforcement, and escalation rules before assets go live.',
+                    'A clear signal on every asset before publication. Your legal team can focus on judgment calls instead of screening. Your marketing team can move faster because the guardrails are built into the process. And when a client, regulator, or opposing counsel asks how you verified an asset, you have the documentation ready.',
             },
         ],
         faq: [
             {
-                question: 'Why not show one giant total for all AI risk?',
+                question: 'Does this mean AI content is inherently risky?',
                 answer:
-                    'Because many generators do not publish their training records. A transparent split between known settlement dollars, active disputes, and algorithmic attribution is more defensible.',
+                    'No. It means AI content enters the pipeline at a volume and speed that existing manual processes cannot handle. The risk is not the content itself. The risk is publishing without adequate review.',
             },
             {
-                question: 'How often should a public risk index be updated?',
+                question: 'What governance frameworks apply to AI content?',
                 answer:
-                    'Weekly or biweekly is enough for an MVP. The goal is credibility and recency, not fake real-time theater.',
+                    'The same ones that apply to all content: brand guidelines, claims policies, IP and licensing rules, provenance verification, and human review thresholds. AI changes the tooling, not the principles.',
             },
             {
-                question: 'Does a public index replace legal review?',
+                question: 'Where does a scoring methodology fit in?',
                 answer:
-                    'No. It helps justify why review controls exist, but individual publish decisions still need legal or policy judgment when risk is high.',
+                    'It sits at the front of your review pipeline. A structured scoring methodology evaluates every asset against your policies before it reaches human reviewers, so your team spends time on decisions, not screening.',
             },
         ],
     },
