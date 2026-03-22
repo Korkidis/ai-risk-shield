@@ -150,6 +150,42 @@ describe('computeVerdict and computeRiskLevel consistency', () => {
 })
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Input Clamping — Out-of-Range Score Protection
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('computeCompositeScore — input clamping', () => {
+    it('clamps negative IP score to 0', () => {
+        const result = computeCompositeScore({ ipScore: -20, safetyScore: 50, c2paStatus: 'missing' })
+        const expected = computeCompositeScore({ ipScore: 0, safetyScore: 50, c2paStatus: 'missing' })
+        expect(result).toBe(expected)
+    })
+
+    it('clamps IP score above 100 to 100', () => {
+        const result = computeCompositeScore({ ipScore: 150, safetyScore: 50, c2paStatus: 'missing' })
+        const expected = computeCompositeScore({ ipScore: 100, safetyScore: 50, c2paStatus: 'missing' })
+        expect(result).toBe(expected)
+    })
+
+    it('clamps negative safety score to 0', () => {
+        const result = computeCompositeScore({ ipScore: 50, safetyScore: -30, c2paStatus: 'missing' })
+        const expected = computeCompositeScore({ ipScore: 50, safetyScore: 0, c2paStatus: 'missing' })
+        expect(result).toBe(expected)
+    })
+
+    it('clamps safety score above 100 to 100', () => {
+        const result = computeCompositeScore({ ipScore: 50, safetyScore: 200, c2paStatus: 'missing' })
+        const expected = computeCompositeScore({ ipScore: 50, safetyScore: 100, c2paStatus: 'missing' })
+        expect(result).toBe(expected)
+    })
+
+    it('result always in 0-100 range even with extreme inputs', () => {
+        const result = computeCompositeScore({ ipScore: 999, safetyScore: 999, c2paStatus: 'invalid' })
+        expect(result).toBeGreaterThanOrEqual(0)
+        expect(result).toBeLessThanOrEqual(100)
+    })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Score Stability — Determinism
 // ═══════════════════════════════════════════════════════════════════════════
 

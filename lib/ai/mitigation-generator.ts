@@ -6,10 +6,11 @@
  * (PDF export, batch generation, testing).
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { MitigationReportContent } from '@/types/database'
+import { getGeminiClient } from '@/lib/ai/gemini'
+import { MitigationReportContentSchema, MITIGATION_REPORT_GEMINI_SCHEMA } from '@/lib/schemas/mitigation-schema'
 
-const GENERATOR_VERSION = '1.0.0'
+const GENERATOR_VERSION = '1.1.0'
 
 // ============================================================================
 // Input Types
@@ -64,19 +65,20 @@ export interface MitigationGeneratorInput {
 export async function generateMitigationReport(
     input: MitigationGeneratorInput
 ): Promise<MitigationReportContent> {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-        throw new Error('GEMINI_API_KEY not configured')
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const genAI = getGeminiClient()
+    const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: {
+            responseMimeType: 'application/json',
+            responseSchema: MITIGATION_REPORT_GEMINI_SCHEMA,
+        },
+    })
 
     const prompt = buildPrompt(input)
     const result = await model.generateContent([prompt])
     const text = result.response.text()
 
-    // Parse JSON from response (strip markdown fences if present)
+    // Parse JSON from response (strip markdown fences as fallback — SDK structured output should eliminate them)
     const jsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
 
     let parsed: Record<string, unknown>
@@ -86,7 +88,14 @@ export async function generateMitigationReport(
         throw new Error(`Failed to parse Gemini response as JSON: ${jsonStr.substring(0, 200)}...`)
     }
 
-    return parsed as unknown as MitigationReportContent
+    // Runtime validation — replaces unsafe `as unknown as` coercion
+    const validated = MitigationReportContentSchema.safeParse(parsed)
+    if (!validated.success) {
+        console.error('Mitigation report validation failed:', JSON.stringify(validated.error.issues, null, 2))
+        throw new Error(`Gemini returned invalid mitigation report structure: ${validated.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ')}`)
+    }
+
+    return validated.data
 }
 
 /**
