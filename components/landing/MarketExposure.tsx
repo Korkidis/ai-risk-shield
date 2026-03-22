@@ -18,11 +18,11 @@ export function MarketExposure() {
                     <span className="rs-type-micro inline-block text-[var(--rs-text-tertiary)] bg-[var(--rs-bg-surface)] px-4 tracking-[0.28em] uppercase">
                         AI Content Governance
                     </span>
-                    <h2 className="mt-6 text-4xl md:text-6xl rs-header-bold-italic tracking-tighter text-[var(--rs-text-primary)]">
-                        THE OPERATING LAYER BETWEEN <span className="text-[var(--rs-signal)]">AI SPEED</span> AND PUBLISH-READY EVIDENCE.
+                    <h2 className="mt-4 text-4xl md:text-6xl rs-header-bold-italic tracking-tighter text-[var(--rs-text-primary)] text-balance mx-auto">
+                        THE OPERATING LAYER BETWEEN <span className="text-[var(--rs-signal)]">AI SPEED</span> AND PUBLISH-READY CONTENT.
                     </h2>
-                    <p className="mt-6 mx-auto max-w-3xl text-sm md:text-base leading-8 text-[var(--rs-text-secondary)]">
-                        This section is built for teams that need more than headlines. It translates litigation, provenance, policy, and review design into a governance model that marketing, brand, legal, and procurement can all use.
+                    <p className="mt-4 mx-auto max-w-2xl text-base leading-snug text-[var(--rs-text-secondary)] text-balance">
+                        Built for teams that need more than headlines. Connect your compliance policies directly to the creative workflow before a single asset ships.
                     </p>
                 </div>
 
@@ -30,19 +30,19 @@ export function MarketExposure() {
                     <MetricCard
                         label="Known public settlements tracked"
                         value={`${formatUsdCompact(riskIndexSnapshot.knownSettlementTotalUsd)}+`}
-                        detail="Disclosed settlement dollars only. No guessed damages."
+                        detail="Disclosed settlement value. No guessed damages."
                         icon={<Scale className="h-4 w-4" />}
                     />
                     <MetricCard
                         label="AI copyright case velocity"
                         value={riskIndexSnapshot.trackedCaseCountLabel}
-                        detail={riskIndexSnapshot.trackedCaseCountContext}
+                        detail="Active AI copyright infringement dockets."
                         icon={<Workflow className="h-4 w-4" />}
                     />
                     <MetricCard
                         label="Provenance ecosystem adoption"
                         value={riskIndexSnapshot.standardsAdoptionLabel}
-                        detail={riskIndexSnapshot.standardsAdoptionContext}
+                        detail="Verified enterprise supply chain deployments."
                         icon={<Fingerprint className="h-4 w-4" />}
                     />
                 </div>
@@ -74,7 +74,7 @@ function MetricCard({
     icon: React.ReactNode
 }) {
     return (
-        <RSPanel className="bg-[var(--rs-bg-secondary)] border-[var(--rs-border-primary)] h-full">
+        <RSPanel className="bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_theme(colors.black)] p-6 md:p-8 flex flex-col justify-between h-full transition-shadow duration-300 hover:shadow-[12px_12px_0_var(--rs-signal)] group">
             <div className="flex items-start justify-between gap-4">
                 <p className="max-w-[14rem] text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--rs-text-tertiary)]">
                     {label}
@@ -82,12 +82,14 @@ function MetricCard({
                 <div className="text-[var(--rs-signal)]">{icon}</div>
             </div>
 
-            <p className="mt-8 text-4xl md:text-5xl font-bold tracking-tight text-[var(--rs-text-primary)] rs-type-mono">
-                {value}
-            </p>
-            <p className="mt-5 text-sm md:text-base leading-8 text-[var(--rs-text-secondary)]">
-                {detail}
-            </p>
+            <div>
+                <p className="mt-6 text-4xl md:text-5xl font-bold tracking-tight text-[var(--rs-text-primary)] rs-type-mono">
+                    {value}
+                </p>
+                <p className="mt-3 text-xs md:text-sm leading-relaxed text-[var(--rs-text-secondary)] text-balance">
+                    {detail}
+                </p>
+            </div>
         </RSPanel>
     )
 }

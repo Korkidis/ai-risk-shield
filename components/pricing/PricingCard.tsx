@@ -6,7 +6,6 @@ import { RSButton } from '@/components/rs/RSButton'
 import { Check, X } from 'lucide-react'
 import type { PlanConfig, PlanId } from '@/lib/plans'
 import { PLAN_CONTENT } from '@/lib/marketing/plans-content'
-import { trackEvent } from '@/lib/analytics'
 
 interface PricingCardProps {
     plan: PlanConfig
@@ -14,6 +13,8 @@ interface PricingCardProps {
     isPopular?: boolean
     currentPlan?: PlanId
     onSelect: (planId: PlanId, interval: 'monthly' | 'annual') => void
+    allowFreeSelection?: boolean
+    freeCtaLabel?: string
 }
 
 export function PricingCard({
@@ -21,7 +22,9 @@ export function PricingCard({
     interval,
     isPopular = false,
     currentPlan,
-    onSelect
+    onSelect,
+    allowFreeSelection = false,
+    freeCtaLabel
 }: PricingCardProps) {
     const [loading, setLoading] = useState(false)
     const content = PLAN_CONTENT[plan.id]
@@ -33,25 +36,32 @@ export function PricingCard({
     const isCurrentPlan = currentPlan === plan.id
     const isEnterprise = plan.id === 'enterprise'
     const isFree = plan.id === 'free'
+    const showsBaseCommitmentLabel = !isEnterprise && !isFree && Boolean(content.baseCommitment)
 
     const handleSelect = async () => {
-        if (isCurrentPlan || isFree) return
+        if (isCurrentPlan || (isFree && !allowFreeSelection)) return
         setLoading(true)
-        await onSelect(plan.id, interval)
-        setLoading(false)
+        try {
+            await onSelect(plan.id, interval)
+        } finally {
+            setLoading(false)
+        }
     }
 
+    const fmt = (n: number, singular: string, plural: string) => n >= 9000 ? `Custom` : `${n} ${n === 1 ? singular : plural}`;
+
+    const isBasicTier = ['free', 'pro', 'team'].includes(plan.id);
+
     const features = [
-        { label: `${plan.monthlyScans} scans/mo`, included: true, tooltip: content.overageRate && content.overageRate !== '-' ? `Additional scans automatically billed at ${content.overageRate}.` : undefined },
-        { label: `${plan.monthlyReports} reports/mo`, included: plan.monthlyReports > 0 },
-        { label: `${plan.monthlyMitigations} mitigation report${plan.monthlyMitigations !== 1 ? 's' : ''}/mo`, included: plan.monthlyMitigations > 0, tooltip: "Additional mitigation reports are available for $29 each." },
-        { label: `${plan.brandProfiles || 1} brand profile${(plan.brandProfiles || 1) !== 1 ? 's' : ''}`, included: true },
-        { label: `${plan.seats} seat${plan.seats > 1 ? 's' : ''}`, included: true },
+        { label: `${fmt(plan.monthlyScans, 'report', 'reports')}/mo`, included: true, tooltip: content.overageRate && content.overageRate !== '-' ? `Additional reports automatically billed at ${content.overageRate}.` : undefined },
+        { label: `${fmt(plan.monthlyMitigations, 'deep mitigation report', 'deep mitigation reports')}/mo`, included: plan.monthlyMitigations > 0, tooltip: "Additional deep mitigation reports are available for $29 each." },
+        ...(plan.brandProfiles > 0 ? [{ label: `${fmt(plan.brandProfiles, 'brand profile', 'brand profiles')}`, included: true }] : []),
+        { label: plan.seats >= 9000 ? 'Custom' : plan.seats > 1 ? `Up to ${fmt(plan.seats, 'administrator', 'administrators')}` : `${fmt(plan.seats, 'administrator', 'administrators')}`, included: true },
         { label: 'Full Report Access', included: plan.features.fullReportAccess },
         { label: 'Bulk Upload', included: plan.features.bulkUpload },
         { label: 'Co-Branding', included: plan.features.coBranding },
         { label: 'White-Label', included: plan.features.whiteLabel },
-        { label: 'Priority Queue', included: plan.features.priorityQueue },
+        ...(!isBasicTier ? [{ label: 'Priority Queue', included: plan.features.priorityQueue }] : []),
         { label: 'Audit Logs', included: plan.features.auditLogs },
         { label: 'SSO', included: plan.features.sso },
     ]
@@ -59,17 +69,17 @@ export function PricingCard({
     return (
         <div
             className={cn(
-                "relative flex flex-col bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-container)]",
-                "p-6 border transition-all h-full",
+                "relative flex flex-col bg-[var(--rs-bg-surface)] rounded-xl",
+                "p-8 border transition-all duration-300 h-full",
                 isPopular
-                    ? "border-[var(--rs-signal)] shadow-[0_0_0_2px_var(--rs-signal),var(--rs-shadow-l3)] scale-[1.02]"
-                    : "border-[var(--rs-border-primary)]/50 shadow-[var(--rs-shadow-l2)] hover:border-[var(--rs-text-tertiary)]",
+                    ? "border-[var(--rs-text-primary)] shadow-[0_8px_30px_rgb(0,0,0,0.12)] scale-[1.02] hover:shadow-[12px_12px_0_var(--rs-text-primary)] hover:-translate-y-1 hover:border-2"
+                    : "border-[var(--rs-border-primary)]/20 shadow-sm hover:shadow-[12px_12px_0_theme(colors.black)] hover:border-[var(--rs-border-primary)]",
                 isCurrentPlan && "ring-2 ring-[var(--rs-safe)]"
             )}
         >
             {/* Popular badge */}
             {isPopular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--rs-signal)] text-white text-[9px] font-bold uppercase tracking-widest px-4 py-1 rounded-full z-10 shadow-sm">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[var(--rs-signal)] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1 z-10 border-2 border-[var(--rs-border-primary)]">
                     Recommended
                 </div>
             )}
@@ -80,13 +90,15 @@ export function PricingCard({
                     <h3 className="text-xl font-black text-[var(--rs-text-primary)] uppercase tracking-tight">
                         {content.name}
                     </h3>
-                    <span className="text-[9px] font-mono text-[var(--rs-text-tertiary)] bg-[var(--rs-bg-element)] px-2 py-0.5 rounded-[2px] uppercase tracking-widest hidden sm:inline-block">
-                        {content.audience}
-                    </span>
                 </div>
-                <p className="text-xs font-medium text-[var(--rs-text-secondary)]">
-                    {content.tagline}
-                </p>
+                <div className="space-y-1">
+                    <p className="text-sm font-bold text-[var(--rs-text-primary)] leading-tight pr-4">
+                        {content.audience}
+                    </p>
+                    <p className="text-xs font-medium text-[var(--rs-text-secondary)]">
+                        {content.tagline}
+                    </p>
+                </div>
             </div>
 
             {/* Price */}
@@ -97,41 +109,38 @@ export function PricingCard({
                     </div>
                 ) : (
                     <>
-                        <div className="flex flex-col gap-1 items-start">
-                            {content.baseCommitment ? (
-                                <>
-                                    <span className="text-3xl font-black text-[var(--rs-text-primary)] tracking-tighter leading-none">
-                                        {content.baseCommitment}
-                                    </span>
-                                </>
-                            ) : (
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-black text-[var(--rs-text-primary)] tracking-tighter">
-                                        ${Math.round(price / 100)}
-                                    </span>
-                                    <span className="text-xs font-mono text-[var(--rs-text-tertiary)] uppercase tracking-wider">/mo</span>
-                                </div>
-                            )}
+                        {showsBaseCommitmentLabel && (
+                            <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--rs-signal)]">
+                                Base commitment
+                            </p>
+                        )}
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-4xl font-black text-[var(--rs-text-primary)] tracking-tighter leading-none">
+                                ${Math.round(price / 100)}
+                            </span>
+                            <span className="text-xs font-mono text-[var(--rs-text-tertiary)] uppercase tracking-wider">/mo</span>
                         </div>
-                        <div className="min-h-[30px] mt-2 flex flex-col gap-1 items-start">
+                        <div className="min-h-[50px] mt-2 flex flex-col gap-1 items-start">
                             {content.effectiveRate && (
-                                <div className="flex items-center gap-1.5 group/overage cursor-help relative">
-                                    <p className="text-sm font-bold text-[var(--rs-text-primary)] tracking-tight">
-                                        {content.effectiveRate}
-                                    </p>
-                                    {content.overageRate && (
-                                        <>
-                                            <div className="w-4 h-4 rounded-full border border-[var(--rs-border-primary)] flex items-center justify-center text-[var(--rs-text-tertiary)] group-hover/overage:border-[var(--rs-text-primary)] group-hover/overage:text-[var(--rs-text-primary)] transition-colors">
-                                                <span className="text-[10px] font-bold italic">i</span>
-                                            </div>
-                                            {/* Tooltip */}
-                                            <div className="absolute left-0 bottom-full mb-2 w-56 p-3 bg-[var(--rs-bg-root)] border border-[var(--rs-border-primary)] shadow-xl rounded text-xs text-[var(--rs-text-secondary)] opacity-0 group-hover/overage:opacity-100 transition-opacity pointer-events-none z-50">
-                                                <span className="block font-bold mb-1 text-[var(--rs-text-primary)]">Overage Details</span>
-                                                <span className="italic block mb-2 leading-tight">Additional scans beyond volume are automatically billed at {content.overageRate}.</span>
-                                                <span className="block leading-tight border-t border-[var(--rs-border-primary)] pt-2 mt-2">Optional Mitigation Reports are available for <strong className="text-[var(--rs-text-primary)]">$29 each</strong> if you need hands-on legal remediation.</span>
-                                            </div>
-                                        </>
-                                    )}
+                                <div className="flex flex-col items-start w-full">
+                                    <div className="flex items-center gap-1.5 group/overage cursor-help relative mb-0.5">
+                                        <p className="text-sm font-bold text-[var(--rs-text-primary)] tracking-tight">
+                                            {content.effectiveRate}
+                                        </p>
+                                        {content.overageRate && (
+                                            <>
+                                                <div className="w-4 h-4 rounded-full border border-[var(--rs-border-primary)] flex items-center justify-center text-[var(--rs-text-tertiary)] group-hover/overage:border-[var(--rs-text-primary)] group-hover/overage:text-[var(--rs-text-primary)] transition-colors">
+                                                    <span className="text-[10px] font-bold italic">i</span>
+                                                </div>
+                                                {/* Tooltip */}
+                                                <div className="absolute left-0 bottom-full mb-2 w-56 p-3 bg-[var(--rs-bg-root)] border border-[var(--rs-border-primary)] shadow-xl rounded text-xs text-[var(--rs-text-secondary)] opacity-0 group-hover/overage:opacity-100 transition-opacity pointer-events-none z-50">
+                                                    <span className="block font-bold mb-1 text-[var(--rs-text-primary)]">Overage Details</span>
+                                                    <span className="italic block mb-2 leading-tight">Additional scans beyond volume are automatically billed at {content.overageRate}.</span>
+                                                    <span className="block leading-tight border-t border-[var(--rs-border-primary)] pt-2 mt-2">Optional Mitigation Reports are available for <strong className="text-[var(--rs-text-primary)]">$29 each</strong> if you need hands-on legal remediation.</span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                             {interval === 'annual' && !isFree && (
@@ -150,44 +159,18 @@ export function PricingCard({
                     <RSButton variant="secondary" fullWidth disabled className="opacity-50">
                         Current Plan
                     </RSButton>
-                ) : isFree ? (
+                ) : isFree && !allowFreeSelection ? (
                     <RSButton variant="secondary" fullWidth disabled className="opacity-50">
                         Included Active
                     </RSButton>
-                ) : isEnterprise ? (
-                    <div className="flex flex-col gap-2 w-full">
-                        <RSButton
-                            variant="primary"
-                            fullWidth
-                            onClick={() => {
-                                trackEvent('contact_sales_clicked', { source: 'pricing_card_primary', planId: plan.id });
-                                window.location.href = 'mailto:sales@contentriskscore.com?subject=Enterprise%20Inquiry';
-                            }}
-                        >
-                            {content.ctaPrimary}
-                        </RSButton>
-                        {content.ctaSecondary && (
-                             <RSButton
-                                variant="ghost"
-                                fullWidth
-                                className="text-[10px] uppercase tracking-widest border border-[var(--rs-border-primary)]"
-                                onClick={() => {
-                                    trackEvent('contact_sales_clicked', { source: 'pricing_card_secondary', planId: plan.id });
-                                    window.location.href = 'mailto:sales@contentriskscore.com?subject=Enterprise%20Demo';
-                                }}
-                            >
-                                {content.ctaSecondary}
-                            </RSButton>
-                        )}
-                    </div>
                 ) : (
                     <RSButton
-                        variant={isPopular ? 'primary' : 'secondary'}
+                        variant={isFree ? 'ghost' : isPopular ? 'primary' : 'secondary'}
                         fullWidth
                         onClick={handleSelect}
                         disabled={loading}
                     >
-                        {loading ? 'Processing...' : content.ctaPrimary}
+                        {loading ? 'Processing...' : isFree ? (freeCtaLabel ?? content.ctaPrimary) : content.ctaPrimary}
                     </RSButton>
                 )}
             </div>

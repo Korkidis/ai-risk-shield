@@ -1,6 +1,5 @@
 'use client'
 
-import { Scan, BrainCircuit, Activity } from 'lucide-react'
 import { RSPanel } from '../rs/RSPanel'
 
 export function HowItWorks() {
@@ -34,16 +33,16 @@ export function HowItWorks() {
 
                     {/* Step 1 */}
                     <StepCard
-                        icon={<Scan className="w-6 h-6 text-[var(--rs-text-primary)]" />}
+                        icon={<span className="font-mono text-xl font-black">01</span>}
                         title="UPLOAD & SCAN"
-                        description="Drop any AI-generated image. Three specialized AI analysts independently score it for IP risk, brand safety, and provenance gaps."
+                        description="Drop any AI-generated image. Our policy-aware engine independently scores it for IP risk, brand safety, and provenance gaps."
                         step="01"
                         delay={0}
                     />
 
                     {/* Step 2 */}
                     <StepCard
-                        icon={<BrainCircuit className="w-6 h-6 text-[var(--rs-text-primary)]" />}
+                        icon={<span className="font-mono text-xl font-black">02</span>}
                         title="VERIFY PROVENANCE"
                         description="Cryptographic C2PA verification confirms origin and edit history. No guesswork — mathematically verifiable proof."
                         step="02"
@@ -52,9 +51,9 @@ export function HowItWorks() {
 
                     {/* Step 3 */}
                     <StepCard
-                        icon={<Activity className="w-6 h-6 text-[var(--rs-text-primary)]" />}
-                        title="GET YOUR SCORE"
-                        description="One composite risk score with a downloadable forensic report. Hand it to legal, attach it to the brief, keep it on file."
+                        icon={<span className="font-mono text-xl font-black">03</span>}
+                        title="GET YOUR INTELLIGENCE"
+                        description="One composite risk score with actionable mitigation recommendations. Route to legal for review, attach to the brief, or pivot tactically."
                         step="03"
                         delay={200}
                     />
@@ -71,7 +70,7 @@ function StepCard({ icon, title, description, step, delay }: { icon: React.React
             style={{ animationDelay: `${delay}ms` }}
         >
             <RSPanel
-                className="h-full bg-[var(--rs-bg-surface)] relative group"
+                className="h-full bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_theme(colors.black)] relative group transition-shadow duration-300 hover:shadow-[12px_12px_0_var(--rs-signal)]"
                 style={{ borderRadius: 'var(--rs-radius-container)' }}
             >
                 {/* Input Well Visuals */}

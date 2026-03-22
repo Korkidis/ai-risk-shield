@@ -18,7 +18,7 @@ export function LandingClient() {
 
                     <p className="rs-type-body text-lg md:text-xl text-[var(--rs-text-secondary)] max-w-2xl mx-auto">
                         AI content risk, quantified in 15 seconds. <br className="hidden md:block" />
-                        <span className="text-[var(--rs-text-primary)] font-medium">IP risk score. Provenance verification. Downloadable evidence for legal.</span>
+                        <span className="text-[var(--rs-text-primary)] font-medium text-balance">IP risk score. Provenance verification. Downloadable evidence for legal.</span>
                     </p>
                 </div>
 
