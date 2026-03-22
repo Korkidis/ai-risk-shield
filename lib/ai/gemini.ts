@@ -13,7 +13,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 // Lazy initialization - only check at runtime, not build time
 let genAI: GoogleGenerativeAI | null = null
 
-function getGeminiClient(): GoogleGenerativeAI {
+export function getGeminiClient(): GoogleGenerativeAI {
   if (!genAI) {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY environment variable is required')

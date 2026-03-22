@@ -72,8 +72,9 @@ export interface CompositeScoreInput {
  * Returns a value 0–100.
  */
 export function computeCompositeScore(input: CompositeScoreInput): number {
-    const { safetyScore, c2paStatus } = input
-    let ipScore = input.ipScore
+    const { c2paStatus } = input
+    let ipScore = Math.max(0, Math.min(100, input.ipScore))
+    const safetyScore = Math.max(0, Math.min(100, input.safetyScore))
     const provenanceScore = computeProvenanceScore(c2paStatus)
 
     // 1. C2PA TRUST OVERRIDE ("The Firefly Rule")

@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, type GenerativeModel, type Part } from '@google/generative-ai'
+import { SpecialistReportSchema, SPECIALIST_REPORT_GEMINI_SCHEMA } from './schemas/specialist-schema'
 import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import fs from 'fs';
 import path from 'path';
@@ -137,7 +138,11 @@ CRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaul
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550` : '');
     const model = getGenAI().getGenerativeModel({
         model: 'gemini-2.5-flash',
-        systemInstruction: instruction
+        systemInstruction: instruction,
+        generationConfig: {
+            responseMimeType: 'application/json',
+            responseSchema: SPECIALIST_REPORT_GEMINI_SCHEMA,
+        },
     });
 
     const prompt = guidelineRules
@@ -227,7 +232,11 @@ Brand-specific rules ALWAYS take priority over generic industry defaults.
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550` : '');
     const model = getGenAI().getGenerativeModel({
         model: 'gemini-2.5-flash',
-        systemInstruction: instruction
+        systemInstruction: instruction,
+        generationConfig: {
+            responseMimeType: 'application/json',
+            responseSchema: SPECIALIST_REPORT_GEMINI_SCHEMA,
+        },
     });
 
     const prompt = guidelineRules
@@ -297,7 +306,11 @@ async function analyzeProvenance(part: Part, filename: string = '', c2paStatus: 
     const instruction = PROVENANCE_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES:\n${guidelineRules}` : '');
     const model = getGenAI().getGenerativeModel({
         model: 'gemini-2.5-flash',
-        systemInstruction: instruction
+        systemInstruction: instruction,
+        generationConfig: {
+            responseMimeType: 'application/json',
+            responseSchema: SPECIALIST_REPORT_GEMINI_SCHEMA,
+        },
     });
 
     const prompt = `Analyze this visual asset (image or video) for content authenticity and provenance.
@@ -365,7 +378,21 @@ async function executePrompt(
             .replace(/```json/g, '')
             .replace(/```/g, '')
             .trim();
-        return JSON.parse(text) as SpecialistReport;
+        const parsed = JSON.parse(text);
+
+        // Runtime validation — SDK responseSchema handles structure, Zod enforces ranges
+        const validated = SpecialistReportSchema.safeParse(parsed);
+        if (!validated.success) {
+            console.error('Specialist report validation failed:', validated.error.issues);
+            // Fall through to catch block default (score 75)
+            throw new Error('Validation failed');
+        }
+
+        // Clamp score to 0-100 (defense in depth — Zod also enforces this)
+        return {
+            ...validated.data,
+            score: Math.max(0, Math.min(100, validated.data.score)),
+        };
     } catch (e) {
         console.error("Gemini Error", e);
         return {
@@ -377,7 +404,7 @@ async function executePrompt(
 }
 
 // Helper to format guideline rules with explicit scoring directives
-function formatGuidelineRules(g: BrandGuideline): string {
+export function formatGuidelineRules(g: BrandGuideline): string {
     const sections: string[] = []
 
     // Always include brand identity — strongest contextual signal for Gemini.

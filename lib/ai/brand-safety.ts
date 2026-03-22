@@ -12,7 +12,8 @@
  * Returns structured violation results aligned with major platform policies
  */
 
-import { getVisionModel, fileToGenerativePart } from './gemini'
+import { getGeminiClient, fileToGenerativePart } from './gemini'
+import { BrandSafetyGeminiResponseSchema, BRAND_SAFETY_GEMINI_RESPONSE_SCHEMA } from '@/lib/schemas/brand-safety-schema'
 
 export type BrandSafetyCategory =
   | 'adult_content'
@@ -47,16 +48,26 @@ export type BrandSafetyResult = {
  */
 export async function analyzeBrandSafety(
   fileBuffer: Buffer,
-  mimeType: string
+  mimeType: string,
+  guidelineRules?: string
 ): Promise<BrandSafetyResult> {
   try {
-    const model = getVisionModel()
+    const model = getGeminiClient().getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      ...(guidelineRules ? {
+        systemInstruction: `You are a brand safety analyst.\n\n════════════════════════════════════════════════════════════════════\nBRAND GUIDELINE OVERRIDE — THIS SUPERSEDES GENERIC SCORING\n════════════════════════════════════════════════════════════════════\n\nThe client has provided explicit brand guidelines. When a guideline says something is approved, you MUST NOT flag it as a violation.\n\n${guidelineRules}\n\nCRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaults.\n════════════════════════════════════════════════════════════════════`,
+      } : {}),
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: BRAND_SAFETY_GEMINI_RESPONSE_SCHEMA,
+      },
+    })
 
     // Convert file to Gemini format
     const imagePart = await fileToGenerativePart(fileBuffer, mimeType)
 
     // Craft detailed prompt for brand safety
-    const prompt = `Analyze this image for brand safety violations that would violate major social media platform policies (Facebook, Instagram, YouTube, TikTok).
+    const basePrompt = `Analyze this image for brand safety violations that would violate major social media platform policies (Facebook, Instagram, YouTube, TikTok).
 
 Check for:
 1. **Adult Content**: Nudity, sexual content, suggestive poses
@@ -72,65 +83,47 @@ For each violation found, provide:
 - Confidence: How confident are you? (0-100)
 - Description: What specifically did you see?
 
-Respond in JSON format:
-{
-  "violations": [
-    {
-      "category": "violence",
-      "severity": "medium",
-      "confidence": 85,
-      "description": "Image contains depiction of..."
-    }
-  ],
-  "summary": "Brief overall assessment of brand safety"
-}
+If the image is brand-safe, return empty violations array with a summary.`
 
-If the image is brand-safe, return empty violations array.`
+    const prompt = guidelineRules
+      ? `${basePrompt}\n\nIMPORTANT: Apply the brand guidelines from system instructions. Content the brand explicitly approved MUST NOT be flagged as a violation.`
+      : basePrompt
 
     const result = await model.generateContent([prompt, imagePart])
     const response = result.response.text()
 
-    // Parse JSON response
-    const parsed = parseJSONResponse(response)
+    // Parse and validate JSON response
+    const jsonStr = response.replace(/\`\`\`json\n?/g, '').replace(/\`\`\`\n?/g, '').trim()
+    const raw = JSON.parse(jsonStr)
+    const validated = BrandSafetyGeminiResponseSchema.safeParse(raw)
+
+    if (!validated.success) {
+      console.error('Brand safety validation failed:', validated.error.issues)
+      return {
+        violations: [], overallRisk: 'review', riskScore: 75,
+        summary: 'Analysis could not complete verification.',
+        platformCompliance: { facebook: false, instagram: false, youtube: false, tiktok: false },
+      }
+    }
+
+    const parsed = validated.data
 
     // Calculate overall risk
-    const { overallRisk, riskScore } = calculateOverallRisk(parsed.violations || [])
+    const { overallRisk, riskScore } = calculateOverallRisk(parsed.violations)
 
     // Determine platform compliance
-    const platformCompliance = determinePlatformCompliance(parsed.violations || [])
+    const platformCompliance = determinePlatformCompliance(parsed.violations)
 
     return {
-      violations: parsed.violations || [],
+      violations: parsed.violations,
       overallRisk,
-      riskScore,
-      summary: parsed.summary || 'No violations detected',
+      riskScore: Math.max(0, Math.min(100, riskScore)),
+      summary: parsed.summary,
       platformCompliance,
     }
   } catch (error) {
     console.error('Brand safety analysis error:', error)
     throw new Error('Failed to analyze brand safety: ' + (error as Error).message)
-  }
-}
-
-/**
- * Parse JSON from Gemini response (handles markdown code blocks)
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Gemini API returns dynamic JSON shapes
-function parseJSONResponse(text: string): any {
-  try {
-    return JSON.parse(text)
-  } catch {
-    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/)
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[1])
-    }
-
-    const objectMatch = text.match(/\{[\s\S]*\}/)
-    if (objectMatch) {
-      return JSON.parse(objectMatch[0])
-    }
-
-    throw new Error('Could not parse JSON from response')
   }
 }
 

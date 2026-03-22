@@ -17,6 +17,7 @@ import type { Database, Json } from '@/lib/supabase/types'
 import { computeCompositeScore, computeRiskLevel, computeProvenanceScore, computeProvenanceStatus, type C2PAStatus } from '@/lib/risk/scoring'
 import { analyzeIP } from '@/lib/ai/ip-detection'
 import { analyzeBrandSafety } from '@/lib/ai/brand-safety'
+import { formatGuidelineRules } from '@/lib/gemini'
 import { broadcastScanProgress } from '@/lib/realtime'
 import type { BrandGuideline } from '@/types/database'
 // FFmpeg is dynamically imported only for video processing (avoids bundling ~70MB binary for image scans)
@@ -187,13 +188,16 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         }
       }
 
+      // Build guideline rules string for video frame analysis (parity with image pipeline)
+      const videoGuidelineRules = brandGuideline ? formatGuidelineRules(brandGuideline as BrandGuideline) : undefined
+
       // Analyze each frame
       for (const [index, frame] of frames.entries()) {
         await broadcastScanProgress(scanId, 50 + Math.floor((index / frames.length) * 30), `Analyzing frame ${index + 1}/${frames.length}...`, { current: index + 1, total: frames.length })
         const frameBuffer = await fs.readFile(frame.filePath)
         const [fIp, fSafe] = await Promise.all([
-          analyzeIP(frameBuffer, 'image/jpeg'),
-          analyzeBrandSafety(frameBuffer, 'image/jpeg')
+          analyzeIP(frameBuffer, 'image/jpeg', videoGuidelineRules),
+          analyzeBrandSafety(frameBuffer, 'image/jpeg', videoGuidelineRules)
         ])
 
         // Track max risk

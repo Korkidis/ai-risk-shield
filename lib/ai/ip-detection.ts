@@ -10,7 +10,8 @@
  * Returns structured detection results with confidence scores
  */
 
-import { getVisionModel, fileToGenerativePart } from './gemini'
+import { getGeminiClient, fileToGenerativePart } from './gemini'
+import { IPGeminiResponseSchema, IP_GEMINI_RESPONSE_SCHEMA } from '@/lib/schemas/ip-analysis-schema'
 
 export type IPDetection = {
   type: 'character' | 'logo' | 'celebrity' | 'design'
@@ -32,16 +33,26 @@ export type IPAnalysisResult = {
  */
 export async function analyzeIP(
   fileBuffer: Buffer,
-  mimeType: string
+  mimeType: string,
+  guidelineRules?: string
 ): Promise<IPAnalysisResult> {
   try {
-    const model = getVisionModel()
+    const model = getGeminiClient().getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      ...(guidelineRules ? {
+        systemInstruction: `You are an IP detection specialist.\n\n════════════════════════════════════════════════════════════════════\nBRAND GUIDELINE OVERRIDE — THIS SUPERSEDES GENERIC SCORING\n════════════════════════════════════════════════════════════════════\n\n${guidelineRules}\n\nCRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaults.\n════════════════════════════════════════════════════════════════════`,
+      } : {}),
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: IP_GEMINI_RESPONSE_SCHEMA,
+      },
+    })
 
     // Convert file to Gemini format
     const imagePart = await fileToGenerativePart(fileBuffer, mimeType)
 
     // Craft detailed prompt for IP detection
-    const prompt = `Analyze this image for intellectual property (IP) that could pose copyright or trademark risks.
+    const basePrompt = `Analyze this image for intellectual property (IP) that could pose copyright or trademark risks.
 
 Identify:
 1. **Copyrighted Characters**: Fictional characters from movies, TV shows, games, comics (e.g., Mickey Mouse, Batman, Mario, Pikachu)
@@ -56,65 +67,39 @@ For each detection, provide:
 - Description: Brief description of what you see
 - Risk Level: low, medium, high, or critical
 
-Respond in JSON format:
-{
-  "detections": [
-    {
-      "type": "character",
-      "name": "Example Character",
-      "confidence": 95,
-      "description": "Clear depiction of...",
-      "riskLevel": "high"
-    }
-  ],
-  "summary": "Brief overall assessment of IP risks found"
-}
+If no IP is detected, return empty detections array with a summary.`
 
-If no IP is detected, return empty detections array.`
+    const prompt = guidelineRules
+      ? `${basePrompt}\n\nIMPORTANT: Apply the brand guidelines from system instructions. Content the brand explicitly approved MUST use riskLevel "low".`
+      : basePrompt
 
     const result = await model.generateContent([prompt, imagePart])
     const response = result.response.text()
 
-    // Parse JSON response
-    const parsed = parseJSONResponse(response)
+    // Parse and validate JSON response
+    const jsonStr = response.replace(/\`\`\`json\n?/g, '').replace(/\`\`\`\n?/g, '').trim()
+    const raw = JSON.parse(jsonStr)
+    const validated = IPGeminiResponseSchema.safeParse(raw)
+
+    if (!validated.success) {
+      console.error('IP detection validation failed:', validated.error.issues)
+      return { detections: [], overallRisk: 'review', riskScore: 75, summary: 'Analysis could not complete verification.' }
+    }
+
+    const parsed = validated.data
 
     // Calculate overall risk
-    const { overallRisk, riskScore } = calculateOverallRisk(parsed.detections || [])
+    const { overallRisk, riskScore } = calculateOverallRisk(parsed.detections)
 
     return {
-      detections: parsed.detections || [],
+      detections: parsed.detections,
       overallRisk,
-      riskScore,
-      summary: parsed.summary || 'No IP detected',
+      riskScore: Math.max(0, Math.min(100, riskScore)),
+      summary: parsed.summary,
     }
   } catch (error) {
     console.error('IP detection error:', error)
     throw new Error('Failed to analyze IP: ' + (error as Error).message)
-  }
-}
-
-/**
- * Parse JSON from Gemini response (handles markdown code blocks)
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Gemini API returns dynamic JSON shapes
-function parseJSONResponse(text: string): any {
-  try {
-    // Try direct parse first
-    return JSON.parse(text)
-  } catch {
-    // Try extracting from markdown code block
-    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/)
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[1])
-    }
-
-    // Try extracting any JSON object
-    const objectMatch = text.match(/\{[\s\S]*\}/)
-    if (objectMatch) {
-      return JSON.parse(objectMatch[0])
-    }
-
-    throw new Error('Could not parse JSON from response')
   }
 }
 
