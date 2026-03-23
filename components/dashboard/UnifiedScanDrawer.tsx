@@ -282,8 +282,8 @@ export function UnifiedScanDrawer({
                             scan.scan_findings && scan.scan_findings.length > 0 ? (
                                 <div className="space-y-4">
                                     {scan.scan_findings.map((finding) => {
-                                        const isPositive = finding.type === 'ip_clear' || finding.type === 'safety_clear' ||
-                                            (finding.type === 'provenance_verified' && finding.severity === 'low')
+                                        const isPositive = finding.finding_type === 'ip_clear' || finding.finding_type === 'safety_clear' ||
+                                            (finding.finding_type === 'provenance_verified' && finding.severity === 'low')
                                         const dotColor = isPositive ? 'bg-[var(--rs-safe)]' :
                                             finding.severity === 'critical' ? 'bg-rs-destruct' :
                                                 finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
@@ -305,7 +305,7 @@ export function UnifiedScanDrawer({
                                                                 finding.severity === 'critical' ? 'text-rs-destruct' :
                                                                 finding.severity === 'high' ? 'text-rs-alert' : 'text-rs-signal'
                                                             )}>{finding.severity}</span>
-                                                            <span className="text-[9px] text-rs-text-tertiary">{finding.type?.replace(/_/g, ' ')}</span>
+                                                            <span className="text-[9px] text-rs-text-tertiary">{finding.finding_type?.replace(/_/g, ' ')}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -521,18 +521,25 @@ export function UnifiedScanDrawer({
                     // Normalize executive summary
                     const rawEs = raw.executive_summary as Record<string, unknown> || {}
                     const recommendation = (rawEs.recommendation || rawEs.decision || 'review') as string
-                    // Map old vocabulary to new
-                    const normalizedRec = recommendation === 'clear' ? 'proceed'
-                        : recommendation === 'watch' ? 'monitor'
-                        : recommendation === 'hold' ? 'review'
-                        : recommendation === 'block' ? 'escalate'
-                        : recommendation
+                    // Map old + new vocabulary to descriptive display labels (never directive)
+                    const recDisplayMap: Record<string, string> = {
+                        proceed: 'Low Risk', clear: 'Low Risk',
+                        monitor: 'Worth Monitoring', watch: 'Worth Monitoring',
+                        review: 'Worth Reviewing', hold: 'Worth Reviewing',
+                        escalate: 'Needs Attention', block: 'Needs Attention',
+                    }
+                    const normalizedRec = recommendation
+                    const recDisplay = recDisplayMap[recommendation] || recommendation
 
                     const recommendationColors: Record<string, string> = {
                         proceed: 'text-[var(--rs-safe)] border-[var(--rs-safe)]/40',
+                        clear: 'text-[var(--rs-safe)] border-[var(--rs-safe)]/40',
                         monitor: 'text-[var(--rs-info)] border-[var(--rs-info)]/40',
+                        watch: 'text-[var(--rs-info)] border-[var(--rs-info)]/40',
                         review: 'text-[var(--rs-warn)] border-[var(--rs-warn)]/40',
+                        hold: 'text-[var(--rs-warn)] border-[var(--rs-warn)]/40',
                         escalate: 'text-[var(--rs-warn)] border-[var(--rs-warn)]/40',
+                        block: 'text-[var(--rs-warn)] border-[var(--rs-warn)]/40',
                     }
 
                     // Normalize domain analyses (old: exposures/severity/remediation_status, new: observations/signal_strength/action_suggested)
@@ -583,7 +590,7 @@ export function UnifiedScanDrawer({
                             <div className="p-4 bg-[var(--rs-bg-well)] rounded-[2px] space-y-3">
                                 <div className="flex items-center gap-3">
                                     <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 border rounded-[1px] ${recommendationColors[normalizedRec] || 'text-rs-text-secondary border-rs-border-primary'}`}>
-                                        {normalizedRec}
+                                        {recDisplay}
                                     </span>
                                     <span className="text-[10px] text-rs-text-tertiary">
                                         Confidence: {rawEs.confidence as number || 0}%
@@ -652,8 +659,8 @@ export function UnifiedScanDrawer({
                             <div className="p-4 bg-[var(--rs-bg-well)] rounded-[2px] space-y-2">
                                 <div className="flex items-center gap-3">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-rs-text-tertiary">Outlook</span>
-                                    <span className={`text-[10px] font-black uppercase ${readiness === 'ready' || readiness === 'approved' ? 'text-[var(--rs-safe)]' : readiness === 'conditional' ? 'text-[var(--rs-warn)]' : 'text-rs-destruct'}`}>
-                                        {readiness === 'needs_attention' ? 'NEEDS ATTENTION' : readiness.toUpperCase()}
+                                    <span className={`text-[10px] font-black uppercase ${readiness === 'ready' || readiness === 'approved' ? 'text-[var(--rs-safe)]' : readiness === 'conditional' ? 'text-[var(--rs-warn)]' : 'text-[var(--rs-warn)]'}`}>
+                                        {readiness === 'ready' || readiness === 'approved' ? 'READY TO PUBLISH' : readiness === 'conditional' ? 'SOME ITEMS TO CONSIDER' : 'WORTH REVIEWING'}
                                     </span>
                                 </div>
                                 <p className="text-[11px] text-rs-text-secondary leading-relaxed">{outlookSummary}</p>

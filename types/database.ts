@@ -76,7 +76,8 @@ export interface ExtendedScan {
 export interface ScanFinding {
   id: string
   scan_id: string
-  type: string
+  /** DB column is `finding_type` — Supabase returns this name */
+  finding_type: string
   severity: 'info' | 'low' | 'medium' | 'high' | 'critical'
   title: string
   description: string

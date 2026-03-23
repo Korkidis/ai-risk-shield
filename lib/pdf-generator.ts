@@ -535,6 +535,26 @@ export const generateForensicReport = (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Normalize domain analysis from old (v2: severity/exposures/remediation_status)
+ * or new (v3: signal_strength/observations/action_suggested) format.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic JSONB shape varies by generator version
+function normalizeDomainForPDF(d: any): MitigationReportContent['ip_analysis'] {
+    if (!d) return { signal_strength: 'none', confidence: 0, observations: [], action_suggested: false }
+    return {
+        signal_strength: d.signal_strength || d.severity || 'none',
+        confidence: d.confidence || 0,
+        observations: (d.observations || d.exposures || []).map((o: Record<string, unknown>) => ({
+            type: o.type || '',
+            description: o.description || '',
+            evidence_ref: o.evidence_ref || '',
+            context: o.context || o.legal_rationale || '',
+        })),
+        action_suggested: typeof d.action_suggested === 'boolean' ? d.action_suggested : d.remediation_status === 'required',
+    }
+}
+
+/**
  * Map domain signal strength to PDF color.
  */
 function signalStrengthColor(strength: string): string {
@@ -544,11 +564,53 @@ function signalStrengthColor(strength: string): string {
 }
 
 export const generateMitigationPDF = (
-    report: MitigationReportContent,
+    reportInput: MitigationReportContent,
     scan: ScanWithRelations,
     reportId?: string,
     generatedAt?: string,
 ) => {
+    // Normalize old (v2) and new (v3) report schemas for backward compat
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic JSONB from Supabase, shape varies by generator version
+    const raw = reportInput as any
+    const report: MitigationReportContent = {
+        ...reportInput,
+        // Explainability may not exist on old reports
+        explainability: raw.explainability || {
+            summary: 'This asset was analyzed across intellectual property, brand safety, and provenance dimensions.',
+            ip_methodology: 'Visual comparison against known protected works.',
+            safety_methodology: 'Evaluation against platform policies and brand safety standards.',
+            provenance_methodology: 'C2PA credential verification and chain of custody analysis.',
+            score_explanation: '',
+        },
+        // Executive summary field renames
+        executive_summary: {
+            recommendation: raw.executive_summary?.recommendation || raw.executive_summary?.decision || 'review',
+            confidence: raw.executive_summary?.confidence || 0,
+            rationale: raw.executive_summary?.rationale || '',
+            disclaimer: raw.executive_summary?.disclaimer || '',
+        },
+        // Domain analysis normalization
+        ip_analysis: normalizeDomainForPDF(raw.ip_analysis),
+        safety_analysis: normalizeDomainForPDF(raw.safety_analysis),
+        provenance_analysis: normalizeDomainForPDF(raw.provenance_analysis),
+        // Recommendations may be in old mitigation_plan field
+        recommendations: raw.recommendations || {
+            actions: (raw.mitigation_plan?.actions || []).map((a: Record<string, unknown>) => ({
+                ...a,
+                impact: a.impact || a.risk_reduction || '',
+                alternatives: a.alternatives || a.safer_alternatives || [],
+            })),
+        },
+        // Outlook may be in old residual_risk field
+        outlook: raw.outlook || {
+            summary: raw.residual_risk?.remaining_risk || '',
+            readiness: raw.residual_risk?.publish_decision === 'approved' ? 'ready' as const
+                : raw.residual_risk?.publish_decision === 'blocked' ? 'needs_attention' as const
+                : 'conditional' as const,
+            conditions: raw.residual_risk?.conditions || [],
+            next_steps: raw.residual_risk?.maintenance_checks || [],
+        },
+    }
     const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -633,18 +695,23 @@ export const generateMitigationPDF = (
 
     // Recommendation badge (large, prominent)
     const es = report.executive_summary
-    const recColor = es.recommendation === 'proceed' ? COLORS.safe
-        : es.recommendation === 'monitor' ? COLORS.sub
-        : es.recommendation === 'review' ? COLORS.caution
-        : COLORS.accent
+    const rec = es.recommendation as string // may contain old enum values from legacy reports
+    const recColor = (rec === 'proceed' || rec === 'clear') ? COLORS.safe
+        : (rec === 'monitor' || rec === 'watch') ? COLORS.sub
+        : COLORS.caution
+    // Descriptive labels — never directives
+    const recDisplay = (rec === 'proceed' || rec === 'clear') ? 'LOW RISK'
+        : (rec === 'monitor' || rec === 'watch') ? 'WORTH MONITORING'
+        : (rec === 'escalate' || rec === 'block') ? 'NEEDS ATTENTION'
+        : 'WORTH REVIEWING'
 
-    drawLabel("RECOMMENDATION", 20, y)
+    drawLabel("ASSESSMENT", 20, y)
     y += 8
 
     doc.setFont(FONT.header, "bold")
     doc.setFontSize(22)
     doc.setTextColor(recColor)
-    doc.text(es.recommendation.toUpperCase(), 20, y)
+    doc.text(recDisplay, 20, y)
 
     doc.setFont(FONT.mono, "normal")
     doc.setFontSize(8)
@@ -1032,12 +1099,15 @@ export const generateMitigationPDF = (
     const ol = report.outlook
     const readinessColor = ol.readiness === 'ready' ? COLORS.safe
         : ol.readiness === 'conditional' ? COLORS.caution
-        : COLORS.accent
+        : COLORS.caution
+    const readinessDisplay = ol.readiness === 'ready' ? 'READY TO PUBLISH'
+        : ol.readiness === 'conditional' ? 'SOME ITEMS TO CONSIDER'
+        : 'WORTH REVIEWING'
 
     doc.setFont(FONT.header, "bold")
     doc.setFontSize(14)
     doc.setTextColor(readinessColor)
-    doc.text(ol.readiness.toUpperCase().replace('_', ' '), 20, y)
+    doc.text(readinessDisplay, 20, y)
 
     y += 8
 

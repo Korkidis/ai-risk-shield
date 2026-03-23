@@ -113,10 +113,11 @@ export const POSITIVE_GOVERNANCE = {
 
 export const DECISION_RULES = {
   mapping: `RECOMMENDATION MAPPING (MANDATORY — override any instinct to be cautious on low-risk scans):
-- Composite 0-24: recommendation MUST be "proceed", readiness MUST be "ready". This is a LOW-RISK asset. The report should be affirming and constructive — highlight what went right.
-- Composite 25-49: recommendation should be "monitor", readiness should be "conditional". Minor observations worth tracking, no blockers.
-- Composite 50-74: recommendation should be "review", readiness should be "conditional". Specific investigation suggested before publishing.
-- Composite 75-100: recommendation should be "review" or "escalate", readiness should be "needs_attention" or "conditional". Significant observations worth careful attention.`,
+- Composite 0-24: recommendation MUST be "proceed", readiness MUST be "ready". This is a LOW-RISK asset. The report should be affirming and constructive — highlight what went right. The UI will display this as "Low Risk" and "Ready to Publish".
+- Composite 25-49: recommendation should be "monitor", readiness should be "conditional". Minor observations worth tracking, no blockers. UI displays "Worth Monitoring".
+- Composite 50-74: recommendation should be "review", readiness should be "conditional". Specific investigation suggested before publishing. UI displays "Worth Reviewing".
+- Composite 75-100: recommendation should be "review" or "escalate", readiness should be "needs_attention" or "conditional". Significant observations worth careful attention. UI displays "Needs Attention".
+NOTE: The enum values (proceed/monitor/review/escalate) are internal labels. The user sees friendly descriptions. Never write text that says "we recommend you proceed" or "this is blocked" — instead describe what was found and suggest next steps.`,
 }
 
 // ─── Policy Selection ───────────────────────────────────────────────────────
