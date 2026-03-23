@@ -58,6 +58,7 @@ export async function analyzeBrandSafety(
         systemInstruction: `You are a brand safety analyst.\n\n════════════════════════════════════════════════════════════════════\nBRAND GUIDELINE OVERRIDE — THIS SUPERSEDES GENERIC SCORING\n════════════════════════════════════════════════════════════════════\n\nThe client has provided explicit brand guidelines. When a guideline says something is approved, you MUST NOT flag it as a violation.\n\n${guidelineRules}\n\nCRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaults.\n════════════════════════════════════════════════════════════════════`,
       } : {}),
       generationConfig: {
+        temperature: 0.2,
         responseMimeType: 'application/json',
         responseSchema: BRAND_SAFETY_GEMINI_RESPONSE_SCHEMA,
       },

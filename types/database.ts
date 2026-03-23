@@ -194,11 +194,18 @@ export interface MitigationReport {
 
 /** Structured mitigation report content stored as JSONB in report_content */
 export interface MitigationReportContent {
+  explainability: {
+    summary: string
+    ip_methodology: string
+    safety_methodology: string
+    provenance_methodology: string
+    score_explanation: string
+  }
   executive_summary: {
-    decision: 'clear' | 'watch' | 'hold' | 'block'
+    recommendation: 'proceed' | 'monitor' | 'review' | 'escalate'
     confidence: number
-    approver_level: string
     rationale: string
+    disclaimer: string
   }
   asset_context: {
     filename: string
@@ -226,35 +233,36 @@ export interface MitigationReportContent {
     jurisdictions: ComplianceEntry[]
     platforms: ComplianceEntry[]
   }
-  mitigation_plan: {
+  recommendations: {
     actions: {
       priority: number
       domain: string
       action: string
       owner: string
       effort: string
-      risk_reduction: string
+      impact: string
       verification: string
+      alternatives?: string[]
     }[]
   }
-  residual_risk: {
-    remaining_risk: string
-    publish_decision: 'approved' | 'conditional' | 'blocked'
+  outlook: {
+    summary: string
+    readiness: 'ready' | 'conditional' | 'needs_attention'
     conditions: string[]
-    maintenance_checks: string[]
+    next_steps: string[]
   }
 }
 
 export interface MitigationDomainAnalysis {
-  severity: string
+  signal_strength: string
   confidence: number
-  exposures: {
+  observations: {
     type: string
     description: string
     evidence_ref: string
-    legal_rationale: string
+    context: string
   }[]
-  remediation_status: 'required' | 'not_required'
+  action_suggested: boolean
 }
 
 export interface ComplianceEntry {

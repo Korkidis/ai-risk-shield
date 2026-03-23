@@ -27,6 +27,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import os from 'os'
 import { verifyContentCredentials } from '@/lib/c2pa'
+import { synthesizeImageFindings, synthesizeVideoFindings } from '@/lib/ai/findings-synthesizer'
 
 export type ProcessScanResult = {
   success: boolean
@@ -115,7 +116,9 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     const c2paResult = { hasManifest: false, valid: false }
 
     // 4. Content Analysis
-    let ipResult, brandSafetyResult; const videoFramesData: Record<string, unknown>[] = []
+    let ipResult: import('@/lib/ai/ip-detection').IPAnalysisResult | null = null
+    let brandSafetyResult: import('@/lib/ai/brand-safety').BrandSafetyResult | null = null
+    const videoFramesData: Record<string, unknown>[] = []
     let compositeRisk: { score: number; level: 'safe' | 'caution' | 'review' | 'high' | 'critical' }
     let provenanceScore = 0
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -233,8 +236,8 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       await cleanupFrames(frames)
 
       // Synthesize results (use worst case)
-      ipResult = { riskScore: maxIpScore, detections: [] } // Simplify detections for video summary
-      brandSafetyResult = { riskScore: maxSafetyScore, violations: [] }
+      ipResult = { riskScore: maxIpScore, detections: [], overallRisk: 'review', summary: `Aggregated from ${frames.length} frames` }
+      brandSafetyResult = { riskScore: maxSafetyScore, violations: [], overallRisk: 'review', summary: `Aggregated from ${frames.length} frames`, platformCompliance: { facebook: true, instagram: true, youtube: true, tiktok: true } }
 
       // Calculate composite for video using canonical scoring
       const videoCompositeScore = computeCompositeScore({
@@ -274,8 +277,8 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         },
         c2pa_report: { status: c2paStatus },
         chief_officer_strategy: maxIpScore > 50 || maxSafetyScore > 50
-          ? 'Video contains frames with elevated risk. Review flagged frames before publication.'
-          : 'Video analysis indicates acceptable risk levels for publication.',
+          ? { points: ['Video contains frames with elevated risk. Review flagged frames before publication.'], overall_confidence: 'medium' as const }
+          : { points: ['Video analysis indicates acceptable risk levels for publication.'], overall_confidence: 'high' as const },
         is_video: true,
         frames_analyzed: frames.length,
         highest_risk_frame: highestRiskFrameIndex,
@@ -304,11 +307,16 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
       // Extract scores from risk profile
       ipResult = {
         riskScore: riskProfile.ip_report.score,
-        detections: [] // Detections are in the findings, not needed here
+        detections: [],
+        overallRisk: 'review',
+        summary: riskProfile.ip_report.teaser,
       }
       brandSafetyResult = {
         riskScore: riskProfile.safety_report.score,
-        violations: []
+        violations: [],
+        overallRisk: 'review',
+        summary: riskProfile.safety_report.teaser,
+        platformCompliance: { facebook: true, instagram: true, youtube: true, tiktok: true },
       }
       // Get provenance score
       provenanceScore = riskProfile.provenance_report.score
@@ -337,133 +345,33 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     // 5. Calculate composite risk (Final) is already done above
 
-    // 6. Save findings — use rich data from riskProfile for images (matches authenticated path)
-    const findings: Array<{
-      tenant_id: string | null
-      scan_id: string
-      finding_type: string
-      severity: string
-      title: string
-      description: string
-      recommendation?: string | null
-      evidence?: Json
-      confidence_score?: number
-    }> = []
+    // 6. Synthesize findings using shared findings engine
+    const findings = (!isVideo && riskProfile)
+      ? synthesizeImageFindings(scanId, scan.tenant_id, riskProfile as unknown as import('@/lib/gemini-types').RiskProfile, c2paStatus as C2PAStatus)
+      : synthesizeVideoFindings(scanId, scan.tenant_id, c2paStatus as C2PAStatus, c2paResult.hasManifest, ipResult, brandSafetyResult)
 
-    if (!isVideo && riskProfile) {
-      // IMAGE: Rich findings from Gemini risk profile
-      // C2PA / Provenance finding (always)
-      findings.push({
-        tenant_id: scan.tenant_id,
+    // Save provenance_details for valid/caution C2PA (matches authenticated path)
+    if (!isVideo && riskProfile && ['valid', 'caution'].includes(c2paStatus) && riskProfile.c2pa_report) {
+      await supabase.from('provenance_details').insert({
         scan_id: scanId,
-        finding_type: 'provenance_issue',
-        severity: (c2paStatus === 'valid' || c2paStatus === 'caution') ? 'low' :
-          c2paStatus === 'invalid' ? 'critical' : 'high',
-        title: 'C2PA Provenance Verification',
-        description: riskProfile.provenance_report.teaser,
-        recommendation: (c2paStatus === 'valid' || c2paStatus === 'caution')
-          ? 'Asset is armored with verified Content Credentials. Maintain this chain for legal defensibility.'
-          : 'Absence of cryptographic provenance. In IP disputes, your legal defensibility may be hindered without a verified chain of custody.',
-        evidence: {
-          status: c2paStatus,
-          issuer: riskProfile.c2pa_report?.issuer,
-          tool: riskProfile.c2pa_report?.tool,
-          note: c2paStatus === 'caution' ? 'Verified via fallback manifest (Non-Standard Structure)' : undefined
-        }
+        tenant_id: scan.tenant_id,
+        creator_name: riskProfile.c2pa_report.creator,
+        creation_tool: riskProfile.c2pa_report.tool,
+        creation_tool_version: riskProfile.c2pa_report.tool_version,
+        creation_timestamp: riskProfile.c2pa_report.timestamp,
+        signature_status: riskProfile.c2pa_report.status,
+        certificate_issuer: riskProfile.c2pa_report.issuer,
+        certificate_serial: riskProfile.c2pa_report.serial,
+        edit_history: riskProfile.c2pa_report.history,
+        raw_manifest: riskProfile.c2pa_report.raw_manifest
       })
-
-      // IP finding if score warrants it
-      if (riskProfile.ip_report.score > 50) {
-        findings.push({
-          tenant_id: scan.tenant_id,
-          scan_id: scanId,
-          finding_type: 'ip_violation',
-          severity: riskProfile.ip_report.score > 85 ? 'critical' : 'high',
-          title: 'Potential IP Infringement Detected',
-          description: riskProfile.ip_report.teaser,
-          recommendation: 'Remove or license the detected protected elements immediately.',
-          evidence: { score: riskProfile.ip_report.score, reasoning: riskProfile.ip_report.reasoning }
-        })
-      }
-
-      // Safety finding if score warrants it
-      if (riskProfile.safety_report.score > 50) {
-        findings.push({
-          tenant_id: scan.tenant_id,
-          scan_id: scanId,
-          finding_type: 'safety_violation',
-          severity: riskProfile.safety_report.score > 85 ? 'critical' : 'high',
-          title: 'Brand Safety Violation',
-          description: riskProfile.safety_report.teaser,
-          recommendation: 'Content violates safety guidelines. Do not publish.',
-          evidence: { score: riskProfile.safety_report.score, reasoning: riskProfile.safety_report.reasoning }
-        })
-      }
-
-      // Save provenance_details for valid/caution C2PA (matches authenticated path)
-      if (['valid', 'caution'].includes(c2paStatus) && riskProfile.c2pa_report) {
-        await supabase.from('provenance_details').insert({
-          scan_id: scanId,
-          tenant_id: scan.tenant_id,
-          creator_name: riskProfile.c2pa_report.creator,
-          creation_tool: riskProfile.c2pa_report.tool,
-          creation_tool_version: riskProfile.c2pa_report.tool_version,
-          creation_timestamp: riskProfile.c2pa_report.timestamp,
-          signature_status: riskProfile.c2pa_report.status,
-          certificate_issuer: riskProfile.c2pa_report.issuer,
-          certificate_serial: riskProfile.c2pa_report.serial,
-          edit_history: riskProfile.c2pa_report.history,
-          raw_manifest: riskProfile.c2pa_report.raw_manifest
-        })
-      }
-    } else {
-      // VIDEO or no riskProfile: findings from frame analysis
-      if (!c2paResult.hasManifest) {
-        findings.push({
-          tenant_id: scan.tenant_id,
-          scan_id: scanId,
-          finding_type: 'provenance_issue',
-          severity: 'low',
-          title: 'Missing Content Credentials',
-          description: 'No C2PA manifest found in this asset. Provenance cannot be verified.',
-          recommendation: 'Use tools that attach Content Credentials to ensure trust.',
-          confidence_score: 100
-        })
-      }
-      // Video IP finding if frame analysis detected risk
-      if (ipResult && ipResult.riskScore > 50) {
-        findings.push({
-          tenant_id: scan.tenant_id,
-          scan_id: scanId,
-          finding_type: 'ip_violation',
-          severity: ipResult.riskScore > 85 ? 'critical' : 'high',
-          title: 'Potential IP Risk Detected in Video Frames',
-          description: `Frame analysis detected intellectual property risk (score: ${ipResult.riskScore}/100). Review flagged frames for potential trademark or copyright issues.`,
-          recommendation: 'Review individual frames and remove or license protected elements.',
-          confidence_score: Math.min(ipResult.riskScore, 95)
-        })
-      }
-      // Video Safety finding if frame analysis detected risk
-      if (brandSafetyResult && brandSafetyResult.riskScore > 50) {
-        findings.push({
-          tenant_id: scan.tenant_id,
-          scan_id: scanId,
-          finding_type: 'safety_violation',
-          severity: brandSafetyResult.riskScore > 85 ? 'critical' : 'high',
-          title: 'Brand Safety Concern in Video Frames',
-          description: `Frame analysis flagged brand safety issues (score: ${brandSafetyResult.riskScore}/100). Content may violate platform guidelines.`,
-          recommendation: 'Review flagged frames. Do not publish without addressing safety flags.',
-          confidence_score: Math.min(brandSafetyResult.riskScore, 95)
-        })
-      }
     }
 
     // Insert findings
     if (findings.length > 0) {
-      // Supabase generated types don't allow undefined for recommendation even if it's optional in the DB type
       type FindingInsert = Database['public']['Tables']['scan_findings']['Insert']
       const sanitizedFindings: FindingInsert[] = findings.map(f => {
-        return { ...f, recommendation: (f.recommendation || null) as FindingInsert['recommendation'] } as FindingInsert
+        return { ...f, evidence: f.evidence as Json, recommendation: (null as unknown) as FindingInsert['recommendation'] } as FindingInsert
       })
       await supabase.from('scan_findings').insert(sanitizedFindings)
     }

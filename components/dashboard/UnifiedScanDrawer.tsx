@@ -268,11 +268,11 @@ export function UnifiedScanDrawer({
                     )}
                 </section>
 
-                {/* ── Section 3: Findings (hidden for failed scans) ── */}
+                {/* ── Section 3: Scan Findings ── */}
                 {scan.status !== 'failed' && <section className="border border-rs-border-primary bg-[var(--rs-bg-surface)]">
                     <div className="px-5 py-3 border-b border-rs-border-primary bg-[var(--rs-bg-element)]/70 flex items-center justify-between">
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Detected_Anomalies</span>
-                        <div className="px-2 py-0.5 bg-rs-text-primary text-white text-[9px] font-bold rounded-[1px]">
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-rs-text-tertiary">Scan Findings</span>
+                        <div className="px-2 py-0.5 bg-rs-text-primary text-white text-[10px] font-bold rounded-[1px]">
                             {scan.scan_findings?.length || 0}
                         </div>
                     </div>
@@ -280,30 +280,45 @@ export function UnifiedScanDrawer({
                         {canViewBaselineReport ? (
                             // Full access: all findings visible
                             scan.scan_findings && scan.scan_findings.length > 0 ? (
-                                <div className="relative border-l border-dashed border-rs-border-primary space-y-8 ml-2">
-                                    {scan.scan_findings.map((finding) => (
-                                        <div key={finding.id} className="relative pl-6">
-                                            <div className={cn(
-                                                "absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-[var(--rs-bg-surface)]",
-                                                finding.severity === 'critical' ? 'bg-rs-destruct' :
-                                                    finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
-                                            )} />
-                                            <div className="space-y-1">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-bold text-rs-text-primary uppercase tracking-tight">{finding.title}</span>
-                                                    <span className="text-[9px] font-mono text-rs-text-tertiary">{finding.confidence_score}%_CONF</span>
+                                <div className="space-y-4">
+                                    {scan.scan_findings.map((finding) => {
+                                        const isPositive = finding.type === 'ip_clear' || finding.type === 'safety_clear' ||
+                                            (finding.type === 'provenance_verified' && finding.severity === 'low')
+                                        const dotColor = isPositive ? 'bg-[var(--rs-safe)]' :
+                                            finding.severity === 'critical' ? 'bg-rs-destruct' :
+                                                finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
+                                        return (
+                                            <div key={finding.id} className="p-4 bg-[var(--rs-bg-well)] border border-rs-border-primary/40 rounded-[2px]">
+                                                <div className="flex items-start gap-3">
+                                                    <div className={cn("w-2.5 h-2.5 rounded-full mt-1 shrink-0", dotColor)} />
+                                                    <div className="flex-1 space-y-1.5">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-[12px] font-bold text-rs-text-primary">{finding.title}</span>
+                                                            <span className="text-[10px] font-mono text-rs-text-tertiary shrink-0 ml-3">{finding.confidence_score}%</span>
+                                                        </div>
+                                                        <p className="text-[12px] text-rs-text-secondary leading-relaxed">
+                                                            {finding.description}
+                                                        </p>
+                                                        <div className="flex items-center gap-3 pt-1">
+                                                            <span className={cn("text-[9px] font-bold uppercase tracking-wider",
+                                                                isPositive ? 'text-[var(--rs-safe)]' :
+                                                                finding.severity === 'critical' ? 'text-rs-destruct' :
+                                                                finding.severity === 'high' ? 'text-rs-alert' : 'text-rs-signal'
+                                                            )}>{finding.severity}</span>
+                                                            <span className="text-[9px] text-rs-text-tertiary">{finding.type?.replace(/_/g, ' ')}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <p className="text-[10px] text-rs-text-secondary leading-relaxed bg-[var(--rs-bg-well)] p-3 rounded-[2px] border border-rs-border-primary/50 relative">
-                                                    <span className="absolute top-2 -left-1 w-2 h-2 bg-[var(--rs-bg-well)] border-t border-l border-rs-border-primary/50 -rotate-45" />
-                                                    {finding.description}
-                                                </p>
                                             </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             ) : (
-                                <div className="text-center py-4">
-                                    <span className="text-[10px] font-mono text-rs-text-tertiary uppercase tracking-widest opacity-50">No_Anomalies_Recorded</span>
+                                <div className="text-center py-6">
+                                    <div className="w-8 h-8 mx-auto rounded-full bg-[var(--rs-safe)]/10 flex items-center justify-center mb-2">
+                                        <Shield className="w-4 h-4 text-[var(--rs-safe)]" />
+                                    </div>
+                                    <span className="text-[11px] font-medium text-rs-text-secondary">All checks passed — no issues detected</span>
                                 </div>
                             )
                         ) : (
@@ -498,53 +513,111 @@ export function UnifiedScanDrawer({
                     </div>
                 </section>
 
-                {/* ── Section 4.5: Mitigation Report ── */}
+                {/* ── Section 4.5: Advisory Report ── */}
                 {latestMitigation?.status === 'complete' && latestMitigation.report_content && (() => {
-                    const rc = latestMitigation.report_content
-                    const decisionColors: Record<string, string> = {
-                        clear: 'text-[var(--rs-safe)] border-[var(--rs-safe)]/40',
-                        watch: 'text-[var(--rs-info)] border-[var(--rs-info)]/40',
-                        hold: 'text-[var(--rs-warn)] border-[var(--rs-warn)]/40',
-                        block: 'text-rs-destruct border-rs-destruct/40',
+                    // Normalize report content — handles both old (v2) and new (v3) schema
+                    const raw = latestMitigation.report_content as unknown as Record<string, unknown>
+
+                    // Normalize executive summary
+                    const rawEs = raw.executive_summary as Record<string, unknown> || {}
+                    const recommendation = (rawEs.recommendation || rawEs.decision || 'review') as string
+                    // Map old vocabulary to new
+                    const normalizedRec = recommendation === 'clear' ? 'proceed'
+                        : recommendation === 'watch' ? 'monitor'
+                        : recommendation === 'hold' ? 'review'
+                        : recommendation === 'block' ? 'escalate'
+                        : recommendation
+
+                    const recommendationColors: Record<string, string> = {
+                        proceed: 'text-[var(--rs-safe)] border-[var(--rs-safe)]/40',
+                        monitor: 'text-[var(--rs-info)] border-[var(--rs-info)]/40',
+                        review: 'text-[var(--rs-warn)] border-[var(--rs-warn)]/40',
+                        escalate: 'text-[var(--rs-warn)] border-[var(--rs-warn)]/40',
                     }
+
+                    // Normalize domain analyses (old: exposures/severity/remediation_status, new: observations/signal_strength/action_suggested)
+                    type NormalizedDomain = { signal_strength: string; action_suggested: boolean; observations: { type: string; description: string; context?: string }[] }
+                    const normalizeDomain = (d: Record<string, unknown> | undefined): NormalizedDomain | null => {
+                        if (!d) return null
+                        const obs = (d.observations || d.exposures || []) as { type: string; description: string; context?: string; legal_rationale?: string }[]
+                        return {
+                            signal_strength: (d.signal_strength || d.severity || 'none') as string,
+                            action_suggested: typeof d.action_suggested === 'boolean' ? d.action_suggested : d.remediation_status === 'required',
+                            observations: obs.map(o => ({ type: o.type, description: o.description, context: o.context || o.legal_rationale })),
+                        }
+                    }
+
+                    // Normalize actions (old: mitigation_plan, new: recommendations)
+                    const rawActions = (raw.recommendations as Record<string, unknown>)?.actions
+                        || (raw.mitigation_plan as Record<string, unknown>)?.actions || []
+                    const actions = (rawActions as { priority: number; domain: string; action: string; owner: string; effort: string; verification: string; impact?: string; risk_reduction?: string }[])
+
+                    // Normalize outlook (old: residual_risk, new: outlook)
+                    const rawOutlook = (raw.outlook || raw.residual_risk || {}) as Record<string, unknown>
+                    const readiness = (rawOutlook.readiness || (rawOutlook.publish_decision === 'approved' ? 'ready' : rawOutlook.publish_decision === 'blocked' ? 'needs_attention' : 'conditional')) as string
+                    const outlookSummary = (rawOutlook.summary || rawOutlook.remaining_risk || '') as string
+                    const outlookConditions = (rawOutlook.conditions || []) as string[]
+                    const outlookNextSteps = (rawOutlook.next_steps || rawOutlook.maintenance_checks || []) as string[]
+
+                    // Explainability (new schema only)
+                    const explainability = raw.explainability as { summary: string; score_explanation: string } | undefined
+
+                    const ipDomain = normalizeDomain(raw.ip_analysis as Record<string, unknown>)
+                    const safetyDomain = normalizeDomain(raw.safety_analysis as Record<string, unknown>)
+                    const provDomain = normalizeDomain(raw.provenance_analysis as Record<string, unknown>)
+
                     return (
-                        <section className="space-y-3 pt-4 border-t border-rs-border-primary/50">
-                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Mitigation_Report</span>
+                        <section className="space-y-5 pt-6 border-t border-rs-border-primary/50">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Advisory Report</span>
+
+                            {/* Explainability */}
+                            {explainability && (
+                                <div className="p-4 bg-[var(--rs-bg-surface)] border border-rs-border-primary/30 rounded-[2px] space-y-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-rs-text-tertiary">How We Analyzed</span>
+                                    <p className="text-[12px] text-rs-text-secondary leading-relaxed">{explainability.summary}</p>
+                                    <p className="text-[11px] text-rs-text-tertiary leading-relaxed">{explainability.score_explanation}</p>
+                                </div>
+                            )}
 
                             {/* Executive Summary */}
-                            <div className="p-3 bg-[var(--rs-bg-well)] rounded-[2px] space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border rounded-[1px] ${decisionColors[rc.executive_summary.decision] || 'text-rs-text-secondary border-rs-border-primary'}`}>
-                                        {rc.executive_summary.decision}
+                            <div className="p-4 bg-[var(--rs-bg-well)] rounded-[2px] space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 border rounded-[1px] ${recommendationColors[normalizedRec] || 'text-rs-text-secondary border-rs-border-primary'}`}>
+                                        {normalizedRec}
                                     </span>
-                                    <span className="text-[8px] text-rs-text-tertiary">
-                                        Confidence: {rc.executive_summary.confidence}% · Approver: {rc.executive_summary.approver_level}
+                                    <span className="text-[10px] text-rs-text-tertiary">
+                                        Confidence: {rawEs.confidence as number || 0}%
                                     </span>
                                 </div>
-                                <p className="text-[10px] text-rs-text-secondary leading-relaxed">{rc.executive_summary.rationale}</p>
+                                <p className="text-[12px] text-rs-text-secondary leading-relaxed">{rawEs.rationale as string || ''}</p>
                             </div>
 
                             {/* Domain Analyses */}
                             {[
-                                { label: 'IP_Analysis', data: rc.ip_analysis },
-                                { label: 'Safety_Analysis', data: rc.safety_analysis },
-                                { label: 'Provenance_Analysis', data: rc.provenance_analysis },
+                                { label: 'Intellectual Property', data: ipDomain },
+                                { label: 'Brand Safety', data: safetyDomain },
+                                { label: 'Provenance & Authenticity', data: provDomain },
                             ].map(({ label, data }) => data && (
-                                <div key={label} className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[8px] font-bold uppercase tracking-widest text-rs-text-tertiary">{label}</span>
-                                        <span className={`text-[8px] font-bold uppercase ${data.severity === 'critical' || data.severity === 'high' ? 'text-rs-destruct' : data.severity === 'medium' ? 'text-[var(--rs-warn)]' : 'text-[var(--rs-safe)]'}`}>
-                                            {data.severity}
+                                <div key={label} className="space-y-2 p-4 bg-[var(--rs-bg-surface)] border border-rs-border-primary/20 rounded-[2px]">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-rs-text-tertiary">{label}</span>
+                                        <span className={`text-[10px] font-bold uppercase ${data.signal_strength === 'strong' || data.signal_strength === 'significant' || data.signal_strength === 'critical' || data.signal_strength === 'high' ? 'text-rs-destruct' : data.signal_strength === 'moderate' || data.signal_strength === 'medium' ? 'text-[var(--rs-warn)]' : 'text-[var(--rs-safe)]'}`}>
+                                            {data.signal_strength}
                                         </span>
-                                        <span className="text-[8px] text-rs-text-tertiary">
-                                            {data.remediation_status === 'required' ? '⚠ Remediation Required' : '✓ No Remediation Needed'}
+                                        <span className="text-[10px] text-rs-text-tertiary ml-auto">
+                                            {data.action_suggested ? 'Action Suggested' : 'No Action Needed'}
                                         </span>
                                     </div>
-                                    {data.exposures?.length > 0 && (
-                                        <div className="pl-2 space-y-1">
-                                            {data.exposures.map((e: { type: string; description: string }, i: number) => (
-                                                <div key={i} className="text-[9px] text-rs-text-secondary">
-                                                    <span className="text-rs-text-primary font-medium">{e.type}:</span> {e.description}
+                                    {data.observations?.length > 0 && (
+                                        <div className="space-y-2 mt-1">
+                                            {data.observations.map((o, i: number) => (
+                                                <div key={i} className="pl-3 border-l-2 border-rs-border-primary/40 space-y-1">
+                                                    <p className="text-[11px] text-rs-text-primary">
+                                                        <span className="font-semibold">{o.type}:</span> {o.description}
+                                                    </p>
+                                                    {o.context && (
+                                                        <p className="text-[10px] text-rs-text-tertiary italic leading-relaxed">{o.context}</p>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -552,51 +625,64 @@ export function UnifiedScanDrawer({
                                 </div>
                             ))}
 
-                            {/* Mitigation Actions */}
-                            {rc.mitigation_plan?.actions?.length > 0 && (
-                                <div className="space-y-1">
-                                    <span className="text-[8px] font-bold uppercase tracking-widest text-rs-text-tertiary">Action_Plan</span>
-                                    <div className="space-y-2">
-                                        {rc.mitigation_plan.actions.map((a: { priority: number; domain: string; action: string; owner: string; effort: string; verification: string }, i: number) => (
-                                            <div key={i} className="p-2 bg-[var(--rs-bg-surface)] border border-rs-border-primary rounded-[2px]">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-[8px] font-black text-rs-text-primary">#{a.priority}</span>
-                                                    <span className="text-[8px] font-bold uppercase tracking-wider text-[var(--rs-info)]">{a.domain}</span>
-                                                    <span className="text-[8px] text-rs-text-tertiary ml-auto">{a.effort}</span>
+                            {/* Recommendations */}
+                            {actions.length > 0 && (
+                                <div className="space-y-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-rs-text-tertiary">Recommendations</span>
+                                    <div className="space-y-3">
+                                        {actions.map((a, i: number) => (
+                                            <div key={i} className="p-3 bg-[var(--rs-bg-surface)] border border-rs-border-primary rounded-[2px]">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-[10px] font-black text-rs-text-primary">#{a.priority}</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--rs-info)]">{a.domain}</span>
+                                                    <span className="text-[10px] text-rs-text-tertiary ml-auto">{a.effort}</span>
                                                 </div>
-                                                <p className="text-[9px] text-rs-text-primary font-medium">{a.action}</p>
-                                                <p className="text-[8px] text-rs-text-tertiary mt-0.5">Owner: {a.owner} · Verify: {a.verification}</p>
+                                                <p className="text-[12px] text-rs-text-primary leading-relaxed">{a.action}</p>
+                                                <p className="text-[10px] text-rs-text-tertiary mt-1.5">
+                                                    {a.impact || a.risk_reduction ? `Impact: ${a.impact || a.risk_reduction}` : ''}
+                                                    {a.verification ? ` · Verify: ${a.verification}` : ''}
+                                                </p>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Residual Risk */}
-                            {rc.residual_risk && (
-                                <div className="p-2 bg-[var(--rs-bg-well)] rounded-[2px] space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[8px] font-bold uppercase tracking-widest text-rs-text-tertiary">Residual_Risk</span>
-                                        <span className={`text-[8px] font-black uppercase ${rc.residual_risk.publish_decision === 'approved' ? 'text-[var(--rs-safe)]' : rc.residual_risk.publish_decision === 'conditional' ? 'text-[var(--rs-warn)]' : 'text-rs-destruct'}`}>
-                                            {rc.residual_risk.publish_decision}
-                                        </span>
-                                    </div>
-                                    <p className="text-[9px] text-rs-text-secondary">{rc.residual_risk.remaining_risk}</p>
-                                    {rc.residual_risk.conditions?.length > 0 && (
-                                        <div className="text-[8px] text-rs-text-tertiary">
-                                            Conditions: {rc.residual_risk.conditions.join(' · ')}
-                                        </div>
-                                    )}
+                            {/* Outlook */}
+                            <div className="p-4 bg-[var(--rs-bg-well)] rounded-[2px] space-y-2">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-rs-text-tertiary">Outlook</span>
+                                    <span className={`text-[10px] font-black uppercase ${readiness === 'ready' || readiness === 'approved' ? 'text-[var(--rs-safe)]' : readiness === 'conditional' ? 'text-[var(--rs-warn)]' : 'text-rs-destruct'}`}>
+                                        {readiness === 'needs_attention' ? 'NEEDS ATTENTION' : readiness.toUpperCase()}
+                                    </span>
                                 </div>
-                            )}
+                                <p className="text-[11px] text-rs-text-secondary leading-relaxed">{outlookSummary}</p>
+                                {outlookConditions.length > 0 && (
+                                    <div className="text-[10px] text-rs-text-tertiary space-y-0.5">
+                                        {outlookConditions.map((c, i) => (
+                                            <div key={i}>&bull; {c}</div>
+                                        ))}
+                                    </div>
+                                )}
+                                {outlookNextSteps.length > 0 && (
+                                    <div className="mt-2">
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rs-text-tertiary">Next Steps</span>
+                                        <div className="text-[10px] text-rs-text-tertiary space-y-0.5 mt-1">
+                                            {outlookNextSteps.map((ns, i) => (
+                                                <div key={i}>&bull; {ns}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
-                            {/* Download Mitigation PDF (Sprint 10.10) */}
+                            {/* Download Advisory PDF */}
                             <RSButton
                                 variant="ghost"
-                                className="w-full h-8 text-[8px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all mt-3"
+                                className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all mt-3"
                                 onClick={() => {
                                     generateMitigationPDF(
-                                        rc,
+                                        latestMitigation.report_content!,
                                         scan,
                                         latestMitigation.id,
                                         latestMitigation.completed_at || undefined,
@@ -604,7 +690,7 @@ export function UnifiedScanDrawer({
                                 }}
                             >
                                 <Download className="w-3 h-3 mr-1.5" />
-                                Export_Mitigation_PDF
+                                Export Advisory PDF
                             </RSButton>
                         </section>
                     )

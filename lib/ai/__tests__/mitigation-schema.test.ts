@@ -2,11 +2,18 @@ import { describe, it, expect } from 'vitest'
 import { MitigationReportContentSchema } from '@/lib/schemas/mitigation-schema'
 
 const VALID_FIXTURE = {
+  explainability: {
+    summary: 'We analyzed this asset across three dimensions: intellectual property, brand safety, and provenance.',
+    ip_methodology: 'Visual comparison against known protected works, trademark patterns, and celebrity recognition.',
+    safety_methodology: 'Evaluation against platform policies, content appropriateness, and brand alignment standards.',
+    provenance_methodology: 'C2PA credential verification and visual forensic analysis for authenticity signals.',
+    score_explanation: 'Your composite score of 42/100 reflects moderate IP similarity and missing provenance credentials.',
+  },
   executive_summary: {
-    decision: 'watch' as const,
+    recommendation: 'monitor' as const,
     confidence: 72,
-    approver_level: 'manager',
-    rationale: 'Moderate IP risk detected. Brand safety clear. Missing provenance credentials.',
+    rationale: 'Moderate IP similarity detected. Brand safety clear. Missing provenance credentials.',
+    disclaimer: 'This system provides risk signals and operational decision support. It does not provide legal advice.',
   },
   asset_context: {
     filename: 'hero-banner.png',
@@ -17,36 +24,36 @@ const VALID_FIXTURE = {
     creator_metadata: null,
   },
   ip_analysis: {
-    severity: 'medium',
+    signal_strength: 'moderate',
     confidence: 68,
-    exposures: [
+    observations: [
       {
         type: 'trademark_similarity',
         description: 'Logo bears resemblance to registered trademark',
-        evidence_ref: 'scan_finding',
-        legal_rationale: 'Potential confusion under Lanham Act Section 43(a)',
+        evidence_ref: 'FINDING-1',
+        context: 'Visual similarity detected but licensing status cannot be determined by automated analysis.',
       },
     ],
-    remediation_status: 'required' as const,
+    action_suggested: true,
   },
   safety_analysis: {
-    severity: 'none',
+    signal_strength: 'none',
     confidence: 95,
-    exposures: [],
-    remediation_status: 'not_required' as const,
+    observations: [],
+    action_suggested: false,
   },
   provenance_analysis: {
-    severity: 'high',
+    signal_strength: 'significant',
     confidence: 90,
-    exposures: [
+    observations: [
       {
         type: 'missing_c2pa',
         description: 'No C2PA content credentials found',
-        evidence_ref: 'provenance_check',
-        legal_rationale: 'Cannot verify origin chain per CAI standards',
+        evidence_ref: 'FINDING-2',
+        context: 'Without C2PA credentials, the creation chain cannot be independently verified.',
       },
     ],
-    remediation_status: 'required' as const,
+    action_suggested: true,
   },
   bias_analysis: {
     applicable: false,
@@ -65,7 +72,7 @@ const VALID_FIXTURE = {
         name: 'United States',
         source: 'inferred' as const,
         status: 'review' as const,
-        rationale: 'Trademark similarity requires legal review under US law',
+        rationale: 'Visual similarity may warrant trademark clearance under US law',
       },
     ],
     platforms: [
@@ -77,33 +84,33 @@ const VALID_FIXTURE = {
       },
     ],
   },
-  mitigation_plan: {
+  recommendations: {
     actions: [
       {
         priority: 1,
         domain: 'ip',
-        action: 'Conduct trademark clearance search for identified logo similarity',
+        action: 'Consider conducting a trademark clearance search for the identified logo similarity',
         owner: 'Legal counsel',
         effort: '2-3 business days',
-        risk_reduction: 'Eliminates trademark infringement risk',
+        impact: 'Confirms whether the visual similarity poses a trademark concern',
         verification: 'Written clearance opinion from IP attorney',
       },
       {
         priority: 2,
         domain: 'provenance',
-        action: 'Add C2PA content credentials before publication',
+        action: 'Add C2PA content credentials before publication to establish chain of custody',
         owner: 'Creative team',
         effort: '1 hour',
-        risk_reduction: 'Establishes verifiable origin chain',
+        impact: 'Establishes verifiable origin chain for content defensibility',
         verification: 'C2PA validation returns verified status',
       },
     ],
   },
-  residual_risk: {
-    remaining_risk: 'Low residual risk after trademark clearance and C2PA attachment',
-    publish_decision: 'conditional' as const,
+  outlook: {
+    summary: 'Low residual risk after trademark clearance and C2PA credential attachment',
+    readiness: 'conditional' as const,
     conditions: ['Trademark clearance obtained', 'C2PA credentials attached'],
-    maintenance_checks: ['Re-scan after modifications', 'Annual trademark monitoring'],
+    next_steps: ['Re-scan after modifications', 'Annual trademark monitoring'],
   },
 }
 
@@ -119,19 +126,25 @@ describe('MitigationReportContentSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects invalid decision enum value', () => {
+  it('rejects report missing explainability', () => {
+    const { explainability: _, ...incomplete } = VALID_FIXTURE
+    const result = MitigationReportContentSchema.safeParse(incomplete)
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects invalid recommendation enum value', () => {
     const invalid = {
       ...VALID_FIXTURE,
-      executive_summary: { ...VALID_FIXTURE.executive_summary, decision: 'maybe' },
+      executive_summary: { ...VALID_FIXTURE.executive_summary, recommendation: 'maybe' },
     }
     const result = MitigationReportContentSchema.safeParse(invalid)
     expect(result.success).toBe(false)
   })
 
-  it('rejects invalid remediation_status', () => {
+  it('rejects non-boolean action_suggested', () => {
     const invalid = {
       ...VALID_FIXTURE,
-      ip_analysis: { ...VALID_FIXTURE.ip_analysis, remediation_status: 'pending' },
+      ip_analysis: { ...VALID_FIXTURE.ip_analysis, action_suggested: 'pending' },
     }
     const result = MitigationReportContentSchema.safeParse(invalid)
     expect(result.success).toBe(false)
@@ -149,10 +162,10 @@ describe('MitigationReportContentSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects invalid publish_decision', () => {
+  it('rejects invalid readiness value', () => {
     const invalid = {
       ...VALID_FIXTURE,
-      residual_risk: { ...VALID_FIXTURE.residual_risk, publish_decision: 'pending' },
+      outlook: { ...VALID_FIXTURE.outlook, readiness: 'pending' },
     }
     const result = MitigationReportContentSchema.safeParse(invalid)
     expect(result.success).toBe(false)
@@ -172,11 +185,11 @@ describe('MitigationReportContentSchema', () => {
   it('accepts empty arrays for actions and findings', () => {
     const minimal = {
       ...VALID_FIXTURE,
-      mitigation_plan: { actions: [] },
+      recommendations: { actions: [] },
       bias_analysis: { ...VALID_FIXTURE.bias_analysis, findings: [] },
       compliance_matrix: { jurisdictions: [], platforms: [] },
       guideline_mapping: { guideline_name: null, mappings: [] },
-      residual_risk: { ...VALID_FIXTURE.residual_risk, conditions: [], maintenance_checks: [] },
+      outlook: { ...VALID_FIXTURE.outlook, conditions: [], next_steps: [] },
     }
     const result = MitigationReportContentSchema.safeParse(minimal)
     expect(result.success).toBe(true)

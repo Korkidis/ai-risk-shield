@@ -1,8 +1,11 @@
 /**
- * Mitigation Report Schemas
+ * Mitigation Report Schemas (v3.0)
  *
  * Zod runtime validation + Gemini SDK responseSchema for MitigationReportContent.
- * Derived from types/database.ts MitigationReportContent interface.
+ * Advisory vocabulary — no "block", "required", "legal_rationale", or "exposures".
+ *
+ * Schema vocabulary directly influences LLM tone. Every field name here
+ * becomes part of the language Gemini writes with.
  */
 
 import { z } from 'zod'
@@ -10,18 +13,18 @@ import { SchemaType, type Schema } from '@google/generative-ai'
 
 // ─── Zod Schemas ─────────────────────────────────────────────────────────────
 
-const ExposureSchema = z.object({
+const ObservationSchema = z.object({
   type: z.string(),
   description: z.string(),
   evidence_ref: z.string(),
-  legal_rationale: z.string(),
+  context: z.string(),
 })
 
 const MitigationDomainAnalysisSchema = z.object({
-  severity: z.string(),
+  signal_strength: z.string(),
   confidence: z.number(),
-  exposures: z.array(ExposureSchema),
-  remediation_status: z.enum(['required', 'not_required']),
+  observations: z.array(ObservationSchema),
+  action_suggested: z.boolean(),
 })
 
 const ComplianceEntrySchema = z.object({
@@ -32,11 +35,18 @@ const ComplianceEntrySchema = z.object({
 })
 
 export const MitigationReportContentSchema = z.object({
+  explainability: z.object({
+    summary: z.string(),
+    ip_methodology: z.string(),
+    safety_methodology: z.string(),
+    provenance_methodology: z.string(),
+    score_explanation: z.string(),
+  }),
   executive_summary: z.object({
-    decision: z.enum(['clear', 'watch', 'hold', 'block']),
+    recommendation: z.enum(['proceed', 'monitor', 'review', 'escalate']),
     confidence: z.number(),
-    approver_level: z.string(),
     rationale: z.string(),
+    disclaimer: z.string(),
   }),
   asset_context: z.object({
     filename: z.string(),
@@ -72,47 +82,48 @@ export const MitigationReportContentSchema = z.object({
     jurisdictions: z.array(ComplianceEntrySchema),
     platforms: z.array(ComplianceEntrySchema),
   }),
-  mitigation_plan: z.object({
+  recommendations: z.object({
     actions: z.array(z.object({
       priority: z.number(),
       domain: z.string(),
       action: z.string(),
       owner: z.string(),
       effort: z.string(),
-      risk_reduction: z.string(),
+      impact: z.string(),
       verification: z.string(),
+      alternatives: z.array(z.string()).optional(),
     })),
   }),
-  residual_risk: z.object({
-    remaining_risk: z.string(),
-    publish_decision: z.enum(['approved', 'conditional', 'blocked']),
+  outlook: z.object({
+    summary: z.string(),
+    readiness: z.enum(['ready', 'conditional', 'needs_attention']),
     conditions: z.array(z.string()),
-    maintenance_checks: z.array(z.string()),
+    next_steps: z.array(z.string()),
   }),
 })
 
 // ─── Gemini SDK Schema ───────────────────────────────────────────────────────
 
-const EXPOSURE_GEMINI: Schema = {
+const OBSERVATION_GEMINI: Schema = {
   type: SchemaType.OBJECT,
   properties: {
     type: { type: SchemaType.STRING },
     description: { type: SchemaType.STRING },
     evidence_ref: { type: SchemaType.STRING },
-    legal_rationale: { type: SchemaType.STRING },
+    context: { type: SchemaType.STRING },
   },
-  required: ['type', 'description', 'evidence_ref', 'legal_rationale'],
+  required: ['type', 'description', 'evidence_ref', 'context'],
 }
 
 const DOMAIN_ANALYSIS_GEMINI: Schema = {
   type: SchemaType.OBJECT,
   properties: {
-    severity: { type: SchemaType.STRING },
+    signal_strength: { type: SchemaType.STRING },
     confidence: { type: SchemaType.NUMBER },
-    exposures: { type: SchemaType.ARRAY, items: EXPOSURE_GEMINI },
-    remediation_status: { type: SchemaType.STRING, format: 'enum', enum: ['required', 'not_required'] },
+    observations: { type: SchemaType.ARRAY, items: OBSERVATION_GEMINI },
+    action_suggested: { type: SchemaType.BOOLEAN },
   },
-  required: ['severity', 'confidence', 'exposures', 'remediation_status'],
+  required: ['signal_strength', 'confidence', 'observations', 'action_suggested'],
 }
 
 const COMPLIANCE_ENTRY_GEMINI: Schema = {
@@ -129,15 +140,26 @@ const COMPLIANCE_ENTRY_GEMINI: Schema = {
 export const MITIGATION_REPORT_GEMINI_SCHEMA: Schema = {
   type: SchemaType.OBJECT,
   properties: {
+    explainability: {
+      type: SchemaType.OBJECT,
+      properties: {
+        summary: { type: SchemaType.STRING },
+        ip_methodology: { type: SchemaType.STRING },
+        safety_methodology: { type: SchemaType.STRING },
+        provenance_methodology: { type: SchemaType.STRING },
+        score_explanation: { type: SchemaType.STRING },
+      },
+      required: ['summary', 'ip_methodology', 'safety_methodology', 'provenance_methodology', 'score_explanation'],
+    },
     executive_summary: {
       type: SchemaType.OBJECT,
       properties: {
-        decision: { type: SchemaType.STRING, format: 'enum', enum: ['clear', 'watch', 'hold', 'block'] },
+        recommendation: { type: SchemaType.STRING, format: 'enum', enum: ['proceed', 'monitor', 'review', 'escalate'] },
         confidence: { type: SchemaType.NUMBER },
-        approver_level: { type: SchemaType.STRING },
         rationale: { type: SchemaType.STRING },
+        disclaimer: { type: SchemaType.STRING },
       },
-      required: ['decision', 'confidence', 'approver_level', 'rationale'],
+      required: ['recommendation', 'confidence', 'rationale', 'disclaimer'],
     },
     asset_context: {
       type: SchemaType.OBJECT,
@@ -203,7 +225,7 @@ export const MITIGATION_REPORT_GEMINI_SCHEMA: Schema = {
       },
       required: ['jurisdictions', 'platforms'],
     },
-    mitigation_plan: {
+    recommendations: {
       type: SchemaType.OBJECT,
       properties: {
         actions: {
@@ -216,29 +238,30 @@ export const MITIGATION_REPORT_GEMINI_SCHEMA: Schema = {
               action: { type: SchemaType.STRING },
               owner: { type: SchemaType.STRING },
               effort: { type: SchemaType.STRING },
-              risk_reduction: { type: SchemaType.STRING },
+              impact: { type: SchemaType.STRING },
               verification: { type: SchemaType.STRING },
+              alternatives: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
             },
-            required: ['priority', 'domain', 'action', 'owner', 'effort', 'risk_reduction', 'verification'],
+            required: ['priority', 'domain', 'action', 'owner', 'effort', 'impact', 'verification'],
           },
         },
       },
       required: ['actions'],
     },
-    residual_risk: {
+    outlook: {
       type: SchemaType.OBJECT,
       properties: {
-        remaining_risk: { type: SchemaType.STRING },
-        publish_decision: { type: SchemaType.STRING, format: 'enum', enum: ['approved', 'conditional', 'blocked'] },
+        summary: { type: SchemaType.STRING },
+        readiness: { type: SchemaType.STRING, format: 'enum', enum: ['ready', 'conditional', 'needs_attention'] },
         conditions: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-        maintenance_checks: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+        next_steps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
       },
-      required: ['remaining_risk', 'publish_decision', 'conditions', 'maintenance_checks'],
+      required: ['summary', 'readiness', 'conditions', 'next_steps'],
     },
   },
   required: [
-    'executive_summary', 'asset_context', 'ip_analysis', 'safety_analysis',
+    'explainability', 'executive_summary', 'asset_context', 'ip_analysis', 'safety_analysis',
     'provenance_analysis', 'bias_analysis', 'guideline_mapping',
-    'compliance_matrix', 'mitigation_plan', 'residual_risk',
+    'compliance_matrix', 'recommendations', 'outlook',
   ],
 }

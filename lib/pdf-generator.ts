@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import { RiskProfile } from './gemini-types'
+import { RiskProfile, formatChiefStrategy } from './gemini-types'
 import { ExtendedScan, MitigationReportContent, ScanWithRelations } from '@/types/database'
 import { format } from 'date-fns'
 import { getRiskTier } from './risk/tiers'
@@ -441,14 +441,15 @@ export const generateForensicReport = (
         drawLine(y)
         y += 10
 
-        const strategyLabel = isSample ? "RISK INTELLIGENCE SUMMARY" : "CHIEF OFFICER RISK BRIEFING"
+        const strategyLabel = isSample ? "RISK INTELLIGENCE SUMMARY" : "CONTENT STRATEGY ADVISORY"
         drawLabel(strategyLabel, 20, y)
         y += 6
 
         doc.setFont(FONT.body, "normal")
         doc.setFontSize(9)
         doc.setTextColor(COLORS.ink)
-        const strategyLines = doc.splitTextToSize(profile.chief_officer_strategy, 160)
+        const strategyText = formatChiefStrategy(profile.chief_officer_strategy)
+        const strategyLines = doc.splitTextToSize(strategyText, 160)
         doc.text(strategyLines, 20, y)
         y += (strategyLines.length * 4) + 6
     }
@@ -528,17 +529,17 @@ export const generateForensicReport = (
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MITIGATION REPORT PDF (Sprint 10.10)
-// Same Dieter Rams aesthetic as scan report. Covers all 10 sections of
-// MitigationReportContent + integrity checksum.
+// ADVISORY REPORT PDF (v3.0)
+// Multi-page premium layout. Dieter Rams aesthetic. Advisory vocabulary.
+// Designed to feel like a $29 professional document with breathing room.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Map mitigation domain severity to PDF color.
+ * Map domain signal strength to PDF color.
  */
-function mitigationSeverityColor(severity: string): string {
-    if (severity === 'critical' || severity === 'high') return COLORS.accent
-    if (severity === 'medium') return COLORS.caution
+function signalStrengthColor(strength: string): string {
+    if (strength === 'strong' || strength === 'significant') return COLORS.accent
+    if (strength === 'moderate') return COLORS.caution
     return COLORS.safe
 }
 
@@ -554,7 +555,7 @@ export const generateMitigationPDF = (
         format: 'a4'
     })
 
-    // --- HELPERS (reuse patterns from scan report) ---
+    // --- HELPERS ---
     const drawLine = (y: number) => {
         doc.setDrawColor(COLORS.line)
         doc.setLineWidth(0.1)
@@ -569,19 +570,17 @@ export const generateMitigationPDF = (
     }
 
     const checkPageBreak = (y: number, needed: number): number => {
-        if (y + needed > 270) {
+        if (y + needed > 265) {
             doc.addPage()
-            return 20
+            return 25
         }
         return y
     }
 
-    // Content integrity checksum (deterministic FNV-1a style hash of report content)
+    // Content integrity checksum
     const contentJson = JSON.stringify(report)
-    // Non-cryptographic hash for integrity display.
     let checksum = '0000000000000000'
     try {
-        // FNV-1a 64-bit hash (works in browser + server)
         let h1 = 0x811c9dc5
         let h2 = 0x811c9dc5
         for (let i = 0; i < contentJson.length; i++) {
@@ -593,169 +592,218 @@ export const generateMitigationPDF = (
     } catch { /* fallback already set */ }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // HEADER
+    // PAGE 1: COVER + EXECUTIVE SUMMARY
     // ═══════════════════════════════════════════════════════════════════════════
 
+    // Brand header
     doc.setFont(FONT.header, "bold")
-    doc.setFontSize(14)
+    doc.setFontSize(18)
     doc.setTextColor(COLORS.ink)
-    doc.text("AI CONTENT RISK SCORE", 20, 15)
+    doc.text("AI CONTENT RISK SCORE", 20, 25)
 
     doc.setFont(FONT.body, "normal")
-    doc.setFontSize(8)
-    doc.text("MITIGATION REPORT", 20, 19)
+    doc.setFontSize(10)
+    doc.setTextColor(COLORS.sub)
+    doc.text("Content Advisory Report", 20, 32)
 
-    // Metadata (Top Right)
+    // Metadata block
     doc.setFont(FONT.mono, "normal")
     doc.setFontSize(7)
     doc.setTextColor(COLORS.sub)
-    doc.text(`SCAN: ${scan.id.substring(0, 8).toUpperCase()}`, 190, 11, { align: "right" })
+    doc.text(`SCAN: ${scan.id.substring(0, 8).toUpperCase()}`, 190, 20, { align: "right" })
     if (reportId) {
-        doc.text(`REPORT: ${reportId.substring(0, 8).toUpperCase()}`, 190, 15, { align: "right" })
+        doc.text(`REPORT: ${reportId.substring(0, 8).toUpperCase()}`, 190, 24, { align: "right" })
     }
-    doc.text(`DATE: ${format(generatedAt ? new Date(generatedAt) : new Date(), 'yyyy-MM-dd HH:mm:ss')}`, 190, 19, { align: "right" })
+    doc.text(`DATE: ${format(generatedAt ? new Date(generatedAt) : new Date(), 'yyyy-MM-dd HH:mm:ss')}`, 190, 28, { align: "right" })
 
-    drawLine(25)
+    drawLine(38)
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // 1. EXECUTIVE SUMMARY
-    // ═══════════════════════════════════════════════════════════════════════════
+    // Asset context — compact
+    let y = 48
+    const ac = report.asset_context
+    drawLabel("ASSET", 20, y)
+    doc.setFont(FONT.mono, "normal")
+    doc.setFontSize(8)
+    doc.setTextColor(COLORS.ink)
+    doc.text(`${ac.filename}  |  ${ac.type.toUpperCase()}  |  ${ac.size > 0 ? Math.round(ac.size / 1024) + ' KB' : 'Unknown'}  |  C2PA: ${ac.c2pa_chain_status.toUpperCase()}`, 48, y)
 
-    let y = 35
+    y += 12
+    drawLine(y)
+    y += 12
 
-    drawLabel("EXECUTIVE SUMMARY", 20, y)
-    y += 6
-
-    // Decision badge
+    // Recommendation badge (large, prominent)
     const es = report.executive_summary
-    const decisionColor = es.decision === 'clear' ? COLORS.safe
-        : es.decision === 'watch' ? COLORS.sub
-        : es.decision === 'hold' ? COLORS.caution
+    const recColor = es.recommendation === 'proceed' ? COLORS.safe
+        : es.recommendation === 'monitor' ? COLORS.sub
+        : es.recommendation === 'review' ? COLORS.caution
         : COLORS.accent
 
+    drawLabel("RECOMMENDATION", 20, y)
+    y += 8
+
     doc.setFont(FONT.header, "bold")
-    doc.setFontSize(18)
-    doc.setTextColor(decisionColor)
-    doc.text(es.decision.toUpperCase(), 20, y + 4)
+    doc.setFontSize(22)
+    doc.setTextColor(recColor)
+    doc.text(es.recommendation.toUpperCase(), 20, y)
 
     doc.setFont(FONT.mono, "normal")
     doc.setFontSize(8)
     doc.setTextColor(COLORS.sub)
-    doc.text(`CONFIDENCE: ${es.confidence}%  |  APPROVER: ${es.approver_level.toUpperCase()}`, 60, y + 2)
+    doc.text(`CONFIDENCE: ${es.confidence}%`, 90, y - 2)
 
-    y += 14
+    y += 10
 
     doc.setFont(FONT.body, "normal")
-    doc.setFontSize(9)
+    doc.setFontSize(10)
     doc.setTextColor(COLORS.ink)
     const rationaleLines = doc.splitTextToSize(es.rationale, 160)
     doc.text(rationaleLines, 20, y)
-    y += (rationaleLines.length * 4) + 8
+    y += (rationaleLines.length * 4.5) + 8
+
+    // Disclaimer
+    if (es.disclaimer) {
+        doc.setFont(FONT.body, "italic")
+        doc.setFontSize(7)
+        doc.setTextColor(COLORS.sub)
+        const disclaimerLines = doc.splitTextToSize(es.disclaimer, 160)
+        doc.text(disclaimerLines, 20, y)
+        y += (disclaimerLines.length * 3) + 6
+    }
 
     drawLine(y)
-    y += 10
+    y += 12
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 2. ASSET CONTEXT
+    // EXPLAINABILITY — How We Analyzed
     // ═══════════════════════════════════════════════════════════════════════════
 
-    y = checkPageBreak(y, 30)
-    drawLabel("ASSET CONTEXT", 20, y)
-    y += 6
+    if (report.explainability) {
+        y = checkPageBreak(y, 60)
+        drawLabel("HOW WE ANALYZED THIS CONTENT", 20, y)
+        y += 8
 
-    doc.setFont(FONT.mono, "normal")
-    doc.setFontSize(8)
-    doc.setTextColor(COLORS.ink)
+        doc.setFont(FONT.body, "normal")
+        doc.setFontSize(9)
+        doc.setTextColor(COLORS.ink)
+        const summaryLines = doc.splitTextToSize(report.explainability.summary, 160)
+        doc.text(summaryLines, 20, y)
+        y += (summaryLines.length * 4) + 6
 
-    const ac = report.asset_context
-    const assetLines = [
-        `FILENAME:    ${ac.filename}`,
-        `TYPE:        ${ac.type.toUpperCase()}`,
-        `SIZE:        ${ac.size > 0 ? Math.round(ac.size / 1024) + ' KB' : 'Unknown'}`,
-        `C2PA STATUS: ${ac.c2pa_chain_status.toUpperCase()}`,
-    ]
-    doc.text(assetLines, 20, y)
-    y += (assetLines.length * 4.5) + 6
+        // Methodology breakdown
+        const methodologies = [
+            { label: 'IP ANALYSIS', text: report.explainability.ip_methodology },
+            { label: 'SAFETY ANALYSIS', text: report.explainability.safety_methodology },
+            { label: 'PROVENANCE ANALYSIS', text: report.explainability.provenance_methodology },
+        ]
 
-    drawLine(y)
-    y += 10
+        methodologies.forEach(({ label, text }) => {
+            y = checkPageBreak(y, 15)
+            doc.setFont(FONT.body, "bold")
+            doc.setFontSize(7)
+            doc.setTextColor(COLORS.sub)
+            doc.text(label, 26, y)
+            y += 4
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(8)
+            doc.setTextColor(COLORS.ink)
+            const mLines = doc.splitTextToSize(text, 155)
+            doc.text(mLines, 26, y)
+            y += (mLines.length * 3.5) + 5
+        })
+
+        // Score explanation
+        y = checkPageBreak(y, 15)
+        drawLabel("YOUR SCORE", 26, y)
+        y += 5
+        doc.setFont(FONT.body, "normal")
+        doc.setFontSize(9)
+        doc.setTextColor(COLORS.ink)
+        const scoreLines = doc.splitTextToSize(report.explainability.score_explanation, 155)
+        doc.text(scoreLines, 26, y)
+        y += (scoreLines.length * 4) + 8
+
+        drawLine(y)
+        y += 12
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 3-5. DOMAIN ANALYSES (IP, Safety, Provenance)
+    // DOMAIN ANALYSES — always start on a fresh area
     // ═══════════════════════════════════════════════════════════════════════════
 
     const domains: { label: string; data: typeof report.ip_analysis }[] = [
-        { label: 'IP RISK ANALYSIS', data: report.ip_analysis },
-        { label: 'SAFETY ANALYSIS', data: report.safety_analysis },
-        { label: 'PROVENANCE ANALYSIS', data: report.provenance_analysis },
+        { label: 'INTELLECTUAL PROPERTY', data: report.ip_analysis },
+        { label: 'BRAND SAFETY', data: report.safety_analysis },
+        { label: 'PROVENANCE & AUTHENTICITY', data: report.provenance_analysis },
     ]
 
     domains.forEach(({ label, data }) => {
-        y = checkPageBreak(y, 30)
+        y = checkPageBreak(y, 40)
         drawLabel(label, 20, y)
-        y += 6
+        y += 7
 
-        // Severity + Confidence
+        // Signal strength + confidence
+        const strengthColor = signalStrengthColor(data.signal_strength)
         doc.setFont(FONT.header, "bold")
-        doc.setFontSize(11)
-        doc.setTextColor(mitigationSeverityColor(data.severity))
-        doc.text(data.severity.toUpperCase(), 20, y)
+        doc.setFontSize(12)
+        doc.setTextColor(strengthColor)
+        doc.text(data.signal_strength.toUpperCase(), 20, y)
 
         doc.setFont(FONT.mono, "normal")
         doc.setFontSize(8)
         doc.setTextColor(COLORS.sub)
-        doc.text(`CONFIDENCE: ${data.confidence}%  |  REMEDIATION: ${data.remediation_status.toUpperCase().replace('_', ' ')}`, 55, y)
-        y += 7
+        const statusText = data.action_suggested ? 'Action Suggested' : 'No Action Needed'
+        doc.text(`CONFIDENCE: ${data.confidence}%  |  ${statusText.toUpperCase()}`, 65, y)
+        y += 9
 
-        // Exposures
-        if (data.exposures && data.exposures.length > 0) {
-            data.exposures.forEach(exp => {
-                y = checkPageBreak(y, 15)
+        // Observations
+        if (data.observations && data.observations.length > 0) {
+            data.observations.forEach(obs => {
+                y = checkPageBreak(y, 18)
 
-                doc.setFillColor(mitigationSeverityColor(data.severity))
+                doc.setFillColor(strengthColor)
                 doc.circle(22, y - 1, 1, "F")
 
                 doc.setFont(FONT.body, "bold")
-                doc.setFontSize(8)
+                doc.setFontSize(9)
                 doc.setTextColor(COLORS.ink)
-                doc.text(exp.type, 26, y)
+                doc.text(obs.type, 26, y)
 
-                y += 4
+                y += 4.5
                 doc.setFont(FONT.body, "normal")
-                doc.setFontSize(8)
-                doc.setTextColor(COLORS.sub)
-                const descLines = doc.splitTextToSize(exp.description, 155)
+                doc.setFontSize(8.5)
+                doc.setTextColor(COLORS.ink)
+                const descLines = doc.splitTextToSize(obs.description, 155)
                 doc.text(descLines, 26, y)
-                y += (descLines.length * 3.5) + 2
+                y += (descLines.length * 3.8) + 2
 
-                if (exp.legal_rationale) {
-                    doc.setFont(FONT.mono, "normal")
-                    doc.setFontSize(7)
+                if (obs.context) {
+                    doc.setFont(FONT.body, "italic")
+                    doc.setFontSize(7.5)
                     doc.setTextColor(COLORS.sub)
-                    const legalLines = doc.splitTextToSize(`LEGAL: ${exp.legal_rationale}`, 155)
-                    doc.text(legalLines, 26, y)
-                    y += (legalLines.length * 3) + 2
+                    const ctxLines = doc.splitTextToSize(obs.context, 155)
+                    doc.text(ctxLines, 26, y)
+                    y += (ctxLines.length * 3.2) + 2
                 }
-                y += 2
+                y += 3
             })
         } else {
             doc.setFont(FONT.body, "italic")
             doc.setFontSize(8)
             doc.setTextColor(COLORS.sub)
-            doc.text("No exposures identified.", 26, y)
-            y += 5
+            doc.text("No observations for this domain.", 26, y)
+            y += 6
         }
 
-        y += 4
+        y += 5
         drawLine(y)
-        y += 10
+        y += 12
     })
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 6. BIAS ANALYSIS
+    // BIAS ANALYSIS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    y = checkPageBreak(y, 20)
+    y = checkPageBreak(y, 25)
     drawLabel("BIAS ANALYSIS", 20, y)
     y += 6
 
@@ -765,12 +813,12 @@ export const generateMitigationPDF = (
         doc.setFontSize(8)
         doc.setTextColor(COLORS.sub)
         doc.text(`Not applicable: ${bias.not_applicable_reason || 'Content type not subject to bias evaluation.'}`, 20, y)
-        y += 6
+        y += 8
     } else {
         doc.setFont(FONT.header, "bold")
         doc.setFontSize(10)
-        doc.setTextColor(mitigationSeverityColor(bias.severity || 'low'))
-        doc.text((bias.severity || 'UNKNOWN').toUpperCase(), 20, y)
+        doc.setTextColor(signalStrengthColor(bias.severity || 'low'))
+        doc.text((bias.severity || 'NONE').toUpperCase(), 20, y)
 
         doc.setFont(FONT.mono, "normal")
         doc.setFontSize(8)
@@ -785,16 +833,16 @@ export const generateMitigationPDF = (
             doc.setTextColor(COLORS.ink)
             const bLines = doc.splitTextToSize(`${f.type}: ${f.description}`, 160)
             doc.text(bLines, 26, y)
-            y += (bLines.length * 3.5) + 2
+            y += (bLines.length * 3.5) + 3
         })
     }
 
     y += 4
     drawLine(y)
-    y += 10
+    y += 12
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 7. GUIDELINE MAPPING
+    // GUIDELINE MAPPING
     // ═══════════════════════════════════════════════════════════════════════════
 
     y = checkPageBreak(y, 20)
@@ -807,7 +855,7 @@ export const generateMitigationPDF = (
         doc.setFontSize(8)
         doc.setTextColor(COLORS.ink)
         doc.text(`GUIDELINE: ${gm.guideline_name}`, 20, y)
-        y += 5
+        y += 6
 
         if (gm.mappings && gm.mappings.length > 0) {
             gm.mappings.forEach(m => {
@@ -815,204 +863,215 @@ export const generateMitigationPDF = (
                 doc.setFont(FONT.body, "normal")
                 doc.setFontSize(8)
                 doc.setTextColor(COLORS.ink)
-                doc.text(`${m.finding_ref} → ${m.guideline_item}: ${m.status.toUpperCase()}`, 26, y)
-                y += 4
+                doc.text(`${m.finding_ref} \u2192 ${m.guideline_item}: ${m.status.toUpperCase()}`, 26, y)
+                y += 5
             })
         } else {
             doc.setFont(FONT.body, "italic")
             doc.setFontSize(8)
             doc.setTextColor(COLORS.sub)
-            doc.text("No guideline violations mapped.", 26, y)
-            y += 4
+            doc.text("No guideline issues mapped.", 26, y)
+            y += 5
         }
     } else {
         doc.setFont(FONT.body, "italic")
         doc.setFontSize(8)
         doc.setTextColor(COLORS.sub)
         doc.text("No brand guideline applied to this scan.", 20, y)
-        y += 4
+        y += 5
     }
 
     y += 4
     drawLine(y)
-    y += 10
+    y += 12
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 8. COMPLIANCE MATRIX
+    // COMPLIANCE MATRIX
     // ═══════════════════════════════════════════════════════════════════════════
 
     y = checkPageBreak(y, 30)
-    drawLabel("COMPLIANCE MATRIX", 20, y)
+    drawLabel("COMPLIANCE LANDSCAPE", 20, y)
     y += 8
 
     const cm = report.compliance_matrix
 
     // Jurisdictions
-    drawLabel("JURISDICTIONS", 26, y)
-    y += 5
-    cm.jurisdictions?.forEach(j => {
-        y = checkPageBreak(y, 8)
-        const statusColor = j.status === 'pass' ? COLORS.safe
-            : j.status === 'fail' ? COLORS.accent
-            : j.status === 'review' ? COLORS.caution
-            : COLORS.sub
+    if (cm.jurisdictions?.length > 0) {
+        drawLabel("JURISDICTIONS", 26, y)
+        y += 5
+        cm.jurisdictions.forEach(j => {
+            y = checkPageBreak(y, 12)
+            const statusColor = j.status === 'pass' ? COLORS.safe
+                : j.status === 'fail' ? COLORS.accent
+                : j.status === 'review' ? COLORS.caution
+                : COLORS.sub
 
-        doc.setFont(FONT.mono, "bold")
-        doc.setFontSize(8)
-        doc.setTextColor(statusColor)
-        doc.text(j.status.toUpperCase(), 26, y)
+            doc.setFont(FONT.mono, "bold")
+            doc.setFontSize(8)
+            doc.setTextColor(statusColor)
+            doc.text(j.status.toUpperCase(), 26, y)
 
-        doc.setFont(FONT.body, "normal")
-        doc.setFontSize(8)
-        doc.setTextColor(COLORS.ink)
-        doc.text(`${j.name} (${j.source})`, 50, y)
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(8)
+            doc.setTextColor(COLORS.ink)
+            doc.text(`${j.name} (${j.source})`, 50, y)
 
-        y += 4
-        doc.setFont(FONT.body, "normal")
-        doc.setFontSize(7)
-        doc.setTextColor(COLORS.sub)
-        const rLines = doc.splitTextToSize(j.rationale, 140)
-        doc.text(rLines, 50, y)
-        y += (rLines.length * 3) + 3
-    })
-
-    y += 2
+            y += 4
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(7)
+            doc.setTextColor(COLORS.sub)
+            const rLines = doc.splitTextToSize(j.rationale, 140)
+            doc.text(rLines, 50, y)
+            y += (rLines.length * 3) + 4
+        })
+        y += 3
+    }
 
     // Platforms
-    drawLabel("PLATFORMS", 26, y)
-    y += 5
-    cm.platforms?.forEach(p => {
-        y = checkPageBreak(y, 8)
-        const statusColor = p.status === 'pass' ? COLORS.safe
-            : p.status === 'fail' ? COLORS.accent
-            : p.status === 'review' ? COLORS.caution
-            : COLORS.sub
+    if (cm.platforms?.length > 0) {
+        drawLabel("PLATFORMS", 26, y)
+        y += 5
+        cm.platforms.forEach(p => {
+            y = checkPageBreak(y, 12)
+            const statusColor = p.status === 'pass' ? COLORS.safe
+                : p.status === 'fail' ? COLORS.accent
+                : p.status === 'review' ? COLORS.caution
+                : COLORS.sub
 
-        doc.setFont(FONT.mono, "bold")
-        doc.setFontSize(8)
-        doc.setTextColor(statusColor)
-        doc.text(p.status.toUpperCase(), 26, y)
+            doc.setFont(FONT.mono, "bold")
+            doc.setFontSize(8)
+            doc.setTextColor(statusColor)
+            doc.text(p.status.toUpperCase(), 26, y)
 
-        doc.setFont(FONT.body, "normal")
-        doc.setFontSize(8)
-        doc.setTextColor(COLORS.ink)
-        doc.text(`${p.name} (${p.source})`, 50, y)
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(8)
+            doc.setTextColor(COLORS.ink)
+            doc.text(`${p.name} (${p.source})`, 50, y)
 
-        y += 4
-        doc.setFont(FONT.body, "normal")
-        doc.setFontSize(7)
-        doc.setTextColor(COLORS.sub)
-        const rLines = doc.splitTextToSize(p.rationale, 140)
-        doc.text(rLines, 50, y)
-        y += (rLines.length * 3) + 3
-    })
+            y += 4
+            doc.setFont(FONT.body, "normal")
+            doc.setFontSize(7)
+            doc.setTextColor(COLORS.sub)
+            const rLines = doc.splitTextToSize(p.rationale, 140)
+            doc.text(rLines, 50, y)
+            y += (rLines.length * 3) + 4
+        })
+    }
 
     y += 4
     drawLine(y)
-    y += 10
+    y += 12
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 9. MITIGATION ACTION PLAN
+    // RECOMMENDATIONS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    y = checkPageBreak(y, 30)
-    drawLabel("MITIGATION ACTION PLAN", 20, y)
+    y = checkPageBreak(y, 35)
+    drawLabel("RECOMMENDATIONS", 20, y)
     y += 8
 
-    report.mitigation_plan?.actions?.forEach(a => {
-        y = checkPageBreak(y, 25)
+    report.recommendations?.actions?.forEach(a => {
+        y = checkPageBreak(y, 30)
 
         // Priority badge
         doc.setFont(FONT.header, "bold")
-        doc.setFontSize(10)
+        doc.setFontSize(11)
         doc.setTextColor(COLORS.accent)
-        doc.text(`#${a.priority}`, 20, y)
+        doc.text(`${a.priority}`, 22, y)
 
         doc.setFont(FONT.mono, "bold")
         doc.setFontSize(8)
         doc.setTextColor(COLORS.ink)
-        doc.text(a.domain.toUpperCase(), 32, y)
+        doc.text(a.domain.toUpperCase(), 30, y)
 
         doc.setFont(FONT.mono, "normal")
         doc.setFontSize(7)
         doc.setTextColor(COLORS.sub)
-        doc.text(`EFFORT: ${a.effort}  |  OWNER: ${a.owner}`, 55, y)
+        doc.text(`${a.effort}  |  ${a.owner}`, 65, y)
 
-        y += 5
+        y += 6
 
-        // Action text
+        // Action text (larger for readability)
         doc.setFont(FONT.body, "normal")
         doc.setFontSize(9)
         doc.setTextColor(COLORS.ink)
         const actionLines = doc.splitTextToSize(a.action, 155)
         doc.text(actionLines, 26, y)
-        y += (actionLines.length * 4) + 2
+        y += (actionLines.length * 4) + 3
 
-        // Risk reduction
+        // Impact + verification
         doc.setFont(FONT.mono, "normal")
         doc.setFontSize(7)
         doc.setTextColor(COLORS.sub)
-        doc.text(`IMPACT: ${a.risk_reduction}`, 26, y)
+        doc.text(`IMPACT: ${a.impact}`, 26, y)
         y += 3.5
         doc.text(`VERIFY: ${a.verification}`, 26, y)
+        y += 3.5
+
+        // Alternatives
+        if (a.alternatives && a.alternatives.length > 0) {
+            doc.text(`ALTERNATIVES: ${a.alternatives.join(' | ')}`, 26, y)
+            y += 3.5
+        }
+
         y += 6
     })
 
-    y += 4
+    y += 2
     drawLine(y)
-    y += 10
+    y += 12
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 10. RESIDUAL RISK
+    // OUTLOOK
     // ═══════════════════════════════════════════════════════════════════════════
 
-    y = checkPageBreak(y, 30)
-    drawLabel("RESIDUAL RISK ASSESSMENT", 20, y)
-    y += 6
+    y = checkPageBreak(y, 35)
+    drawLabel("OUTLOOK", 20, y)
+    y += 7
 
-    const rr = report.residual_risk
-    const publishColor = rr.publish_decision === 'approved' ? COLORS.safe
-        : rr.publish_decision === 'conditional' ? COLORS.caution
+    const ol = report.outlook
+    const readinessColor = ol.readiness === 'ready' ? COLORS.safe
+        : ol.readiness === 'conditional' ? COLORS.caution
         : COLORS.accent
 
     doc.setFont(FONT.header, "bold")
     doc.setFontSize(14)
-    doc.setTextColor(publishColor)
-    doc.text(rr.publish_decision.toUpperCase(), 20, y + 2)
+    doc.setTextColor(readinessColor)
+    doc.text(ol.readiness.toUpperCase().replace('_', ' '), 20, y)
 
-    y += 10
+    y += 8
 
     doc.setFont(FONT.body, "normal")
     doc.setFontSize(9)
     doc.setTextColor(COLORS.ink)
-    const rrLines = doc.splitTextToSize(rr.remaining_risk, 160)
-    doc.text(rrLines, 20, y)
-    y += (rrLines.length * 4) + 4
+    const olLines = doc.splitTextToSize(ol.summary, 160)
+    doc.text(olLines, 20, y)
+    y += (olLines.length * 4) + 5
 
-    if (rr.conditions && rr.conditions.length > 0) {
+    if (ol.conditions && ol.conditions.length > 0) {
         drawLabel("CONDITIONS", 26, y)
         y += 5
-        rr.conditions.forEach(c => {
+        ol.conditions.forEach(c => {
             y = checkPageBreak(y, 6)
             doc.setFont(FONT.body, "normal")
             doc.setFontSize(8)
             doc.setTextColor(COLORS.ink)
             doc.text(`\u2022  ${c}`, 30, y)
-            y += 4
+            y += 5
         })
         y += 2
     }
 
-    if (rr.maintenance_checks && rr.maintenance_checks.length > 0) {
-        drawLabel("MAINTENANCE CHECKS", 26, y)
+    if (ol.next_steps && ol.next_steps.length > 0) {
+        drawLabel("NEXT STEPS", 26, y)
         y += 5
-        rr.maintenance_checks.forEach(mc => {
+        ol.next_steps.forEach(ns => {
             y = checkPageBreak(y, 6)
             doc.setFont(FONT.body, "normal")
             doc.setFontSize(8)
             doc.setTextColor(COLORS.ink)
-            doc.text(`\u2022  ${mc}`, 30, y)
-            y += 4
+            doc.text(`\u2022  ${ns}`, 30, y)
+            y += 5
         })
     }
 
@@ -1020,7 +1079,7 @@ export const generateMitigationPDF = (
     // INTEGRITY + FOOTER
     // ═══════════════════════════════════════════════════════════════════════════
 
-    y += 10
+    y += 12
     y = checkPageBreak(y, 15)
     drawLine(y)
     y += 6
@@ -1029,7 +1088,7 @@ export const generateMitigationPDF = (
     doc.setTextColor(COLORS.sub)
     doc.text(`INTEGRITY: FNV1A64 ${checksum}`, 20, y)
 
-    // Page footers
+    // Page footers on all pages
     const pageCount = doc.getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i)
@@ -1037,7 +1096,7 @@ export const generateMitigationPDF = (
         doc.setFontSize(6)
         doc.setTextColor(COLORS.sub)
         doc.text(
-            `AI CONTENT RISK SCORE  |  MITIGATION REPORT  |  ${format(generatedAt ? new Date(generatedAt) : new Date(), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
+            `AI CONTENT RISK SCORE  |  ADVISORY REPORT  |  ${format(generatedAt ? new Date(generatedAt) : new Date(), 'yyyy-MM-dd')}  |  Page ${i}/${pageCount}`,
             105, 290, { align: "center" }
         )
     }
@@ -1045,7 +1104,7 @@ export const generateMitigationPDF = (
     // Save or Return
     if (typeof window !== 'undefined') {
         const filename = scan.filename || 'scan'
-        doc.save(`AIRS_Mitigation_${filename.substring(0, 10)}_${format(new Date(), 'yyyyMMdd')}.pdf`)
+        doc.save(`AIRS_Advisory_${filename.substring(0, 10)}_${format(new Date(), 'yyyyMMdd')}.pdf`)
     }
 
     return doc

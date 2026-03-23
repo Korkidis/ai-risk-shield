@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, type GenerativeModel, type Part } from '@google/generative-ai'
-import { SpecialistReportSchema, SPECIALIST_REPORT_GEMINI_SCHEMA } from './schemas/specialist-schema'
+import { SpecialistReportSchema, SPECIALIST_REPORT_GEMINI_SCHEMA, ChiefStrategySchema, CHIEF_STRATEGY_GEMINI_SCHEMA } from './schemas/specialist-schema'
 import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import fs from 'fs';
 import path from 'path';
@@ -76,7 +76,7 @@ async function uploadToGemini(filePath: string, mimeType: string): Promise<strin
 // ============================================================================
 // PERSONA 1: IP SPECIALIST
 // ============================================================================
-const IP_SYSTEM_INSTRUCTION = `You are an Elite IP Forensics Specialist at a top-tier intellectual property law firm.
+const IP_SYSTEM_INSTRUCTION = `You are an IP Risk Analyst.
 
 YOUR EXPERTISE:
 - Copyright infringement detection
@@ -119,7 +119,12 @@ CRITICAL RULES:
 1. If you see Mickey Mouse, score 98+
 2. If you see ANY Disney/Marvel/Pixar character, score 95+
 3. If you see Taylor Swift, Beyonce, or ANY major celebrity: score 99+ (CRITICAL LIABILITY)
-4. When in doubt, score HIGHER. Liability is expensive.`;
+4. When in doubt, score HIGHER. Liability is expensive.
+
+CONFIDENCE RATING:
+- high: Clear, recognizable match to known IP (e.g., unmistakable character, logo, or celebrity)
+- medium: Probable match but some ambiguity (e.g., similar style, partial visibility, fan art)
+- low: Unclear or uncertain — could be coincidental similarity`;
 
 async function analyzeIP(part: Part, guidelineRules?: string): Promise<SpecialistReport> {
     const instruction = IP_SYSTEM_INSTRUCTION + (guidelineRules ? `
@@ -140,6 +145,7 @@ CRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaul
         model: 'gemini-2.5-flash',
         systemInstruction: instruction,
         generationConfig: {
+            temperature: 0.2,
             responseMimeType: 'application/json',
             responseSchema: SPECIALIST_REPORT_GEMINI_SCHEMA,
         },
@@ -156,7 +162,8 @@ Respond with ONLY a JSON object in this exact format:
 {
   "score": <number 0-100>,
   "teaser": "<one sentence technical summary, considering client guidelines>",
-  "reasoning": "<explain how brand guidelines affected your scoring>"
+  "reasoning": "<explain how brand guidelines affected your scoring>",
+  "confidence": "<high|medium|low>"
 }`
         : `Analyze this visual asset (image or video) for intellectual property infringement risk.
 
@@ -164,7 +171,8 @@ Respond with ONLY a JSON object in this exact format:
 {
   "score": <number 0-100>,
   "teaser": "<one sentence technical summary for a legal brief>",
-  "reasoning": "<detailed explanation of detected IP elements and infringement vectors>"
+  "reasoning": "<detailed explanation of detected IP elements and infringement vectors>",
+  "confidence": "<high|medium|low>"
 }`;
 
     return executePrompt(model, prompt, part);
@@ -173,7 +181,7 @@ Respond with ONLY a JSON object in this exact format:
 // ============================================================================
 // PERSONA 2: SAFETY ANALYST
 // ============================================================================
-const SAFETY_SYSTEM_INSTRUCTION = `You are a Senior Brand Safety Analyst for a global advertising agency.
+const SAFETY_SYSTEM_INSTRUCTION = `You are a Brand Safety Analyst.
 
 YOUR EXPERTISE:
 - Content moderation for Fortune 500 clients
@@ -209,9 +217,14 @@ SCORING PROTOCOL:
 - Children's content (G-rated)
 
 CRITICAL RULES:
-1. Mickey Mouse and Disney characters are family-safe (low safety risk)
-2. Cartoon violence is lower risk than realistic violence
-3. Consider: "Would a Fortune 500 CMO be comfortable with this in an ad?"`;
+1. Cartoon violence is lower risk than realistic violence
+2. Consider: "Would a Fortune 500 CMO be comfortable with this in an ad?"
+3. Score based on actual content safety (violence, nudity, hate, etc.) — not on character identity or IP ownership
+
+CONFIDENCE RATING:
+- high: Clear, unambiguous safety issue (e.g., explicit nudity, graphic violence, hate symbols)
+- medium: Probable issue but context-dependent (e.g., suggestive imagery, edgy humor)
+- low: Ambiguous — could be interpreted as safe or unsafe depending on audience`;
 
 async function analyzeSafety(part: Part, guidelineRules?: string): Promise<SpecialistReport> {
     const instruction = SAFETY_SYSTEM_INSTRUCTION + (guidelineRules ? `
@@ -234,6 +247,7 @@ Brand-specific rules ALWAYS take priority over generic industry defaults.
         model: 'gemini-2.5-flash',
         systemInstruction: instruction,
         generationConfig: {
+            temperature: 0.2,
             responseMimeType: 'application/json',
             responseSchema: SPECIALIST_REPORT_GEMINI_SCHEMA,
         },
@@ -251,7 +265,8 @@ Respond with ONLY a JSON object in this exact format:
 {
   "score": <number 0-100>,
   "teaser": "<one sentence on brand alignment risk, considering client guidelines>",
-  "reasoning": "<explain how brand guidelines affected your scoring>"
+  "reasoning": "<explain how brand guidelines affected your scoring>",
+  "confidence": "<high|medium|low>"
 }`
         : `Analyze this visual asset (image or video) for brand safety and PR risk.
 
@@ -259,7 +274,8 @@ Respond with ONLY a JSON object in this exact format:
 {
   "score": <number 0-100>,
   "teaser": "<one sentence on brand alignment risk>",
-  "reasoning": "<detailed breakdown of safety concerns and policy violations>"
+  "reasoning": "<detailed breakdown of safety concerns and policy violations>",
+  "confidence": "<high|medium|low>"
 }`;
 
     return executePrompt(model, prompt, part);
@@ -268,39 +284,50 @@ Respond with ONLY a JSON object in this exact format:
 // ============================================================================
 // PERSONA 3: PROVENANCE ENGINEER
 // ============================================================================
-const PROVENANCE_SYSTEM_INSTRUCTION = `You are an AI Forensics Engineer specializing in content authenticity and provenance verification.
+const PROVENANCE_SYSTEM_INSTRUCTION = `You are a Provenance Analyst specializing in visual forensics and content authenticity.
 
-CORE PHILOSOPHY:
-Provenance is the 'chain of custody' for an asset. 
-1. C2PA (Content Credentials) is the cryptographic 'Gold Standard'. If verified, provenance is established.
-2. Visual Forensics (your job) is the 'Detective Work'. You look for artifacts, AI noise, and metadata anomalies that suggest the provenance has been stripped, faked, or "washed" (e.g. screenshot of a licensed image).
+YOUR ROLE:
+Identify visual forensic signals that supplement the C2PA cryptographic determination. The system handles C2PA scoring separately — your job is to analyze what you can observe about the image itself.
 
-SCORING PROTOCOL (INNOCENCE MUST BE PROVEN BY PROVENANCE):
+WHAT TO LOOK FOR:
+- AI generation artifacts (physically impossible geometry, texture anomalies, prompt-leaked text)
+- Screenshot indicators (UI chrome, notification bars, cursor artifacts, compression banding)
+- Editing traces (clone stamp patterns, inconsistent lighting, splicing boundaries)
+- Metadata anomalies visible in the image (watermark remnants, cropped attribution)
+- Quality signals (professional studio lighting vs phone capture vs AI render)
 
-0-24 POINTS - VERIFIED PROVENANCE (TARGET STATE):
-- ONLY possible if C2PA status is 'verified'.
-- If C2PA is verified, your score SHOULD be in this range unless you see blatant visual tampering/screenshot artifacts.
+SCORING PROTOCOL:
 
-25-49 POINTS - PARTIAL PROVENANCE:
-- Some camera/device metadata patterns visible.
-- Appears to be original capture but lacks cryptographic verification.
+0-24 POINTS - VERIFIED / CONSISTENT:
+- Visual signals consistent with authentic capture. No forensic red flags.
+- If C2PA is verified AND visuals are consistent, score in this range.
 
-50-74 POINTS - UNCLEAR PROVENANCE:
-- Cannot determine if original or derived.
-- Amateur capture with some editing.
+25-49 POINTS - PARTIAL SIGNALS:
+- Some authentic capture signals (natural noise, lens distortion) but no cryptographic proof.
+- Appears original but unverifiable.
 
-75-89 POINTS - SUSPICIOUS PROVENANCE:
-- Professional quality but NO C2PA/metadata (Red flag in 2026).
-- Watermarks removed or cropped out.
+50-74 POINTS - UNCLEAR ORIGIN:
+- Cannot determine if original, derived, or AI-generated.
+- Mixed signals — some authentic, some suspicious.
 
-90-100 POINTS - NO PROVENANCE / PROVENANCE WASHING:
-- Screen recordings or screenshots (obvious provenance stripping).
-- AI-generated content (physically impossible motion, artifacts).
+75-89 POINTS - SUSPICIOUS:
+- Professional quality with no provenance signals.
+- Indicators of provenance stripping (watermark removal, metadata scrubbing).
+
+90-100 POINTS - FORENSIC RED FLAGS:
+- Clear AI generation artifacts.
+- Obvious screenshot/screen recording of another source.
+- Evidence of provenance washing.
 
 CRITICAL RULES:
-1. C2PA IS PROVENANCE. If C2PA Status is "verified", the risk is LOW (0-20).
-2. If C2PA is "missing", the asset is "Unverified" and usually High Risk (75+).
-3. If this is a digital illustration/graphic with no C2PA, score 85+ (unverifiable origin).`;
+1. The system derives the authoritative provenance score from C2PA status. Your score provides supplementary forensic context.
+2. Focus on what you OBSERVE in the visual content, not on restating C2PA facts.
+3. If you see no forensic red flags, say so clearly — do not inflate the score.
+
+CONFIDENCE RATING:
+- high: Clear forensic signals (e.g., obvious AI artifacts, unmistakable screenshot chrome)
+- medium: Probable signals but not definitive (e.g., suspicious quality patterns, possible editing)
+- low: Ambiguous — visual signals inconclusive`;
 
 async function analyzeProvenance(part: Part, filename: string = '', c2paStatus: string, guidelineRules?: string): Promise<SpecialistReport> {
     const instruction = PROVENANCE_SYSTEM_INSTRUCTION + (guidelineRules ? `\n\nCUSTOM BRAND GUIDELINES:\n${guidelineRules}` : '');
@@ -308,27 +335,29 @@ async function analyzeProvenance(part: Part, filename: string = '', c2paStatus: 
         model: 'gemini-2.5-flash',
         systemInstruction: instruction,
         generationConfig: {
+            temperature: 0.2,
             responseMimeType: 'application/json',
             responseSchema: SPECIALIST_REPORT_GEMINI_SCHEMA,
         },
     });
 
-    const prompt = `Analyze this visual asset (image or video) for content authenticity and provenance.
-    
-METADATA CONTEXT:
-Filename: "${filename}"
-C2PA/Content Credentials Status: "${c2paStatus}"
+    const prompt = `Analyze this visual asset for content authenticity using visual forensics.
 
-IMPORTANT RULES:
-1. If C2PA Status is "verified", this is a strong positive signal. Lower the risk score significantly (0-20 range) unless the visual content is obviously tampered.
-2. If the filename contains "screen", "rec", "capture", or "shot" (e.g. "Screen Recording 2024..."), AUTOMATICALLY SCORE THIS 95+ as it is likely a scrape without license.
-3. In 2026, the absence of C2PA credentials is a red flag. Score accordingly.
+CONTEXT (for concordance analysis only — do not simply restate these):
+- Filename: "${filename}"
+- C2PA Status: "${c2paStatus}"
+
+YOUR TASK:
+1. Examine the visual content for AI generation artifacts, screenshot indicators, editing traces, and quality signals.
+2. Report what you observe about the image itself — focus on forensic evidence, not metadata facts.
+3. Note whether your visual observations are concordant or discordant with the C2PA status.
 
 Respond with ONLY a JSON object in this exact format:
 {
   "score": <number 0-100>,
-  "teaser": "<one sentence on authenticity indicators>",
-  "reasoning": "<technical breakdown of provenance signals and concerns>"
+  "teaser": "<one sentence on visual forensic observations>",
+  "reasoning": "<technical breakdown of visual forensic signals — what you see, not what C2PA says>",
+  "confidence": "<high|medium|low>"
 }`;
 
     return executePrompt(model, prompt, part);
@@ -337,30 +366,44 @@ Respond with ONLY a JSON object in this exact format:
 // ============================================================================
 // CHIEF OFFICER (SYNTHESIS)
 // ============================================================================
-async function generateChiefStrategy(reports: SpecialistReport[]): Promise<string> {
-    const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' });
+async function generateChiefStrategy(reports: SpecialistReport[]): Promise<import('./gemini-types').ChiefStrategy> {
+    const model = getGenAI().getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: {
+            temperature: 0.3,
+            responseMimeType: 'application/json',
+            responseSchema: CHIEF_STRATEGY_GEMINI_SCHEMA,
+        },
+    });
 
-    const prompt = `You are a Chief Forensic Risk Officer. Based on these findings, provide a 3-point strategic mitigation plan:
+    const prompt = `You are a Content Strategy Advisor summarizing scan findings into clear, actionable guidance for creative teams.
 
-IP SPECIALIST REPORT:
-- Score: ${reports[0].score}/100
+IP ANALYSIS:
+- Risk Score: ${reports[0].score}/100 (0=no concerns, 100=critical)
 - Finding: ${reports[0].teaser}
 
-SAFETY ANALYST REPORT:
-- Score: ${reports[1].score}/100
+SAFETY ANALYSIS:
+- Risk Score: ${reports[1].score}/100 (0=no concerns, 100=critical)
 - Finding: ${reports[1].teaser}
 
-PROVENANCE ENGINEER REPORT:
-- Score: ${reports[2].score}/100
+PROVENANCE ANALYSIS:
+- Risk Score: ${reports[2].score}/100 (0=strongest provenance, 100=no provenance)
 - Finding: ${reports[2].teaser}
 
-Provide exactly 3 bullet points of actionable strategic recommendations to mitigate these risks.`;
+Based on these results, provide 1-5 clear, constructive recommendations. If scores are low, focus on best practices to maintain content quality. If scores are high, explain what was found and suggest practical next steps. Use plain language — no jargon. Rate your overall confidence (high/medium/low).`;
 
     try {
         const result = await model.generateContent([prompt]);
-        return result.response.text();
+        const text = result.response.text().replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(text);
+        const validated = ChiefStrategySchema.safeParse(parsed);
+        if (!validated.success) {
+            console.error('Chief strategy validation failed:', validated.error.issues);
+            return { points: ['Risk assessment requires manual review.'], overall_confidence: 'low' };
+        }
+        return validated.data;
     } catch {
-        return "Strategy generation unavailable.";
+        return { points: ['Strategy generation unavailable. Manual review recommended.'], overall_confidence: 'low' };
     }
 }
 
@@ -578,7 +621,7 @@ export async function analyzeImageMultiPersona(
             c2pa_report: c2paReport,
             composite_score: 99,
             verdict: "Critical Risk",
-            chief_officer_strategy: "Emergency forensic failure. Check server logs."
+            chief_officer_strategy: { points: ['Emergency forensic failure. Check server logs.'], overall_confidence: 'low' as const }
         };
     } finally {
         // Cleanup Temp File

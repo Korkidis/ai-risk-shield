@@ -47,7 +47,7 @@ export const PLAN_CONTENT: Record<PlanId, PlanContent> = {
         softBenefits: [
             'Forensic mitigation reports with step-by-step remediation',
             'Your brand rules and policies define every score',
-            'Deterministic methodology: same asset in, same score out',
+            'Consistent methodology: AI-powered analysis with deterministic composite scoring',
         ],
         ctaPrimary: 'Subscribe Pro',
     },
@@ -125,7 +125,7 @@ export const FAQs = [
     },
     {
         question: 'What methodology powers the risk score?',
-        answer: 'The engine uses a deterministic, rule-based approach grounded in established IP and governance frameworks. It adapts to your organization\'s brand guidelines and policies. Same asset in, same score out. No generative guesswork.'
+        answer: 'The engine combines AI-powered visual analysis with deterministic scoring rules and C2PA cryptographic verification. Composite scores use fixed weights and thresholds grounded in established IP and governance frameworks. The system adapts to your organization\'s brand guidelines and policies.'
     },
     {
         question: 'Does this replace our legal review process?',

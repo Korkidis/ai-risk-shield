@@ -43,6 +43,7 @@ export async function analyzeIP(
         systemInstruction: `You are an IP detection specialist.\n\n════════════════════════════════════════════════════════════════════\nBRAND GUIDELINE OVERRIDE — THIS SUPERSEDES GENERIC SCORING\n════════════════════════════════════════════════════════════════════\n\n${guidelineRules}\n\nCRITICAL: Brand-specific rules ALWAYS take priority over generic industry defaults.\n════════════════════════════════════════════════════════════════════`,
       } : {}),
       generationConfig: {
+        temperature: 0.2,
         responseMimeType: 'application/json',
         responseSchema: IP_GEMINI_RESPONSE_SCHEMA,
       },
