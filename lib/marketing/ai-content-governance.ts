@@ -5,6 +5,12 @@ export type GovernanceGuideSlug =
     | 'human-review-workflows'
     | 'brand-policy-controls'
     | 'mitigation-layers'
+    | 'ai-contracts-cover-2026'
+    | 'edited-ai-outputs-risk'
+    | 'ai-design-tool-composition-risk'
+    | 'ai-transcreation-rights-review'
+    | 'ai-disclosure-provenance-rules'
+    | 'how-legal-teams-read-ai-contracts'
 
 export interface RiskWatchItem {
     title: string
@@ -35,6 +41,7 @@ export interface GovernanceSource {
 export interface GovernanceGuide {
     slug: GovernanceGuideSlug
     title: string
+    titleTag?: string
     description: string
     audience: string
     intent: string
@@ -46,6 +53,7 @@ export interface GovernanceGuide {
     sourceLinks: GovernanceSource[]
     sections: GovernanceGuideSection[]
     faq: GovernanceFAQ[]
+    internalLinks?: GovernanceGuideSlug[]
 }
 
 export const riskIndexSnapshot = {
@@ -603,6 +611,537 @@ export const governanceGuides: GovernanceGuide[] = [
             },
         ],
     },
+    {
+        slug: 'ai-contracts-cover-2026',
+        title: 'What AI Contracts Cover In 2026',
+        titleTag: 'What AI Contracts Cover in 2026 and What They Do Not | AI Content Risk Score',
+        description:
+            'AI vendor indemnity is real, but it is limited. See what Google, Microsoft, and AWS commitments usually cover, what they exclude, and what enterprise teams still need to control themselves.',
+        audience: 'Legal, procurement, responsible AI, marketing operations',
+        intent: 'Contract scope and exclusions',
+        publishedAt: '2026-03-25',
+        updatedAt: '2026-03-25',
+        primaryQuestion:
+            'Are hyperscaler AI contracts enough on their own to make generative output safe for commercial use?',
+        shortAnswer:
+            'No. Provider commitments can meaningfully reduce copyright exposure in covered workflows, but they are conditional, service-specific, and rarely solve trademark, likeness, publicity, input-rights, or deceptive-use issues on their own.',
+        keywords: [
+            'ai contracts 2026',
+            'ai vendor indemnity',
+            'google microsoft aws ai coverage',
+            'enterprise ai contract review',
+        ],
+        sourceLinks: [
+            {
+                label: 'Google Cloud generative AI indemnified services',
+                url: 'https://cloud.google.com/terms/generative-ai-indemnified-services?hl=en',
+            },
+            {
+                label: 'Microsoft Customer Copyright Commitment mitigations',
+                url: 'https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/openai/customer-copyright-commitment',
+            },
+            {
+                label: 'AWS service terms',
+                url: 'https://aws.amazon.com/service-terms/',
+            },
+            {
+                label: 'Amazon Bedrock third-party model terms',
+                url: 'https://aws.amazon.com/legal/bedrock/third-party-models/',
+            },
+        ],
+        sections: [
+            {
+                heading: 'Provider coverage is real, but it is not blanket protection',
+                body:
+                    'Google, Microsoft, and AWS now offer meaningful commitments in certain generative AI workflows. The catch is that coverage usually depends on the exact covered service, the linked service terms, the customer keeping required safeguards in place, and the team staying inside the documented workflow.',
+            },
+            {
+                heading: 'Inputs, edits, and mixed toolchains can weaken coverage fast',
+                body:
+                    'Rights to inputs matter as much as rights to outputs. Unlicensed reference images, third-party source files, infringing prompts, or heavily edited cross-tool workflows make the coverage story harder to defend because the final asset is no longer just one provider-native output.',
+                bullets: [
+                    'Check whether the exact model or service is covered.',
+                    'Verify the team had the right to use every input or reference asset.',
+                    'Treat off-platform edits and third-party models as separate review events.',
+                ],
+            },
+            {
+                heading: 'Contracts do not solve trademark, likeness, publicity, or synthetic media issues',
+                body:
+                    'This is where many teams overread indemnity. A provider may offer meaningful copyright-related protection in limited contexts while leaving trademark-in-commerce, trade dress, unauthorized likeness use, deceptive synthetic media, or disclosure failures squarely on the customer.',
+            },
+            {
+                heading: 'The practical review standard is contract-aware operations',
+                body:
+                    'Teams should approve tools only after they can answer which exact services are covered, what customer commitments preserve that coverage, what is excluded, what happens after editing or recombination, whether third-party models carry separate terms, and how provenance or disclosure expectations are handled.',
+            },
+        ],
+        faq: [
+            {
+                question: 'Are hyperscaler AI contracts enough on their own?',
+                answer:
+                    'No. They reduce part of the risk, but approvals still depend on input rights, workflow design, guardrails, provenance, and human review.',
+            },
+            {
+                question: 'Do all models on a provider platform get the same coverage?',
+                answer:
+                    'No. Covered services and third-party model terms vary by provider and product, which is why legal review has to go beyond one headline commitment.',
+            },
+            {
+                question: 'What should teams check before they approve a tool?',
+                answer:
+                    'At minimum: the exact covered service, customer obligations, exclusions, treatment of third-party models, monitoring rules, and whether provenance or disclosure features are available or required.',
+            },
+        ],
+        internalLinks: [
+            'how-legal-teams-read-ai-contracts',
+            'edited-ai-outputs-risk',
+            'ai-disclosure-provenance-rules',
+        ],
+    },
+    {
+        slug: 'edited-ai-outputs-risk',
+        title: 'What Happens When AI Outputs Are Heavily Edited',
+        titleTag: 'How Edited AI Outputs Change Contract Risk and Review | AI Content Risk Score',
+        description:
+            'Editing AI output does not automatically remove risk. Learn how heavy edits, recombination, and non-covered tools affect contract protection, provenance, and legal review.',
+        audience: 'Creative operations, legal, brand review, production leads',
+        intent: 'Edited outputs and mixed toolchains',
+        publishedAt: '2026-03-25',
+        updatedAt: '2026-03-25',
+        primaryQuestion: 'Does heavy editing make AI output legally safer or easier to defend?',
+        shortAnswer:
+            'Not by itself. Editing can strengthen a review record, but it does not erase bad inputs, preserve provider coverage automatically, or simplify rights questions once teams mix assets, tools, and vendors.',
+        keywords: [
+            'edited ai output risk',
+            'ai output legal review',
+            'mixed ai toolchain risk',
+            'ai output provenance after editing',
+        ],
+        sourceLinks: [
+            {
+                label: 'Google Cloud service terms',
+                url: 'https://cloud.google.com/terms/service-terms',
+            },
+            {
+                label: 'Microsoft Customer Copyright Commitment mitigations',
+                url: 'https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/openai/customer-copyright-commitment',
+            },
+            {
+                label: 'AWS service terms',
+                url: 'https://aws.amazon.com/service-terms/',
+            },
+            {
+                label: 'Amazon Bedrock third-party model terms',
+                url: 'https://aws.amazon.com/legal/bedrock/third-party-models/',
+            },
+        ],
+        sections: [
+            {
+                heading: 'Downstream editing changes the review posture',
+                body:
+                    'An output may begin inside a covered service and still become harder to defend after multiple edits. The problem is usually evidentiary. Teams need to show what the provider generated, what humans changed, what third-party material entered later, and which terms still apply to the final asset.',
+            },
+            {
+                heading: 'The risk rises when composition becomes layered',
+                body:
+                    'Substantial inpainting, outpainting, compositing, stock inserts, logo placement, product-packaging edits, and moving the file into other generative tools all push the asset away from a clean single-output story.',
+                bullets: [
+                    'Treat major edits as a separate review threshold, not as an automatic cleanup step.',
+                    'Log every tool in the chain once the asset leaves the original generation environment.',
+                    'Route mixed-asset compositions to human review before external use.',
+                ],
+            },
+            {
+                heading: 'Off-platform tools create both contract and provenance problems',
+                body:
+                    'Once an asset moves outside the original covered environment, teams inherit a new set of model terms, exclusions, logging rules, and provenance gaps. The result is a workflow problem, not just a content problem.',
+            },
+            {
+                heading: 'The practical rule is simple: more edits should mean more review',
+                body:
+                    'Editing can support explainability and defensibility, but it is not a substitute for rights-cleared inputs, preserved safeguards, or clear documentation. Heavily edited outputs need stronger records and a higher review threshold, not optimism.',
+            },
+        ],
+        faq: [
+            {
+                question: 'Does editing AI output make it legally safe?',
+                answer:
+                    'No. Editing can improve the review record, but it does not erase upstream input issues, trademark problems, or missing provenance.',
+            },
+            {
+                question: 'Should heavily edited outputs go to human review?',
+                answer:
+                    'Yes. That is the cleanest way to handle mixed assets, off-platform processing, and uncertain coverage or provenance.',
+            },
+            {
+                question: 'What should teams log after an asset is edited?',
+                answer:
+                    'The tools used, major edits applied, source assets introduced, who approved the work, and whether provenance or disclosure changed before publication.',
+            },
+        ],
+        internalLinks: [
+            'ai-design-tool-composition-risk',
+            'ai-transcreation-rights-review',
+            'human-review-workflows',
+        ],
+    },
+    {
+        slug: 'ai-design-tool-composition-risk',
+        title: 'AI In Design Tools And Node-Based Canvases',
+        titleTag: 'AI Design Tool Workflows: Composition Risk and Legal Review | AI Content Risk Score',
+        description:
+            'Multi-model AI workflows in design tools and node-based canvases can speed production, but they also create layered contract and rights questions. Here is how to review them.',
+        audience: 'Design systems, creative technology, legal ops, brand governance',
+        intent: 'Composition workflow review',
+        publishedAt: '2026-03-25',
+        updatedAt: '2026-03-25',
+        primaryQuestion: 'Are node-based AI canvases automatically high risk for enterprise teams?',
+        shortAnswer:
+            'No. They are manageable when the workflow is approved, observable, and fed with rights-cleared inputs. The risk rises when teams mix models, tools, and assets without clear records or clear ownership of the final chain.',
+        keywords: [
+            'node based ai workflow risk',
+            'ai design tool legal review',
+            'multi model ai composition',
+            'ai canvas workflow governance',
+        ],
+        sourceLinks: [
+            {
+                label: 'Amazon Bedrock third-party model terms',
+                url: 'https://aws.amazon.com/legal/bedrock/third-party-models/',
+            },
+            {
+                label: 'AWS Bedrock Guardrails',
+                url: 'https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-how.html',
+            },
+            {
+                label: 'Google Cloud service terms',
+                url: 'https://cloud.google.com/terms/service-terms',
+            },
+            {
+                label: 'Microsoft AI Code of Conduct',
+                url: 'https://learn.microsoft.com/en-us/legal/ai-code-of-conduct',
+            },
+        ],
+        sections: [
+            {
+                heading: 'The workflow is the legal object, not just the final file',
+                body:
+                    'Modern creative stacks often chain text, image, video, masking, inpainting, compositing, and export steps across multiple models and products. That makes the final asset harder to review because several services, terms, and source assets may all be implicated at once.',
+            },
+            {
+                heading: 'The canvas itself is not the problem',
+                body:
+                    'The real question is whether the composition stayed inside an approved and observable workflow. A clean pipeline can be defensible. An opaque chain with mixed models, copied assets, and missing provenance usually is not.',
+            },
+            {
+                heading: 'Policy teams should require toolchain-level evidence',
+                body:
+                    'The cleanest standard is to log each model or tool in the chain, require rights-cleared source assets, preserve safety systems, and escalate mixed-tool compositions before public use.',
+                bullets: [
+                    'Keep an approved-tool matrix for creative AI workflows.',
+                    'Treat third-party model terms as separate review inputs.',
+                    'Require provenance retention or fallback documentation when files move across tools.',
+                ],
+            },
+            {
+                heading: 'Good composition governance keeps speed without fiction',
+                body:
+                    'Teams do not need to ban advanced design workflows. They need to make those workflows observable enough that legal, procurement, and brand reviewers can reconstruct what happened if the asset becomes disputed later.',
+            },
+        ],
+        faq: [
+            {
+                question: 'Are node-based AI canvases automatically high risk?',
+                answer:
+                    'No. The risk comes from unapproved models, unclear source rights, missing provenance, and weak records, not from the visual workflow format by itself.',
+            },
+            {
+                question: 'What should legal teams ask about these workflows?',
+                answer:
+                    'Ask which models were used, which services were covered, whether third-party terms applied, whether provenance was preserved, and whether logos, likenesses, or brand-sensitive assets entered during composition.',
+            },
+            {
+                question: 'What is the minimum viable control for mixed AI toolchains?',
+                answer:
+                    'Approved tools, logged model steps, rights-cleared inputs, preserved safeguards, and a human-review trigger for external-facing work.',
+            },
+        ],
+        internalLinks: [
+            'edited-ai-outputs-risk',
+            'ai-transcreation-rights-review',
+            'brand-policy-controls',
+        ],
+    },
+    {
+        slug: 'ai-transcreation-rights-review',
+        title: 'AI Transcreation Of Existing Assets',
+        titleTag: 'AI Transcreation: Why Existing Assets Still Need Rights Review | AI Content Risk Score',
+        description:
+            'AI transcreation can speed localization and adaptation, but it does not wipe away rights constraints from the original asset. Here is how to review AI-assisted transcreation.',
+        audience: 'Localization teams, brand leads, legal, creative operations',
+        intent: 'Adaptation and source rights',
+        publishedAt: '2026-03-25',
+        updatedAt: '2026-03-25',
+        primaryQuestion: 'Is AI transcreation lower risk than generating from scratch?',
+        shortAnswer:
+            'Sometimes, but only when the source asset was already licensed and approved for adaptation. AI-assisted transcreation inherits the source asset’s constraints instead of magically resetting them.',
+        keywords: [
+            'ai transcreation rights review',
+            'ai localization legal risk',
+            'adapt existing assets with ai',
+            'source asset rights ai',
+        ],
+        sourceLinks: [
+            {
+                label: 'AWS service terms',
+                url: 'https://aws.amazon.com/service-terms/',
+            },
+            {
+                label: 'Google Cloud generative AI indemnified services',
+                url: 'https://cloud.google.com/terms/generative-ai-indemnified-services?hl=en',
+            },
+            {
+                label: 'Google Cloud service terms',
+                url: 'https://cloud.google.com/terms/service-terms',
+            },
+            {
+                label: 'Microsoft Customer Copyright Commitment mitigations',
+                url: 'https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/openai/customer-copyright-commitment',
+            },
+        ],
+        sections: [
+            {
+                heading: 'Transcreation changes format, not underlying rights',
+                body:
+                    'Teams often assume transcreation is safer because it starts from approved creative. That may be true from a brand perspective, but it does not remove licensing limits, talent restrictions, partner approvals, geography-specific rules, or usage constraints attached to the source material.',
+            },
+            {
+                heading: 'Source rights usually matter more than teams expect',
+                body:
+                    'If the original asset includes licensed visuals, celebrity likenesses, partner marks, product imagery, or regulated claims, those constraints can carry directly into the adapted output. The output stays only as clean as the source material and the workflow around it.',
+            },
+            {
+                heading: 'A workable review standard starts upstream',
+                body:
+                    'Transcreation should be approved when the original asset is rights-cleared for adaptation, the workflow stays inside approved tools, the resulting asset is checked for locality and claims issues, and the team records what changed.',
+                bullets: [
+                    'Verify adaptation rights on the source asset before prompting or editing.',
+                    'Log the source asset, workflow, and review decision together.',
+                    'Escalate celebrity, logo, partner, and jurisdiction-specific variants.',
+                ],
+            },
+            {
+                heading: 'The operational win is clarity, not automatic speed',
+                body:
+                    'A clean transcreation standard lets teams move faster because they know which source assets are reusable, which need legal confirmation, and which should never be handed to AI tools in the first place.',
+            },
+        ],
+        faq: [
+            {
+                question: 'Is AI transcreation lower risk than generating from scratch?',
+                answer:
+                    'Sometimes, but only when the source asset was already licensed and approved for adaptation. If the source is constrained, the adapted output inherits that constraint.',
+            },
+            {
+                question: 'Should transcreation always be logged?',
+                answer:
+                    'Yes. Teams should record the source asset, the approved rights, the tool or model used, and the final review decision so the adaptation path stays defensible.',
+            },
+            {
+                question: 'What triggers escalation in transcreation workflows?',
+                answer:
+                    'Licensed talent, partner content, logos, geography-specific claims, and any source asset whose adaptation rights are unclear or limited.',
+            },
+        ],
+        internalLinks: [
+            'brand-policy-controls',
+            'human-review-workflows',
+            'ai-contracts-cover-2026',
+        ],
+    },
+    {
+        slug: 'ai-disclosure-provenance-rules',
+        title: 'AI Disclosure, Provenance, And Naming Rules',
+        titleTag: 'AI Disclosure, Provenance, and Naming Rules for Enterprises | AI Content Risk Score',
+        description:
+            'AI disclosure rules are tightening. Learn what enterprise teams should do now on provenance, watermarking, naming conventions, and synthetic media review.',
+        audience: 'Policy, compliance, brand ops, communications',
+        intent: 'Disclosure and provenance policy',
+        publishedAt: '2026-03-25',
+        updatedAt: '2026-03-25',
+        primaryQuestion: 'When should enterprises disclose AI-generated content and preserve provenance?',
+        shortAnswer:
+            'At minimum, when synthetic media could mislead users, viewers, or counterparties, and whenever policy or jurisdiction requires it. Even where disclosure is not mandatory yet, provenance and naming rules make review faster and later disputes easier to defend.',
+        keywords: [
+            'ai disclosure policy enterprise',
+            'ai provenance rules',
+            'content credentials naming conventions',
+            'synthetic media enterprise policy',
+        ],
+        sourceLinks: [
+            {
+                label: 'EU AI Act official text',
+                url: 'https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689',
+            },
+            {
+                label: 'EU AI Act Article 50 summary',
+                url: 'https://artificialintelligenceact.eu/article/50/',
+            },
+            {
+                label: 'Microsoft AI Code of Conduct',
+                url: 'https://learn.microsoft.com/en-us/legal/ai-code-of-conduct',
+            },
+            {
+                label: 'Azure OpenAI Content Credentials',
+                url: 'https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/content-credentials',
+            },
+            {
+                label: 'Google Imagen watermark verification',
+                url: 'https://cloud.google.com/vertex-ai/generative-ai/docs/image/verify-watermark',
+            },
+            {
+                label: 'Amazon Titan watermark detection',
+                url: 'https://aws.amazon.com/about-aws/whats-new/2024/04/watermark-detection-amazon-titan-image-generator-bedrock/',
+            },
+        ],
+        sections: [
+            {
+                heading: 'Disclosure and provenance have moved to the center of governance',
+                body:
+                    'The policy direction is clear. Article 50 transparency obligations in the EU AI Act become applicable on August 2, 2026, and U.S. policy discussion is increasingly focused on synthetic media, creator concerns, and digital replicas. This is no longer a niche issue for platform teams.',
+            },
+            {
+                heading: 'Vendors already support watermarking and provenance signals',
+                body:
+                    'Azure AI-generated images include Content Credentials by default, Google Imagen supports SynthID watermark verification, and Amazon Titan images include invisible watermarking by default. That means provenance preservation is operationally realistic now, not just aspirational.',
+            },
+            {
+                heading: 'Most enterprises need three immediate rules',
+                body:
+                    'Set a disclosure standard for external synthetic media, preserve provenance in approved workflows, and use naming conventions that make AI-assisted files recognizable during review and handoff.',
+                bullets: [
+                    'Define where disclosure is mandatory, recommended, or optional.',
+                    'Preserve watermarks, Content Credentials, or equivalent provenance where supported.',
+                    'Use naming rules that flag AI-generated or AI-assisted assets in the review chain.',
+                ],
+            },
+            {
+                heading: 'Missing provenance should change review posture',
+                body:
+                    'No manifest or watermark is not proof of infringement, but it does weaken confidence. Teams should treat missing provenance as a signal to document more, review more carefully, or escalate before publish rather than waving it through.',
+            },
+        ],
+        faq: [
+            {
+                question: 'When should a team disclose AI-generated content?',
+                answer:
+                    'At minimum when synthetic media could mislead viewers or counterparties, and whenever policy, contract, or jurisdiction requires it.',
+            },
+            {
+                question: 'Should companies preserve watermarks and Content Credentials?',
+                answer:
+                    'Yes, in approved workflows. Preserving provenance supports review, accountability, and later verification.',
+            },
+            {
+                question: 'Does missing provenance prove infringement?',
+                answer:
+                    'No. It is not proof of wrongdoing, but it should raise the review threshold because it weakens confidence and complicates later defense.',
+            },
+        ],
+        internalLinks: [
+            'content-credentials',
+            'human-review-workflows',
+            'ai-contracts-cover-2026',
+        ],
+    },
+    {
+        slug: 'how-legal-teams-read-ai-contracts',
+        title: 'How Legal Teams Should Read AI Contracts',
+        titleTag: 'How Legal Teams Should Read AI Contracts Without Missing Risk | AI Content Risk Score',
+        description:
+            'AI legal review fails when teams read one indemnity clause in isolation. Here is a better framework for legal, procurement, platform, and responsible AI teams reviewing vendors.',
+        audience: 'Legal, procurement, platform engineering, responsible AI',
+        intent: 'Cross-functional vendor review',
+        publishedAt: '2026-03-25',
+        updatedAt: '2026-03-25',
+        primaryQuestion: 'What is the biggest mistake in AI contract review?',
+        shortAnswer:
+            'Treating the indemnity clause as the whole answer. The real answer usually sits across covered services, linked documentation, customer obligations, third-party model terms, monitoring rules, provenance features, and workflow controls.',
+        keywords: [
+            'how legal teams review ai contracts',
+            'ai vendor review checklist',
+            'procurement ai contract workflow',
+            'responsible ai vendor diligence',
+        ],
+        sourceLinks: [
+            {
+                label: 'Google Cloud generative AI indemnified services',
+                url: 'https://cloud.google.com/terms/generative-ai-indemnified-services?hl=en',
+            },
+            {
+                label: 'Google abuse monitoring',
+                url: 'https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/abuse-monitoring',
+            },
+            {
+                label: 'Microsoft Customer Copyright Commitment mitigations',
+                url: 'https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/openai/customer-copyright-commitment',
+            },
+            {
+                label: 'AWS service terms',
+                url: 'https://aws.amazon.com/service-terms/',
+            },
+        ],
+        sections: [
+            {
+                heading: 'The common failure mode is clause-level reading',
+                body:
+                    'Many legal teams review AI vendors one clause at a time while platform and policy teams are managing workflows, controls, and evidence. That split produces shallow approvals because the actual risk lives across the full stack, not inside one indemnity paragraph.',
+            },
+            {
+                heading: 'The better model is one cross-functional review stack',
+                body:
+                    'Legal, procurement, foundation, and responsible AI teams should review contract terms, covered services, safeguards, source-asset policy, logging, provenance, disclosure rules, and human-review triggers together.',
+                bullets: [
+                    'Map named services and models to approved use cases.',
+                    'Check whether third-party model terms apply.',
+                    'Confirm what customer actions preserve or lose coverage.',
+                ],
+            },
+            {
+                heading: 'Every review should answer the same core questions',
+                body:
+                    'Which exact services are approved? Are prompts or outputs processed for abuse monitoring or service operation? What provenance features exist? What exclusions matter most for this use case? Which scenarios require human escalation before deployment?',
+            },
+            {
+                heading: 'Good contract review speeds approvals instead of slowing them down',
+                body:
+                    'A shared framework gives platform and creative teams a repeatable safe path. That lets legal focus on edge cases instead of reopening the same questions every time a team wants to try a new model or workflow.',
+            },
+        ],
+        faq: [
+            {
+                question: 'What is the biggest mistake in AI contract review?',
+                answer:
+                    'Reading the indemnity clause in isolation. The practical answer sits across product terms, model scope, customer obligations, and workflow controls.',
+            },
+            {
+                question: 'What helps approvals move faster?',
+                answer:
+                    'An approved foundation, observable workflows, clear review triggers, and shared language between legal, procurement, platform, and policy teams.',
+            },
+            {
+                question: 'Why should legal teams care about abuse monitoring and logging?',
+                answer:
+                    'Because monitoring, retention, and service-operation rules can affect confidentiality assumptions, acceptable use, and whether a workflow is appropriate for sensitive source material.',
+            },
+        ],
+        internalLinks: [
+            'ai-contracts-cover-2026',
+            'indemnity-controls',
+            'mitigation-layers',
+        ],
+    },
 ]
 
 export function getGovernanceGuide(slug: string) {
@@ -610,6 +1149,15 @@ export function getGovernanceGuide(slug: string) {
 }
 
 export function getRelatedGovernanceGuides(slug: GovernanceGuideSlug, limit = 3) {
+    const currentGuide = governanceGuides.find((guide) => guide.slug === slug)
+
+    if (currentGuide?.internalLinks?.length) {
+        return currentGuide.internalLinks
+            .map((internalSlug) => governanceGuides.find((guide) => guide.slug === internalSlug))
+            .filter((guide): guide is GovernanceGuide => Boolean(guide))
+            .slice(0, limit)
+    }
+
     return governanceGuides.filter((guide) => guide.slug !== slug).slice(0, limit)
 }
 

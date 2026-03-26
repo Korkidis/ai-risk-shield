@@ -35,13 +35,13 @@ export async function generateMetadata({ params }: GuidePageProps): Promise<Meta
     const path = `/ai-content-governance/${guide.slug}`
 
     return {
-        title: guide.title,
+        title: guide.titleTag ?? guide.title,
         description: guide.description,
         alternates: {
             canonical: path,
         },
         openGraph: {
-            title: `${guide.title} | AI Content Risk Score`,
+            title: guide.titleTag ?? `${guide.title} | AI Content Risk Score`,
             description: guide.description,
             url: path,
             type: 'article',
@@ -103,6 +103,21 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
         citation: guide.sourceLinks.map((source) => source.url),
     }
 
+    const faqSchema = guide.faq.length
+        ? {
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: guide.faq.map((item) => ({
+                  '@type': 'Question',
+                  name: item.question,
+                  acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: item.answer,
+                  },
+              })),
+          }
+        : null
+
     const relatedGuides = getRelatedGovernanceGuides(guide.slug)
 
     return (
@@ -115,7 +130,11 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
             <main className="flex-1">
                 <script
                     type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify([pageSchema, breadcrumbSchema]) }}
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify(
+                            [pageSchema, breadcrumbSchema, faqSchema].filter(Boolean)
+                        ),
+                    }}
                 />
 
                 <section className="border-b border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)]">
@@ -298,7 +317,7 @@ export default async function GovernanceGuidePage({ params }: GuidePageProps) {
                     <div className="mx-auto max-w-6xl px-6 py-16">
                         <div className="mb-10 max-w-5xl space-y-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--rs-text-tertiary)]">
-                                Related guides
+                                Recommended internal links
                             </p>
                             <h2 className="text-3xl md:text-5xl uppercase tracking-tighter text-[var(--rs-text-primary)] rs-header-bold-italic">
                                 Keep moving through the control stack
@@ -380,5 +399,4 @@ function MetadataChip({ label, value }: { label: string; value: string }) {
         </div>
     )
 }
-
 
