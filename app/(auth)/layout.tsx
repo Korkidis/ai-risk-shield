@@ -29,9 +29,9 @@ export default function AuthLayout({
                             ← SYSTEM_EXIT
                         </Link>
                         <div className="w-1 h-1 bg-rs-signal/20 rounded-full" />
-                        <Link href="/help" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
-                            HELP_MANUAL
-                        </Link>
+                        <a href="mailto:support@aicontentriskscore.com" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
+                            CONTACT_SUPPORT
+                        </a>
                     </div>
                 </div>
             </div>
