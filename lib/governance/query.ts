@@ -10,7 +10,8 @@
  * Tenant-specific policies are filtered by tenant_id when provided.
  */
 
-import { createServiceRoleClient } from '@/lib/supabase/server'
+import 'server-only'
+import { createServiceRoleClient } from '@/lib/supabase/admin'
 import type {
   GovernancePolicy,
   GovernancePrecedent,
