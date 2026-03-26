@@ -41,6 +41,74 @@ export interface BrandGuideline {
   updated_at: string | null
 }
 
+// ─── Governance Database Types ───────────────────────────────────────────────
+
+export type GovernanceDomain = 'ip' | 'safety' | 'provenance' | 'bias' | 'disclosure'
+export type GovernanceScope = 'jurisdiction' | 'platform' | 'content_type' | 'industry' | 'general'
+export type GovernanceRuleType = 'requirement' | 'prohibition' | 'recommendation' | 'disclosure'
+
+export interface GovernancePolicy {
+  id: string
+  tenant_id: string | null
+  domain: GovernanceDomain
+  scope: GovernanceScope
+  scope_value: string
+  rule_type: GovernanceRuleType
+  rule_text: string
+  authority: string
+  authority_url: string | null
+  effective_date: string | null
+  expiry_date: string | null
+  severity_weight: number
+  tags: string[]
+  created_at: string
+  updated_at: string
+}
+
+export type PrecedentType = 'settlement' | 'ruling' | 'enforcement' | 'advisory' | 'litigation'
+
+export interface GovernancePrecedent {
+  id: string
+  policy_id: string | null
+  case_type: PrecedentType
+  case_ref: string
+  financial_exposure_usd: number | null
+  relevance_score: number
+  summary: string
+  date: string
+  source_url: string | null
+  tags: string[]
+  created_at: string
+}
+
+export type PlatformContentType = 'ai_generated' | 'synthetic_media' | 'stock' | 'user_generated' | 'all'
+export type EnforcementLevel = 'strict' | 'recommended' | 'emerging'
+export type PlatformRequirementType = 'disclosure' | 'label' | 'review' | 'prohibition' | 'recommendation'
+
+export interface PlatformRequirement {
+  id: string
+  platform: string
+  content_type: PlatformContentType
+  requirement_type: PlatformRequirementType
+  requirement_text: string
+  enforcement_level: EnforcementLevel
+  last_verified_date: string
+  source_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** Aggregated governance stats for hub display */
+export interface GovernanceStats {
+  totalPolicies: number
+  totalPrecedents: number
+  totalFinancialExposure: number
+  trackedCaseCount: number
+  platformsCovered: number
+  jurisdictionsCovered: number
+  lastUpdated: string
+}
+
 export interface ExtendedScan {
   id: string
   session_id?: string | null // For anonymous scans
@@ -268,9 +336,10 @@ export interface MitigationDomainAnalysis {
 
 export interface ComplianceEntry {
   name: string
-  source: 'inferred' | 'guideline'
+  source: 'inferred' | 'guideline' | 'governance_db'
   status: 'pass' | 'review' | 'fail' | 'not_applicable'
   rationale: string
+  authority?: string  // Citation from governance DB (e.g., "EU AI Act Art. 52(1)")
 }
 
 export interface ReferralEvent {

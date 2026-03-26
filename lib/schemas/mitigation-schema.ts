@@ -29,7 +29,7 @@ const MitigationDomainAnalysisSchema = z.object({
 
 const ComplianceEntrySchema = z.object({
   name: z.string(),
-  source: z.enum(['inferred', 'guideline']),
+  source: z.enum(['inferred', 'guideline', 'governance_db']),
   status: z.enum(['pass', 'review', 'fail', 'not_applicable']),
   rationale: z.string(),
 })
@@ -130,7 +130,7 @@ const COMPLIANCE_ENTRY_GEMINI: Schema = {
   type: SchemaType.OBJECT,
   properties: {
     name: { type: SchemaType.STRING },
-    source: { type: SchemaType.STRING, format: 'enum', enum: ['inferred', 'guideline'] },
+    source: { type: SchemaType.STRING, format: 'enum', enum: ['inferred', 'guideline', 'governance_db'] },
     status: { type: SchemaType.STRING, format: 'enum', enum: ['pass', 'review', 'fail', 'not_applicable'] },
     rationale: { type: SchemaType.STRING },
   },
