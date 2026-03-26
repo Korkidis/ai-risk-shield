@@ -124,7 +124,8 @@ NOTE: The enum values (proceed/monitor/review/escalate) are internal labels. The
 
 /**
  * Select relevant policy rules based on scan results.
- * Returns 2-5 applicable rules formatted as decision context.
+ * Synchronous version — uses hardcoded rules only.
+ * Used as fallback when governance DB is unavailable.
  */
 export function selectPolicyContext(scan: {
   composite_score?: number | null

@@ -264,6 +264,118 @@ export type Database = {
           },
         ]
       }
+      governance_policies: {
+        Row: {
+          id: string
+          tenant_id: string | null
+          domain: string
+          scope: string
+          scope_value: string
+          rule_type: string
+          rule_text: string
+          authority: string
+          authority_url: string | null
+          effective_date: string | null
+          expiry_date: string | null
+          severity_weight: number
+          tags: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id?: string | null
+          domain: string
+          scope: string
+          scope_value: string
+          rule_type: string
+          rule_text: string
+          authority?: string
+          authority_url?: string | null
+          effective_date?: string | null
+          expiry_date?: string | null
+          severity_weight?: number
+          tags?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string | null
+          domain?: string
+          scope?: string
+          scope_value?: string
+          rule_type?: string
+          rule_text?: string
+          authority?: string
+          authority_url?: string | null
+          effective_date?: string | null
+          expiry_date?: string | null
+          severity_weight?: number
+          tags?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "governance_policies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      governance_precedents: {
+        Row: {
+          id: string
+          policy_id: string | null
+          case_type: string
+          case_ref: string
+          financial_exposure_usd: number | null
+          relevance_score: number
+          summary: string
+          date: string
+          source_url: string | null
+          tags: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          policy_id?: string | null
+          case_type: string
+          case_ref: string
+          financial_exposure_usd?: number | null
+          relevance_score?: number
+          summary: string
+          date: string
+          source_url?: string | null
+          tags?: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          policy_id?: string | null
+          case_type?: string
+          case_ref?: string
+          financial_exposure_usd?: number | null
+          relevance_score?: number
+          summary?: string
+          date?: string
+          source_url?: string | null
+          tags?: string[]
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "governance_precedents_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "governance_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ips: {
         Row: {
           blocked_until: string | null
@@ -388,6 +500,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_requirements: {
+        Row: {
+          id: string
+          platform: string
+          content_type: string
+          requirement_type: string
+          requirement_text: string
+          enforcement_level: string
+          last_verified_date: string
+          source_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          platform: string
+          content_type: string
+          requirement_type: string
+          requirement_text: string
+          enforcement_level?: string
+          last_verified_date?: string
+          source_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          platform?: string
+          content_type?: string
+          requirement_type?: string
+          requirement_text?: string
+          enforcement_level?: string
+          last_verified_date?: string
+          source_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       provenance_details: {
         Row: {

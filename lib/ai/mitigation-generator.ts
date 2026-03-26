@@ -18,6 +18,8 @@ import { getGeminiClient } from '@/lib/ai/gemini'
 import { MitigationReportContentSchema, MITIGATION_REPORT_GEMINI_SCHEMA } from '@/lib/schemas/mitigation-schema'
 import { formatChiefStrategy } from '@/lib/gemini-types'
 import { selectPolicyContext, GENERAL_POLICIES } from '@/lib/risk/policy-rules'
+import { buildGovernanceContext } from '@/lib/governance/query'
+import type { GovernanceDomain } from '@/types/database'
 
 const GENERATOR_VERSION = '3.0.0'
 
@@ -34,6 +36,7 @@ export interface MitigationGeneratorInput {
         safety_risk_score: number | null
         provenance_risk_score: number | null
         provenance_status: string | null
+        tenant_id?: string | null
     }
     /** Asset file metadata */
     asset: {
@@ -55,6 +58,7 @@ export interface MitigationGeneratorInput {
     /** Optional brand guideline context */
     guideline?: {
         name: string
+        industry?: string | null
         prohibitions?: string[] | null
         requirements?: string[] | null
         target_markets?: string[] | null
@@ -85,7 +89,7 @@ export async function generateMitigationReport(
         },
     })
 
-    const prompt = buildPrompt(input)
+    const prompt = await buildPrompt(input)
     const result = await model.generateContent([prompt])
     const text = result.response.text()
 
@@ -120,7 +124,7 @@ export function getGeneratorVersion(): string {
 // Prompt Construction
 // ============================================================================
 
-function buildPrompt(input: MitigationGeneratorInput): string {
+async function buildPrompt(input: MitigationGeneratorInput): Promise<string> {
     const { scan, asset, findings, riskProfile, guideline } = input
 
     const compositeScore = scan.composite_score || 0
@@ -193,8 +197,31 @@ For each match, create a mapping entry in guideline_mapping.mappings:
         }
     }
 
-    // Policy context — selected based on this scan's results
+    // Policy context — hardcoded rules (always available as baseline)
     const policyContext = selectPolicyContext(scan)
+
+    // Governance DB context — enriched with real regulatory data and precedents
+    let governanceContext = ''
+    try {
+        // Determine relevant domains based on scan scores
+        const domains: GovernanceDomain[] = []
+        if (ipScore >= 10) domains.push('ip')
+        if (safetyScore >= 10) domains.push('safety')
+        domains.push('provenance', 'disclosure') // always relevant
+
+        const govResult = await buildGovernanceContext({
+            domains,
+            jurisdictions: guideline?.target_markets?.filter(Boolean) as string[] | undefined,
+            platforms: guideline?.target_platforms?.filter(Boolean) as string[] | undefined,
+            industry: guideline?.industry || null,
+            tenantId: scan.tenant_id || null,
+            compositeScore,
+        })
+        governanceContext = govResult.promptText
+    } catch (err) {
+        // Fail-safe: governance DB unavailable — hardcoded rules still apply
+        console.error('Governance DB query failed, using hardcoded rules only:', err instanceof Error ? err.message : err)
+    }
 
     // Strategy from scanner synthesis
     const strategyText = formatChiefStrategy((riskProfile as Record<string, unknown>)?.chief_officer_strategy as string) || 'No strategy available.'
@@ -235,7 +262,7 @@ ${strategyText}
 
 DECISION FRAMEWORK:
 ${policyContext}
-${complianceHint}${guidelineMappingHint}
+${governanceContext ? `\n${governanceContext}\n` : ''}${complianceHint}${guidelineMappingHint}
 SECTION-BY-SECTION INSTRUCTIONS:
 
 1. EXPLAINABILITY (top of report — explains HOW we analyzed):
@@ -278,5 +305,7 @@ OUTPUT: Generate JSON matching the schema. Rules:
 2. All three domain analyses must have substantive content — positive observations for clean domains.
 3. ${compositeScore < 25 ? 'This is low-risk. recommendation MUST be "proceed", readiness MUST be "ready". Do NOT undercut positive results.' : ''}
 4. Write like a knowledgeable colleague, not a compliance officer.
-5. Output ONLY JSON, no markdown fences.`
+5. Output ONLY JSON, no markdown fences.
+6. For compliance_matrix: use "governance_db" as source for entries derived from the REGULATORY & GOVERNANCE CONTEXT or PLATFORM-SPECIFIC REQUIREMENTS above. Include the authority citation in the rationale field.
+7. When citing precedents, use the exact case_ref text provided. Do not fabricate case names or rulings.`
 }

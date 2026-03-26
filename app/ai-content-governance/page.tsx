@@ -9,15 +9,18 @@ import {
     formatLongDate,
     formatUsdCompact,
     governanceGuides,
-    policySignals,
-    riskIndexSnapshot,
-    riskWatchItems,
+    getLiveRiskIndexSnapshot,
+    getLiveRiskWatchItems,
+    getLivePolicySignals,
 } from '@/lib/marketing/ai-content-governance'
 import { getAbsoluteUrl } from '@/lib/site'
 
 const hubUrl = '/ai-content-governance'
 const hubDescription =
     'AI Content Governance is a structured guide hub for enterprise teams managing AI IP risk, provenance, human review workflows, and operational controls before publishing.'
+
+/** Revalidate governance hub data every hour */
+export const revalidate = 3600
 
 export const metadata: Metadata = {
     title: 'AI Content Governance',
@@ -33,7 +36,13 @@ export const metadata: Metadata = {
     },
 }
 
-export default function AIContentGovernancePage() {
+export default async function AIContentGovernancePage() {
+    const [riskIndexSnapshot, riskWatchItems, policySignals] = await Promise.all([
+        getLiveRiskIndexSnapshot(),
+        getLiveRiskWatchItems(),
+        getLivePolicySignals(),
+    ])
+
     const trackedSignals = [...policySignals, ...riskWatchItems].sort((a, b) => b.date.localeCompare(a.date))
 
     const schema = [
