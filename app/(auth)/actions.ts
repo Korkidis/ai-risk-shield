@@ -228,6 +228,7 @@ export async function requestPasswordReset(_prevState: unknown, formData: FormDa
   if (!email || !z.string().email().safeParse(email).success) {
     return {
       error: 'Please enter a valid email address',
+      success: false,
     }
   }
 
@@ -235,24 +236,35 @@ export async function requestPasswordReset(_prevState: unknown, formData: FormDa
   const ipKey = await getRateLimitKey()
   const rl = await checkRateLimit({ action: 'password_reset', key: ipKey, maxAttempts: 3, windowSeconds: 3600 })
   if (!rl.allowed) {
-    return { error: 'Too many reset requests. Please try again later.' }
+    return { error: 'Too many reset requests. Please try again later.', success: false }
   }
 
   const supabase = await createClient()
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    'http://localhost:3000'
+  const normalizedAppUrl =
+    appUrl.startsWith('http://') || appUrl.startsWith('https://')
+      ? appUrl.replace(/\/+$/, '')
+      : `https://${appUrl.replace(/\/+$/, '')}`
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
+    // Route recovery links through the existing auth callback so the code is
+    // exchanged for a session before the user lands on the password form.
+    redirectTo: `${normalizedAppUrl}/auth/callback?next=/reset-password`,
   })
 
   if (error) {
     console.error('Password reset error:', error)
     return {
       error: 'Failed to send reset email. Please try again.',
+      success: false,
     }
   }
 
   // Always return success to prevent email enumeration
-  return { success: true }
+  return { error: '', success: true }
 }
 
 export async function resetPassword(_prevState: unknown, formData: FormData) {
@@ -269,6 +281,7 @@ export async function resetPassword(_prevState: unknown, formData: FormData) {
   if (!validation.success) {
     return {
       error: validation.error.issues[0]?.message || 'Invalid password',
+      success: false,
     }
   }
 
@@ -282,8 +295,9 @@ export async function resetPassword(_prevState: unknown, formData: FormData) {
     console.error('Password update error:', error)
     return {
       error: 'Failed to reset password. Please try again or request a new reset link.',
+      success: false,
     }
   }
 
-  return { success: true }
+  return { error: '', success: true }
 }
