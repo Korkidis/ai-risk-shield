@@ -9,10 +9,12 @@ import {
     formatLongDate,
     formatUsdCompact,
     governanceGuides,
+} from '@/lib/marketing/ai-content-governance'
+import {
     getLiveRiskIndexSnapshot,
     getLiveRiskWatchItems,
     getLivePolicySignals,
-} from '@/lib/marketing/ai-content-governance'
+} from '@/lib/marketing/ai-content-governance.server'
 import { getAbsoluteUrl } from '@/lib/site'
 
 const hubUrl = '/ai-content-governance'

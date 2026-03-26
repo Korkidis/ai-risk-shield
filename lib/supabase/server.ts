@@ -33,24 +33,7 @@ export async function createClient() {
     )
 }
 
-/**
- * Create a Supabase client with Service Role Access
- * BYPASSES RLS - USE WITH CAUTION
- * Only for admin tasks/API routes needing elevated privileges
- */
-export async function createServiceRoleClient() {
-    // Import dynamically to avoid bundling issues if this file is imported in client components
-    const { createClient } = await import('@supabase/supabase-js')
-
-    return createClient<Database>(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-            auth: {
-                persistSession: false,
-                autoRefreshToken: false,
-                detectSessionInUrl: false
-            }
-        }
-    )
-}
+// Re-export service role client from admin.ts for backward compatibility.
+// New code should import directly from '@/lib/supabase/admin' to avoid
+// pulling next/headers into modules that only need the admin client.
+export { createServiceRoleClient } from './admin'
