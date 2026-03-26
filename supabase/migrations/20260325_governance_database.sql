@@ -331,7 +331,8 @@ INSERT INTO public.platform_requirements (platform, content_type, requirement_ty
 ('X', 'synthetic_media', 'prohibition', 'Synthetic or manipulated media shared with intent to deceive about real events, cause harm, or interfere with elections may be labeled, reduced in distribution, or removed.', 'strict', '2026-03-01', 'https://help.x.com/en/rules-and-policies/synthetic-and-manipulated-media-policy'),
 
 -- LinkedIn
-('LinkedIn', 'ai_generated', 'recommendation', 'LinkedIn encourages members to disclose AI-assisted content creation. While not currently required for all content, AI-generated profile photos and misleading synthetic content may be flagged or removed.', 'emerging', '2026-03-01', 'https://www.linkedin.com/legal/professional-community-policies');
+('LinkedIn', 'ai_generated', 'recommendation', 'LinkedIn encourages members to disclose AI-assisted content creation. While not currently required for all content, AI-generated profile photos and misleading synthetic content may be flagged or removed.', 'emerging', '2026-03-01', 'https://www.linkedin.com/legal/professional-community-policies'),
+('LinkedIn', 'synthetic_media', 'prohibition', 'Synthetic media that impersonates real professionals, fabricates endorsements, or creates misleading professional credentials is prohibited under LinkedIn''s Professional Community Policies.', 'strict', '2026-03-01', 'https://www.linkedin.com/legal/professional-community-policies');
 
 -- ============================================================================
 -- Updated_at trigger for governance_policies
