@@ -61,10 +61,11 @@ SaaS platform for AI content risk validation. Stack: Next.js 16 (App Router, Tur
 - **API routes** for complex workflows (file upload, Gemini analysis)
 
 ### Supabase Best Practices
-- **Three client types:**
+- **Four client modules:**
   - `createBrowserClient` - Client Components
   - `createServerClient` - Server Components, API Routes
   - Middleware client - Session refresh
+  - `createServiceRoleClient` in `lib/supabase/admin.ts` - server-only admin operations; must never enter a client bundle
 - **RLS is defense-in-depth** - Always filter by tenant_id in code too
 - **Storage paths:** Always use tenant_id in folder structure (`uploads/{tenant_id}/{file}`)
 - **Realtime** - Switched from polling to Supabase Realtime (Feb 2026) for scan status updates. Polling caused 139GB egress.
@@ -140,7 +141,7 @@ app/
 └── page.tsx             # Landing page (freemium on-ramp)
 
 lib/
-├── supabase/           # Supabase clients (client.ts, server.ts, middleware.ts)
+├── supabase/           # Supabase clients (client.ts, server.ts, middleware.ts, admin.ts)
 ├── gemini.ts           # Gemini multi-persona analysis (IP, Safety, Provenance)
 ├── ai/                 # scan-processor.ts (async processing orchestrator)
 ├── risk/               # CANONICAL: tiers.ts + scoring.ts (single source of truth)
@@ -234,9 +235,12 @@ WEBHOOK_ALERT_EMAIL=               # Optional: email for webhook failure alerts
 - `mitigation_reports` - AI-generated remediation guidance (schema exists)
 - `referral_events` - Insurance referral tracking (schema exists)
 - `tenant_invites` - Team invite tokens (schema exists, `metadata` column confirmed in live DB)
+- `governance_policies` - Regulatory and enterprise governance rules used in mitigation context + governance hub
+- `governance_precedents` - Litigation, settlement, ruling, and enforcement signals used in mitigation context + governance hub
+- `platform_requirements` - Platform policy requirements used in mitigation context + governance hub
 
 ### Schema Drift — Resolved
-All migrations verified applied to production DB on 2026-03-15 (object-level verification: columns, indexes, RLS policies, functions, grants). No pending schema drift remains. See `.Codex/CURRENT_STATE.md` §8 for full production-verified inventory.
+Base schema was object-level verified on 2026-03-15 (columns, indexes, RLS policies, functions, grants). The governance knowledge-base migration and production SQL follow-up were applied in late March 2026, including the `governance_*` tables, `platform_requirements`, and the `search_path` hardening re-application for helper functions. No known pending schema drift remains. See `CURRENT_STATE.md` for the current shipped-state summary.
 
 ### Every Table Must Have
 - `id` (UUID primary key)
@@ -435,7 +439,7 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **Vercel Cron configured**: `vercel.json` with two cron jobs (monthly quota reset + daily rate-limit cleanup). 15-min usage retry removed (incompatible with Vercel Hobby plan; route still exists for future Pro upgrade)
 
 ### Phase R Complete (Feb 24, 2026)
-- **Supabase types rebuilt**: `lib/supabase/types.ts` manually reconstructed from schema mapping (18 tables, 6 RPCs, `rate_limits` table added). Includes `Relationships: []` on all tables, `Views`, `CompositeTypes` for Supabase-js compatibility. `scans.status` and `scans.risk_level` narrowed to union types.
+- **Supabase types rebuilt**: `lib/supabase/types.ts` manually reconstructed from schema mapping (21 tables, 6 RPCs, including the governance tables and `rate_limits`). Includes `Relationships: []` on all tables, `Views`, `CompositeTypes` for Supabase-js compatibility. `scans.status` and `scans.risk_level` narrowed to union types.
 - **`as any` casts eliminated**: Reduced from 107 → 8 legitimate casts (external libraries: C2PA, Stripe, React email, Next.js request). Zero `@ts-ignore` comments in app/lib/components.
 - **Type-check zero errors**: `npx tsc --noEmit` passes with zero errors. `types/database.ts` reconciled with regenerated types (`file_size` added to `ScanWithRelations`, `BrandGuideline` arrays made nullable).
 - **`scans/[id]/route.ts` refactored**: Introduced `ScanApiResult` local type for dynamic select casts (replaces 6 `as any` and `NonNullable<typeof>` workarounds). Legacy fallback uses clean spread instead of `delete` mutations.
@@ -459,13 +463,25 @@ Upload API extracts `guidelineId` from formData, validates tenant ownership, sto
 - **PDF gating corrected**: In-app scan report downloads are always full (`isSample = false`). Sample PDFs only in pre-account email.
 - **Quota boundary hardened**: `v_new_used + p_amount > limit` (correct for bulk amounts)
 
+### Governance Knowledge Base + Hub (Mar 25-28, 2026)
+- **Governance database launched**: added `governance_policies`, `governance_precedents`, and `platform_requirements` with seed data, indexes, RLS, and `updated_at` triggers
+- **Composable governance query layer**: `lib/governance/query.ts` now powers mitigation context, governance hub stats, public signals, and precedent lookup
+- **Mitigation generator upgraded**: `lib/ai/mitigation-generator.ts` now injects governance DB context and falls back safely to hardcoded rules if DB access is unavailable
+- **Governance hub wired live**: `app/ai-content-governance/page.tsx` uses server-only fetchers with `revalidate = 3600` for live stats, signals, and policy items
+- **Server/client boundary fixed**: `createServiceRoleClient` moved to `lib/supabase/admin.ts`; governance live fetchers moved to `lib/marketing/ai-content-governance.server.ts`; `lib/governance/query.ts` is server-only guarded
+- **Governance hub UX tightened**: playbook reorganized into stable sections, public signals split into current watchlist + archive, duplicate React keys fixed for repeated policy labels/dates
+- **Production Supabase updated**: governance migration applied and helper-function `search_path` warnings cleared in production
+
 ### Schema Drift — Resolved (Verified 2026-03-15)
-All migrations applied to production DB. Verified live on 2026-03-15:
+Base migrations verified live on 2026-03-15; governance additions applied in late March 2026. Current production state includes:
 - `rate_limits` table — exists with RLS enabled
 - `check_rate_limit_atomic()` — SECURITY DEFINER, search_path=public, EXECUTE to service_role + owner
 - `cleanup_stale_rate_limits()` — SECURITY DEFINER, search_path=public, EXECUTE to service_role + owner
 - `increment_tenant_mitigation_usage()` — SECURITY DEFINER, EXECUTE to authenticated + service_role + owner
 - `consume_mitigation_quota()` — SECURITY DEFINER, EXECUTE to authenticated + service_role + owner
+- `governance_policies` — live and seeded
+- `governance_precedents` — live and seeded
+- `platform_requirements` — live and seeded
 
 ## Lessons Learned (Updated as we build)
 
@@ -476,13 +492,18 @@ All migrations applied to production DB. Verified live on 2026-03-15:
 - TypeScript strict mode catches errors early - keep it enabled
 - Always use `npm run type-check` before committing
 
-### Step 2: Supabase Setup (2026-01-03)
+### Step 2: Supabase Setup (2026-01-03, updated 2026-03-25)
 - **Initial migrations must be run manually in SQL Editor** - Supabase doesn't expose `exec_sql` RPC by default
 - **Storage policies require tenant_id from profiles** - Use `auth.uid()` to get user, then lookup `tenant_id`
-- **Three separate Supabase clients needed:** browser (anon), server (anon or service role), middleware (session refresh)
+- **Four Supabase runtime modules are needed:** browser (anon), server (request/cookies), middleware (session refresh), and admin/service-role (`lib/supabase/admin.ts`) for background/admin access that must not import `next/headers`
 - **Service role key bypasses RLS** - Only use for admin operations (Stripe webhooks, background jobs)
 - **RLS helper function** - Created `public.user_tenant_id()` (not `auth.` - permission issue) for easy tenant filtering in policies
 - **Atomic quota function** - Uses `FOR UPDATE` row locking to prevent race conditions
+
+### Step 8: Server/Client Boundaries (2026-03-25)
+- **Do not mix shared content exports with server-only fetchers** - client-consumed modules can accidentally pull `next/headers` into the browser graph
+- **Keep admin Supabase access in `lib/supabase/admin.ts`** - cookie-aware server clients and service-role clients belong in different modules
+- **Use `server-only` on governance query and live marketing data modules** - fail fast if a client import crosses the boundary
 
 ### Step 3: Authentication Flow (2026-01-03)
 - **Server Actions for auth** - signup, login, logout all server-side (secure, no API routes needed)
@@ -514,4 +535,4 @@ All migrations applied to production DB. Verified live on 2026-03-15:
 
 ---
 
-**Last Updated:** 2026-03-15 (Documentation reconciliation — removed stale migration drift claims, fixed entitlement function names, corrected changelog accuracy. See `.Codex/CURRENT_STATE.md` for canonical shipped state.)
+**Last Updated:** 2026-03-28 (Documentation reconciliation — added late-March governance database + hub work, corrected Supabase client architecture, restored `CURRENT_STATE.md`, and aligned schema notes with current production state.)
