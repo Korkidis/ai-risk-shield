@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowUpRight, Fingerprint, Scale, Workflow } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, Fingerprint, Scale, Workflow } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { RSBackground } from '@/components/rs/RSBackground'
 import { RSPanel } from '@/components/rs/RSPanel'
@@ -20,6 +20,56 @@ import { getAbsoluteUrl } from '@/lib/site'
 const hubUrl = '/ai-content-governance'
 const hubDescription =
     'AI Content Governance is a structured guide hub for enterprise teams managing AI IP risk, provenance, human review workflows, and operational controls before publishing.'
+
+type GovernanceGuideCluster = {
+    id: string
+    eyebrow: string
+    title: string
+    description: string
+    slugs: (typeof governanceGuides)[number]['slug'][]
+}
+
+const governanceGuideClusters: GovernanceGuideCluster[] = [
+    {
+        id: 'foundations',
+        eyebrow: 'Start here',
+        title: 'Core governance systems',
+        description:
+            'The baseline operating model for policy, review thresholds, and mitigation layers.',
+        slugs: [
+            'assessing-ai-content-risk',
+            'brand-policy-controls',
+            'human-review-workflows',
+            'mitigation-layers',
+        ],
+    },
+    {
+        id: 'contracts',
+        eyebrow: 'Commercial risk',
+        title: 'Contracts, rights, and approvals',
+        description:
+            'The pages most useful for procurement, legal review, indemnity analysis, and adaptation workflows.',
+        slugs: [
+            'indemnity-controls',
+            'ai-contracts-cover-2026',
+            'how-legal-teams-read-ai-contracts',
+            'ai-transcreation-rights-review',
+        ],
+    },
+    {
+        id: 'advanced',
+        eyebrow: 'Advanced workflows',
+        title: 'Provenance, disclosure, and mixed-tool edge cases',
+        description:
+            'Deeper reads for edited outputs, design-tool chains, content credentials, and synthetic-media disclosure.',
+        slugs: [
+            'content-credentials',
+            'edited-ai-outputs-risk',
+            'ai-design-tool-composition-risk',
+            'ai-disclosure-provenance-rules',
+        ],
+    },
+] as const
 
 /** Revalidate governance hub data every hour */
 export const revalidate = 3600
@@ -45,7 +95,18 @@ export default async function AIContentGovernancePage() {
         getLivePolicySignals(),
     ])
 
+    const guideLookup = new Map(governanceGuides.map((guide) => [guide.slug, guide]))
+    const clusteredGuides = governanceGuideClusters.map((cluster) => ({
+        ...cluster,
+        guides: cluster.slugs
+            .map((slug) => guideLookup.get(slug))
+            .filter((guide): guide is (typeof governanceGuides)[number] => Boolean(guide)),
+    }))
+
     const trackedSignals = [...policySignals, ...riskWatchItems].sort((a, b) => b.date.localeCompare(a.date))
+    const signalPreviewCount = Math.min(4, trackedSignals.length)
+    const primarySignals = trackedSignals.slice(0, signalPreviewCount)
+    const overflowSignals = trackedSignals.slice(signalPreviewCount)
 
     const schema = [
         {
@@ -158,43 +219,46 @@ export default async function AIContentGovernancePage() {
                             </p>
                         </div>
 
-                        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                            {governanceGuides.map((guide) => (
-                                <Link
-                                    key={guide.slug}
-                                    href={`/ai-content-governance/${guide.slug}`}
+                        <div className="mb-10 grid gap-4 lg:grid-cols-3">
+                            {clusteredGuides.map((cluster, index) => (
+                                <a
+                                    key={cluster.id}
+                                    href={`#playbook-${cluster.id}`}
                                     className="group block h-full"
                                 >
-                                    <RSPanel className="flex h-full flex-col justify-between bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_theme(colors.black)] transition-all duration-300 group-hover:border-[var(--rs-text-primary)] group-hover:shadow-[12px_12px_0_var(--rs-signal)]">
-                                        <div>
-                                            <div className="mb-6 flex items-start justify-between gap-4">
-                                                <p className="rs-type-micro text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors">
-                                                    {guide.intent}
-                                                </p>
-                                                <ArrowUpRight className="h-4 w-4 text-[var(--rs-text-tertiary)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[var(--rs-signal)]" />
-                                            </div>
-                                            <h3 className="text-2xl font-black uppercase tracking-tighter text-[var(--rs-text-primary)] text-balance italic">
-                                                {guide.title.replace(/ (and|or|for|with|in) /gi, ' $1\u00A0')}
+                                    <RSPanel className="flex h-full flex-col justify-between border-2 border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] shadow-[8px_8px_0_var(--rs-border-primary)] transition-all duration-300 group-hover:border-[var(--rs-signal)] group-hover:shadow-[12px_12px_0_var(--rs-signal)]">
+                                        <div className="space-y-4">
+                                            <p className="rs-type-micro text-[var(--rs-text-tertiary)]">
+                                                0{index + 1} / {cluster.eyebrow}
+                                            </p>
+                                            <h3 className="text-xl font-black uppercase tracking-tight text-[var(--rs-text-primary)]">
+                                                {cluster.title}
                                             </h3>
-                                            <p className="mt-4 text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty font-medium">
-                                                {guide.description}
+                                            <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                                                {cluster.description}
                                             </p>
                                         </div>
-
-                                        <div className="mt-8 border-t-[3px] border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] -mx-6 -mb-6 px-6 py-5">
-                                            <div className="flex flex-wrap gap-2">
-                                                {guide.audience.split(',').map((tag) => (
-                                                    <span
-                                                        key={`${guide.slug}-${tag.trim()}`}
-                                                        className="inline-flex items-center border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--rs-text-secondary)]"
-                                                    >
-                                                        {tag.trim()}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                        <div className="mt-6 flex items-center justify-between border-t border-[var(--rs-border-primary)] pt-4">
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--rs-text-secondary)]">
+                                                {cluster.guides.length} guides
+                                            </span>
+                                            <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--rs-signal)]">
+                                                Jump to section
+                                                <ArrowUpRight className="h-3.5 w-3.5" />
+                                            </span>
                                         </div>
                                     </RSPanel>
-                                </Link>
+                                </a>
+                            ))}
+                        </div>
+
+                        <div className="space-y-8">
+                            {clusteredGuides.map((cluster, index) => (
+                                <PlaybookSection
+                                    key={cluster.id}
+                                    cluster={cluster}
+                                    sectionNumber={index + 1}
+                                />
                             ))}
                         </div>
                     </div>
@@ -214,45 +278,53 @@ export default async function AIContentGovernancePage() {
                             </p>
                         </div>
 
-                        <div className="space-y-6">
-                            {trackedSignals.map((item) => (
-                                <a
-                                    key={`${item.title}-${item.date}`}
-                                    href={item.sourceUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="group block h-full"
-                                >
-                                    <RSPanel className="h-full overflow-hidden border-2 border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] p-0 shadow-[8px_8px_0_var(--rs-border-primary)] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[12px_12px_0_theme(colors.black)]">
-                                        <div className="flex h-full flex-col md:flex-row md:items-stretch">
-                                            <div className="flex-1 p-6 md:p-8">
-                                                <p className="rs-type-micro text-[var(--rs-text-tertiary)]">
-                                                    {item.category} <span className="mx-2 text-[var(--rs-signal)]">|</span> {item.status}
-                                                </p>
-                                                <h3 className="mt-4 text-2xl font-black uppercase tracking-tighter text-[var(--rs-text-primary)] text-balance italic">
-                                                    {item.title}
-                                                </h3>
-                                                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty font-medium">
-                                                    {item.summary}
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-col justify-center border-t border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] p-6 transition-colors group-hover:bg-[var(--rs-bg-well)] md:min-w-[300px] md:border-t-0 md:border-l-[3px] md:p-8">
-                                                <p className="rs-type-label mb-2 text-[var(--rs-text-tertiary)]">
-                                                    Source
-                                                </p>
-                                                <p className="inline-flex items-start gap-2 text-sm font-bold text-[var(--rs-text-primary)] transition-colors group-hover:text-[var(--rs-signal)]">
-                                                    {item.sourceLabel}
-                                                    <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
-                                                </p>
-                                                <p className="mt-4 text-xs font-mono text-[var(--rs-text-secondary)]">
-                                                    {formatLongDate(item.date)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </RSPanel>
-                                </a>
+                        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-y border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)] px-4 py-4">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--rs-text-primary)]">
+                                    Latest signals
+                                </p>
+                                <p className="text-xs leading-relaxed text-[var(--rs-text-secondary)]">
+                                    The newest four items stay visible by default. Older signals drop into a small archive below.
+                                </p>
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--rs-text-primary)]">
+                                {primarySignals.length} live / {overflowSignals.length} archived
+                            </span>
+                        </div>
+
+                        <div className="grid gap-6 xl:grid-cols-2">
+                            {primarySignals.map((item, index) => (
+                                <TrackedSignalCard key={getSignalKey(item, index)} item={item} />
                             ))}
                         </div>
+
+                        {overflowSignals.length > 0 ? (
+                            <details className="mt-8 border-2 border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)] shadow-[8px_8px_0_var(--rs-border-primary)]">
+                                <summary className="cursor-pointer list-none px-6 py-5 [&::-webkit-details-marker]:hidden">
+                                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                        <div className="space-y-2">
+                                            <p className="rs-type-micro text-[var(--rs-text-tertiary)] font-bold">
+                                                Signal archive
+                                            </p>
+                                            <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                                                Open the older standards, litigation, and market signals without crowding the current watchlist.
+                                            </p>
+                                        </div>
+                                        <div className="inline-flex items-center gap-2 border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--rs-text-primary)]">
+                                            Show archive ({overflowSignals.length})
+                                            <ChevronDown className="h-3.5 w-3.5" />
+                                        </div>
+                                    </div>
+                                </summary>
+                                <div className="border-t border-[var(--rs-border-primary)] px-6 py-6">
+                                    <div className="grid gap-6 xl:grid-cols-2">
+                                        {overflowSignals.map((item, index) => (
+                                            <TrackedSignalCard key={getSignalKey(item, signalPreviewCount + index)} item={item} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </details>
+                        ) : null}
                     </div>
                 </section>
 
@@ -335,6 +407,161 @@ export default async function AIContentGovernancePage() {
             </main>
         </RSBackground>
     )
+}
+
+function GuideGrid({
+    guides,
+}: {
+    guides: (typeof governanceGuides)[number][]
+}) {
+    return (
+        <div className="grid gap-6 md:grid-cols-2">
+            {guides.map((guide) => (
+                <Link
+                    key={guide.slug}
+                    href={`/ai-content-governance/${guide.slug}`}
+                    className="group block h-full"
+                >
+                    <RSPanel className="flex h-full flex-col justify-between bg-[var(--rs-bg-surface)] border-2 border-[var(--rs-border-primary)] shadow-[8px_8px_0_theme(colors.black)] transition-all duration-300 group-hover:border-[var(--rs-text-primary)] group-hover:shadow-[12px_12px_0_var(--rs-signal)]">
+                        <div>
+                            <div className="mb-6 flex items-start justify-between gap-4">
+                                <p className="rs-type-micro text-[var(--rs-text-tertiary)] group-hover:text-[var(--rs-signal)] transition-colors">
+                                    {guide.intent}
+                                </p>
+                                <ArrowUpRight className="h-4 w-4 text-[var(--rs-text-tertiary)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[var(--rs-signal)]" />
+                            </div>
+                            <h3 className="text-2xl font-black uppercase tracking-tighter text-[var(--rs-text-primary)] text-balance italic">
+                                {guide.title.replace(/ (and|or|for|with|in) /gi, ' $1\u00A0')}
+                            </h3>
+                            <p className="mt-4 text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty font-medium">
+                                {guide.description}
+                            </p>
+                        </div>
+
+                        <div className="mt-8 border-t-[3px] border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] -mx-6 -mb-6 px-6 py-5">
+                            <div className="flex flex-wrap gap-2">
+                                {guide.audience.split(',').map((tag) => (
+                                    <span
+                                        key={`${guide.slug}-${tag.trim()}`}
+                                        className="inline-flex items-center border border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--rs-text-secondary)]"
+                                    >
+                                        {tag.trim()}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </RSPanel>
+                </Link>
+            ))}
+        </div>
+    )
+}
+
+function PlaybookSection({
+    cluster,
+    sectionNumber,
+}: {
+    cluster: GovernanceGuideCluster & { guides: (typeof governanceGuides)[number][] }
+    sectionNumber: number
+}) {
+    return (
+        <section
+            id={`playbook-${cluster.id}`}
+            className="border-2 border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] shadow-[8px_8px_0_var(--rs-border-primary)]"
+        >
+            <div className="grid gap-8 px-6 py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8 lg:py-8">
+                <div className="space-y-4">
+                    <p className="rs-type-micro text-[var(--rs-text-tertiary)]">
+                        0{sectionNumber} / {cluster.eyebrow}
+                    </p>
+                    <h3 className="text-2xl md:text-3xl uppercase italic font-black tracking-tight text-[var(--rs-text-primary)] text-balance">
+                        {cluster.title}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
+                        {cluster.description}
+                    </p>
+                    <div className="inline-flex items-center border border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--rs-text-primary)]">
+                        {cluster.guides.length} guides
+                    </div>
+                </div>
+                <GuideGrid guides={cluster.guides} />
+            </div>
+        </section>
+    )
+}
+
+function TrackedSignalCard({
+    item,
+}: {
+    item: {
+        title: string
+        date: string
+        category: string
+        status: string
+        summary: string
+        sourceLabel: string
+        sourceUrl: string
+    }
+}) {
+    return (
+        <a
+            href={item.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="group block h-full"
+        >
+            <RSPanel className="h-full overflow-hidden border-2 border-[var(--rs-border-primary)] bg-[var(--rs-bg-surface)] p-0 shadow-[8px_8px_0_var(--rs-border-primary)] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[12px_12px_0_theme(colors.black)]">
+                <div className="flex h-full flex-col md:flex-row md:items-stretch">
+                    <div className="flex-1 p-6 md:p-8">
+                        <p className="rs-type-micro text-[var(--rs-text-tertiary)]">
+                            {item.category} <span className="mx-2 text-[var(--rs-signal)]">|</span> {item.status}
+                        </p>
+                        <h3 className="mt-4 text-2xl font-black uppercase tracking-tighter text-[var(--rs-text-primary)] text-balance italic">
+                            {item.title}
+                        </h3>
+                        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--rs-text-secondary)] text-pretty font-medium">
+                            {item.summary}
+                        </p>
+                    </div>
+                    <div className="flex flex-col justify-center border-t border-[var(--rs-border-primary)] bg-[var(--rs-bg-secondary)] p-6 transition-colors group-hover:bg-[var(--rs-bg-well)] md:min-w-[300px] md:border-t-0 md:border-l-[3px] md:p-8">
+                        <p className="rs-type-label mb-2 text-[var(--rs-text-tertiary)]">
+                            Source
+                        </p>
+                        <p className="inline-flex items-start gap-2 text-sm font-bold text-[var(--rs-text-primary)] transition-colors group-hover:text-[var(--rs-signal)]">
+                            {item.sourceLabel}
+                            <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
+                        </p>
+                        <p className="mt-4 text-xs font-mono text-[var(--rs-text-secondary)]">
+                            {formatLongDate(item.date)}
+                        </p>
+                    </div>
+                </div>
+            </RSPanel>
+        </a>
+    )
+}
+
+function getSignalKey(
+    item: {
+        title: string
+        date: string
+        category: string
+        status: string
+        summary: string
+        sourceLabel: string
+        sourceUrl: string
+    },
+    index: number
+) {
+    return [
+        item.title,
+        item.date,
+        item.category,
+        item.status,
+        item.sourceLabel,
+        item.sourceUrl || item.summary.slice(0, 48),
+        index,
+    ].join('::')
 }
 
 function SignalPanel({
