@@ -74,20 +74,56 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
     const STALE_THRESHOLD_MS = 10 * 60 * 1000 // 10 minutes
     const staleThreshold = new Date(Date.now() - STALE_THRESHOLD_MS).toISOString()
 
-    // Try to claim: succeeds if scan is:
-    //   - 'pending' (batch pickup — no prior claim), OR
-    //   - 'processing' with no claim token (fresh upload), OR
-    //   - 'processing' with stale updated_at (orphaned job)
-    const { data: claimed, error: claimError } = await supabase
-      .from('scans')
-      .update({
-        status: 'processing', // Transition pending → processing atomically
-        error_message: claimToken,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', scanId)
-      .or(`status.eq.pending,and(status.eq.processing,or(error_message.is.null,updated_at.lt.${staleThreshold}))`)
-      .select('id')
+    const claimPayload = {
+      status: 'processing' as const,
+      error_message: claimToken,
+      updated_at: new Date().toISOString(),
+    }
+
+    // Keep the claim path simple. A nested `.or(...)` matched on SELECT but
+    // silently no-op'd on UPDATE in production, which stranded scans in
+    // `processing`. These guarded updates remain atomic at the row level while
+    // avoiding that PostgREST edge case.
+    const claimAttempts = [
+      () =>
+        supabase
+          .from('scans')
+          .update(claimPayload)
+          .eq('id', scanId)
+          .eq('status', 'pending')
+          .select('id'),
+      () =>
+        supabase
+          .from('scans')
+          .update(claimPayload)
+          .eq('id', scanId)
+          .eq('status', 'processing')
+          .is('error_message', null)
+          .select('id'),
+      () =>
+        supabase
+          .from('scans')
+          .update(claimPayload)
+          .eq('id', scanId)
+          .eq('status', 'processing')
+          .lt('updated_at', staleThreshold)
+          .select('id'),
+    ]
+
+    let claimed: { id: string }[] | null = null
+    let claimError: Error | null = null
+
+    for (const attemptClaim of claimAttempts) {
+      const { data, error } = await attemptClaim()
+      if (error) {
+        claimError = error
+        break
+      }
+      if (data && data.length > 0) {
+        claimed = data
+        break
+      }
+    }
 
     if (claimError || !claimed || claimed.length === 0) {
       // Check if it's already in a terminal state (not an error)
