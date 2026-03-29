@@ -13,7 +13,7 @@ import { DashboardEmailGate } from '@/components/dashboard/DashboardEmailGate';
 import { UnifiedScanDrawer } from '@/components/dashboard/UnifiedScanDrawer';
 import { AuditModal } from '@/components/marketing/AuditModal';
 import { cn } from '@/lib/utils';
-import { getRiskTier } from '@/lib/risk-utils';
+import { getRiskTier, toUIRiskLevel } from '@/lib/risk-utils';
 import { trackEvent } from '@/lib/analytics';
 import { Entitlements } from '@/lib/entitlements';
 import { generateForensicReport } from '@/lib/pdf-generator';
@@ -36,6 +36,7 @@ interface RiskProfile {
         history?: Array<{ action: string; when?: string }>;
         raw_manifest?: Record<string, unknown>;
     };
+    chief_officer_strategy?: { points: string[]; overall_confidence: string } | string;
 }
 
 const INITIAL_LOG_ENTRY = {
@@ -150,6 +151,8 @@ export default function DashboardPage() {
     const pollForCompletion = useCallback((scanId: string) => {
         const supabase = createClient();
         const channel = supabase.channel(`scan-${scanId}`);
+        const pollStartTime = Date.now();
+        const POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
         channel
             .on('broadcast', { event: 'progress' }, (payload) => {
@@ -160,6 +163,16 @@ export default function DashboardPage() {
             .subscribe();
 
         const pollInterval = setInterval(async () => {
+            // Timeout: stop polling if scan has been stuck for too long
+            if (Date.now() - pollStartTime > POLL_TIMEOUT_MS) {
+                clearInterval(pollInterval);
+                supabase.removeChannel(channel);
+                setScanStatus('error');
+                setErrorMessage('Analysis timed out. The scan may still be processing — try refreshing the page.');
+                addLog('SCAN TIMEOUT: Analysis did not complete within the expected window.', 'error');
+                return;
+            }
+
             try {
                 const res = await fetch(`/api/scans/${scanId}`, { cache: 'no-store' });
                 if (!res.ok) return;
@@ -811,11 +824,19 @@ export default function DashboardPage() {
                         <RSRiskPanel
                             id={currentScanId?.substring(0, 8).toUpperCase() || "SYS-STD-01"}
                             score={results.composite}
-                            level={getRiskTier(results.composite).level as 'critical' | 'high' | 'medium' | 'low' | 'safe'}
+                            level={toUIRiskLevel(getRiskTier(results.composite).level)}
                             ipScore={results.ipRisk}
                             safetyScore={results.brandSafety}
                             provenanceScore={results.provenance}
                             status="completed"
+                            verdict={analysisResult?.verdict}
+                            strategyPoints={
+                                analysisResult?.chief_officer_strategy
+                                    ? typeof analysisResult.chief_officer_strategy === 'string'
+                                        ? undefined
+                                        : analysisResult.chief_officer_strategy.points
+                                    : undefined
+                            }
                             className="w-full"
                         />
                     </div>

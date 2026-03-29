@@ -68,18 +68,53 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     await broadcastScanProgress(scanId, 10, "Initializing forensic engine...")
 
-    // Atomic status transition: only proceed if scan is in 'processing' state
-    // (set by upload route). This prevents duplicate processing if processScan
-    // is called twice for the same scan.
-    const { data: statusCheck } = await supabase
-      .from('scans')
-      .select('status')
-      .eq('id', scanId)
-      .single()
+    // Atomic claim: UPDATE with a WHERE guard so only one processor can proceed.
+    // The heartbeat timestamp lets stale-scan recovery detect abandoned jobs.
+    const claimToken = `proc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    const STALE_THRESHOLD_MS = 10 * 60 * 1000 // 10 minutes
+    const staleThreshold = new Date(Date.now() - STALE_THRESHOLD_MS).toISOString()
 
-    if (statusCheck?.status === 'complete' || statusCheck?.status === 'failed') {
-      console.warn(`Scan ${scanId} already in terminal state: ${statusCheck.status}, skipping`)
+    // Try to claim: succeeds if scan is:
+    //   - 'pending' (batch pickup — no prior claim), OR
+    //   - 'processing' with no claim token (fresh upload), OR
+    //   - 'processing' with stale updated_at (orphaned job)
+    const { data: claimed, error: claimError } = await supabase
+      .from('scans')
+      .update({
+        status: 'processing', // Transition pending → processing atomically
+        error_message: claimToken,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', scanId)
+      .or(`status.eq.pending,and(status.eq.processing,or(error_message.is.null,updated_at.lt.${staleThreshold}))`)
+      .select('id')
+
+    if (claimError || !claimed || claimed.length === 0) {
+      // Check if it's already in a terminal state (not an error)
+      const { data: statusCheck } = await supabase
+        .from('scans')
+        .select('status')
+        .eq('id', scanId)
+        .single()
+
+      if (statusCheck?.status === 'complete' || statusCheck?.status === 'failed') {
+        console.warn(`Scan ${scanId} already in terminal state: ${statusCheck.status}, skipping`)
+        return { success: true, scanId }
+      }
+
+      // Another processor claimed it
+      console.warn(`Scan ${scanId} could not be claimed (already being processed by another worker)`)
       return { success: true, scanId }
+    }
+
+    // Heartbeat: periodically touch updated_at so stale-scan recovery doesn't
+    // reclaim a scan that's still actively processing (especially video jobs).
+    const heartbeat = async () => {
+      await supabase
+        .from('scans')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', scanId)
+        .eq('status', 'processing')
     }
 
     // The select('*, assets(*)') returns assets as a joined relation
@@ -145,12 +180,15 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
       // Extract frames
       const { extractFrames, cleanupFrames } = await import('@/lib/video/processor')
-      const frames = await extractFrames(fileBuffer, frameLimit)
+      const frames = await extractFrames(fileBuffer, frameLimit, mimeType)
 
       // VIDEO C2PA CHECK
       try {
         await broadcastScanProgress(scanId, 40, "Verifying C2PA digital signature...")
-        const tempPath = path.join(os.tmpdir(), `scan-${scanId}-${Date.now()}.mp4`);
+        // Use correct extension for temp file (e.g. .mov for QuickTime)
+        const extMap: Record<string, string> = { 'video/quicktime': '.mov', 'video/webm': '.webm', 'video/x-matroska': '.mkv' }
+        const videoExt = extMap[mimeType] || '.mp4'
+        const tempPath = path.join(os.tmpdir(), `scan-${scanId}-${Date.now()}${videoExt}`);
         await fs.writeFile(tempPath, fileBuffer);
         const c2paReport = await verifyContentCredentials(tempPath);
         await fs.unlink(tempPath).catch(() => { }); // ignore cleanup error
@@ -196,6 +234,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
       // Analyze each frame
       for (const [index, frame] of frames.entries()) {
+        await heartbeat() // Keep the claim alive so stale-scan recovery doesn't reclaim mid-processing
         await broadcastScanProgress(scanId, 50 + Math.floor((index / frames.length) * 30), `Analyzing frame ${index + 1}/${frames.length}...`, { current: index + 1, total: frames.length })
         const frameBuffer = await fs.readFile(frame.filePath)
         const [fIp, fSafe] = await Promise.all([
@@ -295,6 +334,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     } else {
       // IMAGE PIPELINE - Use full enterprise analysis
+      await heartbeat()
       await broadcastScanProgress(scanId, 30, "Analyzing visual spectrum and IP databases...")
       const { analyzeImageMultiPersona } = await import('@/lib/gemini')
       riskProfile = await analyzeImageMultiPersona(
@@ -399,8 +439,10 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         is_video: isVideo,
         frames_analyzed: isVideo ? videoFramesData.length : null,
         completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         analysis_duration_ms: analysisTime,
         gemini_model_version: 'gemini-2.5-flash',
+        error_message: null, // Clear claim token on success
       })
       .eq('id', scanId)
 
@@ -488,22 +530,37 @@ export async function processPendingScans(): Promise<{
 }> {
   const supabase = await createServiceRoleClient()
 
+  // Pick up pending scans
   const { data: pendingScans, error } = await supabase
     .from('scans')
     .select('id')
     .eq('status', 'pending')
-    .limit(10) // Process max 10 at a time
+    .limit(10)
+
+  // Also reclaim scans stuck in 'processing' for >10 minutes (orphaned jobs)
+  const staleThreshold = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+  const { data: staleScanRows } = await supabase
+    .from('scans')
+    .select('id')
+    .eq('status', 'processing')
+    .lt('updated_at', staleThreshold)
+    .limit(10)
+
+  const staleScans = staleScanRows || []
+  if (staleScans.length > 0) {
+    console.warn(`Reclaiming ${staleScans.length} stale processing scan(s)`)
+  }
 
   if (error || !pendingScans) {
     console.error('Failed to fetch pending scans:', error)
-    return { processed: 0, succeeded: 0, failed: 0 }
+    return { processed: staleScans.length, succeeded: 0, failed: 0 }
   }
 
+  const allScans = [...pendingScans, ...staleScans]
   let succeeded = 0
   let failed = 0
 
-  // Process each scan
-  for (const scan of pendingScans) {
+  for (const scan of allScans) {
     const result = await processScan(scan.id)
     if (result.success) {
       succeeded++
@@ -513,7 +570,7 @@ export async function processPendingScans(): Promise<{
   }
 
   return {
-    processed: pendingScans.length,
+    processed: allScans.length,
     succeeded,
     failed,
   }

@@ -236,6 +236,23 @@ export async function POST(request: Request) {
                 await processScan(scan!.id)
             } catch (err) {
                 console.error('Background analysis failed:', err)
+                // Mark scan as failed so the UI stops spinning and recovery can work.
+                // processScan's own catch handler marks failures too, but if the import
+                // or an outer error prevents reaching it, this is the safety net.
+                try {
+                    const adminClient = await createServiceRoleClient()
+                    await adminClient
+                        .from('scans')
+                        .update({
+                            status: 'failed',
+                            error_message: `Background processing error: ${(err as Error).message?.substring(0, 200) || 'Unknown'}`,
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', scan!.id)
+                        .eq('status', 'processing') // Only update if still processing (don't overwrite a completed scan)
+                } catch (updateErr) {
+                    console.error('Failed to mark scan as failed after background error:', updateErr)
+                }
             }
         })
 

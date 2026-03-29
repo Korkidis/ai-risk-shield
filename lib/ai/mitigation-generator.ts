@@ -284,14 +284,18 @@ SECTION-BY-SECTION INSTRUCTIONS:
    - confidence: 0-100 percentage
    - observations: Array of what was found. ${compositeScore < 25 ? 'For low-risk domains: describe what was checked and what looked good. e.g., "No visual similarity to known protected works was detected in our reference database." These positive observations ARE the value of the report.' : 'Describe specific observations with evidence references.'}
    - action_suggested: ${compositeScore < 25 ? 'false for all domains under 25' : 'true only when there are concrete steps the team should take'}
-   - For observation.context: Explain why this observation matters in plain English. NOT legal analysis.
+   - Each observation description MUST be 2-3 sentences minimum. First sentence: what was found. Second: why it matters. Third: specific context from scan data.
+   - Each observation context field MUST be 1-2 sentences on practical implications.
    - For observation.evidence_ref: Link to FINDING-N references when they exist. For positive observations, use "scan_analysis".
+   For low-risk domains: Do NOT just say "nothing was found." Describe: (a) what specific checks were performed, (b) what a positive result means practically for the team, and (c) a concrete suggestion for maintaining this status.
    ${provStatus === 'valid' ? '\n   PROVENANCE SPECIAL: C2PA is verified. The provenance_analysis should highlight this as a significant strength. Explain what verified credentials mean (chain of custody from creation tool to now). This is the gold standard — make it feel like a win.' : ''}
 
 4. RECOMMENDATIONS (not "mitigation plan"):
    - ${compositeScore < 25 ? 'Frame as BEST PRACTICES for maintaining content quality, not risk remediation. Examples: asset naming conventions, disclosure practices, workflow documentation, provenance preservation.' : 'Frame as constructive suggestions, not directives. Use "consider" and "we recommend".'}
    - 2-4 actions, prioritized by value to the team
-   - impact: What this action achieves (positive framing)
+   - Each recommendation action MUST be specific and implementable — not vague advice like "review your content."
+   - Include the "why" — what risk does this action address or what benefit does it protect.
+   - impact: What this action achieves (positive framing). Quantify when possible (e.g., "reduces similarity flag likelihood by addressing the top visual match").
    - alternatives: Only needed for medium/high-risk items — creative alternatives that preserve intent
 
 5. OUTLOOK (not "residual risk"):
@@ -299,6 +303,8 @@ SECTION-BY-SECTION INSTRUCTIONS:
    - readiness: ${compositeScore < 25 ? '"ready" (MANDATORY)' : compositeScore < 50 ? '"conditional" recommended' : '"needs_attention" or "conditional" recommended'}
    - conditions: ${compositeScore < 25 ? 'Empty array — no conditions needed for low-risk content' : 'Specific items to address before publishing'}
    - next_steps: Helpful suggestions for the team going forward (governance tips, workflow improvements)
+
+QUALITY BAR: This is a premium $29 report. Each section should feel substantive and worth paying for. A reader should finish feeling informed and confident about their next steps. If a section would fit in a single line, expand it with methodology explanation or practical guidance. Thin, generic responses undermine trust in the product.
 
 OUTPUT: Generate JSON matching the schema. Rules:
 1. Match the scan data. Do NOT invent observations that weren't detected.

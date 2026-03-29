@@ -6,6 +6,7 @@ import path from 'path';
 import os from 'os';
 import { verifyContentCredentials } from './c2pa';
 import { BrandGuideline } from '@/types/database';
+import { getIPDoctrineContext, getSafetyDoctrineContext, getProvenanceDoctrineContext, getChiefStrategyDoctrineContext } from '@/lib/marketing/ai-content-governance';
 
 // Import and re-export types from separate types file
 import type { SpecialistReport, RiskProfile } from './gemini-types';
@@ -121,6 +122,8 @@ CRITICAL RULES:
 3. If you see Taylor Swift, Beyonce, or ANY major celebrity: score 99+ (CRITICAL LIABILITY)
 4. When in doubt, score HIGHER. Liability is expensive.
 
+${getIPDoctrineContext()}
+
 CONFIDENCE RATING:
 - high: Clear, recognizable match to known IP (e.g., unmistakable character, logo, or celebrity)
 - medium: Probable match but some ambiguity (e.g., similar style, partial visibility, fan art)
@@ -220,6 +223,8 @@ CRITICAL RULES:
 1. Cartoon violence is lower risk than realistic violence
 2. Consider: "Would a Fortune 500 CMO be comfortable with this in an ad?"
 3. Score based on actual content safety (violence, nudity, hate, etc.) — not on character identity or IP ownership
+
+${getSafetyDoctrineContext()}
 
 CONFIDENCE RATING:
 - high: Clear, unambiguous safety issue (e.g., explicit nudity, graphic violence, hate symbols)
@@ -324,6 +329,8 @@ CRITICAL RULES:
 2. Focus on what you OBSERVE in the visual content, not on restating C2PA facts.
 3. If you see no forensic red flags, say so clearly — do not inflate the score.
 
+${getProvenanceDoctrineContext()}
+
 CONFIDENCE RATING:
 - high: Clear forensic signals (e.g., obvious AI artifacts, unmistakable screenshot chrome)
 - medium: Probable signals but not definitive (e.g., suspicious quality patterns, possible editing)
@@ -389,6 +396,8 @@ SAFETY ANALYSIS:
 PROVENANCE ANALYSIS:
 - Risk Score: ${reports[2].score}/100 (0=strongest provenance, 100=no provenance)
 - Finding: ${reports[2].teaser}
+
+${getChiefStrategyDoctrineContext()}
 
 Based on these results, provide 1-5 clear, constructive recommendations. If scores are low, focus on best practices to maintain content quality. If scores are high, explain what was found and suggest practical next steps. Use plain language — no jargon. Rate your overall confidence (high/medium/low).`;
 

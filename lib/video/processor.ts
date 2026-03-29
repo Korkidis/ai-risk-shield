@@ -12,6 +12,20 @@ export type FrameResult = {
     filePath: string
 }
 
+/** Map video MIME types to file extensions for correct temp file naming. */
+function videoExtFromMime(mimeType?: string): string {
+    if (!mimeType) return '.mp4'
+    const map: Record<string, string> = {
+        'video/mp4': '.mp4',
+        'video/quicktime': '.mov',
+        'video/x-msvideo': '.avi',
+        'video/webm': '.webm',
+        'video/x-matroska': '.mkv',
+        'video/mpeg': '.mpeg',
+    }
+    return map[mimeType.toLowerCase()] || '.mp4'
+}
+
 /**
  * Extracts frames from a video buffer.
  * Strategy: Save to temp, extract evenly-spaced screenshots to save cost/time.
@@ -24,9 +38,10 @@ export type FrameResult = {
  * Get the duration of a video in seconds.
  * Writes buffer to temp file, runs ffprobe, cleans up.
  */
-export async function getVideoDuration(videoBuffer: Buffer): Promise<number> {
+export async function getVideoDuration(videoBuffer: Buffer, mimeType?: string): Promise<number> {
     const tempDir = os.tmpdir()
-    const videoPath = path.join(tempDir, `${uuidv4()}_probe.mp4`)
+    const ext = videoExtFromMime(mimeType)
+    const videoPath = path.join(tempDir, `${uuidv4()}_probe${ext}`)
     await fs.writeFile(videoPath, videoBuffer)
 
     try {
@@ -46,13 +61,33 @@ export async function getVideoDuration(videoBuffer: Buffer): Promise<number> {
     }
 }
 
-export async function extractFrames(videoBuffer: Buffer, limit = 10): Promise<FrameResult[]> {
+export async function extractFrames(videoBuffer: Buffer, limit = 10, mimeType?: string): Promise<FrameResult[]> {
     const tempDir = os.tmpdir()
     const runId = uuidv4()
-    const videoPath = path.join(tempDir, `${runId}.mp4`)
+    const ext = videoExtFromMime(mimeType)
+    const videoPath = path.join(tempDir, `${runId}${ext}`)
 
     // 1. Write video to temp file
     await fs.writeFile(videoPath, videoBuffer)
+
+    // 2. Probe video duration so we can assign accurate timestamps to frames.
+    //    Falls back to null if ffprobe fails (timestamps will default to 0).
+    let durationSecs: number | null = null
+    try {
+        durationSecs = await new Promise<number>((resolve, reject) => {
+            ffmpeg.ffprobe(videoPath, (err, metadata) => {
+                if (err) return reject(err)
+                const dur = metadata?.format?.duration
+                if (typeof dur !== 'number' || isNaN(dur) || dur <= 0) {
+                    return reject(new Error('Unable to determine video duration'))
+                }
+                resolve(dur)
+            })
+        })
+    } catch {
+        // Duration unknown — timestamps will fall back to 0 for all frames
+        durationSecs = null
+    }
 
     return new Promise((resolve, reject) => {
         const frames: FrameResult[] = []
@@ -91,10 +126,24 @@ export async function extractFrames(videoBuffer: Buffer, limit = 10): Promise<Fr
                 size: '640x?' // Resize to save analysis tokens
             })
             .on('filenames', (filenames) => {
-                // Map filenames to full paths
+                // Map filenames to full paths with accurate timestamps.
+                // ffmpeg .screenshots({ count: N }) extracts frames evenly spaced
+                // across the video, so we calculate timestamp = idx / (N-1) * duration.
+                const totalFrames = filenames.length
                 filenames.forEach((f: string, idx: number) => {
+                    let timestamp: number
+                    if (durationSecs !== null && totalFrames > 1) {
+                        timestamp = (idx / (totalFrames - 1)) * durationSecs
+                    } else if (durationSecs !== null && totalFrames === 1) {
+                        // Single frame — place at midpoint
+                        timestamp = durationSecs / 2
+                    } else {
+                        // Duration unknown — preserve ordering via index
+                        timestamp = idx
+                    }
+
                     frames.push({
-                        timestamp: idx, // Approximation, accurate timestamp requires more logic
+                        timestamp, // in seconds (actual video position)
                         filePath: path.join(tempDir, f)
                     })
                 })

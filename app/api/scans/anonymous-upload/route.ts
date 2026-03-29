@@ -159,6 +159,20 @@ export async function POST(request: Request) {
         console.log(`[Perf] processScan ${newScan.id.slice(0, 8)}: ${Date.now() - processStart}ms`)
       } catch (err) {
         console.error('Background analysis failed:', err)
+        try {
+          const adminClient = await createServiceRoleClient()
+          await adminClient
+            .from('scans')
+            .update({
+              status: 'failed',
+              error_message: `Background processing error: ${(err as Error).message?.substring(0, 200) || 'Unknown'}`,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', newScan.id)
+            .eq('status', 'processing')
+        } catch (updateErr) {
+          console.error('Failed to mark scan as failed after background error:', updateErr)
+        }
       }
     })
 

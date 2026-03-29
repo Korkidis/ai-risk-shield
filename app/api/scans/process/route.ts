@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       // 1. Fetch Scan Metadata (Status & Ownership)
       const { data: scanData, error: scanError } = await supabase
         .from('scans')
-        .select('id, status, user_id, tenant_id')
+        .select('id, status, user_id, tenant_id, updated_at')
         .eq('id', body.scanId)
         .single()
 
@@ -61,9 +61,18 @@ export async function POST(request: NextRequest) {
       // 2. Idempotency Check
       if (['processing', 'completed', 'valid', 'high', 'critical', 'review', 'safe'].includes(scanData.status)) {
         if (scanData.status === 'processing') {
-          return NextResponse.json({ success: false, error: 'Scan is already processing' }, { status: 409 })
+          // Allow retry if scan has been stuck in processing for >10 minutes (orphaned job)
+          const STALE_THRESHOLD_MS = 10 * 60 * 1000
+          const updatedAt = scanData.updated_at ? new Date(scanData.updated_at).getTime() : 0
+          const isStale = Date.now() - updatedAt > STALE_THRESHOLD_MS
+          if (!isStale) {
+            return NextResponse.json({ success: false, error: 'Scan is already processing' }, { status: 409 })
+          }
+          // Stale scan — reset to allow reprocessing
+          console.warn(`Reclaiming stale processing scan ${scanData.id} (stuck since ${scanData.updated_at})`)
+        } else {
+          return NextResponse.json({ success: true, message: 'Scan already completed', scanId: scanData.id }, { status: 200 })
         }
-        return NextResponse.json({ success: true, message: 'Scan already completed', scanId: scanData.id }, { status: 200 })
       }
 
       // 3. Ownership Check (if not Service Role)

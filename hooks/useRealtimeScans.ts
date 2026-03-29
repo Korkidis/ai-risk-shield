@@ -125,6 +125,33 @@ export function useRealtimeScans({
         return cleanup
     }, [enabled, hasProcessingScans, processingIdsKey, processingIds])
 
+    // 1b. Passive staleness tracking — scans processing >10 min without a heartbeat
+    // are flagged as stale for UI display. No synthetic failure, no HTTP fetch.
+    // Server-side recovery (cron + atomic claim) handles actual recovery;
+    // the Realtime subscription delivers the real terminal status when it arrives.
+    const STALE_THRESHOLD_MS = 10 * 60 * 1000 // 10 minutes (matches server threshold)
+
+    // Periodic tick ensures staleIds recomputes even without new Realtime events
+    const [staleTick, setStaleTick] = useState(0)
+    useEffect(() => {
+        if (!hasProcessingScans) return
+        const id = setInterval(() => setStaleTick(t => t + 1), 60_000)
+        return () => clearInterval(id)
+    }, [hasProcessingScans])
+
+    const staleIds = useMemo(() => {
+        const now = Date.now()
+        return scans
+            .filter(s => {
+                if (s.status !== 'processing' && s.status !== 'pending') return false
+                const lastActivity = s.updated_at || s.created_at
+                if (!lastActivity) return false
+                return now - new Date(lastActivity).getTime() > STALE_THRESHOLD_MS
+            })
+            .map(s => s.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scans, staleTick])
+
     // 2. Individual Broadcast Subscriptions
     useEffect(() => {
         processingIds.forEach(id => {
@@ -170,5 +197,6 @@ export function useRealtimeScans({
         isSubscribed,
         processingCount: processingIds.length,
         ephemeralState,
+        staleIds,
     }
 }

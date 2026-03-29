@@ -8,7 +8,7 @@
  */
 
 // Re-export canonical types and functions
-export { getRiskTier, type RiskLevel, type BoxTier } from './risk/tiers'
+export { getRiskTier, toUIRiskLevel, type RiskLevel, type BoxTier } from './risk/tiers'
 
 // ─── UI Utility Helpers (thin wrappers over canonical tiers) ────────────────
 
