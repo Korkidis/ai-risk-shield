@@ -17,13 +17,14 @@ export interface ScanCardProps {
     isBulkSelected: boolean
     liveProgress?: number
     liveMessage?: string
+    isStale?: boolean
     onBulkToggle: (checked: boolean) => void
     onClick: () => void
     onDownload: () => void
     onShare: () => void
 }
 
-export function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage, onBulkToggle, onClick, onDownload, onShare }: ScanCardProps) {
+export function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveMessage, isStale, onBulkToggle, onClick, onDownload, onShare }: ScanCardProps) {
     const score = scan.risk_profile?.composite_score || 0;
     const thumbnailPath = scan.tenant_id && scan.asset_id ? `${scan.tenant_id}/${scan.asset_id}_thumb.jpg` : null;
     const thumbnailUrl = thumbnailPath ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/thumbnails/${thumbnailPath}` : null;
@@ -135,14 +136,15 @@ export function ScanCard({ scan, isSelected, isBulkSelected, liveProgress, liveM
                     className="absolute top-[8px] right-[8px] h-[28px] px-2 flex items-center justify-center rounded-full z-30 shadow-md backdrop-blur-sm"
                     style={{
                         backgroundColor:
-                            scan.status === 'processing' || scan.status === 'pending' ? 'var(--rs-text-tertiary)' :
-                                scan.status === 'failed' ? 'var(--rs-destruct)' :
+                            scan.status === 'processing' || scan.status === 'pending'
+                                ? (isStale ? 'var(--rs-caution)' : 'var(--rs-text-tertiary)')
+                                : scan.status === 'failed' ? 'var(--rs-destruct)' :
                                     riskTier.colorVar
                     }}
                 >
                     <span className="text-[10px] font-bold text-white uppercase tracking-wider leading-none flex items-center gap-1">
-                        {(scan.status === 'processing' || scan.status === 'pending') && <Loader2 className="w-3 h-3 animate-spin" />}
-                        {scan.status === 'processing' || scan.status === 'pending' ? 'ANALYZING' :
+                        {(scan.status === 'processing' || scan.status === 'pending') && !isStale && <Loader2 className="w-3 h-3 animate-spin" />}
+                        {scan.status === 'processing' || scan.status === 'pending' ? (isStale ? 'DELAYED' : 'ANALYZING') :
                             scan.status === 'failed' ? 'FAILED' :
                                 riskTier.label === 'CRITICAL RISK' ? 'CRITICAL' :
                                     riskTier.label === 'HIGH RISK' ? 'HIGH RISK' :

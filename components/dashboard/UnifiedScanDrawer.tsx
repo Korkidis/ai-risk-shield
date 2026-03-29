@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { X, Loader2, ExternalLink, Shield, FileText, Clock, Hash } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -10,6 +10,7 @@ import { RSButton } from '@/components/rs/RSButton'
 import { RSRiskPanel } from '@/components/rs/RSRiskPanel'
 import { RSCallout } from '@/components/rs/RSCallout'
 import { type RiskLevel } from '@/components/rs/RSRiskScore'
+import { toUIRiskLevel, mapLegacyLevel } from '@/lib/risk/tiers'
 import { format } from 'date-fns'
 import { formatBytes } from '@/lib/utils'
 import { generateMitigationPDF } from '@/lib/pdf-generator'
@@ -52,6 +53,12 @@ export interface UnifiedScanDrawerProps {
     onDismissDownloadBanner: () => void
     /** Authenticated user's tenant ID — used to suppress mitigation CTA on cross-tenant scans */
     userTenantId?: string
+    /** Show first-scan onboarding banner */
+    isFirstScan?: boolean
+    /** Called when user dismisses the first-scan banner */
+    onFirstScanDismiss?: () => void
+    /** Scan is taking longer than expected (no heartbeat for >10 min) */
+    isStale?: boolean
 }
 
 // ─── Provenance Helpers ──────────────────────────────────────────────────────
@@ -135,6 +142,9 @@ export function UnifiedScanDrawer({
     showDownloadBanner,
     onDismissDownloadBanner,
     userTenantId,
+    isFirstScan,
+    onFirstScanDismiss,
+    isStale,
 }: UnifiedScanDrawerProps) {
     const provenance = getProvenanceData(scan)
     const aiDeclaration = parseAiDeclaration(provenance?.raw_manifest)
@@ -142,6 +152,12 @@ export function UnifiedScanDrawer({
     const manifestDetected = !!provenance?.raw_manifest
     const hasEditHistory = Array.isArray(provenance?.edit_history) && provenance.edit_history.length > 0
     const latestMitigation: MitigationReport | null = scan.mitigation_reports?.[0] || null
+
+    const advisoryRef = useRef<HTMLElement>(null)
+    const prevMitigationStatus = useRef<string | null>(null)
+    const scrollToAdvisory = () => {
+        advisoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
 
     // Scan report access: always true when drawer is open (scan report = free baseline).
     // The drawer is only opened for authenticated or post-email users.
@@ -157,6 +173,26 @@ export function UnifiedScanDrawer({
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [isOpen, onClose]);
+
+    useEffect(() => {
+        const currentStatus = latestMitigation?.status || null
+        const prevStatus = prevMitigationStatus.current
+        prevMitigationStatus.current = currentStatus
+
+        if (currentStatus === 'complete' && prevStatus && prevStatus !== 'complete') {
+            // Auto-download PDF
+            if (latestMitigation?.report_content) {
+                generateMitigationPDF(
+                    latestMitigation.report_content,
+                    scan,
+                    latestMitigation.id,
+                    latestMitigation.completed_at || undefined,
+                )
+            }
+            // Scroll to advisory section
+            scrollToAdvisory()
+        }
+    }, [latestMitigation?.status, latestMitigation?.report_content, latestMitigation?.id, latestMitigation?.completed_at, scan])
 
     if (!isOpen) return null
 
@@ -182,12 +218,12 @@ export function UnifiedScanDrawer({
             {/* ═══════════════ HEADER ═══════════════ */}
             <div className="h-16 border-b border-rs-border-primary flex items-center justify-between px-6 bg-[var(--rs-bg-element)]/80 backdrop-blur-md shrink-0">
                 <div className="space-y-0.5">
-                    <h2 className="text-[9px] font-black uppercase tracking-[0.3em] text-rs-text-tertiary">Scan_Workspace</h2>
-                    <p className="text-[10px] font-bold text-rs-text-primary uppercase tracking-wider truncate max-w-[280px]">{scan.filename}</p>
+                    <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-rs-text-tertiary">Scan_Workspace</h2>
+                    <p className="text-[12px] font-bold text-rs-text-primary uppercase tracking-wider truncate max-w-[280px]">{scan.filename}</p>
                 </div>
                 <button
                     onClick={onClose}
-                    className="h-8 px-3 flex items-center gap-1.5 justify-center border border-rs-border-primary hover:border-rs-text-primary text-rs-text-tertiary hover:text-rs-text-primary transition-all rounded-[1px] hover:bg-[var(--rs-bg-element)] text-[9px] font-black uppercase tracking-wider"
+                    className="h-8 px-3 flex items-center gap-1.5 justify-center border border-rs-border-primary hover:border-rs-text-primary text-rs-text-tertiary hover:text-rs-text-primary transition-all rounded-[1px] hover:bg-[var(--rs-bg-element)] text-[10px] font-black uppercase tracking-wider"
                 >
                     <X className="w-3.5 h-3.5" />
                     Close
@@ -196,6 +232,37 @@ export function UnifiedScanDrawer({
 
             {/* ═══════════════ SCROLLABLE CONTENT ═══════════════ */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+
+                {/* ── First-Scan Onboarding Banner ── */}
+                {isFirstScan && (
+                    <div className="p-5 bg-[var(--rs-info)]/5 border border-[var(--rs-info)]/20 rounded-[2px] relative">
+                        <button
+                            onClick={() => {
+                                localStorage.setItem('rs_first_scan_seen', 'true')
+                                onFirstScanDismiss?.()
+                            }}
+                            className="absolute top-3 right-3 text-[var(--rs-text-tertiary)] hover:text-[var(--rs-text-primary)] transition-colors"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="space-y-2 pr-6">
+                            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--rs-info)]">
+                                Your First Scan
+                            </span>
+                            <p className="text-[13px] text-[var(--rs-text-secondary)] leading-relaxed">
+                                We analyzed this image across three domains: intellectual property risk, brand safety, and provenance verification.
+                                The composite score and findings below reflect our assessment. Scroll down to review each domain.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Stale Scan Warning ── */}
+                {isStale && (scan.status === 'processing' || scan.status === 'pending') && (
+                    <RSCallout variant="warning">
+                        This scan is taking longer than expected.
+                    </RSCallout>
+                )}
 
                 {/* ── Section 1: Scan Summary ── */}
                 <section>
@@ -242,6 +309,8 @@ export function UnifiedScanDrawer({
                     </div>
                 </section>
 
+                <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent" />
+
                 {/* ── Section 2: Risk Overview ── */}
                 <section>
                     {scan.status === 'failed' ? (
@@ -255,23 +324,29 @@ export function UnifiedScanDrawer({
                                 scan.status === 'processing' || scan.status === 'pending' ? 'scanning' : 'completed'
                             }
                             score={scan.risk_profile?.composite_score || 0}
-                            level={
-                                scan.risk_level === 'review' ? 'medium' :
-                                    scan.risk_level === 'caution' ? 'low' :
-                                        (scan.risk_level || 'low') as RiskLevel
-                            }
+                            level={toUIRiskLevel(mapLegacyLevel(scan.risk_level || 'safe')) as RiskLevel}
                             ipScore={scan.risk_profile?.ip_report?.score || 0}
                             safetyScore={scan.risk_profile?.safety_report?.score || 0}
                             provenanceScore={scan.risk_profile?.provenance_report?.score || 0}
+                            verdict={scan.risk_profile?.verdict}
+                            strategyPoints={
+                                scan.risk_profile?.chief_officer_strategy
+                                    ? typeof scan.risk_profile.chief_officer_strategy === 'string'
+                                        ? undefined
+                                        : scan.risk_profile.chief_officer_strategy.points
+                                    : undefined
+                            }
                             className="shadow-sm"
                         />
                     )}
                 </section>
 
+                <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent" />
+
                 {/* ── Section 3: Scan Findings ── */}
                 {scan.status !== 'failed' && <section className="border border-rs-border-primary bg-[var(--rs-bg-surface)]">
                     <div className="px-5 py-3 border-b border-rs-border-primary bg-[var(--rs-bg-element)]/70 flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-rs-text-tertiary">Scan Findings</span>
+                        <span className="text-[12px] font-black uppercase tracking-[0.15em] text-rs-text-tertiary">Scan Findings</span>
                         <div className="px-2 py-0.5 bg-rs-text-primary text-white text-[10px] font-bold rounded-[1px]">
                             {scan.scan_findings?.length || 0}
                         </div>
@@ -280,32 +355,35 @@ export function UnifiedScanDrawer({
                         {canViewBaselineReport ? (
                             // Full access: all findings visible
                             scan.scan_findings && scan.scan_findings.length > 0 ? (
-                                <div className="space-y-4">
+                                <div className="space-y-5">
                                     {scan.scan_findings.map((finding) => {
                                         const isPositive = finding.finding_type === 'ip_clear' || finding.finding_type === 'safety_clear' ||
                                             (finding.finding_type === 'provenance_verified' && finding.severity === 'low')
                                         const dotColor = isPositive ? 'bg-[var(--rs-safe)]' :
                                             finding.severity === 'critical' ? 'bg-rs-destruct' :
                                                 finding.severity === 'high' ? 'bg-rs-alert' : 'bg-rs-signal'
+                                        const borderColor = isPositive ? 'border-l-[var(--rs-safe)]' :
+                                            (finding.severity === 'critical' || finding.severity === 'high') ? 'border-l-[var(--rs-signal)]' :
+                                                finding.severity === 'medium' ? 'border-l-[var(--rs-risk-caution)]' : 'border-l-[var(--rs-safe)]'
                                         return (
-                                            <div key={finding.id} className="p-4 bg-[var(--rs-bg-well)] border border-rs-border-primary/40 rounded-[2px]">
+                                            <div key={finding.id} className={cn("p-5 bg-[var(--rs-bg-well)] border border-rs-border-primary/40 rounded-[2px] border-l-[3px]", borderColor)}>
                                                 <div className="flex items-start gap-3">
-                                                    <div className={cn("w-2.5 h-2.5 rounded-full mt-1 shrink-0", dotColor)} />
-                                                    <div className="flex-1 space-y-1.5">
+                                                    <div className={cn("w-3 h-3 rounded-full mt-1 shrink-0", dotColor)} />
+                                                    <div className="flex-1 space-y-2">
                                                         <div className="flex items-center justify-between">
-                                                            <span className="text-[12px] font-bold text-rs-text-primary">{finding.title}</span>
-                                                            <span className="text-[10px] font-mono text-rs-text-tertiary shrink-0 ml-3">{finding.confidence_score}%</span>
+                                                            <span className="text-[14px] font-bold text-rs-text-primary">{finding.title}</span>
+                                                            <span className="text-[11px] font-mono text-rs-text-tertiary shrink-0 ml-3">{finding.confidence_score}%</span>
                                                         </div>
-                                                        <p className="text-[12px] text-rs-text-secondary leading-relaxed">
+                                                        <p className="text-[13px] text-rs-text-secondary leading-relaxed">
                                                             {finding.description}
                                                         </p>
                                                         <div className="flex items-center gap-3 pt-1">
-                                                            <span className={cn("text-[9px] font-bold uppercase tracking-wider",
+                                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider",
                                                                 isPositive ? 'text-[var(--rs-safe)]' :
                                                                 finding.severity === 'critical' ? 'text-rs-destruct' :
                                                                 finding.severity === 'high' ? 'text-rs-alert' : 'text-rs-signal'
                                                             )}>{finding.severity}</span>
-                                                            <span className="text-[9px] text-rs-text-tertiary">{finding.finding_type?.replace(/_/g, ' ')}</span>
+                                                            <span className="text-[10px] text-rs-text-tertiary">{finding.finding_type?.replace(/_/g, ' ')}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -315,10 +393,10 @@ export function UnifiedScanDrawer({
                                 </div>
                             ) : (
                                 <div className="text-center py-6">
-                                    <div className="w-8 h-8 mx-auto rounded-full bg-[var(--rs-safe)]/10 flex items-center justify-center mb-2">
-                                        <Shield className="w-4 h-4 text-[var(--rs-safe)]" />
+                                    <div className="w-10 h-10 mx-auto rounded-full bg-[var(--rs-safe)]/10 flex items-center justify-center mb-2">
+                                        <Shield className="w-5 h-5 text-[var(--rs-safe)]" />
                                     </div>
-                                    <span className="text-[11px] font-medium text-rs-text-secondary">All checks passed — no issues detected</span>
+                                    <span className="text-[12px] font-medium text-rs-text-secondary">All checks passed — no issues detected</span>
                                 </div>
                             )
                         ) : (
@@ -362,6 +440,8 @@ export function UnifiedScanDrawer({
                     </section>
                 )}
 
+                <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent" />
+
                 {/* ── Section 4: Provenance & Creation ── */}
                 <section>
                     <div className="relative w-full">
@@ -377,11 +457,11 @@ export function UnifiedScanDrawer({
                                             provenance?.signature_status === 'caution' ? 'bg-[var(--rs-risk-caution)]' :
                                                 manifestDetected ? 'bg-[var(--rs-signal)]' : 'bg-[var(--rs-text-tertiary)]'
                                     )} />
-                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--rs-text-tertiary)]">
+                                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--rs-text-tertiary)]">
                                         Content_Credentials
                                     </span>
                                 </div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: sigConfig.color }}>
+                                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: sigConfig.color }}>
                                     {manifestDetected ? sigConfig.label : 'NO_MANIFEST'}
                                 </span>
                             </div>
@@ -446,12 +526,12 @@ export function UnifiedScanDrawer({
                                 {/* Chain of Custody (edit history) */}
                                 {canViewProvenance && hasEditHistory && (
                                     <div className="pt-2 border-t border-[var(--rs-border-primary)]/50">
-                                        <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] mb-2 block">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] mb-2 block">
                                             Chain of Custody
                                         </span>
                                         <div className="space-y-1.5 max-h-[120px] overflow-y-auto custom-scrollbar">
                                             {provenance!.edit_history!.map((entry: { action?: string; label?: string; tool?: string; timestamp?: string }, i: number) => (
-                                                <div key={i} className="flex items-center gap-3 text-[9px] py-1 px-2 bg-[var(--rs-bg-surface)] rounded border border-[var(--rs-border-primary)]/30">
+                                                <div key={i} className="flex items-center gap-3 text-[10px] py-1 px-2 bg-[var(--rs-bg-surface)] rounded border border-[var(--rs-border-primary)]/30">
                                                     <span className="w-4 text-[var(--rs-text-tertiary)] font-bold">{i + 1}</span>
                                                     <span className="text-[var(--rs-text-primary)] font-medium flex-1 truncate">
                                                         {entry.action || entry.label || 'Edit'}
@@ -470,13 +550,23 @@ export function UnifiedScanDrawer({
                                     </div>
                                 )}
 
+                                {/* Creation Date */}
+                                {provenance?.creation_timestamp && (
+                                    <ProvenanceRow
+                                        label="Creation Date"
+                                        value={format(new Date(provenance.creation_timestamp), 'MMM d, yyyy HH:mm')}
+                                        status="info"
+                                        barWidth={100}
+                                    />
+                                )}
+
                                 {/* Cryptographic Evidence */}
                                 {canViewProvenance && manifestDetected && (
                                     <div className="pt-2 border-t border-[var(--rs-border-primary)]/50">
-                                        <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] mb-1 block">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)] mb-1 block">
                                             Cryptographic Evidence
                                         </span>
-                                        <div className="text-[9px] text-[var(--rs-text-secondary)] space-y-0.5">
+                                        <div className="text-[10px] text-[var(--rs-text-secondary)] space-y-0.5">
                                             <div>Hash Algorithm: <span className="text-[var(--rs-text-primary)] font-medium">{provenance?.hashing_algorithm || 'SHA-256'}</span></div>
                                             {provenance?.creation_timestamp && (
                                                 <div>Signed At: <span className="text-[var(--rs-text-primary)] font-medium">{format(new Date(provenance.creation_timestamp), 'MMM d, yyyy HH:mm:ss')}</span></div>
@@ -489,7 +579,7 @@ export function UnifiedScanDrawer({
                                 {!canViewProvenance && (
                                     <div className="pt-2 border-t border-[var(--rs-border-primary)]/50">
                                         <div className="text-center py-3">
-                                            <p className="text-[9px] text-[var(--rs-text-tertiary)] uppercase tracking-wider">
+                                            <p className="text-[10px] text-[var(--rs-text-tertiary)] uppercase tracking-wider">
                                                 Additional provenance data available after account creation
                                             </p>
                                         </div>
@@ -502,7 +592,7 @@ export function UnifiedScanDrawer({
                                         href="https://contentcredentials.org/verify"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-[var(--rs-info)] hover:underline"
+                                        className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--rs-info)] hover:underline"
                                     >
                                         <ExternalLink className="w-3 h-3" />
                                         Verify on ContentCredentials.org
@@ -574,30 +664,34 @@ export function UnifiedScanDrawer({
                     const provDomain = normalizeDomain(raw.provenance_analysis as Record<string, unknown>)
 
                     return (
-                        <section className="space-y-5 pt-6 border-t border-rs-border-primary/50">
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Advisory Report</span>
+                        <section ref={advisoryRef} className="space-y-5 pt-6 border-t-2 border-[var(--rs-info)]/30">
+                            <span className="text-[14px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Advisory Report</span>
 
                             {/* Explainability */}
                             {explainability && (
-                                <div className="p-4 bg-[var(--rs-bg-surface)] border border-rs-border-primary/30 rounded-[2px] space-y-2">
+                                <div className="p-6 bg-[var(--rs-bg-surface)] border border-rs-border-primary/30 rounded-[2px] space-y-2">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-rs-text-tertiary">How We Analyzed</span>
-                                    <p className="text-[12px] text-rs-text-secondary leading-relaxed">{explainability.summary}</p>
-                                    <p className="text-[11px] text-rs-text-tertiary leading-relaxed">{explainability.score_explanation}</p>
+                                    <p className="text-[14px] text-rs-text-secondary leading-relaxed">{explainability.summary}</p>
+                                    <p className="text-[13px] text-rs-text-tertiary leading-relaxed">{explainability.score_explanation}</p>
                                 </div>
                             )}
 
+                            <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent my-2" />
+
                             {/* Executive Summary */}
-                            <div className="p-4 bg-[var(--rs-bg-well)] rounded-[2px] space-y-3">
+                            <div className="p-6 bg-[var(--rs-bg-well)] rounded-[2px] space-y-3">
                                 <div className="flex items-center gap-3">
-                                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 border rounded-[1px] ${recommendationColors[normalizedRec] || 'text-rs-text-secondary border-rs-border-primary'}`}>
+                                    <span className={`text-[12px] font-black uppercase tracking-widest px-4 py-1.5 border rounded-[1px] ${recommendationColors[normalizedRec] || 'text-rs-text-secondary border-rs-border-primary'}`}>
                                         {recDisplay}
                                     </span>
-                                    <span className="text-[10px] text-rs-text-tertiary">
+                                    <span className="text-[12px] text-rs-text-tertiary">
                                         Confidence: {rawEs.confidence as number || 0}%
                                     </span>
                                 </div>
-                                <p className="text-[12px] text-rs-text-secondary leading-relaxed">{rawEs.rationale as string || ''}</p>
+                                <p className="text-[14px] text-rs-text-secondary leading-relaxed">{rawEs.rationale as string || ''}</p>
                             </div>
+
+                            <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent my-2" />
 
                             {/* Domain Analyses */}
                             {[
@@ -605,25 +699,25 @@ export function UnifiedScanDrawer({
                                 { label: 'Brand Safety', data: safetyDomain },
                                 { label: 'Provenance & Authenticity', data: provDomain },
                             ].map(({ label, data }) => data && (
-                                <div key={label} className="space-y-2 p-4 bg-[var(--rs-bg-surface)] border border-rs-border-primary/20 rounded-[2px]">
+                                <div key={label} className="space-y-2 p-6 bg-[var(--rs-bg-surface)] border border-rs-border-primary/20 rounded-[2px]">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider text-rs-text-tertiary">{label}</span>
-                                        <span className={`text-[10px] font-bold uppercase ${data.signal_strength === 'strong' || data.signal_strength === 'significant' || data.signal_strength === 'critical' || data.signal_strength === 'high' ? 'text-rs-destruct' : data.signal_strength === 'moderate' || data.signal_strength === 'medium' ? 'text-[var(--rs-warn)]' : 'text-[var(--rs-safe)]'}`}>
+                                        <span className="text-[13px] font-bold uppercase tracking-wider text-rs-text-tertiary">{label}</span>
+                                        <span className={`text-[12px] font-bold uppercase ${data.signal_strength === 'strong' || data.signal_strength === 'significant' || data.signal_strength === 'critical' || data.signal_strength === 'high' ? 'text-rs-destruct' : data.signal_strength === 'moderate' || data.signal_strength === 'medium' ? 'text-[var(--rs-warn)]' : 'text-[var(--rs-safe)]'}`}>
                                             {data.signal_strength}
                                         </span>
-                                        <span className="text-[10px] text-rs-text-tertiary ml-auto">
+                                        <span className="text-[12px] text-rs-text-tertiary ml-auto">
                                             {data.action_suggested ? 'Action Suggested' : 'No Action Needed'}
                                         </span>
                                     </div>
                                     {data.observations?.length > 0 && (
-                                        <div className="space-y-2 mt-1">
+                                        <div className="space-y-3 mt-1">
                                             {data.observations.map((o, i: number) => (
                                                 <div key={i} className="pl-3 border-l-2 border-rs-border-primary/40 space-y-1">
-                                                    <p className="text-[11px] text-rs-text-primary">
+                                                    <p className="text-[14px] text-rs-text-primary">
                                                         <span className="font-semibold">{o.type}:</span> {o.description}
                                                     </p>
                                                     {o.context && (
-                                                        <p className="text-[10px] text-rs-text-tertiary italic leading-relaxed">{o.context}</p>
+                                                        <p className="text-[12px] text-rs-text-tertiary italic leading-relaxed">{o.context}</p>
                                                     )}
                                                 </div>
                                             ))}
@@ -632,20 +726,22 @@ export function UnifiedScanDrawer({
                                 </div>
                             ))}
 
+                            <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent my-2" />
+
                             {/* Recommendations */}
                             {actions.length > 0 && (
                                 <div className="space-y-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-rs-text-tertiary">Recommendations</span>
+                                    <span className="text-[13px] font-bold uppercase tracking-widest text-rs-text-tertiary">Recommendations</span>
                                     <div className="space-y-3">
                                         {actions.map((a, i: number) => (
-                                            <div key={i} className="p-3 bg-[var(--rs-bg-surface)] border border-rs-border-primary rounded-[2px]">
+                                            <div key={i} className="p-5 bg-[var(--rs-bg-surface)] border border-rs-border-primary rounded-[2px]">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-[10px] font-black text-rs-text-primary">#{a.priority}</span>
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--rs-info)]">{a.domain}</span>
-                                                    <span className="text-[10px] text-rs-text-tertiary ml-auto">{a.effort}</span>
+                                                    <span className="text-[12px] font-black text-rs-text-primary">#{a.priority}</span>
+                                                    <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--rs-info)]">{a.domain}</span>
+                                                    <span className="text-[12px] text-rs-text-tertiary ml-auto">{a.effort}</span>
                                                 </div>
-                                                <p className="text-[12px] text-rs-text-primary leading-relaxed">{a.action}</p>
-                                                <p className="text-[10px] text-rs-text-tertiary mt-1.5">
+                                                <p className="text-[14px] text-rs-text-primary leading-relaxed">{a.action}</p>
+                                                <p className="text-[12px] text-rs-text-tertiary mt-1.5">
                                                     {a.impact || a.risk_reduction ? `Impact: ${a.impact || a.risk_reduction}` : ''}
                                                     {a.verification ? ` · Verify: ${a.verification}` : ''}
                                                 </p>
@@ -655,6 +751,8 @@ export function UnifiedScanDrawer({
                                 </div>
                             )}
 
+                            <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent my-2" />
+
                             {/* Outlook */}
                             <div className="p-4 bg-[var(--rs-bg-well)] rounded-[2px] space-y-2">
                                 <div className="flex items-center gap-3">
@@ -663,9 +761,9 @@ export function UnifiedScanDrawer({
                                         {readiness === 'ready' || readiness === 'approved' ? 'READY TO PUBLISH' : readiness === 'conditional' ? 'SOME ITEMS TO CONSIDER' : 'WORTH REVIEWING'}
                                     </span>
                                 </div>
-                                <p className="text-[11px] text-rs-text-secondary leading-relaxed">{outlookSummary}</p>
+                                <p className="text-[14px] text-rs-text-secondary leading-relaxed">{outlookSummary}</p>
                                 {outlookConditions.length > 0 && (
-                                    <div className="text-[10px] text-rs-text-tertiary space-y-0.5">
+                                    <div className="text-[12px] text-rs-text-tertiary space-y-0.5">
                                         {outlookConditions.map((c, i) => (
                                             <div key={i}>&bull; {c}</div>
                                         ))}
@@ -673,8 +771,8 @@ export function UnifiedScanDrawer({
                                 )}
                                 {outlookNextSteps.length > 0 && (
                                     <div className="mt-2">
-                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rs-text-tertiary">Next Steps</span>
-                                        <div className="text-[10px] text-rs-text-tertiary space-y-0.5 mt-1">
+                                        <span className="text-[11px] font-bold uppercase tracking-wider text-rs-text-tertiary">Next Steps</span>
+                                        <div className="text-[12px] text-rs-text-tertiary space-y-0.5 mt-1">
                                             {outlookNextSteps.map((ns, i) => (
                                                 <div key={i}>&bull; {ns}</div>
                                             ))}
@@ -686,7 +784,7 @@ export function UnifiedScanDrawer({
                             {/* Download Advisory PDF */}
                             <RSButton
                                 variant="ghost"
-                                className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all mt-3"
+                                className="w-full h-11 text-[10px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all mt-3"
                                 onClick={() => {
                                     generateMitigationPDF(
                                         latestMitigation.report_content!,
@@ -703,10 +801,12 @@ export function UnifiedScanDrawer({
                     )
                 })()}
 
+                <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent" />
+
                 {/* ── Section 5: Collaboration (Notes) ── */}
-                <section className="space-y-2 pt-4 border-t border-rs-border-primary/50">
+                <section className="space-y-2 pt-4">
                     <div className="flex items-center justify-between">
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Compliance_Log</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rs-text-tertiary">Compliance_Log</span>
                         {isUpdatingNotes && <Loader2 className="w-3 h-3 text-rs-text-tertiary animate-spin" />}
                     </div>
                     <RSTextarea
@@ -715,7 +815,7 @@ export function UnifiedScanDrawer({
                         value={notesBuffer}
                         onChange={(e) => onNotesChange(e.target.value)}
                         onBlur={(e) => onNotesUpdate(scan.id, e.target.value)}
-                        className="bg-[var(--rs-bg-surface)] border-rs-border-primary text-[10px] font-mono p-3 focus:border-rs-text-primary rounded-[1px] shadow-none resize-none"
+                        className="bg-[var(--rs-bg-surface)] border-rs-border-primary text-[12px] font-mono p-3 focus:border-rs-text-primary rounded-[1px] shadow-none resize-none"
                     />
                 </section>
 
@@ -739,44 +839,48 @@ export function UnifiedScanDrawer({
                     </div>
                 )}
 
+                <hr className="border-0 h-px bg-gradient-to-r from-transparent via-[var(--rs-border-primary)] to-transparent" />
+
                 {/* ── Section 6: Actions ── */}
-                <section className="pt-8 flex flex-col gap-2">
-                    {/* Download Scan Report */}
-                            <RSButton
-                                variant="ghost"
-                                className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
-                                onClick={() => onDownload(scan)}
-                            >
-                                Export_Dossier
-                            </RSButton>
+                <section className="pt-8">
+                    <div className="grid grid-cols-2 gap-2">
+                        {/* Download Scan Report */}
+                        <RSButton
+                            variant="ghost"
+                            className="w-full h-10 text-[10px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
+                            onClick={() => onDownload(scan)}
+                        >
+                            Export_Dossier
+                        </RSButton>
 
-                    {/* Share */}
-                    <RSButton
-                        variant="ghost"
-                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
-                        onClick={() => onShare(scan.id)}
-                    >
-                        {shareToast || 'Share_Link'}
-                    </RSButton>
+                        {/* Share */}
+                        <RSButton
+                            variant="ghost"
+                            className="w-full h-10 text-[10px] uppercase tracking-widest font-black border border-rs-border-primary hover:bg-[var(--rs-bg-element)] hover:border-rs-text-primary transition-all"
+                            onClick={() => onShare(scan.id)}
+                        >
+                            {shareToast || 'Share_Link'}
+                        </RSButton>
+                    </div>
 
-                    {/* Delete */}
-                    <RSButton
-                        variant="ghost"
-                        className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary text-rs-destruct hover:bg-rs-destruct/5 hover:border-rs-destruct transition-all"
+                    {/* Delete — plain text link */}
+                    <button
+                        className="text-[10px] text-rs-text-tertiary hover:text-rs-destruct underline-offset-2 hover:underline transition-colors mt-3 mx-auto block"
                         onClick={() => onDelete(scan.id)}
                     >
-                        Purge_Archive
-                    </RSButton>
+                        Delete this scan
+                    </button>
                 </section>
             </div>
 
             {/* ═══════════════ STICKY FOOTER: Mitigation CTA ═══════════════ */}
             {scan.status === 'complete' && (!userTenantId || scan.tenant_id === userTenantId) && (
-                <div className="shrink-0 border-t border-[var(--rs-border-primary)] px-6 py-4 bg-[var(--rs-bg-element)]/80 backdrop-blur-md">
+                <div className="shrink-0 border-t border-[var(--rs-border-primary)] px-6 py-5 bg-[var(--rs-bg-element)]/80 backdrop-blur-md shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
                     <MitigationCTA
                         latestMitigation={latestMitigation}
                         entitlements={entitlements}
                         onGenerate={() => onGenerateMitigation(scan.id)}
+                        onViewAdvisory={scrollToAdvisory}
                     />
                 </div>
             )}
@@ -798,8 +902,8 @@ function MetadataField({ icon, label, value, valueClass, className }: {
         <div className={cn("flex items-start gap-2 py-2 px-3 bg-[var(--rs-bg-well)] border border-[var(--rs-border-primary)]/30 rounded-[2px]", className)}>
             <div className="text-[var(--rs-text-tertiary)] mt-0.5 shrink-0">{icon}</div>
             <div className="min-w-0">
-                <div className="text-[8px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">{label}</div>
-                <div className={cn("text-[10px] font-medium text-[var(--rs-text-primary)] truncate", valueClass)}>{value}</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">{label}</div>
+                <div className={cn("text-[12px] font-medium text-[var(--rs-text-primary)] truncate", valueClass)}>{value}</div>
             </div>
         </div>
     )
@@ -824,8 +928,8 @@ function ProvenanceRow({ label, value, status, barWidth, detail, blurred }: {
     return (
         <div className={cn("space-y-1", blurred && "blur-[3px] select-none pointer-events-none")}>
             <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">{label}</span>
-                <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color }}>{value}</span>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--rs-text-tertiary)]">{label}</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color }}>{value}</span>
             </div>
             <div className="w-full h-1 bg-[var(--rs-bg-surface)] rounded-full overflow-hidden">
                 <div
@@ -834,39 +938,40 @@ function ProvenanceRow({ label, value, status, barWidth, detail, blurred }: {
                 />
             </div>
             {detail && (
-                <p className="text-[8px] text-[var(--rs-text-tertiary)] leading-relaxed">{detail}</p>
+                <p className="text-[10px] text-[var(--rs-text-tertiary)] leading-relaxed">{detail}</p>
             )}
         </div>
     )
 }
 
-function MitigationCTA({ latestMitigation, entitlements, onGenerate }: {
+function MitigationCTA({ latestMitigation, entitlements, onGenerate, onViewAdvisory }: {
     latestMitigation: MitigationReport | null
     entitlements: DrawerEntitlements
     onGenerate: () => void
+    onViewAdvisory: () => void
 }) {
     // If mitigation exists for this scan
     if (latestMitigation) {
         if (latestMitigation.status === 'complete') {
             return (
                 <RSButton
-                    variant="ghost"
-                    className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-[var(--rs-safe)]/40 text-[var(--rs-safe)] hover:bg-[var(--rs-safe)]/5 hover:border-[var(--rs-safe)] transition-all"
-                    onClick={onGenerate}
+                    variant="secondary"
+                    className="w-full h-12 text-[11px] uppercase tracking-widest font-black transition-all"
+                    onClick={onViewAdvisory}
                 >
-                    View_Mitigation_Report
+                    View Advisory Report
                 </RSButton>
             )
         }
         if (latestMitigation.status === 'processing' || latestMitigation.status === 'pending') {
             return (
                 <RSButton
-                    variant="ghost"
-                    className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-border-primary text-rs-text-tertiary cursor-wait"
+                    variant="secondary"
+                    className="w-full h-12 text-[11px] uppercase tracking-widest font-black cursor-wait"
                     disabled
                 >
-                    <Loader2 className="w-3 h-3 animate-spin mr-2 inline" />
-                    Generating_Report...
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-2 inline" />
+                    Generating Report...
                 </RSButton>
             )
         }
@@ -874,10 +979,10 @@ function MitigationCTA({ latestMitigation, entitlements, onGenerate }: {
             return (
                 <RSButton
                     variant="ghost"
-                    className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-rs-destruct/40 text-rs-destruct hover:bg-rs-destruct/5 transition-all"
+                    className="w-full h-12 text-[11px] uppercase tracking-widest font-black border border-rs-destruct/40 text-rs-destruct bg-rs-destruct/5 hover:bg-rs-destruct/10 hover:border-rs-destruct transition-all"
                     onClick={onGenerate}
                 >
-                    Retry_Mitigation_Report
+                    Retry Advisory Report
                 </RSButton>
             )
         }
@@ -891,11 +996,12 @@ function MitigationCTA({ latestMitigation, entitlements, onGenerate }: {
     if (hasCredits) {
         return (
             <RSButton
-                variant="ghost"
-                className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-[var(--rs-info)]/40 text-[var(--rs-info)] hover:bg-[var(--rs-info)]/5 hover:border-[var(--rs-info)] transition-all"
+                variant="primary"
+                className="w-full !h-14 flex flex-col items-center justify-center gap-0.5"
                 onClick={onGenerate}
             >
-                Generate_Mitigation ({remaining} of {mitigationCredits.included} remaining)
+                <span className="text-[12px] font-black uppercase tracking-widest">Generate Advisory Report</span>
+                <span className="text-[10px] font-medium opacity-80">Use your plan credits ({remaining} of {mitigationCredits.included} remaining)</span>
             </RSButton>
         )
     }
@@ -903,11 +1009,12 @@ function MitigationCTA({ latestMitigation, entitlements, onGenerate }: {
     // No credits — $29 purchase
     return (
         <RSButton
-            variant="ghost"
-            className="w-full h-9 text-[9px] uppercase tracking-widest font-black border border-[var(--rs-info)]/40 text-[var(--rs-info)] hover:bg-[var(--rs-info)]/5 hover:border-[var(--rs-info)] transition-all"
+            variant="primary"
+            className="w-full !h-14 flex flex-col items-center justify-center gap-0.5"
             onClick={onGenerate}
         >
-            Generate_Mitigation — $29
+            <span className="text-[12px] font-black uppercase tracking-widest">Generate Advisory Report — $29</span>
+            <span className="text-[10px] font-medium opacity-80">Actionable insights + PDF export</span>
         </RSButton>
     )
 }

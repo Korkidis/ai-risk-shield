@@ -1187,6 +1187,80 @@ export function formatLongDate(date: string) {
     }).format(new Date(`${date}T00:00:00Z`))
 }
 
+// ─── Scan Doctrine Context (for Gemini prompt injection) ─────────────────────
+// These functions build structured doctrine strings from the governance knowledge
+// base above. gemini.ts calls these instead of hardcoding legal/regulatory claims.
+
+/**
+ * IP-domain doctrine context for the Legal Analyst persona.
+ * Sources: riskIndexSnapshot, riskWatchItems (litigation + settlement data).
+ */
+export function getIPDoctrineContext(): string {
+    const snap = riskIndexSnapshot
+    const settlement = riskWatchItems.find(r => r.category === 'settlement')
+    const caseVolume = riskWatchItems.find(r => r.title.includes('case volume'))
+    const runway = riskWatchItems.find(r => r.title.includes('Runway'))
+
+    const lines: string[] = []
+    if (caseVolume) lines.push(`- ${caseVolume.summary.split('.')[0]}. The litigation environment for AI-generated content is intensifying.`)
+    if (settlement) lines.push(`- The Anthropic authors settlement proposed a $${formatUsdCompact(snap.knownSettlementTotalUsd)} financial anchor for AI copyright exposure, establishing nine-figure precedent for training-data-related claims.`)
+    if (runway) lines.push(`- ${runway.summary.split('.')[0]}.`)
+    lines.push('- When you detect recognizable IP elements (logos, characters, trade dress, celebrity likeness), consider that enforcement risk is materially higher than it was 12 months ago.')
+    lines.push('- False negatives in IP detection carry increasing legal and financial exposure for enterprise users.')
+
+    return `DOCTRINE CONTEXT (as of ${snap.asOf}):\n${lines.join('\n')}`
+}
+
+/**
+ * Safety-domain doctrine context for the Compliance Auditor persona.
+ * Sources: policySignals (EU AI Act, US framework, platform policies).
+ */
+export function getSafetyDoctrineContext(): string {
+    const euSignal = policySignals.find(r => r.title.includes('EU AI Act'))
+    const usSignal = policySignals.find(r => r.title.includes('US National'))
+    const snap = riskIndexSnapshot
+
+    const lines: string[] = []
+    if (euSignal) lines.push(`- The EU AI Act Article 50 transparency obligations are now in enforcement. Synthetic content published in EU markets may require disclosure.`)
+    lines.push('- Major platforms are tightening AI content policies. LinkedIn prohibits AI-generated profile images in certain contexts. TikTok requires synthetic content disclosure.')
+    if (usSignal) lines.push(`- ${usSignal.summary.split('.')[0]}.`)
+    lines.push('- When evaluating brand safety, consider not just visual content but also platform-specific policy exposure — content safe on one platform may violate policy on another.')
+
+    return `PLATFORM & REGULATORY CONTEXT (as of ${snap.asOf}):\n${lines.join('\n')}`
+}
+
+/**
+ * Provenance-domain doctrine context for the Forensic Analyst persona.
+ * Sources: riskWatchItems (C2PA adoption data).
+ */
+export function getProvenanceDoctrineContext(): string {
+    const c2pa = riskWatchItems.find(r => r.title.includes('Content Credentials'))
+    const snap = riskIndexSnapshot
+
+    const lines: string[] = []
+    if (c2pa) lines.push(`- Content Credentials (C2PA) 2.3 is now live with over ${snap.standardsAdoptionLabel} verified production deployments. Missing credentials are increasingly unusual for professionally produced AI content.`)
+    lines.push('- In the current legal environment, missing or weak provenance is a governance weakness, not proof of wrongdoing — but it materially reduces defensibility and auditability.')
+    lines.push('- Valid credentials reduce uncertainty and strengthen the user\'s ability to defend publication decisions.')
+    lines.push('- Invalid or contradictory provenance should sharply increase the need for human review.')
+    lines.push('- Consider provenance as part of the explanation chain for how an asset was made, not as a standalone verdict.')
+
+    return `PROVENANCE DOCTRINE (as of ${snap.asOf}):\n${lines.join('\n')}`
+}
+
+/**
+ * Chief Strategy synthesis doctrine context.
+ * Sources: riskIndexSnapshot aggregate data.
+ */
+export function getChiefStrategyDoctrineContext(): string {
+    const snap = riskIndexSnapshot
+    return `GOVERNANCE AWARENESS:
+- Your recommendations should reflect the current legal and regulatory environment: ${snap.trackedCaseCountLabel} active AI copyright cases, $${formatUsdCompact(snap.knownSettlementTotalUsd)} settlement precedent, EU AI Act enforcement, platform policy tightening.
+- When IP risk is high and provenance is weak, explicitly note the compounding exposure.
+- When content credentials are valid, acknowledge the defensibility benefit.
+- Frame recommendations as practical guidance for teams publishing AI content in a heightened enforcement environment.
+- Be specific about what the user should do — not generic governance language.`
+}
+
 // ─── Live Governance Data ────────────────────────────────────────────────────
 // Server-only live fetchers (getLiveRiskIndexSnapshot, getLiveRiskWatchItems,
 // getLivePolicySignals) are in ai-content-governance.server.ts to avoid

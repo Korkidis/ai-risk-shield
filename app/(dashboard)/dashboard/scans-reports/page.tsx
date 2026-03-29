@@ -26,6 +26,7 @@ import { Entitlements } from '@/lib/entitlements'
 import { type PlanId } from '@/lib/plans'
 import { AuditModal } from '@/components/marketing/AuditModal'
 import { createClient } from '@/lib/supabase/client'
+import { getRiskTier } from '@/lib/risk/tiers'
 
 // Wrapper to handle Suspense boundary for useSearchParams
 export default function ScansReportsPage() {
@@ -68,6 +69,9 @@ function ScansReportsContent() {
     const [shareToast, setShareToast] = useState<string | null>(null)
     const [purchaseToast, setPurchaseToast] = useState(false)
     const [showDownloadBanner, setShowDownloadBanner] = useState(false)
+    const [hasOnlyOneScan, setHasOnlyOneScan] = useState(false)
+    const [firstScanSeen, setFirstScanSeen] = useState(false)
+    const firstScanTriggered = useRef(false)
 
     // Upload State
     const [showUploadModal, setShowUploadModal] = useState(false)
@@ -122,6 +126,8 @@ function ScansReportsContent() {
                 throw new Error(err.error || `Failed to fetch records (HTTP ${response.status})`)
             }
             const data = await response.json()
+            const hasSearchFilter = searchTerm.trim().length > 0
+            const hasRiskFilter = filterRisk !== 'all'
 
             const mappedScans: ScanWithRelations[] = data.scans.map((s: Record<string, unknown> & { assets?: Record<string, unknown>; scan_findings?: unknown[]; provenance_details?: unknown; mitigation_reports?: unknown[]; risk_profile?: Record<string, unknown>; risk_level?: string; composite_score?: number; ip_risk_score?: number; safety_risk_score?: number; provenance_risk_score?: number; provenance_status?: string; status?: string }) => ({
                 ...s,
@@ -133,9 +139,7 @@ function ScansReportsContent() {
                 provenance_details: Array.isArray(s.provenance_details) ? s.provenance_details[0] : s.provenance_details,
                 mitigation_reports: s.mitigation_reports || [],
                 risk_profile: s.risk_profile || {
-                    verdict: s.risk_level === 'critical' ? 'Critical Risk' :
-                        s.risk_level === 'high' ? 'High Risk' :
-                            s.risk_level === 'review' ? 'Review Recommended' : 'Low Risk',
+                    verdict: getRiskTier(s.composite_score || 0).verdict,
                     composite_score: s.composite_score || 0,
                     ip_report: { score: s.ip_risk_score || 0 },
                     safety_report: { score: s.safety_risk_score || 0 },
@@ -144,6 +148,7 @@ function ScansReportsContent() {
                 }
             }))
 
+            setHasOnlyOneScan(!hasSearchFilter && !hasRiskFilter && mappedScans.length === 1 && !data.hasMore)
             setScans(mappedScans)
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to fetch records')
@@ -198,10 +203,28 @@ function ScansReportsContent() {
         }
     }, [])
 
-    const { ephemeralState } = useRealtimeScans({
+    const { ephemeralState, staleIds } = useRealtimeScans({
         scans,
         onScanUpdate: handleScanUpdate
     })
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // First-Scan Onboarding: Auto-open drawer for users with exactly 1 scan
+    // ─────────────────────────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (
+            !firstScanTriggered.current &&
+            !isLoading &&
+            hasOnlyOneScan &&
+            scans.length > 0 &&
+            typeof window !== 'undefined' &&
+            !localStorage.getItem('rs_first_scan_seen')
+        ) {
+            firstScanTriggered.current = true
+            setSelectedScanId(scans[0].id)
+            setShowDetails(true)
+        }
+    }, [hasOnlyOneScan, scans, isLoading])
 
     // ─────────────────────────────────────────────────────────────────────────────
     // Smart Dashboard Logic: Highlight & Assignment
@@ -844,7 +867,8 @@ function ScansReportsContent() {
                                                     isSelected={selectedScanId === scan.id}
                                                     isBulkSelected={selectedIds.includes(scan.id)}
                                                     liveProgress={ephemeralState[scan.id]?.progress}
-                                                    liveMessage={ephemeralState[scan.id]?.message}
+                                                    liveMessage={staleIds.includes(scan.id) ? "TAKING LONGER THAN EXPECTED..." : ephemeralState[scan.id]?.message}
+                                                    isStale={staleIds.includes(scan.id)}
                                                     onBulkToggle={(checked) => {
                                                         setSelectedIds(prev => checked
                                                             ? [...prev, scan.id]
@@ -937,6 +961,9 @@ function ScansReportsContent() {
                             showDownloadBanner={showDownloadBanner}
                             onDismissDownloadBanner={() => setShowDownloadBanner(false)}
                             userTenantId={userContext?.tenant_id}
+                            isFirstScan={hasOnlyOneScan && !firstScanSeen && (typeof window === 'undefined' || !localStorage.getItem('rs_first_scan_seen'))}
+                            onFirstScanDismiss={() => setFirstScanSeen(true)}
+                            isStale={staleIds.includes(selectedScan?.id ?? '')}
                         />
                     )}
                 </AnimatePresence>
