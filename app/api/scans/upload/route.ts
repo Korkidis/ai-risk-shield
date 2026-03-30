@@ -104,7 +104,7 @@ export async function POST(request: Request) {
 
             try {
                 const { getVideoDuration } = await import('@/lib/video/processor')
-                const duration = await getVideoDuration(fileBuffer)
+                const duration = await getVideoDuration(fileBuffer, file.type)
                 if (duration > planConfig.videoMaxDurationSeconds) {
                     return NextResponse.json({
                         error: `Video duration (${duration}s) exceeds your plan limit (${planConfig.videoMaxDurationSeconds}s). Upgrade for longer video support.`,

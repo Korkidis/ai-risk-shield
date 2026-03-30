@@ -59,7 +59,12 @@ const nextConfig = {
       },
     ]
   },
-  serverExternalPackages: ['c2pa-node'],
+  serverExternalPackages: [
+    'c2pa-node',
+    '@ffmpeg-installer/ffmpeg',
+    '@ffprobe-installer/ffprobe',
+    'fluent-ffmpeg',
+  ],
 }
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports

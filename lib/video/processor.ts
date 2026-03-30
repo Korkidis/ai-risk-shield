@@ -2,10 +2,14 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import os from 'os'
 import ffmpeg from 'fluent-ffmpeg'
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg'
+import ffprobeInstaller from '@ffprobe-installer/ffprobe'
 import { v4 as uuidv4 } from 'uuid'
 
-// Note: ffmpeg must be installed on the system (e.g. `brew install ffmpeg`)
-// fluent-ffmpeg assumes 'ffmpeg' is in PATH.
+// Explicitly configure binary paths so video processing works in serverless
+// environments (Vercel) where ffmpeg/ffprobe are not on the system PATH.
+ffmpeg.setFfmpegPath(ffmpegInstaller.path)
+ffmpeg.setFfprobePath(ffprobeInstaller.path)
 
 export type FrameResult = {
     timestamp: number // in seconds
