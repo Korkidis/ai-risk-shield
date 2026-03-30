@@ -34,12 +34,21 @@ export function useToast() {
  * The physical Rams/Bass Toast Item.
  * Designed to look like a hardware readout/ticker slip.
  */
-export function RSToastItem({ data, onDismiss, className, title, description, variant }: any) {
+interface RSToastItemProps {
+    data?: ToastData;
+    onDismiss?: () => void;
+    className?: string;
+    title?: string;
+    description?: string;
+    variant?: ToastVariant;
+}
+
+export function RSToastItem({ data, onDismiss, className, title, description, variant }: RSToastItemProps) {
     // Backwards compatibility for Design Lab
-    const finalData = data || { id: 'legacy', title, description, variant: variant || 'default' };
-    
+    const finalData = data || { id: 'legacy', title: title || '', description, variant: variant || 'default' };
+
     // Rams aesthetics: matte finishes, inset borders, mechanical tracking
-    const variantStyles: any = {
+    const variantStyles: Record<string, string> = {
         default: "bg-[var(--rs-bg-surface)] border-black/10 text-[var(--rs-text-primary)] shadow-[0_8px_20px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.7)]",
         success: "bg-[var(--rs-bg-surface)] border-l-[var(--rs-safe)] text-[var(--rs-text-primary)] shadow-[0_8px_20px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.7)]",
         error: "bg-[var(--rs-bg-inverse)] border-black text-white shadow-[0_8px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
@@ -84,22 +93,22 @@ export function RSToastItem({ data, onDismiss, className, title, description, va
                 )}
                 
                 {finalData.action && (
-                    <button 
-                        onClick={() => { data.action?.onClick(); onDismiss(); }}
+                    <button
+                        onClick={() => { finalData.action?.onClick(); onDismiss?.(); }}
                         className={cn(
                             "mt-3 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-md transition-colors active:scale-95",
-                            data.variant === 'error' 
-                                ? "bg-white/10 text-white hover:bg-white/20" 
+                            finalData.variant === 'error'
+                                ? "bg-white/10 text-white hover:bg-white/20"
                                 : "bg-black/5 text-black hover:bg-black/10"
                         )}
                     >
-                        {data.action.label}
+                        {finalData.action.label}
                     </button>
                 )}
             </div>
 
             <button
-                onClick={onDismiss}
+                onClick={() => onDismiss?.()}
                 className="absolute top-3 right-3 p-1 rounded-sm opacity-50 hover:opacity-100 transition-opacity"
                 aria-label="Close notification"
             >

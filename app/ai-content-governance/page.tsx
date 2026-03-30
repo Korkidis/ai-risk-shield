@@ -160,7 +160,7 @@ export default async function AIContentGovernancePage() {
                             </h1>
                             <p className="max-w-2xl text-base leading-relaxed text-[var(--rs-text-secondary)] md:text-lg text-pretty">
                                 The defensive playbook for marketing teams, brand reviewers, procurement,
-                                and in-house legal groups. Protect your brand's integrity before publishing by establishing ironclad human-in-the-loop workflows.
+                                and in-house legal groups. Protect your brand&apos;s integrity before publishing by establishing ironclad human-in-the-loop workflows.
                             </p>
                             <div className="pt-4 flex flex-wrap items-center gap-4">
                                 <Link href="/register">

@@ -15,7 +15,7 @@ export function Footer() {
                         STOP PUBLISHING IN THE <span className="text-[var(--rs-signal)]">DARK.</span>
                     </h2>
                     <p className="max-w-2xl mx-auto text-base leading-relaxed text-[var(--rs-text-secondary)] text-pretty">
-                        Don't let unverified AI assets expose your brand to IP litigation. Upload your first image and secure your content pipeline in 15 seconds.
+                        Don&apos;t let unverified AI assets expose your brand to IP litigation. Upload your first image and secure your content pipeline in 15 seconds.
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
                         <Link href="/register">

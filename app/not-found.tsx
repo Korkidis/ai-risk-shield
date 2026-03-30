@@ -63,7 +63,10 @@ export default function NotFound() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [moveLeft, moveRight])
 
-    // Game Loop
+    // Game Loop — stored in a ref so requestAnimationFrame can reference it
+    // without accessing the variable before its declaration.
+    const gameLoopRef = useRef<(time: number) => void>(() => {})
+
     const gameLoop = useCallback((time: number) => {
         if (!isPlayingRef.current || gameOverRef.current) return;
 
@@ -90,7 +93,7 @@ export default function NotFound() {
             // Collision check
             const pX = playerXRef.current;
             const pY = GAME_HEIGHT - PLAYER_SIZE - 20; // Player Y position
-            
+
             for (const ob of nextObs) {
                 if (
                     pX < ob.x + ob.width &&
@@ -113,9 +116,14 @@ export default function NotFound() {
 
         if (!gameOverRef.current) {
             setScore(prev => prev + 1)
-            requestRef.current = requestAnimationFrame(gameLoop)
+            requestRef.current = requestAnimationFrame(gameLoopRef.current)
         }
     }, [])
+
+    // Keep ref in sync so requestAnimationFrame always calls latest version
+    useEffect(() => {
+        gameLoopRef.current = gameLoop
+    }, [gameLoop])
 
     useEffect(() => {
         if (isPlaying) {
@@ -229,7 +237,7 @@ export default function NotFound() {
                             404: ROUTE <span className="text-[var(--rs-signal)]">INVALID.</span>
                         </h1>
                         <p className="rs-type-body text-[var(--rs-text-secondary)] text-pretty max-w-sm">
-                            The requested address does not exist. While you're here, press the power button and help our agent dodge incoming content risks.
+                            The requested address does not exist. While you&apos;re here, press the power button and help our agent dodge incoming content risks.
                         </p>
                     </div>
                     

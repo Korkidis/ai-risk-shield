@@ -302,7 +302,7 @@ function PlansContent() {
               Why Upgrade to Pro?
             </h2>
             <p className="text-lg md:text-xl text-[var(--rs-text-secondary)] leading-relaxed max-w-3xl mx-auto">
-              Most teams publishing AI content don't have the right tools to manage the risk. Pro gives you a structured workflow so you can stay focused on creating.
+              Most teams publishing AI content don&apos;t have the right tools to manage the risk. Pro gives you a structured workflow so you can stay focused on creating.
             </p>
           </div>
 
@@ -378,7 +378,7 @@ function PlansContent() {
               </h2>
               
               <p className="text-lg text-[var(--rs-text-secondary)] leading-relaxed max-w-2xl mx-auto font-medium">
-                Don't let unverified AI assets expose your brand to IP litigation. Run a free forensic scan today, or upgrade your entire team to establish an ironclad provenance workflow.
+                Don&apos;t let unverified AI assets expose your brand to IP litigation. Run a free forensic scan today, or upgrade your entire team to establish an ironclad provenance workflow.
               </p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
