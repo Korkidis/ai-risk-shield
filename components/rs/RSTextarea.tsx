@@ -29,8 +29,8 @@ export function RSTextarea({
                 className={cn(
                     "bg-rs-white border border-rs-gray-300 rounded-[4px] px-3 py-2 text-sm text-rs-black font-sans placeholder:text-rs-gray-400 shadow-sm transition-all duration-150 resize-y min-h-[80px]",
                     "hover:border-rs-gray-400 hover:bg-rs-gray-50/50",
-                    "focus:outline-none focus:ring-2 focus:ring-rs-black focus:border-rs-black focus:bg-rs-white",
-                    error && "border-rs-signal focus:ring-rs-signal",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rs-black focus-visible:border-rs-black focus-visible:bg-rs-white",
+                    error && "border-rs-signal focus-visible:ring-rs-signal",
                     className
                 )}
                 {...props}

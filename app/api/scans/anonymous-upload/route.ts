@@ -4,6 +4,7 @@ import { getOrCreateSessionId } from '@/lib/session'
 import { getClientIp, hashIp } from '@/lib/ratelimit'
 import { createHash } from 'crypto'
 import type { Database } from '@/lib/supabase/types'
+import { detectFileType } from '@/lib/file-validation'
 
 /**
  * POST /api/scans/anonymous-upload
@@ -73,6 +74,17 @@ export async function POST(request: Request) {
 
     // Read file buffer for checksum + upload
     const fileBuffer = Buffer.from(await file.arrayBuffer())
+
+    // Server-side file type validation (don't trust client MIME)
+    const detected = detectFileType(fileBuffer)
+    if (!detected) {
+      return NextResponse.json({ error: 'Unrecognized file format' }, { status: 400 })
+    }
+    if (detected.category !== fileType) {
+      return NextResponse.json({ error: 'File content does not match declared type' }, { status: 400 })
+    }
+    // Use server-detected MIME for storage and DB (overrides client-supplied)
+    const trustedMime = detected.mime
     const sha256Checksum = createHash('sha256').update(fileBuffer).digest('hex')
 
     // Use service role to bypass RLS (anonymous users don't have tenant_id)
@@ -86,7 +98,7 @@ export async function POST(request: Request) {
       .upload(fileName, fileBuffer, {
         cacheControl: '3600',
         upsert: false,
-        contentType: file.type,
+        contentType: trustedMime,
       })
 
     if (uploadError) {
@@ -106,7 +118,7 @@ export async function POST(request: Request) {
       uploaded_by: null,
       filename: file.name,
       file_type: fileType,
-      mime_type: file.type,
+      mime_type: trustedMime,
       file_size: file.size,
       storage_path: uploadData.path,
       storage_bucket: 'uploads',

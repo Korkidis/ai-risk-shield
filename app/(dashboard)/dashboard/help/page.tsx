@@ -406,7 +406,7 @@ export default function HelpPage() {
                     <RSPanel
                         title="Need Help?"
                         metadata={[
-                            { label: 'Support', value: 'support@aicontentriskscore.com' },
+                            { label: 'Support', value: 'support@contentriskscore.com' },
                             { label: 'Response Time', value: 'Under 24 hours' },
                         ]}
                         className="h-fit border-2 border-[var(--rs-border-primary)] bg-[var(--rs-bg-well)] shadow-[8px_8px_0_var(--rs-border-primary)]"

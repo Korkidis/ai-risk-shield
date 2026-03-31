@@ -66,7 +66,7 @@ export function RSSelect({
                     "flex items-center justify-between gap-3 px-3 h-10 w-full rounded-[4px]",
                     "bg-rs-white border border-rs-gray-300 shadow-[var(--rs-shadow-bevel)]",
                     "hover:bg-rs-gray-100 hover:border-rs-black transition-colors duration-150",
-                    "focus:outline-none focus:ring-2 focus:ring-rs-black focus:border-rs-black",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rs-black focus-visible:border-rs-black",
                     isOpen ? "border-rs-black bg-rs-gray-100" : ""
                 )}
             >

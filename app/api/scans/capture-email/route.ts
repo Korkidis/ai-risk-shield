@@ -105,8 +105,6 @@ export async function POST(request: Request) {
       email_confirm: false, // User must verify via link
       user_metadata: {
         source: 'scan_unlock',
-        privacy_policy_accepted: true,
-        privacy_policy_accepted_at: new Date().toISOString()
       }
     })
 

@@ -72,8 +72,11 @@ export async function getRateLimitKey(): Promise<string> {
 }
 
 export async function hashIp(ip: string): Promise<string> {
-    const secret = process.env.IP_HASH_SECRET || 'dev-secret-do-not-use-in-prod'
-    return crypto.createHmac('sha256', secret).update(ip).digest('hex')
+    const secret = process.env.IP_HASH_SECRET
+    if (!secret && process.env.NODE_ENV === 'production') {
+        console.error('[CRITICAL] IP_HASH_SECRET is not set — per-IP rate limiting is ineffective. Generate one: openssl rand -hex 32')
+    }
+    return crypto.createHmac('sha256', secret || 'dev-secret-do-not-use-in-prod').update(ip).digest('hex')
 }
 
 export async function getClientIp() {

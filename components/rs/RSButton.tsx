@@ -19,7 +19,7 @@ export function RSButton({
     const baseStyles = cn(
         "inline-flex items-center justify-center font-medium font-sans relative overflow-hidden",
         "transition-all duration-75", // Fast, snappy hardware tactile response
-        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rs-black",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-rs-black",
         "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:shadow-inherit"
     );
 

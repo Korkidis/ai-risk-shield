@@ -121,7 +121,7 @@ export const FAQs = [
     },
     {
         question: 'Is my content used to train your models?',
-        answer: 'Never. Your data is your IP. We process scans in secure, ephemeral environments with zero retention. We hold no claim to your content and do absolutely no model training on your data.'
+        answer: 'Never. Your content is never used to train our models. Uploads and scan results are retained according to your plan\'s retention window and then permanently deleted. We hold no claim to your content.'
     },
     {
         question: 'What methodology powers the risk score?',

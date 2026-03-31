@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
 
                 const resend = new Resend(process.env.RESEND_API_KEY)
                 await resend.emails.send({
-                    from: 'AI Content Risk Score <noreply@aicontentrisk.com>',
+                    from: 'AI Content Risk Score <noreply@contentriskscore.com>',
                     to: email,
                     subject: `You've been invited to ${tenant?.name || 'a workspace'} on AI Content Risk Score`,
                     html: `

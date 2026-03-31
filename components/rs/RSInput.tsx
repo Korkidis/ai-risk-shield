@@ -38,9 +38,9 @@ export function RSInput({
                     "h-12 w-full bg-[var(--rs-bg-well)] rounded-[8px]", // MOMA Recessed Well
                     "px-4 text-[var(--rs-text-primary)] text-sm placeholder:text-[var(--rs-text-tertiary)] font-mono",
                     "shadow-[inset_0_2px_6px_rgba(0,0,0,0.1),0_1px_0_rgba(255,255,255,0.8)] border border-black/5",
-                    "focus:outline-none focus:ring-2 focus:ring-[var(--rs-gray-900)] focus:border-transparent transition-all duration-300",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rs-gray-900)] focus-visible:border-transparent transition-all duration-300",
                     "disabled:opacity-50 disabled:shadow-none hover:shadow-[inset_0_2px_8px_rgba(0,0,0,0.15)]",
-                    error ? "shadow-[inset_0_0_0_2px_var(--rs-signal)] bg-[var(--rs-signal)]/5 border-transparent focus:ring-[var(--rs-signal)]" : ""
+                    error ? "shadow-[inset_0_0_0_2px_var(--rs-signal)] bg-[var(--rs-signal)]/5 border-transparent focus-visible:ring-[var(--rs-signal)]" : ""
                 )}
                 aria-invalid={!!error}
                 aria-errormessage={error ? `${id}-error` : undefined}

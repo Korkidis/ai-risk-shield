@@ -24,14 +24,22 @@ export default function AuthLayout({
                     </RSChassisCard>
 
                     {/* Bottom Navigation - Detached Schematic Navigation */}
-                    <div className="mt-12 flex items-center justify-center gap-8">
+                    <div className="mt-12 flex items-center justify-center gap-8 flex-wrap">
                         <Link href="/" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
-                            ← SYSTEM_EXIT
+                            ← Back
                         </Link>
                         <div className="w-1 h-1 bg-rs-signal/20 rounded-full" />
-                        <a href="mailto:support@aicontentriskscore.com" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
-                            CONTACT_SUPPORT
+                        <a href="mailto:support@contentriskscore.com" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
+                            Support
                         </a>
+                        <div className="w-1 h-1 bg-rs-signal/20 rounded-full" />
+                        <Link href="/privacy" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
+                            Privacy
+                        </Link>
+                        <div className="w-1 h-1 bg-rs-signal/20 rounded-full" />
+                        <Link href="/terms" className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--rs-text-tertiary)] hover:text-rs-signal transition-all">
+                            Terms
+                        </Link>
                     </div>
                 </div>
             </div>

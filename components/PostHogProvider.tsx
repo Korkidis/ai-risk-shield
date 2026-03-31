@@ -16,6 +16,9 @@ function PostHogPageview() {
     return null
 }
 
+// BETA NOTE: Do not set NEXT_PUBLIC_POSTHOG_KEY in preview/beta environments.
+// PostHog uses localStorage+cookie and initializes before any consent flow exists.
+// Re-enable only after a proper consent gate is implemented.
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const key = process.env.NEXT_PUBLIC_POSTHOG_KEY

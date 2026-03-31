@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/auth'
+import { checkRateLimit } from '@/lib/ratelimit'
 
 function getGenAI() {
     if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is required');
@@ -32,6 +33,14 @@ export async function POST(req: NextRequest) {
     try {
         const user = await getCurrentUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+        const rl = await checkRateLimit({ action: 'guidelines_extract', key: user.id, maxAttempts: 10, windowSeconds: 900 })
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'Too many extraction requests. Please try again later.' },
+                { status: 429, headers: { 'Retry-After': String(rl.retryAfter || 60) } }
+            )
+        }
 
         const formData = await req.formData()
         const file = formData.get('file') as File

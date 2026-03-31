@@ -18,10 +18,10 @@ export default function Error({
                 <RSEmptyState
                     icon={<AlertOctagon className="w-8 h-8 text-[var(--rs-signal)]" />}
                     title="System Error"
-                    description="An unexpected error occurred during analysis. Our forensic systems have been notified."
+                    description="An unexpected error occurred. Please try again, or contact support if this persists."
                     action={
                         <RSButton variant="primary" onClick={reset}>
-                            RETRY_OPERATION
+                            Try Again
                         </RSButton>
                     }
                 />

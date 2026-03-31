@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 
@@ -21,23 +21,53 @@ export function RSModal({
     size = 'md',
     className,
 }: RSModalProps) {
+    const modalRef = useRef<HTMLDivElement>(null);
+    const previousFocusRef = useRef<HTMLElement | null>(null);
+    const titleId = title ? 'rs-modal-title' : undefined;
 
-    // Escape key handler
+    // Focus trap: keep Tab/Shift+Tab within the modal
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (e.key === 'Escape') { onClose(); return; }
+        if (e.key !== 'Tab' || !modalRef.current) return;
+
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        }
+    }, [onClose]);
+
     useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-
         if (isOpen) {
-            document.addEventListener('keydown', handleEscape);
+            previousFocusRef.current = document.activeElement as HTMLElement;
+            document.addEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'hidden';
+            // Move focus into the modal
+            requestAnimationFrame(() => {
+                const first = modalRef.current?.querySelector<HTMLElement>(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                first?.focus();
+            });
         }
 
         return () => {
-            document.removeEventListener('keydown', handleEscape);
+            document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'unset';
+            // Return focus to the element that opened the modal
+            previousFocusRef.current?.focus();
         };
-    }, [isOpen, onClose]);
+    }, [isOpen, handleKeyDown]);
 
     if (!isOpen) return null;
 
@@ -49,15 +79,20 @@ export function RSModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="presentation">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-rs-black/60 backdrop-blur-sm animate-in fade-in duration-200"
                 onClick={onClose}
+                aria-hidden="true"
             />
 
             {/* Modal Content */}
             <div
+                ref={modalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
                 className={cn(
                     "relative bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-chassis)] shadow-[var(--rs-shadow-l3)] border border-[var(--rs-border-strong)]/20 w-full animate-in zoom-in-95 fade-in duration-300",
                     sizeClasses[size],
@@ -68,12 +103,13 @@ export function RSModal({
                 {/* Header */}
                 {title && (
                     <div className="flex items-center justify-between px-8 py-6 border-b border-[var(--rs-border-strong)]/5">
-                        <h2 className="rs-type-section text-xl text-[var(--rs-text-primary)]">
+                        <h2 id={titleId} className="rs-type-section text-xl text-[var(--rs-text-primary)]">
                             {title}
                         </h2>
                         <button
                             onClick={onClose}
-                            className="w-8 h-8 rounded-full hover:bg-rs-gray-200 flex items-center justify-center transition-colors"
+                            aria-label="Close dialog"
+                            className="w-8 h-8 rounded-full hover:bg-rs-gray-200 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rs-black"
                         >
                             <X className="w-5 h-5 text-rs-gray-600" />
                         </button>

@@ -38,7 +38,7 @@ export function RSCheckbox({
                 />
                 <div className={cn(
                     "w-5 h-5 border border-rs-gray-400 bg-rs-white rounded-[4px] shadow-sm transition-all duration-200",
-                    "peer-focus:ring-2 peer-focus:ring-rs-black/20",
+                    "peer-focus-visible:ring-2 peer-focus-visible:ring-rs-black/20",
                     isChecked ? "bg-rs-black border-rs-black" : "group-hover:border-rs-gray-500"
                 )}>
                     <Check

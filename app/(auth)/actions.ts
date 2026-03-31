@@ -142,7 +142,7 @@ export async function signUp(_prevState: unknown, formData: FormData) {
   // Success! Redirect to dashboard
   // Success! Redirect to dashboard or next url
   const next = formData.get('next') as string
-  if (next && next.startsWith('/')) {
+  if (next && next.startsWith('/') && !next.startsWith('//')) {
     redirect(next)
   }
   redirect('/dashboard')

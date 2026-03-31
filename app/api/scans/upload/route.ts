@@ -5,6 +5,7 @@ import { getTenantId, requireAuth } from '@/lib/supabase/auth'
 import { createHash } from 'crypto'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { getPlan, type PlanId } from '@/lib/plans'
+import { detectFileType } from '@/lib/file-validation'
 // FFmpeg is dynamically imported only when processing video (avoids bundling ~70MB binary for image uploads)
 // import { getVideoDuration } from '@/lib/video/processor'
 
@@ -92,6 +93,17 @@ export async function POST(request: Request) {
         // Read file buffer once (used for duration check, checksum, and upload)
         const fileBuffer = Buffer.from(await file.arrayBuffer())
 
+        // Server-side file type validation (don't trust client MIME)
+        const detected = detectFileType(fileBuffer)
+        if (!detected) {
+            return NextResponse.json({ error: 'Unrecognized file format' }, { status: 400 })
+        }
+        if (detected.category !== fileType) {
+            return NextResponse.json({ error: 'File content does not match declared type' }, { status: 400 })
+        }
+        // Use server-detected MIME for storage and DB (overrides client-supplied)
+        const trustedMime = detected.mime
+
         // Video duration enforcement (plan-tier limits)
         if (isVideo) {
             const planConfig = getPlan(plan as PlanId)
@@ -104,7 +116,7 @@ export async function POST(request: Request) {
 
             try {
                 const { getVideoDuration } = await import('@/lib/video/processor')
-                const duration = await getVideoDuration(fileBuffer, file.type)
+                const duration = await getVideoDuration(fileBuffer, trustedMime)
                 if (duration > planConfig.videoMaxDurationSeconds) {
                     return NextResponse.json({
                         error: `Video duration (${duration}s) exceeds your plan limit (${planConfig.videoMaxDurationSeconds}s). Upgrade for longer video support.`,
@@ -143,7 +155,7 @@ export async function POST(request: Request) {
             .upload(fileName, fileBuffer, {
                 cacheControl: '3600',
                 upsert: false,
-                contentType: file.type,
+                contentType: trustedMime,
             })
 
         if (uploadError) {
@@ -158,7 +170,7 @@ export async function POST(request: Request) {
             tenant_id: tenantId,
             filename: file.name,
             file_type: fileType,
-            mime_type: file.type,
+            mime_type: trustedMime,
             file_size: file.size,
             storage_path: uploadData.path,
             storage_bucket: 'uploads',
