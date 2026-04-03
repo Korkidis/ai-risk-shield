@@ -167,7 +167,7 @@ components/
 ```bash
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=          # Project URL (safe to expose)
-NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Anon key (safe to expose)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Anon key (safe to expose; alias: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)
 SUPABASE_SERVICE_ROLE_KEY=         # Service role (SERVER-SIDE ONLY)
 
 # Google Gemini

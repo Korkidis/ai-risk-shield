@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from './types'
+import { getSupabaseAnonKey } from './env'
 
 /**
  * Create a Supabase client for Server Components and Server Actions
@@ -11,7 +12,7 @@ export async function createClient() {
 
     return createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        getSupabaseAnonKey(),
         {
             cookies: {
                 getAll() {
