@@ -72,6 +72,7 @@ export function RSTelemetryPanel({
     );
     const resolvedButtonText = buttonText || 'View Manifest'
     const isNewScanButton = resolvedButtonText.toUpperCase() === 'NEW_SCAN'
+    const highlightNewScanButton = isNewScanButton && state === 'complete'
 
     return (
         <div className={cn(
@@ -226,8 +227,10 @@ export function RSTelemetryPanel({
                                             onClick={onAction}
                                             className={cn(
                                                 "group flex items-center gap-3 pl-6 pr-4 py-2 rounded transition-all",
-                                                isNewScanButton
-                                                    ? "bg-rs-black border border-white/15 text-white/70 hover:bg-white/[0.04] hover:text-white hover:border-white/35"
+                                                highlightNewScanButton
+                                                    ? "bg-[var(--rs-signal)]/12 border border-[var(--rs-signal)]/45 text-[var(--rs-signal)] shadow-[0_0_24px_rgba(255,91,34,0.12)] hover:bg-[var(--rs-signal)]/18 hover:text-white hover:border-[var(--rs-signal)]"
+                                                    : isNewScanButton
+                                                        ? "bg-rs-black border border-white/15 text-white/85 hover:bg-white/[0.04] hover:text-white hover:border-white/35"
                                                     : "bg-rs-black border border-white/10 hover:border-rs-signal/50 text-white/60 hover:text-rs-signal"
                                             )}
                                         >
@@ -236,7 +239,11 @@ export function RSTelemetryPanel({
                                             </span>
                                             <div className={cn(
                                                 "w-4 h-4 flex items-center justify-center rounded-full transition-colors",
-                                                isNewScanButton ? "border border-white/20 group-hover:border-white/45" : "border border-white/10 group-hover:border-rs-signal"
+                                                highlightNewScanButton
+                                                    ? "border border-[var(--rs-signal)]/55 group-hover:border-white"
+                                                    : isNewScanButton
+                                                        ? "border border-white/20 group-hover:border-white/45"
+                                                        : "border border-white/10 group-hover:border-rs-signal"
                                             )}>
                                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                                     <path d="M5 12h14M12 5l7 7-7 7" />

@@ -30,6 +30,7 @@ export function RSScanner({
             className={cn(
                 "relative overflow-hidden bg-[var(--rs-bg-surface)] rounded-[var(--rs-radius-element)] border border-white/5 transition-colors duration-300",
                 isDragActive && "border-[var(--rs-signal)] shadow-[0_0_20px_var(--rs-signal)]",
+                isComplete && "border-emerald-400/35 shadow-[0_0_0_1px_rgba(52,211,153,0.15),0_0_36px_rgba(16,185,129,0.12)]",
                 "w-full h-full flex items-center justify-center",
                 "shadow-[var(--rs-shadow-hull)]",
                 className
@@ -87,11 +88,12 @@ export function RSScanner({
 
             {/* Status Overlay */}
             {isComplete && (
-                <div className="absolute inset-0 bg-emerald-500/10 flex items-center justify-center backdrop-blur-[2px] animate-in fade-in duration-300">
-                    <div className="bg-[var(--rs-bg-surface)]/80 text-emerald-500 px-4 py-2 border border-emerald-500 rounded-[2px] font-mono text-sm tracking-widest font-bold uppercase shadow-lg">
+                <>
+                    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-emerald-400/12 to-transparent pointer-events-none animate-in fade-in duration-300" />
+                    <div className="absolute top-5 right-5 px-4 py-2 bg-[var(--rs-bg-surface)]/88 text-emerald-400 border border-emerald-400/60 rounded-[2px] font-mono text-sm tracking-widest font-bold uppercase shadow-[0_0_20px_rgba(52,211,153,0.18)] backdrop-blur-[1px] animate-in fade-in zoom-in-95 duration-300">
                         Scan Complete
                     </div>
-                </div>
+                </>
             )}
 
             {isError && (
