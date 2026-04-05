@@ -428,7 +428,7 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
 
     // Save provenance_details for valid/caution C2PA (matches authenticated path)
     if (!isVideo && riskProfile && ['valid', 'caution'].includes(c2paStatus) && riskProfile.c2pa_report) {
-      await supabase.from('provenance_details').insert({
+      const { error: provenanceError } = await supabase.from('provenance_details').insert({
         scan_id: scanId,
         tenant_id: scan.tenant_id,
         creator_name: riskProfile.c2pa_report.creator,
@@ -441,15 +441,21 @@ export async function processScan(scanId: string): Promise<ProcessScanResult> {
         edit_history: riskProfile.c2pa_report.history,
         raw_manifest: riskProfile.c2pa_report.raw_manifest
       })
+      if (provenanceError) {
+        console.error(`[scan-processor] Failed to insert provenance_details for scan ${scanId}:`, provenanceError.message)
+      }
     }
 
     // Insert findings
     if (findings.length > 0) {
       type FindingInsert = Database['public']['Tables']['scan_findings']['Insert']
       const sanitizedFindings: FindingInsert[] = findings.map(f => {
-        return { ...f, evidence: f.evidence as Json, recommendation: (null as unknown) as FindingInsert['recommendation'] } as FindingInsert
+        return { ...f, evidence: f.evidence as Json, recommendation: null } as FindingInsert
       })
-      await supabase.from('scan_findings').insert(sanitizedFindings)
+      const { error: findingsError } = await supabase.from('scan_findings').insert(sanitizedFindings)
+      if (findingsError) {
+        console.error(`[scan-processor] Failed to insert findings for scan ${scanId}:`, findingsError.message)
+      }
     }
 
     // Insert video frames if applicable

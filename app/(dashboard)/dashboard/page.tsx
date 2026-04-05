@@ -830,13 +830,6 @@ export default function DashboardPage() {
                             provenanceScore={results.provenance}
                             status="completed"
                             verdict={analysisResult?.verdict}
-                            strategyPoints={
-                                analysisResult?.chief_officer_strategy
-                                    ? typeof analysisResult.chief_officer_strategy === 'string'
-                                        ? undefined
-                                        : analysisResult.chief_officer_strategy.points
-                                    : undefined
-                            }
                             className="w-full"
                         />
                     </div>
@@ -901,6 +894,7 @@ export default function DashboardPage() {
                         mitigationCredits: mitigationEntitlement,
                     }}
                     onGenerateMitigation={handleGenerateMitigation}
+                    onPurchaseMitigation={() => setShowAuditModal(true)}
                     onShare={handleShare}
                     onDelete={handleDelete}
                     onNotesUpdate={handleSaveNotes}

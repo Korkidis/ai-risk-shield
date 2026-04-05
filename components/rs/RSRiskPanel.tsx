@@ -15,7 +15,6 @@ interface RSRiskPanelProps {
     status: 'empty' | 'scanning' | 'completed';
     className?: string;
     verdict?: string;
-    strategyPoints?: string[];
 }
 
 // Theme — CSS variable tokens (dark mode compatible)
@@ -76,7 +75,6 @@ export function RSRiskPanel({
     status,
     className,
     verdict,
-    strategyPoints
 }: RSRiskPanelProps) {
 
     // Determine colors
@@ -93,7 +91,7 @@ export function RSRiskPanel({
     const activeColor = colors[level] || colors.info;
     const isScanning = status === 'scanning';
     const hasResult = status === 'completed';
-    const strategySummary = level === 'critical' || level === 'high'
+    const assessmentSummary = level === 'critical' || level === 'high'
         ? 'This asset has significant risk signals that should be reviewed before publishing.'
         : level === 'medium'
             ? 'This asset has some risk signals worth reviewing.'
@@ -110,10 +108,19 @@ export function RSRiskPanel({
         actionStatement = 'Analysis in Progress.';
         headerStatus = 'PROCESSING';
     } else {
-        actionStatement = level === 'critical' ? 'Immediate Remediation Required.' :
-            level === 'safe' ? 'System Integrity Verified.' :
-                'Review Flagged Content.';
-        headerStatus = level === 'critical' ? 'CRITICAL THREAT' : 'SYSTEM SECURE';
+        if (level === 'critical') {
+            actionStatement = 'Critical Risk Signals Detected.';
+            headerStatus = 'CRITICAL RISK';
+        } else if (level === 'high') {
+            actionStatement = 'Elevated Risk Signals Detected.';
+            headerStatus = 'HIGH RISK';
+        } else if (level === 'medium' || level === 'warning') {
+            actionStatement = 'Review Recommended.';
+            headerStatus = 'REVIEW REQ';
+        } else {
+            actionStatement = 'Assessment Complete.';
+            headerStatus = 'LOW RISK';
+        }
     }
 
 
@@ -204,23 +211,13 @@ export function RSRiskPanel({
                                 )} />
                             </div>
 
-                            {/* Verdict & Strategy */}
+                            {/* Verdict Summary */}
                             {verdict && hasResult && (
                                 <div className="mt-6 space-y-3">
                                     <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--rs-text-tertiary)]">
                                         {verdict}
                                     </p>
-                                    <p className="text-[13px] text-[var(--rs-text-secondary)] leading-relaxed">{strategySummary}</p>
-                                    {strategyPoints && strategyPoints.length > 0 && (
-                                        <div className="space-y-1.5">
-                                            {strategyPoints.slice(0, 3).map((point, i) => (
-                                                <div key={i} className="flex items-start gap-2">
-                                                    <div className="w-1 h-1 rounded-full bg-[var(--rs-text-tertiary)] mt-2 shrink-0" />
-                                                    <p className="text-[12px] text-[var(--rs-text-tertiary)] leading-relaxed">{point}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <p className="text-[13px] text-[var(--rs-text-secondary)] leading-relaxed">{assessmentSummary}</p>
                                 </div>
                             )}
                         </div>

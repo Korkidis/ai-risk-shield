@@ -67,6 +67,7 @@ function ScansReportsContent() {
     const [userContext, setUserContext] = useState<{ id: string; tenant_id: string; plan: PlanId } | null>(null)
     const [showAuditModal, setShowAuditModal] = useState(false)
     const [shareToast, setShareToast] = useState<string | null>(null)
+    const [mitigationToast, setMitigationToast] = useState<string | null>(null)
     const [purchaseToast, setPurchaseToast] = useState(false)
     const [showDownloadBanner, setShowDownloadBanner] = useState(false)
     const [hasOnlyOneScan, setHasOnlyOneScan] = useState(false)
@@ -135,7 +136,7 @@ function ScansReportsContent() {
                 filename: s.assets?.filename || 'Unnamed Asset',
                 file_type: s.assets?.file_type || 'image',
                 file_size: s.assets?.file_size || 0,
-                scan_findings: s.scan_findings || [],
+                scan_findings: s.scan_findings || undefined,
                 provenance_details: Array.isArray(s.provenance_details) ? s.provenance_details[0] : s.provenance_details,
                 mitigation_reports: s.mitigation_reports || [],
                 risk_profile: s.risk_profile || {
@@ -343,7 +344,7 @@ function ScansReportsContent() {
                 }
             }))
 
-            setShareToast('Generating mitigation report...')
+            setMitigationToast('Generating mitigation report...')
 
             let attempts = 0;
             const maxAttempts = 5;
@@ -356,11 +357,11 @@ function ScansReportsContent() {
 
                     if (res.ok && data.report) {
                         setScans(prev => prev.map(s => s.id === highlightId ? { ...s, mitigation_reports: [data.report] } : s));
-                        setShareToast('Mitigation report generated');
+                        setMitigationToast('Mitigation report generated');
                         cleanupUrl();
                         return;
                     } else if (res.status === 202) {
-                        setShareToast('Report already generating...');
+                        setMitigationToast('Report already generating...');
                         // Trigger a targeted refresh of the scan so the UI gets the canonical processing row
                         fetch(`/api/scans/${highlightId}`)
                             .then(r => r.ok ? r.json() : null)
@@ -382,7 +383,7 @@ function ScansReportsContent() {
                         return;
                     } else {
                         // Exhausted retries or hard failure (400, 500)
-                        setShareToast('Failed to start generation. Please check your credits.');
+                        setMitigationToast('Failed to start generation. Please check your credits.');
                         console.error('Mitigation API failed:', data);
                         cleanupUrl();
 
@@ -394,7 +395,7 @@ function ScansReportsContent() {
                     }
                 } catch (err) {
                     console.error('Mitigation fetch failed:', err);
-                    setShareToast('Failed to start generation');
+                    setMitigationToast('Failed to start generation');
                     cleanupUrl();
 
                     // Revert optimistic state
@@ -928,21 +929,26 @@ function ScansReportsContent() {
                                             if (s.id !== selectedScanId) return s
                                             return { ...s, mitigation_reports: [data.report] }
                                         }))
-                                        setShareToast('Mitigation report generated')
-                                        setTimeout(() => setShareToast(null), 3000)
+                                        setMitigationToast('Mitigation report generated')
+                                        setTimeout(() => setMitigationToast(null), 3000)
                                     } else if (res.status === 202) {
-                                        setShareToast('Report already generating...')
-                                        setTimeout(() => setShareToast(null), 3000)
+                                        setMitigationToast('Report already generating...')
+                                        setTimeout(() => setMitigationToast(null), 3000)
                                     } else if (res.status === 402) {
-                                        setShareToast('Credits exhausted — purchase required')
-                                        setTimeout(() => setShareToast(null), 4000)
+                                        // Revert optimistic update
+                                        setScans(prev => prev.map(s => {
+                                            if (s.id !== selectedScanId) return s
+                                            return { ...s, mitigation_reports: [] }
+                                        }))
+                                        // Open the purchase modal instead of just a toast
+                                        setShowAuditModal(true)
                                     } else {
                                         throw new Error(data.message || 'Generation failed')
                                     }
                                 } catch (err) {
                                     console.error('Mitigation generation error:', err)
-                                    setShareToast('Failed to generate report')
-                                    setTimeout(() => setShareToast(null), 3000)
+                                    setMitigationToast('Failed to generate report')
+                                    setTimeout(() => setMitigationToast(null), 3000)
                                     // Revert optimistic update
                                     setScans(prev => prev.map(s => {
                                         if (s.id !== selectedScanId) return s
@@ -950,6 +956,7 @@ function ScansReportsContent() {
                                     }))
                                 }
                             }}
+                            onPurchaseMitigation={() => setShowAuditModal(true)}
                             onShare={handleShare}
                             onDelete={handleDrawerDelete}
                             onNotesUpdate={(_scanId, notes) => handleSaveNotes(notes)}
@@ -958,6 +965,7 @@ function ScansReportsContent() {
                             onNotesChange={setNotesBuffer}
                             isUpdatingNotes={updating}
                             shareToast={shareToast}
+                            mitigationToast={mitigationToast}
                             showDownloadBanner={showDownloadBanner}
                             onDismissDownloadBanner={() => setShowDownloadBanner(false)}
                             userTenantId={userContext?.tenant_id}

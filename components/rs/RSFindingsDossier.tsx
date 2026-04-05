@@ -62,6 +62,10 @@ interface RSFindingsDossierProps {
     onOpenReport?: () => void;
     reportButtonLabel?: string;
     className?: string;
+    /** When true, show loading skeleton instead of findings (detail fetch in progress) */
+    isLoading?: boolean;
+    /** When true, suppress the header and action area (for embedding in drawer) */
+    compact?: boolean;
 }
 
 export function RSFindingsDossier({
@@ -73,9 +77,26 @@ export function RSFindingsDossier({
     onUpgradeClick,
     onOpenReport,
     reportButtonLabel,
-    className
+    className,
+    isLoading,
+    compact,
 }: RSFindingsDossierProps) {
     if (!isComplete) return null;
+
+    // Loading skeleton while detail fetch is in progress
+    if (isLoading) {
+        return (
+            <div className={cn("space-y-3", compact ? "py-2" : "p-8", className)}>
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="pl-6 border-l border-[var(--rs-border-primary)] py-1 animate-pulse">
+                        <div className="h-3 w-32 bg-[var(--rs-bg-element)] rounded mb-2" />
+                        <div className="h-2 w-full bg-[var(--rs-bg-element)] rounded mb-1" />
+                        <div className="h-2 w-3/4 bg-[var(--rs-bg-element)] rounded" />
+                    </div>
+                ))}
+            </div>
+        );
+    }
 
     // Build display findings from best available source
     let displayFindings: Finding[] = [];
@@ -91,23 +112,24 @@ export function RSFindingsDossier({
         }));
     } else if (riskProfile) {
         // Fallback: derive from risk profile teasers (still real Gemini text)
+        // Always show all 3 persona cards — score=0 means "clear", not "skip"
         const { ip_report, safety_report, provenance_report } = riskProfile;
 
-        if (ip_report && ip_report.score > 0) {
+        if (ip_report) {
             displayFindings.push({
                 id: 'ip',
-                title: 'IP / Copyright',
-                description: ip_report.teaser || 'IP analysis complete.',
+                title: ip_report.score > 0 ? 'IP / Copyright' : 'No IP concerns detected',
+                description: ip_report.teaser || (ip_report.score > 0 ? 'IP analysis complete.' : 'No significant similarity to known protected works detected.'),
                 severity: ip_report.score > 70 ? 'critical' : ip_report.score > 40 ? 'high' : 'low',
                 score: ip_report.score,
             });
         }
 
-        if (safety_report && safety_report.score > 0) {
+        if (safety_report) {
             displayFindings.push({
                 id: 'safety',
-                title: 'Brand Safety',
-                description: safety_report.teaser || 'Safety analysis complete.',
+                title: safety_report.score > 0 ? 'Brand Safety' : 'Content passes brand safety review',
+                description: safety_report.teaser || (safety_report.score > 0 ? 'Safety analysis complete.' : 'No brand safety concerns detected.'),
                 severity: safety_report.score > 70 ? 'critical' : safety_report.score > 40 ? 'high' : 'low',
                 score: safety_report.score,
             });
@@ -127,6 +149,38 @@ export function RSFindingsDossier({
     }
 
     const docRef = scanId ? scanId.slice(0, 8).toUpperCase() : '---';
+
+    // Compact mode: just the findings list, no outer chrome
+    if (compact) {
+        return (
+            <div className={cn("space-y-3", className)}>
+                {displayFindings.length > 0 ? displayFindings.map((f) => (
+                    <div key={f.id} className="group relative pl-6 border-l border-[var(--rs-border-primary)] py-0.5">
+                        <div className={cn(
+                            "absolute left-[-5px] top-2.5 w-[9px] h-[9px] rounded-full border border-[var(--rs-border-primary)] flex items-center justify-center",
+                            RISK_THEME.surface
+                        )}>
+                            <div className={cn("w-1.5 h-1.5 rounded-full", severityToDotColor(f.severity))} />
+                        </div>
+                        <div className="flex justify-between items-center mb-1">
+                            <div className="flex items-center gap-3">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--rs-text-primary)]">{f.title}</span>
+                                <RSRiskBadge level={severityToLevel(f.severity)} size="sm" value={f.score} className="scale-[0.85] origin-left" />
+                            </div>
+                        </div>
+                        <p className={cn("font-mono text-[10px] leading-snug pr-2 opacity-80", RISK_THEME.text)}>{f.description}</p>
+                    </div>
+                )) : (
+                    <div className="text-center py-6">
+                        <div className="w-10 h-10 mx-auto rounded-full bg-[var(--rs-safe)]/10 flex items-center justify-center mb-2">
+                            <Terminal size={18} className="text-[var(--rs-safe)]" />
+                        </div>
+                        <span className="text-[12px] font-medium text-rs-text-secondary">All checks passed — no issues detected</span>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div
@@ -209,10 +263,10 @@ export function RSFindingsDossier({
                                 className="font-bold tracking-[0.15em] shadow-lg rounded-[2px]"
                                 onClick={onUpgradeClick}
                             >
-                                Get Full Report — $29
+                                Get Mitigation Report — $29
                             </RSButton>
                             <p className={cn("font-mono text-[10px] uppercase tracking-widest text-center", RISK_THEME.textMuted)}>
-                                One-time purchase &middot; Full IP analysis &middot; Downloadable PDF
+                                One-time purchase &middot; Actionable remediation plan &middot; PDF export
                             </p>
                         </div>
                     ) : (

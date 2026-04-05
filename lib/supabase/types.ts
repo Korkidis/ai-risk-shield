@@ -693,10 +693,10 @@ export type Database = {
           created_at: string
           description: string
           evidence: Json | null
-          finding_type: string
+          finding_type: 'ip_violation' | 'trademark' | 'safety_violation' | 'brand_violation' | 'provenance_issue' | 'ip_clear' | 'ip_match' | 'ip_similarity' | 'safety_clear' | 'safety_content' | 'safety_context' | 'provenance_verified' | 'provenance_suspicious' | 'provenance_missing'
           id: string
           location_data: Json | null
-          recommendation: string
+          recommendation: string | null
           scan_id: string
           severity: string
           tenant_id: string | null
@@ -707,10 +707,10 @@ export type Database = {
           created_at?: string
           description: string
           evidence?: Json | null
-          finding_type: string
+          finding_type: 'ip_violation' | 'trademark' | 'safety_violation' | 'brand_violation' | 'provenance_issue' | 'ip_clear' | 'ip_match' | 'ip_similarity' | 'safety_clear' | 'safety_content' | 'safety_context' | 'provenance_verified' | 'provenance_suspicious' | 'provenance_missing'
           id?: string
           location_data?: Json | null
-          recommendation: string
+          recommendation?: string | null
           scan_id: string
           severity: string
           tenant_id?: string | null
@@ -721,10 +721,10 @@ export type Database = {
           created_at?: string
           description?: string
           evidence?: Json | null
-          finding_type?: string
+          finding_type?: 'ip_violation' | 'trademark' | 'safety_violation' | 'brand_violation' | 'provenance_issue' | 'ip_clear' | 'ip_match' | 'ip_similarity' | 'safety_clear' | 'safety_content' | 'safety_context' | 'provenance_verified' | 'provenance_suspicious' | 'provenance_missing'
           id?: string
           location_data?: Json | null
-          recommendation?: string
+          recommendation?: string | null
           scan_id?: string
           severity?: string
           tenant_id?: string | null

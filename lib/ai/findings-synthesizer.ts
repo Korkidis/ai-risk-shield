@@ -257,7 +257,7 @@ export function synthesizeVideoFindings(
     })
   }
 
-  // Video IP finding from frame analysis
+  // Video IP finding — always generated (flagged or clear)
   if (ipResult && ipResult.riskScore >= 25) {
     const ipSeverity = scoreSeverity(ipResult.riskScore)
     if (ipSeverity) {
@@ -278,9 +278,26 @@ export function synthesizeVideoFindings(
         confidence_score: Math.min(ipResult.riskScore, 95),
       })
     }
+  } else {
+    // Score < 25 or no IP result: clean finding — confirms what was checked
+    const score = ipResult?.riskScore ?? 0
+    findings.push({
+      tenant_id: tenantId,
+      scan_id: scanId,
+      finding_type: 'ip_clear',
+      severity: 'low',
+      title: 'No intellectual property concerns detected in video frames',
+      description: ipResult?.summary || 'Frame-by-frame analysis found no significant similarity to known protected works, trademarks, or celebrity likenesses.',
+      recommendation: null,
+      evidence: {
+        score,
+        overall_risk: ipResult?.overallRisk || 'low',
+      },
+      confidence_score: Math.max(100 - score, 75),
+    })
   }
 
-  // Video Safety finding from frame analysis
+  // Video Safety finding — always generated (flagged or clear)
   if (brandSafetyResult && brandSafetyResult.riskScore >= 25) {
     const safetySeverity = scoreSeverity(brandSafetyResult.riskScore)
     if (safetySeverity) {
@@ -302,6 +319,23 @@ export function synthesizeVideoFindings(
         confidence_score: Math.min(brandSafetyResult.riskScore, 95),
       })
     }
+  } else {
+    // Score < 25 or no safety result: clean finding — confirms what was checked
+    const score = brandSafetyResult?.riskScore ?? 0
+    findings.push({
+      tenant_id: tenantId,
+      scan_id: scanId,
+      finding_type: 'safety_clear',
+      severity: 'low',
+      title: 'Video content passes brand safety review',
+      description: brandSafetyResult?.summary || 'Frame-by-frame analysis evaluated against platform policies and brand safety standards. No concerns detected.',
+      recommendation: null,
+      evidence: {
+        score,
+        overall_risk: brandSafetyResult?.overallRisk || 'low',
+      },
+      confidence_score: Math.max(100 - score, 75),
+    })
   }
 
   return findings
