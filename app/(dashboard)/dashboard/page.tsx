@@ -70,6 +70,7 @@ export default function DashboardPage() {
     const [notesBuffer, setNotesBuffer] = React.useState('');
     const [isUpdatingNotes, setIsUpdatingNotes] = React.useState(false);
     const [shareToast, setShareToast] = React.useState<string | null>(null);
+    const [mitigationToast, setMitigationToast] = React.useState<string | null>(null);
     const [showDownloadBanner, setShowDownloadBanner] = React.useState(false);
     const [userContext, setUserContext] = React.useState<{ id: string; tenant_id: string; plan: PlanId } | null>(null);
 
@@ -618,28 +619,32 @@ export default function DashboardPage() {
                     ? { ...prev, mitigation_reports: [data.report] }
                     : prev
                 );
-                setShareToast('Mitigation report generated');
-                setTimeout(() => setShareToast(null), 3000);
+                setMitigationToast('Mitigation report generated');
+                setTimeout(() => setMitigationToast(null), 3000);
                 return;
             }
 
             if (res.status === 202) {
-                setShareToast('Report already generating...');
-                setTimeout(() => setShareToast(null), 3000);
+                setMitigationToast('Report already generating...');
+                setTimeout(() => setMitigationToast(null), 3000);
                 return;
             }
 
             if (res.status === 402) {
-                setShareToast('Credits exhausted — purchase required');
-                setTimeout(() => setShareToast(null), 4000);
+                // Revert optimistic state and open purchase modal
+                setScanRecord(prev => prev && prev.id === scanId
+                    ? { ...prev, mitigation_reports: [] }
+                    : prev
+                );
+                setShowAuditModal(true);
                 return;
             }
 
             throw new Error(data.message || 'Generation failed');
         } catch (err) {
             console.error('Mitigation generation failed:', err);
-            setShareToast('Failed to generate report');
-            setTimeout(() => setShareToast(null), 3000);
+            setMitigationToast('Failed to generate report');
+            setTimeout(() => setMitigationToast(null), 3000);
             setScanRecord(prev => prev && prev.id === scanId
                 ? { ...prev, mitigation_reports: [] }
                 : prev
@@ -903,6 +908,7 @@ export default function DashboardPage() {
                     onNotesChange={setNotesBuffer}
                     isUpdatingNotes={isUpdatingNotes}
                     shareToast={shareToast}
+                    mitigationToast={mitigationToast}
                     showDownloadBanner={showDownloadBanner}
                     onDismissDownloadBanner={() => setShowDownloadBanner(false)}
                     userTenantId={userContext?.tenant_id}
@@ -915,6 +921,7 @@ export default function DashboardPage() {
                 scanId={currentScanId || ''}
                 compositeScore={analysisResult?.composite_score}
                 findingCount={scanRecord?.scan_findings?.length}
+                planId={userContext?.plan}
             />
 
             {shareToast && (

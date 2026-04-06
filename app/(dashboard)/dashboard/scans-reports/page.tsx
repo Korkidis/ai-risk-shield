@@ -1083,6 +1083,7 @@ function ScansReportsContent() {
                     scanId={selectedScanId || ''}
                     compositeScore={selectedScan?.composite_score ?? undefined}
                     findingCount={selectedScan?.scan_findings?.length}
+                    planId={userContext?.plan}
                 />
 
                 {/* Purchase Toast */}
