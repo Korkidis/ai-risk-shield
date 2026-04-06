@@ -1,12 +1,14 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { RSTooltip } from '@/components/rs/RSTooltip';
 
 import { RiskLevel } from './RSRiskScore';
 
 interface RSAnalogNeedleProps {
     value?: number;
     label?: string;
+    tooltip?: string;
     level?: RiskLevel;
     powered?: boolean;
     size?: number;
@@ -31,6 +33,7 @@ const NEEDLE_THEME = {
 export function RSAnalogNeedle({
     value = 0,
     label = "Risk Bias",
+    tooltip,
     size = 288,
     isScanning = false,
     powered = true,
@@ -176,13 +179,19 @@ export function RSAnalogNeedle({
             </div>
 
             {/* External Label (Underneath) */}
-            {
-                label && (
+            {label && (
+                tooltip ? (
+                    <RSTooltip content={tooltip} side="bottom">
+                        <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest text-center cursor-help">
+                            {label}
+                        </span>
+                    </RSTooltip>
+                ) : (
                     <span className="text-[10px] font-bold text-[var(--rs-text-secondary)] uppercase tracking-widest text-center">
                         {label}
                     </span>
                 )
-            }
+            )}
         </div >
     );
 }

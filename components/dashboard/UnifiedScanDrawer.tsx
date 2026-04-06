@@ -899,7 +899,7 @@ function MitigationCTA({ latestMitigation, entitlements, onGenerate, onPurchase,
                     className="w-full h-12 text-[11px] uppercase tracking-widest font-black transition-all"
                     onClick={onViewAdvisory}
                 >
-                    View Advisory Report
+                    View Mitigation Report
                 </RSButton>
             )
         }
@@ -922,16 +922,15 @@ function MitigationCTA({ latestMitigation, entitlements, onGenerate, onPurchase,
                     className="w-full h-12 text-[11px] uppercase tracking-widest font-black border border-rs-destruct/40 text-rs-destruct bg-rs-destruct/5 hover:bg-rs-destruct/10 hover:border-rs-destruct transition-all"
                     onClick={onGenerate}
                 >
-                    Retry Advisory Report
+                    Retry Mitigation Report
                 </RSButton>
             )
         }
     }
 
-    // No mitigation yet — show generate CTA
+    // No mitigation yet — show generate CTA (stable label regardless of credit state)
     const { mitigationCredits } = entitlements
     const hasCredits = mitigationCredits.included > 0 && mitigationCredits.used < mitigationCredits.included
-    const remaining = mitigationCredits.included - mitigationCredits.used
 
     if (hasCredits) {
         return (
@@ -940,21 +939,21 @@ function MitigationCTA({ latestMitigation, entitlements, onGenerate, onPurchase,
                 className="w-full !h-14 flex flex-col items-center justify-center gap-0.5"
                 onClick={onGenerate}
             >
-                <span className="text-[12px] font-black uppercase tracking-widest">Generate Advisory Report</span>
-                <span className="text-[10px] font-medium opacity-80">Use your plan credits ({remaining} of {mitigationCredits.included} remaining)</span>
+                <span className="text-[12px] font-black uppercase tracking-widest">Generate Mitigation Report</span>
+                <span className="text-[10px] font-medium opacity-80">Uses 1 of {mitigationCredits.included} credits this cycle</span>
             </RSButton>
         )
     }
 
-    // No credits — $29 purchase
+    // No credits — same label, subcopy explains the state
     return (
         <RSButton
             variant="primary"
             className="w-full !h-14 flex flex-col items-center justify-center gap-0.5"
             onClick={onPurchase}
         >
-            <span className="text-[12px] font-black uppercase tracking-widest">Generate Advisory Report — $29</span>
-            <span className="text-[10px] font-medium opacity-80">Actionable insights + PDF export</span>
+            <span className="text-[12px] font-black uppercase tracking-widest">Generate Mitigation Report</span>
+            <span className="text-[10px] font-medium opacity-80">Credits used — purchase or upgrade required</span>
         </RSButton>
     )
 }

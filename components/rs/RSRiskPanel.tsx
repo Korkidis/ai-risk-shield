@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { RSAnalogNeedle } from '@/components/rs/RSAnalogNeedle';
+import { RSTooltip } from '@/components/rs/RSTooltip';
 import { RiskLevel } from '@/components/rs/RSRiskScore';
 import { motion } from 'framer-motion';
 
@@ -39,7 +40,7 @@ function LikelihoodBar({ className, hideLabel = false, hasResult, activeColor, i
         <div className={className}>
             {!hideLabel && (
                 <div className="flex justify-between items-end mb-4">
-                    <span className={cn("text-[10px] font-bold uppercase tracking-[0.2em]", RISK_THEME.textMuted)}>Likelihood Probability</span>
+                    <span className={cn("text-[10px] font-bold uppercase tracking-[0.2em]", RISK_THEME.textMuted)}>Risk Probability</span>
                 </div>
             )}
             <div className={cn("h-4 md:h-6 rounded-sm relative overflow-hidden shadow-inner border border-black/5", "bg-[var(--rs-bg-well)]")}>
@@ -91,11 +92,6 @@ export function RSRiskPanel({
     const activeColor = colors[level] || colors.info;
     const isScanning = status === 'scanning';
     const hasResult = status === 'completed';
-    const assessmentSummary = level === 'critical' || level === 'high'
-        ? 'This asset has significant risk signals that should be reviewed before publishing.'
-        : level === 'medium'
-            ? 'This asset has some risk signals worth reviewing.'
-            : 'This asset appears low risk based on our analysis.';
 
     // Action Statement Logic
     let actionStatement = '';
@@ -108,17 +104,26 @@ export function RSRiskPanel({
         actionStatement = 'Analysis in Progress.';
         headerStatus = 'PROCESSING';
     } else {
-        if (level === 'critical') {
+        // Use real verdict as action statement when available
+        if (verdict) {
+            actionStatement = verdict;
+        } else if (level === 'critical') {
             actionStatement = 'Critical Risk Signals Detected.';
-            headerStatus = 'CRITICAL RISK';
         } else if (level === 'high') {
             actionStatement = 'Elevated Risk Signals Detected.';
-            headerStatus = 'HIGH RISK';
         } else if (level === 'medium' || level === 'warning') {
             actionStatement = 'Review Recommended.';
+        } else {
+            actionStatement = 'Analysis Complete.';
+        }
+
+        if (level === 'critical') {
+            headerStatus = 'CRITICAL RISK';
+        } else if (level === 'high') {
+            headerStatus = 'HIGH RISK';
+        } else if (level === 'medium' || level === 'warning') {
             headerStatus = 'REVIEW REQ';
         } else {
-            actionStatement = 'Assessment Complete.';
             headerStatus = 'LOW RISK';
         }
     }
@@ -169,21 +174,24 @@ export function RSRiskPanel({
 
                             {/* Score Row: Flex on Mobile to accommodate Likelihood */}
                             <div className="flex items-start justify-between xl:block">
-                                <div className={cn("text-[85px] xl:text-[85px] 2xl:text-[120px] leading-[0.85] font-black tracking-tighter", RISK_THEME.text)}>
-                                    {isScanning ? (
-                                        <motion.span
-                                            animate={{ opacity: [0.3, 1, 0.3] }}
-                                            transition={{ repeat: Infinity, duration: 1.5 }}
-                                        >
-                                            --
-                                        </motion.span>
-                                    ) : (
-                                        <div className="flex items-start">
-                                            {score}
-                                            <span className={cn("text-[24px] xl:text-[24px] 2xl:text-[32px] font-bold mt-4 xl:mt-3 2xl:mt-6", RISK_THEME.textMuted)}>%</span>
-                                        </div>
-                                    )}
-                                </div>
+                                <RSTooltip content="Combined risk assessment across intellectual property, brand safety, and content provenance. Higher values indicate greater risk." side="bottom" maxWidth="280px">
+                                    <div className={cn("text-[85px] xl:text-[85px] 2xl:text-[120px] leading-[0.85] font-black tracking-tighter cursor-help", RISK_THEME.text)}>
+                                        {isScanning ? (
+                                            <motion.span
+                                                animate={{ opacity: [0.3, 1, 0.3] }}
+                                                transition={{ repeat: Infinity, duration: 1.5 }}
+                                            >
+                                                --
+                                            </motion.span>
+                                        ) : (
+                                            <div className="flex items-start">
+                                                {score}
+                                                <span className={cn("text-[24px] xl:text-[24px] 2xl:text-[32px] font-bold mt-4 xl:mt-3 2xl:mt-6", RISK_THEME.textMuted)}>%</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </RSTooltip>
+                                <span className={cn("text-[10px] font-mono font-bold uppercase tracking-[0.2em] mt-1 block", RISK_THEME.textMuted)}>Composite Risk</span>
 
                                 {/* Mobile-only Likelihood Bar (Right of numbers) */}
                                 <LikelihoodBar
@@ -211,15 +219,6 @@ export function RSRiskPanel({
                                 )} />
                             </div>
 
-                            {/* Verdict Summary */}
-                            {verdict && hasResult && (
-                                <div className="mt-6 space-y-3">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--rs-text-tertiary)]">
-                                        {verdict}
-                                    </p>
-                                    <p className="text-[13px] text-[var(--rs-text-secondary)] leading-relaxed">{assessmentSummary}</p>
-                                </div>
-                            )}
                         </div>
                     </div>
 
@@ -238,14 +237,15 @@ export function RSRiskPanel({
                         {/* 2. AUXILIARY DIALS (Directly on panel, no card) - TIGHTER GRID */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-1 mt-2 md:mt-auto">
                             {[
-                                { label: 'IP_RISK', val: ipScore, lvl: ipScore > 50 ? 'critical' : 'safe' },
-                                { label: 'BRAND_SAFETY', val: safetyScore, lvl: safetyScore > 50 ? 'critical' : 'safe' },
-                                { label: 'PROVENANCE', val: provenanceScore, lvl: provenanceScore < 50 ? 'safe' : 'critical' }
+                                { label: 'IP / COPYRIGHT', val: ipScore, lvl: ipScore > 50 ? 'critical' : 'safe', tooltip: 'Similarity to known copyrighted works, trademarks, and celebrity likenesses.' },
+                                { label: 'BRAND SAFETY', val: safetyScore, lvl: safetyScore > 50 ? 'critical' : 'safe', tooltip: 'Brand safety signals including policy violations, sensitive content, and platform compliance risks.' },
+                                { label: 'PROVENANCE', val: provenanceScore, lvl: provenanceScore < 50 ? 'safe' : 'critical', tooltip: 'Content credential verification. Checks C2PA digital signatures for origin and chain of custody.' }
                             ].map((dial, i) => (
                                 <RSAnalogNeedle
                                     key={i}
                                     value={dial.val}
                                     label={dial.label}
+                                    tooltip={dial.tooltip}
                                     fluid={true}
                                     isScanning={isScanning}
                                     powered={status !== 'empty'}
