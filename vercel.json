@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/recover-stale-scans",
-      "schedule": "30 * * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }
